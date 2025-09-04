@@ -418,7 +418,7 @@ class LocBasParser:
             self._raise_error(2)
         info.exptype = fbody.etype
         info.nargs = len(fargs)
-        return AST.DefFN(name=fname, etype=fbody.etype, args=fargs, body=fbody)
+        return AST.DefFN(name=fname, args=fargs, body=fbody)
 
     def _parse_DEFINT(self) -> AST.Command:
         """ <DEFINT> ::= DEFINT <str_range> """
@@ -1319,7 +1319,7 @@ class LocBasParser:
 
     # ----------------- Expresions -----------------
 
-    """
+    r"""
         Numeric operators precedence:
         EXP     ^
         SIGN    -
@@ -1427,7 +1427,7 @@ class LocBasParser:
         return node
 
     def _parse_factor(self) -> AST.Statement:
-        """ <factor> ::= <unary> [( * | / | \ ) <unary>] """
+        r""" <factor> ::= <unary> [( * | / | \ ) <unary>] """
         node = self._parse_unary()
         while self._current_in((TokenType.OP,), ('*', '/', '\\')):
             op = self._advance()

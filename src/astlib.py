@@ -16,9 +16,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
 from typing import Optional
-from enum import Enum, auto
+from enum import Enum
 import json
 
 class ExpType(str, Enum):
@@ -67,189 +66,254 @@ def exptype_isvalid(etype: ExpType) -> bool:
 class ASTNode:
     id: str
 
-@dataclass
+    def __init__(self, id: str):
+        self.id = id
+
 class Program(ASTNode):
     lines: list["Line"]
-    id: str = "Program"
 
-@dataclass
+    def __init__(self, lines: list["Line"]):
+        super().__init__(id="Program")
+        self.lines = lines
+
 class Line(ASTNode):
     number: int
     statements: list["Statement"]
-    id: str = "Line"
 
-@dataclass
+    def __init__(self, number: int, statements: list["Statement"]):
+        super().__init__(id="Line")
+        self.number=number
+        self.statements=statements
+
 class Statement(ASTNode):
     etype: ExpType
 
-@dataclass
+    def __init__(self, etype: ExpType, id: str):
+        super().__init__(id=id)
+        self.etype = etype
+
 class Nop(Statement):
     """ can be used to return something after an error occurred """
-    etype: ExpType = ExpType.Void
-    id: str = "NOP"
+
+    def __init__(self):
+        super().__init__(etype=ExpType.Void, id="NOP")
 
 # ---------- Expresions ----------
 
-@dataclass
 class Assignment(Statement):
     target: Statement
     source: Statement
     id: str = "Assignment"
 
-@dataclass
+    def __init__(self, target: Statement, source: Statement, etype: ExpType):
+        super().__init__(etype=etype, id="Assignment")
+        self.target = target
+        self.source = source
+
 class BinaryOp(Statement):
     op: str
     left: Statement
     right: Statement
-    id: str = "BinaryOp"
 
-@dataclass
+    def __init__(self, op: str, left: Statement, right: Statement, etype: ExpType):
+        super().__init__(etype=etype, id="BinaryOp")
+        self.left = left
+        self.right = right
+        self.op = op
+
 class UnaryOp(Statement):
     op: str
     operand: Statement
-    id: str = "UnaryOp"
 
-@dataclass
+    def __init__(self, op: str, operand: Statement, etype: ExpType):
+        super().__init__(etype=etype, id="UnaryOp")
+        self.operand = operand
+        self.op = op
+
 class Range(Statement):
     low: str | int
     high: str | int
-    id: str = "Range"
 
-@dataclass
+    def __init__(self, low: int | str, high: int | str, etype: ExpType):
+        super().__init__(etype=etype, id="Range")
+        self.low = low
+        self.high = high
+
 class Integer(Statement):
-    value: int = 0
-    etype: ExpType = ExpType.Integer
-    id: str = "Integer"
+    value: int
 
-@dataclass
+    def __init__(self, value: int):
+        super().__init__(etype=ExpType.Integer, id="Integer")
+        self.value = value
+
 class Real(Statement):
-    value: float = 0.0
-    etype: ExpType = ExpType.Real
-    id: str = "Real"
+    value: float
 
-@dataclass
+    def __init__(self, value: float):
+        super().__init__(etype=ExpType.Real, id="Real")
+        self.value = value
+
 class String(Statement):
-    value: str = ""
-    etype: ExpType = ExpType.String
-    id: str = "String"
+    value: str
 
-@dataclass
+    def __init__(self, value: str):
+        super().__init__(etype=ExpType.String, id="String")
+        self.value = value
+
 class Variable(Statement):
-    name: str = ""
-    id: str = "Variable"
+    name: str
 
-@dataclass
+    def __init__(self, name: str, etype: ExpType):
+        super().__init__(etype=etype, id="Variable")
+        self.name = name
+    
 class Array(Statement):
-    name: str = ""
-    sizes: list[int] = field(default_factory=list)
-    id: str = "Array"
+    name: str
+    sizes: list[int]
 
-@dataclass
+    def __init__(self, name: str, etype: ExpType, sizes: list[int]):
+        super().__init__(etype=etype, id="Array")
+        self.name = name
+        self.sizes = sizes
+
 class ArrayItem(Statement):
-    name: str = ""
-    args: list[Statement] = field(default_factory=list)
-    id: str = "ArrayItem"
+    name: str
+    args: list[Statement]
 
-@dataclass
+    def __init__(self, name: str, etype: ExpType, args: list[Statement]):
+        super().__init__(etype=etype, id="ArrayItem")
+        self.name = name
+        self.args = args
+
 class Pointer(Statement):
-    var: Variable = Variable(etype=ExpType.Integer)
-    etype: ExpType = ExpType.Integer
-    id: str = "Pointer"
+    var: Variable
 
-@dataclass
+    def __init__(self, var: Variable):
+        super().__init__(etype=ExpType.Integer, id="Pointer")
+        self.var = var
+
 class Stream(Statement):
-    value: int = 0
-    etype: ExpType = ExpType.Integer
-    id: str = "Stream"
+    value: int
+
+    def __init__(self, value: int = 0):
+        super().__init__(etype=ExpType.Integer, id="Stream")
+        self.value = value
 
 # ---------- Statement Nodes ----------
 
-@dataclass
 class If(Statement):
-    condition: Statement = Nop()
-    then_block: list[Statement] = field(default_factory=list)
-    else_block: list[Statement] = field(default_factory=list)
-    etype: ExpType = ExpType.Void
-    id: str = "If"
+    condition: Statement
+    then_block: list[Statement]
+    else_block: list[Statement]
 
-@dataclass
+    def __init__(self, condition: Statement, then_block: list[Statement], else_block: list[Statement]):
+        super().__init__(etype=ExpType.Void, id="If")
+        self.condition = condition
+        self.then_block = then_block
+        self.else_block = else_block
+
 class ForLoop(Statement):
-    var: Variable = Variable(ExpType.Integer)
-    start: Statement = Nop()
-    end: Statement = Nop()
-    step: Optional[Statement] = None
-    body: list[Statement]  = field(default_factory=list)
-    etype: ExpType = ExpType.Void
-    id: str = "ForLoop"
+    var: Variable
+    start: Statement
+    end: Statement
+    step: Optional[Statement]
+    body: list[Statement]
 
-@dataclass
+    def __init__(self, var: Variable, start: Statement, end: Statement, body: list[Statement], step: Optional[Statement]=None):
+        super().__init__(etype=ExpType.Void, id="ForLoop")
+        self.var = var
+        self.start = start
+        self.end = end
+        self.step = step
+        self.body = body
+
 class WhileLoop(Statement):
-    condition: Statement = Nop()
-    body: list[Statement]= field(default_factory=list)
-    etype: ExpType = ExpType.Void
-    id: str = "WhileLoop"
+    condition: Statement
+    body: list[Statement]
 
-@dataclass
+    def __init__(self, condition: Statement, body: list[Statement]):
+        super().__init__(etype=ExpType.Void, id="WhileLoop")
+        self.condition = condition
+        self.body = body
+
 class BlockEnd(Statement):
-    name: str = ""
-    var: str = ""
-    etype: ExpType = ExpType.Void
-    id: str = "BlockEnd"
+    name: str
+    var: str
 
-@dataclass
+    def __init__(self, name: str, var: str = ""):
+        super().__init__(etype=ExpType.Void, id="BlockEnd")
+        self.name = name
+        self.var = var 
+
 class Comment(Statement):
     text: str = ""
-    etype: ExpType = ExpType.Void
-    id: str = "Comment"
+
+    def __init__(self, text: str):
+        super().__init__(etype=ExpType.Void, id="Comment")
+        self.text = text
 
 # ------ Commands and Functions -------
     
-@dataclass
 class RSX(Statement):
     command: str = ""
-    etype: ExpType = ExpType.Void
-    id: str = "RSX"
 
-@dataclass
+    def __init__(self, command: str):
+        super().__init__(etype=ExpType.Void, id="RSX")
+        self.command = command
+
 class Command(Statement):
-    name: str = ""
-    etype: ExpType = ExpType.Void
-    args: list[Statement] = field(default_factory=list)
-    id: str = "Command"
+    name: str
+    args: list[Statement]
 
-@dataclass
+    def __init__(self, name: str, args: list[Statement] = []):
+        super().__init__(etype=ExpType.Void, id="Command")
+        self.name = name
+        self.args = args
+
 class Function(Statement):
-    name: str = ""
-    args: list[Statement] = field(default_factory=list)
-    id: str = "Function"
+    name: str
+    args: list[Statement]
 
-@dataclass
+    def __init__(self, name: str, etype: ExpType, args: list[Statement] = []):
+        super().__init__(etype=etype, id="Function")
+        self.name = name
+        self.args = args
+
 class UserFun(Statement):
-    name: str = ""
-    args: list[Statement] = field(default_factory=list)
-    id: str = "UserFun"
+    name: str
+    args: list[Statement]
 
-@dataclass
+    def __init__(self, name: str, etype: ExpType, args: list[Statement]):
+        super().__init__(etype=etype, id="UserFun")
+        self.name = name
+        self.args = args
+
 class Print(Statement):
-    items: list[Statement] = field(default_factory=list)
-    etype: ExpType = ExpType.Void
-    id: str = "Print"
+    items: list[Statement]
 
-@dataclass
+    def __init__(self, items: list[Statement]):
+        super().__init__(etype=ExpType.Void, id="Print")
+        self.items = items
+
 class Input(Statement):
-    vars: list[str] = field(default_factory=list)
-    etype: ExpType = ExpType.Void
-    id: str = "Input"
+    vars: list[str]
 
-@dataclass
+    def __init__(self, vars: list[str]):
+        super().__init__(etype=ExpType.Void, id="Input")
+        self.vars = vars
+
 class DefFN(Statement):
-    name: str = ""
-    args: list[Variable] = field(default_factory=list)
-    body: Statement = Nop()
-    etype: ExpType = ExpType.Void
-    id: str = "DefFN"
+    name: str 
+    args: list[Variable]
+    body: Statement
 
+    def __init__(self, name: str, args: list[Variable], body: Statement):
+        super().__init__(etype=ExpType.Void, id="DefFN")
+        self.name = name
+        self.args = args
+        self.body = body
+    
 # ------ Serialize -------
     
 def to_json(root: Program) -> str:
-    return json.dumps(asdict(root), indent=2)
+    return json.dumps({}, indent=2)
