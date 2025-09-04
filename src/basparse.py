@@ -1,7 +1,6 @@
 """
-Syntactic analyzer of Amstrad locomotive BASIC code. It support some
-basic enhacements like the use of labels instead of line number in
-GOTO, GOSUB and THEN/ELSE sentences.
+Syntactic analyzer of Amstrad locomotive BASIC code. It supports some
+enhancements like having a body for THEN clausules.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,1090 +14,1693 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+
+Use example:
+
+program = "
+10 FOR I = 1 TO 5
+20   PRINT I
+30 NEXT I
+40 WHILE I < 10
+50   I = I + 1
+60 WEND
+70 IF I > 5 THEN
+80   PRINT "OK"
+90 ELSE
+100  PRINT "FAIL"
+110 END IF
+"
+
+parser = LocBasParser(program)
+ast = parser.parse_program()
+
+for line in ast.lines:
+    print(f"LINE {line.number}:")
+    for stmt in line.statements:
+        print(f"  {stmt}")
+
 """
 
-import sys
-import os
-from typing import List, Optional, Tuple
-from baslex import BASLexer
-from basemit import SMEmitter
-from bastypes import SymTypes, Symbol, SymbolTable, Token, TokenType, ErrorCode, Expression, BASTypes
-from bastypes import CodeBlock, CodeBlockType, ForBlockInfo
+from __future__ import annotations
+from typing import List, Optional, cast
+from dataclasses import dataclass
+from enum import Enum, auto
+from baserror import BasError
+from baspp import CodeLine
+from baslex import LocBasLexer, TokenType, Token
+from symbols import SymTable, SymEntry, SymType
+import astlib as AST
 
-class BASParser:
-    """
-    A BASParser object keeps track of current token, checks if the code matches the grammar,
-    and emits code along the way if an emitter has been set.
-    To resolve forward declarations (jump points), the parser does two passes. In the
-    first pass, the emitter doesn't really emit any code but this allows the parser
-    to construct the whole symbols table.
-    """
-    def __init__(self, lexer: BASLexer, emitter: SMEmitter, verbose: bool) -> None:
-        self.lexer = lexer
-        self.emitter = emitter
-        self.verbose = verbose
-        self.errors = 0
+class BlockType(Enum):
+    IF = auto()
+    FOR = auto()
+    WHILE = auto()
+ 
+@dataclass
+class CodeBlock:
+    type: BlockType
+    until_keywords: tuple
+    alive: bool = True
 
-        self.cur_token: Optional[Token] = None
-        self.peek_token: Optional[Token] = None
-        self.symbols = SymbolTable()
-        self.cur_expr = Expression()
-        self.expr_stack: List[Expression] = []
-        # start, limit, step, looplabel, endlabel
-        self.block_stack: List[CodeBlock] = []
-        self.temp_vars: int = 0
+class LocBasParser:
+    def __init__(self, code: list[CodeLine], tokens: list[Token], warning_level=-1):
+        self.tokens = tokens
+        self.lines = code
+        self.pos = 0
+        self.codeblocks: list[CodeBlock] = []
+        self.warning_level = warning_level
+        self.symtable = SymTable()
+        self.context = ""
 
-    def abort(self, message: str) -> None:
-        print(f"Fatal error: {message}")
-        sys.exit(1)
+    # ----------------- Error management -----------------
+
+    def _raise_error(self, codenum: int, info: str = "", line: int = -1, col: int = -1):
+        current = self._current()
+        # tokens start line counting in 1
+        codeline = self.lines[current.line - 1]
+        raise BasError(
+            codenum,
+            codeline.source,
+            codeline.code,
+            codeline.line if line == -1 else line,
+            current.col if col == -1 else col,
+            info
+        ) 
+
+    def _raise_warning(self, level: int, msg: str):
+        if self.warning_level<0 or self.warning_level>=level:
+            current = self._current()
+            # tokens start line counting in 1
+            codeline = self.lines[current.line - 1]
+            print(f"[WARNING] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
+
+    # ----------------- Token management -----------------
+
+    def _current(self) -> Token:
+        return self.tokens[self.pos]
+
+    def _advance(self) -> Token:
+        tok = self.tokens[self.pos]
+        self.pos += 1
+        return tok
+
+    def _rewind(self) -> Token:
+        tok = self.tokens[self.pos]
+        self.pos -= 1
+        return tok
+
+    def _match(self, type: TokenType, lex: Optional[str] = None) -> Optional[Token]:
+        if self._current_is(type, lex):
+            return self._advance()
+        return None
+
+    def _expect(self, type: TokenType, lex: Optional[str] = None) -> Token:
+        if not self._current_is(type, lex):
+            self._raise_error(2)
+        return self._advance()
+
+    def _current_is(self, type: TokenType, lexeme: Optional[str] = None) -> bool:
+        tk = self.tokens[self.pos]
+        if tk.type != type: return False
+        if lexeme != None:
+            return lexeme == tk.lexeme
+        return True
+
+    def _current_in(self, types: tuple, lexemes: Optional[tuple] = None) -> bool:
+        tk = self.tokens[self.pos]
+        if tk.type not in types: return False
+        if lexemes is not None:
+            return tk.lexeme in lexemes
+        return True
+
+    def _next_is(self, type: TokenType, lexeme: Optional[str] = None) -> bool:
+        nexttk = self.tokens[self.pos + 1]
+        if nexttk.type != type: return False
+        if lexeme != None and lexeme != nexttk.lexeme: return False
+        return True
+
+    # ----------------- Statements -----------------
+
+    def _parse_ABS(self) -> AST.Function:
+        """ <ABS> := ABS(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="ABS", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_AFTER(self) -> AST.Command:
+        """ <AFTER> ::= AFTER <int_expression>[,<int_expression>] GOSUB INT """
+        self._advance()
+        delay = self._parse_expression()
+        if not AST.exptype_isint(delay.etype):
+            self._raise_error(13)
+        args = [delay]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            timer = self._parse_expression()
+            if not AST.exptype_isint(timer.etype):
+                self._raise_error(13)
+            args.append(timer)
+        self._expect(TokenType.KEYWORD, "GOSUB")
+        num = self._expect(TokenType.INT)
+        args.append(AST.Integer(value = cast(int, num.value)))
+        return AST.Command(name="AFTER", args=args)
     
-    def error(self, srcline: int, message: str, extrainfo: str = "") -> None:
-        self.errors = self.errors + 1
-        filename, linenum, line = self.lexer.get_srccode(srcline)
-        filename = os.path.basename(filename)
-        print(f"Error in {filename}:{linenum}: {line.strip()} -> {message} {extrainfo}")
-        while not self.match_current(TokenType.NEWLINE):
-            self.next_token()
+    def _parse_ASC(self) -> AST.Function:
+        """ <ASC> ::= ASC(<str_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isstr(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="ASC", etype=AST.ExpType.Integer, args=args)
 
-    def warning(self, srcline: int, message: str, extrainfo: str = "") -> None:
-        filename, linenum, line = self.lexer.get_srccode(srcline)
-        filename = os.path.basename(filename)
-        print(f"Warning in {filename}:{linenum}: {line.strip()} -> {message} {extrainfo}")
+    def _parse_ATN(self) -> AST.Function:
+        """ <ATN> ::= ATN(<num_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="ATN", etype=AST.ExpType.Real, args=args)
 
-    def get_curcode(self) -> str:
-        assert self.cur_token is not None
-        _, _, line = self.lexer.get_srccode(self.cur_token.srcline)
-        return line 
+    def _parse_AUTO(self) -> AST.Command:
+        """ <AUTO> ::= AUTO <int_expression>[,<int_expression>] """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="AUTO")
     
-    def get_linelabel(self, num: str) -> str:
-        return f'__label_line_{num}'
+    def _parse_BINSS(self) -> AST.Function:
+        """ <BINSS> ::= BIN$(<int_expression>[,<int_expression>])"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(13)
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            width = self._parse_expression()
+            if not AST.exptype_isint(width.etype):
+                self._raise_error(13)
+            args.append(width)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="BIN$", etype=AST.ExpType.String, args=args)
 
-    def match_current(self, tktype: TokenType) -> bool:
-        """Return true if the current token matches."""
-        assert self.cur_token is not None
-        return tktype == self.cur_token.type
+    def _parse_BORDER(self) -> AST.Command:
+        """ <BORDER> ::= BORDER <int_expression>[,<int_expression>] """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(13)
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            color2 = self._parse_expression()
+            if not AST.exptype_isint(color2.etype):
+                self._raise_error(13)
+            args.append(color2)
+        return AST.Command(name="BORDER", args=args)
 
-    def match_next(self, tktype: TokenType) -> bool:
-        """Return true if the next token matches."""
-        assert self.peek_token is not None
-        return tktype == self.peek_token.type
+    def _parse_CALL(self) -> AST.Command:
+        """ <CALL> ::= CALL <int_expression>[,<expression>]* """
+        self._advance()
+        dir = self._parse_expression()
+        if not AST.exptype_isint(dir.etype):
+            self._raise_error(13)
+        args = [dir]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        return AST.Command(name="CALL", args=args)
 
-    def next_token(self) -> None:
-        """Advances the current token."""
-        self.cur_token = self.peek_token
-        self.peek_token = self.lexer.get_token()
+    def _parse_CAT(self) -> AST.Command:
+        """ <CAT> ::= CAT """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="CAT")
 
-    def next_instruction(self) -> None:
-        """Advances the current token until it founds the end
-        of the current instruction (ie ':' RETURN or End of File)."""
+    def _parse_CHAIN(self) -> AST.Command:
+        """ <CHAIN> ::= CHAIN <str_expression>[,<int_expression>] """
+        # This command appends a new Basic program form a loaded
+        # file, so it doesn't make sense for a compiler
+        # INCBAS additional command suplies this at compile time
+        self._advance()
+        self._raise_error(2, info="Command not supported, use INCBAS instead")
+        return AST.Command(name="CHAIN")
+
+    def _parse_CHAIN_MERGE(self) -> AST.Command:
+        """ <CHAIN_MERGE> ::= CHAIN MERGE <str_expression>[,<int_expression>][,DELETE <int_expression>] """
+        # This command appends a new Basic program form a loaded
+        # file, so it doesn't make sense for a compiler
+        # INCBAS additional command suplies this at compile time
+        self._advance()
+        self._raise_error(2, info="Command not supported, use INCBAS instead")
+        return AST.Command(name="CHAIN_MERGE")
+
+    def _parse_CHRSS(self) -> AST.Function:
+        """ <CHRSS> ::= CHR$(<int_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="CHR$", etype=AST.ExpType.String, args=args)
+
+    def _parse_CINT(self) -> AST.Function:
+        """ <CINT> ::= CINT(<real_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="CINT", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_CLEAR(self) -> AST.Command:
+        """ <CLEAR> ::= CLEAR """
+        # This command resets several areas of the BASIC interpreter
+        # and doesn't seem to be very useful for a compiled program
+        self._advance()
+        self._raise_error(2, info="Command not supported")
+        return AST.Command(name="CLEAR")
+
+    def _parse_CLG(self) -> AST.Command:
+        """ <CLG> ::= CLG [<int_expression>] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            args = [self._parse_expression()]
+            if not AST.exptype_isint(args[0].etype):
+                self._raise_error(13)
+        return AST.Command(name="CLG", args=args)
+
+    def _parse_CLOSEIN(self) -> AST.Command:
+        """ <CLOSEIN> ::= CLOSEIN """
+        self._advance()
+        return AST.Command(name="CLOSEIN")
+
+    def _parse_CLOSEOUT(self) -> AST.Command:
+        """ <CLOSEOUT> ::= CLOSEOUT """
+        self._advance()
+        return AST.Command(name="CLOSEOUT")
+
+    def _parse_CLS(self) -> AST.Command:
+        """ <CLS> := CLS [#<int_expression>] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            args = [self._parse_expression()]
+            if not AST.exptype_isint(args[0].etype):
+                self._raise_error(13)
+        return AST.Command(name="CLS", args=args)
+
+    def _parse_CONT(self) -> AST.Command:
+        """ <CONT> ::= CONT """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="CONT")
+
+    def _parse_COS(self) -> AST.Function:
+        """ <COS> ::= COS(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="COS", etype=AST.ExpType.Real, args=args)
+    
+    def _parse_CREAL(self) -> AST.Function:
+        """ <CREAL> ::= CREAL(<num_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="CREAL", etype=AST.ExpType.Real, args=args)
+
+    def _parse_DATA(self) -> AST.Command:
+        """ <DATA> ::= DATA <primary>[,<primary>]*"""
+        self._advance()
+        args: list[AST.Statement] = [self._parse_constant()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_constant())
+        return AST.Command(name="DATA", args=args)
+
+    def _parse_DECSS(self) -> AST.Function:
+        """ <DECSS> ::= DEC$(<num_expression>, STRING) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(13)
+        self._expect(TokenType.COMMA)
+        tk = self._expect(TokenType.STRING)
+        args.append(AST.String(value=tk.lexeme))
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="DEC$", args=args, etype=AST.ExpType.String)
+
+    def _parse_DEF_FN(self) -> AST.DefFN:
+        """ <DEF_FN> ::== DEF FNIDENT[(IDENT[,IDENT]*)]=<num_expression>"""
+        self._advance()
+        if self.context != "":
+            # is not possible to define functions inside a function
+            self._raise_error(2)
+        tk = self._expect(TokenType.IDENT)
+        fname = "FN" + tk.lexeme
+        fargs: list[AST.Variable] = []
+        self.context = fname.upper()
+        # initial entry so we can create any local context entries
+        # it will be updated at the end
+        info = SymEntry(
+            symtype=SymType.Function,
+            exptype=AST.ExpType.Integer,
+            locals=SymTable(),
+            )
+        if self.symtable.add(ident=fname, info=info, context="") is None:
+            self._raise_error(2)
+        if self._match(TokenType.LPAREN):
+            tk = self._expect(TokenType.IDENT)
+            vartype = AST.exptype_fromname(tk.lexeme)
+            fargs.append(AST.Variable(name=tk.lexeme, etype=vartype))
+            info.exptype = vartype
+            info.symtype = SymType.Variable
+            info.locals = SymTable()
+            self.symtable.add(ident=tk.lexeme, info=info, context=self.context)
+            while self._current_is(TokenType.COMMA):
+                self._advance()
+                tk = self._expect(TokenType.IDENT)
+                vartype = AST.exptype_fromname(tk.lexeme)
+                fargs.append(AST.Variable(name=tk.lexeme, etype=vartype))
+                info.exptype = vartype
+                self.symtable.add(ident=tk.lexeme, info=info, context=self.context)
+            self._expect(TokenType.RPAREN)
+        self._expect(TokenType.COMP, "=")
+        fbody = self._parse_expression()
+        if not AST.exptype_isnum(fbody.etype):
+            self._raise_error(13)
+        self.context = ""
+        # Lets update our entry for the function with
+        # the last calculated parameters
+        info = self.symtable.find(ident=fname) # type: ignore[assignment]
+        if info is None:
+            self._raise_error(2)
+        info.exptype = fbody.etype
+        info.nargs = len(fargs)
+        return AST.DefFN(name=fname, etype=fbody.etype, args=fargs, body=fbody)
+
+    def _parse_DEFINT(self) -> AST.Command:
+        """ <DEFINT> ::= DEFINT <str_range> """
+        self._raise_warning(level=3, msg="DEFINT is ignored")
+        self._advance()
+        args = [self._parse_range()]
+        return AST.Command(name="DEFINT", args=args)
+
+    def _parse_DEFREAL(self) -> AST.Command:
+        """ <DEFREAL> ::= DEFREAL <str_range> """
+        self._raise_warning(level=3, msg="DEFREAL is ignored")
+        self._advance()
+        args = [self._parse_range()]
+        return AST.Command(name="DEFREAL", args=args)
+
+    def _parse_DEFSTR(self) -> AST.Command:
+        """ <DEFSTR> ::= DEFSTR <str_range> """
+        self._raise_warning(level=3, msg="DEFSTR is ignored")
+        self._advance()
+        args = [self._parse_range()]
+        return AST.Command(name="DEFSTR", args=args)
+
+    def _parse_DEG(self) -> AST.Command:
+        """ <DEG> ::= DEG """
+        self._advance()
+        return AST.Command(name="DEG")
+
+    def _parse_DELETE(self) -> AST.Command:
+        """ <DELETE> ::= DELETE <int_range> """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="DELETE")
+
+    def _parse_DI(self) -> AST.Command:
+        """ <DI> ::= DI """
+        self._advance()
+        return AST.Command(name="DI")
+
+    def _parse_DIM(self) -> AST.Command:
+        """ <DIM> ::= DIM <array_declaration>[,<array_declaraion>]*"""
+        # El numero dado como "size" es el maximo indice que se puede
+        # usar, de esta forma es valido 10 DIM I(0): I(0) = 5
+        self._advance()
+        args = [self._parse_array_declaration()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_array_declaration())
+        for var in args:
+            info = SymEntry(
+                symtype=SymType.Array,
+                exptype=var.etype,
+                locals=SymTable(),
+                nargs=len(var.sizes)    #type: ignore[attr-defined]
+            )
+            if not self.symtable.add(ident=var.name, info=info, context=self.context): #type: ignore[attr-defined]
+                self._raise_error(2)
+        return AST.Command(name="DIM", args=args)
+
+    def _parse_array_declaration(self) -> AST.Statement:
+        """ <array_declaration> ::= IDENT([INT[,INT]]) """
+        var = self._expect(TokenType.IDENT).lexeme
+        vartype = AST.exptype_fromname(var)
+        sizes = [10]
+        self._expect(TokenType.LPAREN)
+        if not self._current_is(TokenType.RPAREN):
+            sizes = [cast(int, self._expect(TokenType.INT).value)]
+            if sizes[-1] < 0: self._raise_error(9)
+            while self._current_is(TokenType.COMMA):
+                self._advance()
+                sizes.append(cast(int, self._expect(TokenType.INT).value))
+                if sizes[-1] < 0: self._raise_error(9)
+        self._expect(TokenType.RPAREN)
+        return AST.Array(name=var, etype=vartype, sizes=sizes)
+    
+    def _parse_ELSE(self) -> AST.BlockEnd:
+        """ <ELSE> ::== ELSE """
+        self._advance()
+        if len(self.codeblocks) == 0 or "ELSE" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(2, "Unexpected ELSE keyword")
+        if not self.codeblocks[-1].alive:
+             self._raise_error(2, "Unexpected ELSE keyword")
+        self.codeblocks[-1].alive = False
+        self.codeblocks.pop()
+        return AST.BlockEnd(name="ELSE")
+
+    def _parse_END(self) -> AST.Command:
+        """ <END> ::= END """
+        self._advance()
+        return AST.Command(name="END")
+
+    def _parse_FOR(self) -> AST.ForLoop:
+        """ <FOR> ::= FOR IDENT = <expression> TO <expression> [STEP <expression>] <for_body> """
+        """ <for_body> ::= : <for_inline> | EOL <for_block> """
+        self._advance()
+        var = self._expect(TokenType.IDENT).lexeme.upper()
+        vartype = AST.exptype_fromname(var)
+        if not AST.exptype_isint(vartype):
+            self._raise_error(13)
+        self._expect(TokenType.COMP, "=")
+        info = self.symtable.find(ident=var, context=self.context)
+        if info is None:
+            # Lets add the FOR variable to the symtable as it persists
+            # in Locomotive BASIC after the loop ends
+            self.symtable.add(
+                ident=var,
+                info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
+                context=self.context
+            )
+        start = self._parse_expression()
+        if not AST.exptype_isint(start.etype):
+            self._raise_error(13)
+        self._expect(TokenType.KEYWORD, "TO")
+        end = self._parse_expression()
+        if not AST.exptype_isint(end.etype):
+            self._raise_error(13)
+        step = None
+        if self._match(TokenType.KEYWORD, "STEP"):
+            step = self._parse_expression()
+            if not AST.exptype_isint(step.etype):
+                self._raise_error(13)
+        self.codeblocks.append(CodeBlock(type=BlockType.FOR, until_keywords=("NEXT",)))
+        if self._current_is(TokenType.COLON):
+            body = self._parse_for_inline()
+        else:
+            self._expect(TokenType.EOL)
+            body = self._parse_code_block()
+        # Last statement of the block is the NEXT otherwise
+        # we won't be here
+        next_var = body[-1].var.upper() # type: ignore[attr-defined]
+        if next_var != "" and next_var != var:
+            self._raise_error(5)            
+        index = AST.Variable(name=var, etype=vartype)
+        return AST.ForLoop(var=index, start=start, end=end, step=step, body=body)
+    
+    def _parse_for_inline(self) -> list[AST.Statement]:
+        """ <for_inline> ::= :<statement><for_inline> | :<NEXT>"""
+        self._advance()
+        last_stmt = self._parse_statement() 
+        body = [last_stmt]
+        while not isinstance(last_stmt, AST.BlockEnd):
+            self._expect(TokenType.COLON)
+            last_stmt = self._parse_statement()
+            body.append(last_stmt)
+        return body
+
+    def _parse_GOSUB(self) -> AST.Command:
+        """ <GOSUB> ::= GOSUB INT """
+        self._advance()
+        num = self._expect(TokenType.INT)
+        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        if self.symtable.find(str(cast(int, num.value))) is None:
+            self._raise_error(8)
+        return AST.Command(name="GOSUB", args=args)
+
+    def _parse_GOTO(self) -> AST.Command:
+        """ <GOTO> ::= GOTO INT """
+        self._advance()
+        num = self._expect(TokenType.INT)
+        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        if self.symtable.find(str(cast(int, num.value))) is None:
+            self._raise_error(8)
+        return AST.Command(name="GOTO", args=args)
+
+    def _parse_IF(self) -> AST.If:
+        """ <IF> ::= IF <expression> THEN <then_block> [ELSE <else_block>] """
+        self._advance()
+        condition = self._parse_expression()
+        self._expect(TokenType.KEYWORD, "THEN")
+        then_block = self._parse_then_block()
+        else_block: list[AST.Statement] = []
+        if isinstance(then_block[-1], AST.BlockEnd) and then_block[-1].name == "ELSE":
+            else_block = self._parse_else_block()
+        return AST.If(condition=condition, then_block=then_block, else_block=else_block)
+
+    def _parse_then_block(self) -> list[AST.Statement]:
+        """ <then_block> :== (INT | <statements>) | EOL <code_block>"""
+        then_block: list[AST.Statement] = []
+        if not self._current_is(TokenType.EOL):
+            if self._current_is(TokenType.INT):
+                tk = self._advance()
+                if self.symtable.find(str(cast(int, tk.value))) is None:
+                    self._raise_error(8)
+                then_block = [AST.Command(name="GOTO", args=[AST.Integer(value = cast(int, tk.value))])]
+            else:
+                then_block.append(self._parse_statement())
+                while self._current_is(TokenType.COLON):
+                    self._advance()
+                    then_block.append(self._parse_statement())
+            if self._current_is(TokenType.KEYWORD, "ELSE"):
+                self._advance()
+                then_block.append(AST.BlockEnd(name="ELSE"))
+            else:
+                then_block.append(AST.BlockEnd(name="IFEND"))
+        else:
+            self._advance()
+            self.codeblocks.append(CodeBlock(type=BlockType.IF, until_keywords=("ELSE","IFEND")))
+            statements = self._parse_code_block()
+            then_block = then_block + statements
+        return then_block                    
+        
+    def _parse_else_block(self) -> list[AST.Statement]:
+        """ <then_else> :== (INT | <statements> ) | EOL <code_block>"""
+        else_block: list[AST.Statement] = []
+        if not self._current_is(TokenType.EOL):
+            if self._current_is(TokenType.INT):
+                tk = self._advance()
+                if self.symtable.find(str(cast(int, tk.value))) is None:
+                    self._raise_error(8)
+                else_block = [AST.Command(name="GOTO", args=[AST.Integer(value = cast(int, tk.value))])]
+            else:
+                else_block.append(self._parse_statement())
+                while self._current_is(TokenType.COLON):
+                    self._advance()
+                    else_block.append(self._parse_statement())
+            else_block.append(AST.BlockEnd(name="IFEND"))
+        else:
+            self._advance()
+            self.codeblocks.append(CodeBlock(type=BlockType.IF, until_keywords=("IFEND",)))
+            statements = self._parse_code_block()
+            else_block = else_block + statements
+        return else_block                    
+        
+    def _parse_IFEND(self) -> AST.BlockEnd:
+        self._advance()
+        if len(self.codeblocks) == 0 or "IFEND" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(2, "Unexpected IFEND")
+        if not self.codeblocks[-1].alive:
+            self._raise_error(2, "Unexpected IFEND")
+        self.codeblocks[-1].alive = False
+        self.codeblocks.pop()
+        return AST.BlockEnd(name="IFEND")
+
+    def _parse_INPUT(self) -> AST.Input:
+        self._advance()
+        vars = []
         while True:
-            if self.match_current(TokenType.COLON) or self.match_current(TokenType.NEWLINE) or self.match_current(TokenType.EOF):
-                return
-            self.next_token()
-
-    def rollback_token(self) -> None:
-        """ Goes back to the previous token."""
-        self.peek_token = self.cur_token
-        self.cur_token = self.lexer.rollback()
-
-    def symtab_name2type(self, symname: str) -> Tuple[str, BASTypes]:
-        """ Lets enforce variable types """
-        forcedtype = BASTypes.NONE
-        symname = 'var_' + symname.lower()
-        if symname.endswith('$'):
-            symname = symname.replace('$', '_str')
-            forcedtype = BASTypes.STR
-        elif symname.endswith('!'):
-            symname = symname.replace('!', '_real')
-            forcedtype = BASTypes.REAL
-        elif symname.endswith('%'): 
-            symname = symname.replace('%', '_int')
-            forcedtype = BASTypes.INT
-        return symname, forcedtype
-        
-    def symtab_addlabel(self, symname: str, srcline: int) -> Optional[Symbol]:
-        if self.symbols.search(symname):
-            self.error(srcline, ErrorCode.LEXISTS)
-            return None
-        else:
-            return self.symbols.add(symname, SymTypes.SYMLAB)
-
-    def symtab_addident(self, symname: str, srcline: int, expr: Expression) -> Optional[Symbol]:
-        symname, forcedtype = self.symtab_name2type(symname)
-        entry = self.symbols.search(symname)
-        if entry is None:
-            entry = self.symbols.add(symname, SymTypes.SYMVAR)
-            # force type if it is included in variable name so
-            # is_compatible will ensure it matches with expression type
-            entry.valtype = forcedtype
-        if entry.is_compatible(expr.restype):
-            entry.set_value(expr)
-            return entry
-        else:
-            self.error(srcline, ErrorCode.TYPE)
-            return None
-
-    def symtab_search(self, symname: str) -> Optional[Symbol]:
-        symname, _ = self.symtab_name2type(symname)
-        return self.symbols.search(symname)
-
-    def symtab_newtmpvar(self, expr: Expression) -> Optional[Symbol]:
-        sname = f"tmp{self.temp_vars:03d}"
-        sname, _ = self.symtab_name2type(sname)
-        entry = self.symbols.add(sname, SymTypes.SYMVAR)
-        if entry is not None:
-            entry.set_value(expr)
-            entry.temporal = True
-            self.temp_vars = self.temp_vars + 1
-        return entry
-
-    def symtab_newtmplabel(self, srcline: int) -> Optional[Symbol]:
-        sname = f"label_{self.temp_vars:03d}"
-        entry = self.symtab_addlabel(sname, srcline)
-        if entry is not None:
-            entry.temporal = True
-            self.temp_vars = self.temp_vars + 1
-        return entry
-
-    def push_curexpr(self) -> None:
-        self.expr_stack.append(self.cur_expr)
-        self.cur_expr = Expression()
-
-    def pop_curexpr(self) -> None:
-        if len(self.expr_stack) > 0:
-            self.cur_expr = self.expr_stack[-1]
-            self.expr_stack.pop()
-        else:
-            self.abort("internal error processing expressions")
-
-    def reset_curexpr(self) -> None:
-        self.cur_expr = Expression()
-
-    def parse(self) -> None:
-        self.lexer.reset()
-        self.cur_token = self.lexer.get_token()
-        self.peek_token = self.lexer.get_token()
-        self.temp_vars = 0
-        self.errors = 0
-        self.lines()
-        if len(self.block_stack) > 0:
-            cblock = self.block_stack.pop()
-            if cblock.type == CodeBlockType.FOR:
-                self.abort(ErrorCode.NONEXT)
-            elif cblock.type == CodeBlockType.WHILE:
-                self.abort(ErrorCode.NOWEND)
-            else:
-                self.abort(ErrorCode.EOFMET)
-        if self.errors:
-            print(self.errors, "error(s) in total")
-            sys.exit(1)
-        self.emitter.emitsymboltable()
-
-    # Production rules.
-
-    def lines(self) -> None:
-        """<lines> ::= EOF | NEWLINE <lines> | <line> <lines>"""
-        assert self.cur_token is not None
-        # Parse all the statements in the program.
-        if self.match_current(TokenType.CODE_EOF):
-            # End of file
-            pass
-        elif self.match_current(TokenType.NEWLINE):
-            # Empty lines
-            self.next_token()
-            self.lines()
-        else:
-            self.line()
-            self.lines()
-
-    def line(self) -> None:
-        """ <line> := INTEGER NEWLINE | INTEGER <statements> NEWLINE"""
-        assert self.cur_token is not None
-        if self.match_current(TokenType.INTEGER):
-            self.emitter.remark(self.get_curcode())
-            self.emitter.label(self.get_linelabel(self.cur_token.text))
-            self.next_token()
-            if self.match_current(TokenType.NEWLINE):
-                # This was a full line remark (' or REM) removed by the lexer
-                self.next_token()
-            else:
-                self.statements()
-                if self.match_current(TokenType.NEWLINE):
-                    self.next_token()
-                else:
-                    self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-
-    def statements(self) -> None:
-         """ <statements>  ::= <statement> [':' <statements>] """
-         assert self.cur_token is not None
-         self.statement()
-         if (self.match_current(TokenType.COLON)):
-              self.next_token()
-              self.statements()
-
-    def statement(self) -> None:
-        """  <statement> = IDENT '=' <expression> | <keyword>"""
-        assert self.cur_token is not None
-        self.reset_curexpr()
-        if self.match_current(TokenType.IDENT):
-            symbol = self.cur_token
-            self.next_token()
-            if self.match_current(TokenType.EQ):
-                self.next_token()
-                self.expression()
-                entry = self.symtab_addident(symbol.text, symbol.srcline, self.cur_expr)
-                if entry is not None:
-                    self.emitter.assign(entry.symbol, self.cur_expr)
-            else:
-                self.error(symbol.srcline, ErrorCode.SYNTAX)
-        elif self.cur_token.is_keyword():
-            self.keyword()
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-
-    def keyword(self) -> None:
-        """ <keyword> := COMMAND | FUNCTION """
-        assert self.cur_token is not None
-        fname = self.cur_token.text.replace('$', 'S').upper()
-        keyword_rule = getattr(self, "command_" + fname, None)
-        if keyword_rule is None:
-            keyword_rule = getattr(self, "function_" + fname, None)
-        if keyword_rule is None:
-            self.error(self.cur_token.srcline, ErrorCode.NOKEYW, ": " + self.cur_token.text)
-        else:
-            keyword_rule()
-
-    #
-    # BASIC Build-in Commands and Functions rules
-    #
-
-    def function_ASC(self) -> None:
-        """ <function_ASC> := ASC(<arg_int>) """
-        assert self.cur_token is not None
-        self.next_token()
-        if not self.match_current(TokenType.LPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        sym = self.symtab_newtmpvar(Expression.int('0'))
-        if sym is not None:
-            args: List[Expression] = []
-            self.push_curexpr()
-            self.arg_str()
-            args.append(self.cur_expr)
-            self.pop_curexpr()
-            self.emitter.rtcall('ASC', args, sym)
-            sym.inc_writes()
-            tmpident = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(tmpident, BASTypes.INT)
-            if not self.match_current(TokenType.RPAR):
-                self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-                return
-            self.next_token()
-
-    def function_AT(self) -> None:
-        """ <function_AT> := @<ident_factor> """
-        assert self.cur_token is not None
-        atop = self.cur_token
-        self.next_token()
-        if self.match_current(TokenType.IDENT):
-            self.ident_factor()
-            self.cur_expr.pushop(atop)
-        else:
-            self.error(atop.srcline, ErrorCode.SYNTAX)
-
-    def command_BORDER(self) -> None:
-        """ <command_BORDER> := BORDER <arg_int>[,<arg_int>] """
-        assert self.cur_token is not None
-        self.next_token()
-        self.reset_curexpr()
-        args: List[Expression] = []
-        self.arg_int()
-        args.append(self.cur_expr)
-        if self.match_current(TokenType.COMMA):
-            self.next_token()
-            self.reset_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-        else:
-            # If there is no second color, the first one must
-            # appear twice to avoid the blinking 
-            args.append(self.cur_expr)
-        self.emitter.rtcall('BORDER', args)
-
-    def function_CHRS(self) -> None:
-        """ <function_CHRS> := CHR$(<arg_int>) """
-        assert self.cur_token is not None
-        self.next_token()
-        if not self.match_current(TokenType.LPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        sym = self.symtab_newtmpvar(Expression.string(""))
-        if sym is not None:
-            args: List[Expression] = []
-            self.push_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-            self.pop_curexpr()
-            self.emitter.rtcall('CHRS', args, sym)
-            sym.inc_writes()
-            tmpident = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(tmpident, BASTypes.STR)
-            if not self.match_current(TokenType.RPAR):
-                self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-                return
-            self.next_token()
-
-    def command_CLS(self) -> None:
-        """ <command_CLS> := CLS <arg_channel> """
-        assert self.cur_token is not None
-        self.next_token()
-        self.arg_channel()
-        self.emitter.rtcall('CLS')
-
-    def command_DEFINT(self) -> None:
-        """ <command_DEFINT> := DEFINT RANGE """
-        assert self.cur_token is not None
-        self.warning(self.cur_token.srcline, 'DEFINT has no effect, use variable sufixes instead')
-        self.next_instruction()
-
-    def command_DEFREAL(self) -> None:
-        """ <command_DEFREAL> := DEFREAL RANGE """
-        assert self.cur_token is not None
-        self.warning(self.cur_token.srcline, 'DEFREAL has no effect, use variable sufixes instead')
-        self.next_instruction()
-
-    def command_DEFSTR(self) -> None:
-        """ <command_DEFSTR> := DEFSTR RANGE """
-        assert self.cur_token is not None
-        self.warning(self.cur_token.srcline, 'DEFSTR has no effect, use variable sufixes instead')
-        self.next_instruction()
-
-    def command_END(self) -> None:
-        """ <command_END> := END """
-        self.emitter.end()
-        self.next_token()
-
-    def command_FOR(self) -> None:
-        """ <command_FOR> := FOR IDENT=<arg_int> TO <arg_int> [STEP [-]NUMBER] """
-        assert self.cur_token is not None
-        self.next_token()
-        if self.match_current(TokenType.IDENT):
-            symbol = self.cur_token
-            self.next_token()
-            if self.match_current(TokenType.EQ):
-                self.next_token()
-                self.arg_int()
-                variant = self.symtab_addident(symbol.text, symbol.srcline, self.cur_expr)
-                assert variant is not None
-                self.emitter.assign(variant.symbol, self.cur_expr)
-                self.reset_curexpr()
-                if self.cur_token.text.upper() == 'TO':
-                    self.next_token()
-                    self.arg_int()
-                    limit = self.symtab_newtmpvar(self.cur_expr)
-                    assert limit is not None
-                    self.emitter.assign(limit.symbol, self.cur_expr)
-                    self.reset_curexpr()
-                    step = None
-                    if self.cur_token.text.upper() == 'STEP':
-                        self.next_token()
-                        step = Expression()
-                        reverse = False
-                        if self.match_current(TokenType.MINUS):
-                            self.next_token()
-                            reverse = True
-                        if self.match_current(TokenType.INTEGER):
-                            step.pushval(self.cur_token, BASTypes.INT)
-                            if reverse:
-                               step.pushop(Token('NEG', TokenType.NEG, symbol.srcline))
-                            self.next_token()
-                            if not step.check_types():
-                                self.error(symbol.srcline, ErrorCode.TYPE)
-                                return
-                        else:
-                            self.error(symbol.srcline, ErrorCode.SYNTAX)
-                            return
-                    startlabel = self.symtab_newtmplabel(self.cur_token.srcline)
-                    endlabel = self.symtab_newtmplabel(self.cur_token.srcline)
-                    assert startlabel is not None and endlabel is not None
-                    codeblock = CodeBlock(CodeBlockType.FOR, startlabel, endlabel)
-                    codeblock.set_forinfo((variant, limit, step))
-                    self.block_stack.append(codeblock)
-                    self.emitter.forloop(variant, limit, step, startlabel, endlabel)
-                    return
-            self.error(symbol.srcline, ErrorCode.SYNTAX)
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-
-    def command_FRAME(self) -> None:
-        """ <command_FRAME> := FRAME """
-        self.emitter.rtcall('FRAME')
-        self.next_token()
-
-    def command_GOTO(self) -> None:
-        """ <command_GOTO> := GOTO (NUMBER | IDENT)"""
-        assert self.cur_token is not None
-        # if the label doesn't exit, the assembler will fail
-        # this allow us to jump to a forward label/line
-        line = self.cur_token.srcline
-        self.next_token()
-        if self.match_current(TokenType.INTEGER):
-            # jump to a line number
-            label = self.get_linelabel(self.cur_token.text)
-            self.emitter.goto(label)
-            self.next_token()
-        elif self.match_current(TokenType.IDENT):
-            self.emitter.goto(self.cur_token.text)
-            self.next_token()
-        else:
-            self.error(line, ErrorCode.SYNTAX)
-
-    def function_HEXS(self) -> None:
-        """ <function_HEXS> := HEX$(<arg_int> [,<arg_int>])"""
-        assert self.cur_token is not None
-        self.next_token()
-        if not self.match_current(TokenType.LPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        sym = self.symtab_newtmpvar(Expression.string(""))
-        if sym is not None:
-            args: List[Expression] = []
-            self.push_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-            self.pop_curexpr()
-            digits = Expression.int('4')
-            if self.match_current(TokenType.COMMA):
-                self.next_token()
-                self.push_curexpr()
-                self.arg_int()
-                digits = self.cur_expr
-                self.pop_curexpr()
-            args.append(digits)
-            self.emitter.rtcall('HEXS', args, sym)
-            sym.inc_writes()
-            tmpident = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(tmpident, BASTypes.STR)
-            if not self.match_current(TokenType.RPAR):
-                self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-                return
-            self.next_token()
-
-    def command_IF(self) -> None:
-        """ <command_IF> := IF <expression> (THEN|GOTO) (LABEL | NUMBER | <statements>) [ELSE (LABEL| NUMBER | <statements>)] NEWLINE"""
-        assert self.cur_token is not None
-        self.next_token()
-        line = self.cur_token.srcline
-        endif = self.symtab_newtmplabel(line)
-        if endif is not None:
-            self.expression()
-            self.emitter.logical_expr(self.cur_expr, endif.symbol)
-            if self.match_current(TokenType.GOTO):
-                self.command_GOTO()
-            elif self.match_current(TokenType.THEN):
-                self.command_GOTO() 
-            else:
-                self.error(line, ErrorCode.SYNTAX)
-            if self.match_current(TokenType.ELSE):
-                endelse = self.symtab_newtmplabel(line)
-                if endelse is not None:
-                    self.emitter.goto(endelse.symbol)
-                    self.emitter.label(endif.symbol)
-                    endif = endelse
-                    self.command_GOTO()
-            self.emitter.label(endif.symbol)
-
-    def command_INK(self) -> None:
-        """ <command_INK> := INK <arg_int>,<arg_int>[,<arg_int>] """
-        assert self.cur_token is not None
-        self.next_token()
-        self.reset_curexpr()
-        args: List[Expression] = []
-        self.arg_int()
-        args.append(self.cur_expr)
-        if self.match_current(TokenType.COMMA):
-            self.next_token()
-            self.reset_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-            if self.match_current(TokenType.COMMA):
-                self.next_token()
-                self.reset_curexpr()
-                self.arg_int()
-                args.append(self.cur_expr)
-            else:
-                # If there is no second color, the first one must
-                # appear twice to avoid the blinking 
-                args.append(self.cur_expr)
-            self.emitter.rtcall('INK', args)
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-
-    def function_INKEYS(self) -> None:
-        """ <function_INKEYS> := INKEY$ """
-        # no need of pushing current expression as this function has not
-        # parameters
-        assert self.cur_token is not None
-        sym = self.symtab_newtmpvar(Expression.string(""))
-        if sym is not None:
-            self.emitter.rtcall('INKEYS', [], sym)
-            sym.inc_writes()
-            tmpident = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(tmpident, BASTypes.STR)
-            self.next_token()
-
-
-    def command_INPUT(self) -> None:
-        """ <command_INPUT> := INPUT <arg_channel>[STRING(;|,)] IDENT [,IDENT] """
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.next_token()
-        self.arg_channel()
-        if self.match_current(TokenType.STRING):
-            self.str_factor()
-            self.emitter.rtcall('PRINT',[self.cur_expr])
-            self.reset_curexpr()
-            if self.match_current(TokenType.SEMICOLON):
-                self.emitter.rtcall('PRINT_QM', []) # print the question mark
-            elif not self.match_current(TokenType.COMMA):
-                self.error(line, ErrorCode.SYNTAX)
-                return
-            self.next_token()
-        else:
-            self.emitter.rtcall('PRINT_QM', []) # print the question mark
-
-        args: List[Expression] = []
-        while self.match_current(TokenType.IDENT):
-            self.ident_factor()
-            # we want addresses in memory to store inputs,
-            # so @ is implicit in the syntax
-            self.cur_expr.pushop(Token('AT', TokenType.AT, line))
-            args.append(self.cur_expr)
-            if self.match_current(TokenType.COMMA):
-                self.next_token()
-            self.reset_curexpr()
-        nparams = len(args)
-        if nparams > 127:
-            self.error(line, ErrorCode.OVERFLOW)
-        elif nparams == 0:
-            self.error(line, ErrorCode.SYNTAX)
-        else:
-            self.emitter.rtcall('INPUT', [])
-            for var in args:
-                if var.is_int_result():
-                    self.emitter.rtcall('INPUT_INT', [var])
-                elif var.is_real_result():
-                    self.emitter.rtcall('INPUT_REAL', [var])
-                else:
-                    self.emitter.rtcall('INPUT_STR', [var])
-    
-
-    def command_MODE(self) -> None:
-        """ <command_MODE> := MODE <arg_int> """
-        assert self.cur_token is not None
-        self.next_token()
-        self.arg_int()
-        self.emitter.rtcall('MODE', [self.cur_expr])      
-
-    def command_NEXT(self) -> None:
-        """ <command_NEXT> := NEXT [IDENT] """
-        assert self.cur_token is not None
-        self.next_token()
-        if len(self.block_stack) == 0:
-            assert self.cur_token is not None
-            self.error(self.cur_token.srcline, ErrorCode.NEXT)
-        else:
-            cblock = self.block_stack.pop()
-            if cblock.type != CodeBlockType.FOR:
-                self.block_stack.append(cblock)
-                self.error(self.cur_token.srcline, ErrorCode.NEXT)
-                return
-            assert cblock.blockinfo and cblock.startlabel and cblock.endlabel is not None
-            start, limit, step = cblock.blockinfo
-            self.emitter.next(start, limit, step, cblock.startlabel, cblock.endlabel)
-            if self.match_current(TokenType.IDENT):
-                assert self.cur_token is not None
-                entry = self.symtab_search(self.cur_token.text)
-                if not entry or entry.symbol != start.symbol:
-                    self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-                    self.block_stack.append(cblock)
-                else:
-                    self.next_token()
-
-    def command_LABEL(self) -> None:
-        """
-        <command_LABEL> := LABEL IDENT 
-        This is an addition we can find in Locomotive BASIC v2 to define jump etiquettes
-        """
-        assert self.cur_token is not None
-        self.next_token()
-        if self.match_current(TokenType.IDENT):
-            # Label that can be used by GOTO, THEN, GOSUB, etc.
-            self.symtab_addlabel(self.cur_token.text, self.cur_token.srcline)
-            self.emitter.label(self.cur_token.text)
-            self.next_token()
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-
-    def command_LOCATE(self) -> None:
-        """ <command_LOCATE> := LOCATE <arg_int>, <arg<int> """
-        assert self.cur_token is not None
-        self.next_token()
-        args: List[Expression] = []
-        self.reset_curexpr()
-        self.arg_int()
-        args.append(self.cur_expr)
-        if self.match_current(TokenType.COMMA):
-            self.next_token()
-            self.reset_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-            self.reset_curexpr()
-            self.emitter.rtcall('LOCATE', args)
-        else:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-    
-    def command_PAPER(self) -> None:
-        """ <command_PAPER> := [#<arg_channel>,]<int_arg> """
-        assert self.cur_token is not None
-        self.next_token()
-        self.arg_channel()
-        if self.match_current(TokenType.COMMA):
-            self.next_token()
-        self.reset_curexpr()
-        args: List[Expression] = []
-        self.arg_int()
-        args.append(self.cur_expr)
-        self.emitter.rtcall('PAPER', args)
-    
-    def function_PEEK(self) -> None:
-        """ <function_PEEK> := PEEK(<arg_int>) """
-        assert self.cur_token is not None
-        self.next_token()
-        if not self.match_current(TokenType.LPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        sym = self.symtab_newtmpvar(Expression.int('0'))
-        if sym is not None:
-            args: List[Expression] = []
-            self.push_curexpr()
-            self.arg_int()
-            args.append(self.cur_expr)
-            self.pop_curexpr()
-            self.emitter.rtcall('PEEK', args, sym)
-            sym.inc_writes()
-            tmpident = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(tmpident, BASTypes.INT)
-            if not self.match_current(TokenType.RPAR):
-                self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-                return
-            self.next_token()
-
-    def command_PEN(self) -> None:
-        """ <command_PEN> := [#<arg_channel>,]<int_arg> """
-        assert self.cur_token is not None
-        self.next_token()
-        self.arg_channel()
-        if self.match_current(TokenType.COMMA):
-            self.next_token()
-        self.reset_curexpr()
-        args: List[Expression] = []
-        self.arg_int()
-        args.append(self.cur_expr)
-        self.emitter.rtcall('PEN', args)
-
-    def command_PRINT(self) -> None:
-        """ <command_PRINT> := PRINT <arg_channel> <arg_print_list>"""
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.next_token()
-        self.arg_channel()
-        cblock = CodeBlock(CodeBlockType.PRINT, None, None)
-        self.block_stack.append(cblock)
-        self.arg_print_list()
-        self.block_stack.pop()
-
-    def command_SPC(self) -> None:
-        """ <command_SPC> := SPC(<arg_int>)"""
-        assert self.cur_token is not None
-        if len(self.block_stack) == 0 or self.block_stack[-1].type != CodeBlockType.PRINT:
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        if not self.match_current(TokenType.LPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-        args: List[Expression] = []
-        self.push_curexpr()
-        self.arg_int()
-        args.append(self.cur_expr)
-        self.pop_curexpr()
-        self.emitter.rtcall('PRINT_SPC', args)
-        if not self.match_current(TokenType.RPAR):
-            self.error(self.cur_token.srcline, ErrorCode.SYNTAX)
-            return
-        self.next_token()
-
-    def command_SYMBOL(self) -> None:
-        """ <command_SYMBOL> := <command_SYMBOL_AFTER> | <int_factor>(,<int_factor>)x8 """
-        assert self.cur_token is not None
-        self.next_token()
-        if self.match_current(TokenType.AFTER):
-            self.command_SYMBOL_AFTER()
-        else:
-            args: List[Expression] = []
-            for i in range(0, 8):
-                self.reset_curexpr()
-                self.int_factor()
-                args.append(self.cur_expr)
-                if not self.match_current(TokenType.COMMA):
-                    self.error(self.cur_token.srcline, ErrorCode.NOARG)
-                    return
-                self.next_token()
-            # Last argument
-            self.reset_curexpr()
-            self.int_factor()
-            args.append(self.cur_expr)
-            self.emitter.symbol(args)
-            self.reset_curexpr()
-
-    def command_SYMBOL_AFTER(self) -> None:
-        """ <command_SYMBOL_AFTER> := SYMBOL AFTER <int_factor> """
-        assert self.cur_token is not None
-        self.next_token()
-        self.reset_curexpr()
-        args: List[Expression] = []
-        # number must be known at compile time
-        self.int_factor()
-        args.append(self.cur_expr)
-        self.emitter.symbolafter(args)
-        self.reset_curexpr()
-
-    def command_TAB(self) -> None:
-        """ 
-        <function_TAB> := TAB(<arg_int>)
-        Right now, TAB(x) and SPC(x) do the same thing
-        """
-        self.command_SPC()
-
-    def command_THEN(self) -> None:
-        """ THEN out of sequence """
-        assert self.cur_token is not None
-        self.error(self.cur_token.srcline, ErrorCode.THEN)
-
-    def command_WHILE(self) -> None:
-        """ <command_WHILE> := <arg_int> NEWLINE <lines> WEND """
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.next_token()
-        self.arg_int()
-        if self.match_current(TokenType.NEWLINE):
-            endwhile = self.symtab_newtmplabel(line)
-            startwhile = self.symtab_newtmplabel(line)
-            if endwhile is not None and startwhile is not None:
-                self.emitter.label(startwhile.symbol)
-                self.emitter.logical_expr(self.cur_expr, endwhile.symbol)
-                cblock = CodeBlock(CodeBlockType.WHILE, startwhile, endwhile)
-                self.block_stack.append(cblock)
-                return
-        self.error(line, ErrorCode.SYNTAX)
-        
-    def command_WEND(self) -> None:
-        """ <command_WEND> := WEND """
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        if len(self.block_stack) > 0:
-            cblock = self.block_stack.pop()
-            if cblock.type != CodeBlockType.WHILE:
-                self.error(line, ErrorCode.WEND)
-                self.block_stack.append(cblock)
-                return
-            assert cblock.startlabel and cblock.endlabel is not None
-            self.emitter.goto(cblock.startlabel.symbol)
-            self.emitter.label(cblock.endlabel.symbol)
-            self.next_token()
-        else:
-            self.error(line, ErrorCode.WEND)
-
-    #
-    # Command and Function Argument rules
-    #
-
-    def arg_int(self) -> None:
-        """<arg_int> = <expression>.t == INT"""
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.expression()
-        if self.cur_expr.is_empty():
-            self.error(line, ErrorCode.SYNTAX)
-        elif not self.cur_expr.is_int_result():
-            self.error(line, ErrorCode.TYPE)
-
-    def arg_real(self) -> None:
-        """<arg_real> = <expression>.t == REAL"""
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.expression()
-        if self.cur_expr.is_empty():
-            self.error(line, ErrorCode.SYNTAX)
-        elif not self.cur_expr.is_real_result():
-            self.error(line, ErrorCode.TYPE)
-
-    def arg_str(self) -> None:
-        """<arg_str> = <expression>.t == STR"""
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.expression()
-        if self.cur_expr.is_empty():
-            self.error(line, ErrorCode.SYNTAX)
-        elif not self.cur_expr.is_str_result():
-            self.error(line, ErrorCode.TYPE)
-
-    def arg_channel(self) -> None:
-        """<arg_channel> := #NUMBER.t == INT"""
-        # If channel argument is not pressent, we have to
-        # assume 0
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        channel = [Expression.int('0')]
-        if self.match_current(TokenType.CHANNEL):
-            self.push_curexpr()
-            self.next_token()
-            self.expression()
-            if not self.cur_expr.is_int_result():
-                self.error(line, ErrorCode.TYPE)
-                return
-            channel = [self.cur_expr]
-            self.pop_curexpr()
-        self.emitter.rtcall('CHANNEL_SET', channel)
-
-    def arg_print_list(self) -> None:
-        """ <arg_print_list> := <expresion>[(;|,)<expresion>*]"""
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        allowedcmd = [TokenType.SPC, TokenType.TAB]
-        while self.cur_token.type in allowedcmd:
-            cmd_rule = getattr(self, "command_" + self.cur_token.text, None)
-            assert cmd_rule is not None
-            cmd_rule()
-        self.expression()
-        while not self.cur_expr.is_empty():
-            if self.cur_expr.is_str_result():
-                self.emitter.rtcall('PRINT', [self.cur_expr])
-            elif self.cur_expr.is_int_result():
-                self.emitter.rtcall('PRINT_INT', [self.cur_expr])
-            elif self.cur_expr.is_real_result():
-                self.emitter.rtcall('PRINT_REAL', [self.cur_expr])
-            else:
-                self.error(line, ErrorCode.SYNTAX)
-                return
-            self.reset_curexpr()
-            if self.match_current(TokenType.SEMICOLON):
-                self.next_token()
-                if self.match_current(TokenType.NEWLINE) or self.match_current(TokenType.COLON):
-                    return
-            elif self.match_current(TokenType.COMMA):
-                self.emitter.rtcall('PRINT_SPC', [Expression.int('4')])
-                self.next_token()
-                if self.match_current(TokenType.NEWLINE) or self.match_current(TokenType.COLON):
-                    return
-            elif self.match_current(TokenType.NEWLINE):
+            tok = self._expect(TokenType.IDENT)
+            vars.append(tok.lexeme)
+            if not self._match(TokenType.COMMA):
                 break
-            while self.cur_token.type in allowedcmd:
-                cmd_rule = getattr(self, "command_" + self.cur_token.text, None)
-                assert cmd_rule is not None
-                cmd_rule()
-            self.expression()    
-        self.emitter.rtcall('PRINT_LN')
+        return AST.Input(vars=vars)
+
+    def _parse_LET(self) -> AST.Assignment:
+        self._advance()
+        return self._parse_assignment()
+
+    def _parse_NEXT(self) -> AST.BlockEnd:
+        """ <NEXT> ::= NEXT [IDENT]"""
+        self._advance()
+        if len(self.codeblocks) == 0 or "NEXT" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(1)
+        self.codeblocks[-1].alive = False
+        self.codeblocks.pop()
+        next_var = ""
+        if self._current_is(TokenType.IDENT):
+            next_var = self._advance().lexeme
+            vartype = AST.exptype_fromname(next_var)
+            if not AST.exptype_isint(vartype):
+                self._raise_error(13)
+        return AST.BlockEnd(name="NEXT", var=next_var)
+
+    def _parse_PRINT(self) -> AST.Print:
+        self._advance()
+        items: list[AST.Statement] = []
+        while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
+                self._advance()
+                continue
+            items.append(self._parse_expression())
+        return AST.Print(items=items)
+
+    def _parse_RETURN(self) -> AST.Command:
+        self._advance()
+        return AST.Command(name="RETURN")
+
+    def _parse_THEN(self):
+        """ This is always an error """
+        self._advance()
+        self._raise_error(2, "Unexpected THEN keyword")
+
+    def _parse_WEND(self) -> AST.BlockEnd:
+        """ <WEND> ::= WEND """
+        self._advance()
+        if len(self.codeblocks) == 0 or "WEND" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(2, "Unexpected WEND keyword")
+        self.codeblocks[-1].alive = False
+        self.codeblocks.pop()
+        return AST.BlockEnd(name="WEND")
     
-    #
-    # Expression rules
-    #
-
-    def expression(self) -> None:
-        """ <expression> ::= <or_term> [XOR <expression>] """
-        assert self.cur_token is not None
-        line = self.cur_token.srcline
-        self.or_term()
-        if self.match_current(TokenType.XOR):
-            op = self.cur_token
-            self.next_token()
-            self.expression()
-            self.cur_expr.pushop(op)
-        try:
-            if not self.cur_expr.check_types():
-                self.reset_curexpr()
-                self.error(line, ErrorCode.TYPE)
-        except Exception:
-            # bad formed expression
-            self.reset_curexpr()
-            self.error(line, ErrorCode.SYNTAX)
-
-    def or_term(self) -> None:
-        """<or_term> ::= <and_term> [OR <or_term>]"""
-        assert self.cur_token is not None
-        self.and_term()
-        if self.match_current(TokenType.OR):
-            op = self.cur_token
-            self.next_token()
-            self.or_term()
-            self.cur_expr.pushop(op)
-
-    def and_term(self) -> None:
-        """<and_term> ::= <not_term> [AND <and_term>]"""
-        assert self.cur_token is not None
-        self.not_term()
-        if self.match_current(TokenType.AND):
-            op = self.cur_token
-            self.next_token()
-            self.and_term()
-            self.cur_expr.pushop(op)
-
-    def not_term(self) -> None:
-        """<not_term> ::= [NOT] <compare_term>"""
-        assert self.cur_token is not None
-        if self.match_current(TokenType.NOT):
-            op = self.cur_token
-            self.next_token()
-            self.compare_term()
-            self.cur_expr.pushop(op)
+    def _parse_WHILE(self) -> AST.WhileLoop:
+        """ <WHILE> ::= WHILE <expression> <while_body> """
+        """ <while_body> ::= : <while_inline> | EOL <code_block> """
+        self._advance()
+        cond = self._parse_expression()
+        self.codeblocks.append(CodeBlock(type=BlockType.WHILE, until_keywords=("WEND",)))
+        if self._current_is(TokenType.COLON):
+            self._advance()
+            body = self._parse_while_inline()
         else:
-            self.compare_term()
+            self._expect(TokenType.EOL)
+            body = self._parse_code_block()
+        return AST.WhileLoop(condition=cond, body=body)
+    
+    def _parse_while_inline(self) -> list[AST.Statement]:
+        """ <while_inline> ::= :<statement><while_inline> | :<WEND>"""
+        last_stmt = self._parse_statement() 
+        body = [last_stmt]
+        while not isinstance(last_stmt, AST.BlockEnd):
+            self._expect(TokenType.COLON)
+            last_stmt = self._parse_statement()
+            body.append(last_stmt)
+        return body
 
-    def compare_term(self) -> None:
-        """<compare_term> ::= <add_term> [('=','<>'.'>','<','>=','<=')  <compare_term>]"""
-        assert self.cur_token is not None
-        self.add_term()
-        if self.cur_token.is_logic_op():
-            op = self.cur_token
-            self.next_token()
-            self.compare_term()
-            self.cur_expr.pushop(op)
+    # ------------- Keyword placeholders -----------
 
-    def add_term(self) -> None:
-        """<add_term> ::= <mod_term> [('+'|'-') <add_term>]"""
-        assert self.cur_token is not None
-        self.mod_term()
-        if self.match_current(TokenType.PLUS) or self.match_current(TokenType.MINUS):
-            op = self.cur_token
-            self.next_token()
-            self.add_term()
-            self.cur_expr.pushop(op)
+    def _parse_JOY(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="JOY")
 
-    def mod_term(self) -> None:
-        """<mod_term> ::= <mult_term> [MOD <mod_term>]"""
-        assert self.cur_token is not None
-        self.mult_term()
-        if self.match_current(TokenType.MOD):
-            op = self.cur_token
-            self.next_token()
-            self.mod_term()
-            self.cur_expr.pushop(op)
+    def _parse_RENUM(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RENUM")
 
-    def mult_term(self) -> None:
-        """<mult_term> ::= <negate_term> [('*'|'/'|'\\' <mult_term>] """
-        assert self.cur_token is not None
-        self.negate_term()
-        if self.match_current(TokenType.SLASH) or self.match_current(TokenType.LSLASH) or self.match_current(TokenType.ASTERISK):
-            op = self.cur_token
-            self.next_token()
-            self.mult_term()
-            self.cur_expr.pushop(op)
+    def _parse_MIN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MIN")
 
-    def negate_term(self) -> None:
-        """<negate_term> ::= ['-'] <sub_term> """
-        assert self.cur_token is not None
-        if self.match_current(TokenType.MINUS):
-            op = self.cur_token
-            self.next_token()
-            self.sub_term()
-            self.cur_expr.pushop(Token('NEG', TokenType.NEG, op.srcline))
+    def _parse_RND(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RND")
+
+    def _parse_EI(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="EI")
+
+    def _parse_XPOS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="XPOS")
+
+    def _parse_POKE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="POKE")
+
+    def _parse_WAIT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="WAIT")
+
+    def _parse_INP(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INP")
+
+    def _parse_RANDOMIZE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RANDOMIZE")
+
+    def _parse_USING(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="USING")
+
+    def _parse_UNT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="UNT")
+
+    def _parse_LOCATE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LOCATE")
+
+    def _parse_MASK(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MASK")
+
+    def _parse_NEW(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="NEW")
+
+    def _parse_SWAP(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SWAP")
+
+    def _parse_OPENIN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="OPENIN")
+
+    def _parse_FRE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="FRE")
+
+    def _parse_PI(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PI")
+
+    def _parse_VPOS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="VPOS")
+
+    def _parse_LOG10(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LOG10")
+
+    def _parse_TRON(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TRON")
+
+    def _parse_STOP(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="STOP")
+
+    def _parse_RIGHT_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RIGHT_S")
+
+    def _parse_INSTR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INSTR")
+
+    def _parse_RESTORE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RESTORE")
+
+    def _parse_ON_BREAK(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ON_BREAK")
+
+    def _parse_PAPER(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PAPER")
+
+    def _parse_ON_SQ(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ON_SQ")
+
+    def _parse_LOG(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LOG")
+
+    def _parse_RESUME(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RESUME")
+
+    def _parse_READ(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="READ")
+
+    def _parse_LOAD(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LOAD")
+
+    def _parse_ENT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ENT")
+
+    def _parse_WINDOW(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="WINDOW")
+
+    def _parse_HIMEM(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="HIMEM")
+
+    def _parse_FIX(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="FIX")
+
+    def _parse_MEMORY(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MEMORY")
+
+    def _parse_GRAPHICS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="GRAPHICS")
+
+    def _parse_RAD(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RAD")
+
+    def _parse_SYMBOL_AFTER(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SYMBOL_AFTER")
+
+    def _parse_POS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="POS")
+
+    def _parse_KEY(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="KEY")
+
+    def _parse_RELEASE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RELEASE")
+
+    def _parse_MERGE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MERGE")
+
+    def _parse_TIME(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TIME")
+
+    def _parse_MODE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MODE")
+
+    def _parse_STRING_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="STRING_S")
+
+    def _parse_DEF(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="DEF")
+
+    def _parse_ERASE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ERASE")
+
+    def _parse_INK(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INK")
+
+    def _parse_EVERY(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="EVERY")
+
+    def _parse_TAG(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TAG")
+
+    def _parse_TAGOFF(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TAGOFF")
+
+    def _parse_PEEK(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PEEK")
+
+    def _parse_REMAIN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="REMAIN")
+
+    def _parse_ON(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ON")
+
+    def _parse_UPPER_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="UPPER_S")
+
+    def _parse_CURSOR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="CURSOR")
+
+    def _parse_SQR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SQR")
+
+    def _parse_REM(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="REM")
+
+    def _parse_ENV(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ENV")
+
+    def _parse_OPENOUT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="OPENOUT")
+
+    def _parse_FN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="FN")
+
+    def _parse_LINE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LINE")
+
+    def _parse_ON_ERROR_GOTO(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ON_ERROR_GOTO")
+
+    def _parse_DRAWR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="DRAWR")
+
+    def _parse_SAVE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SAVE")
+
+    def _parse_EDIT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="EDIT")
+
+    def _parse_RUN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="RUN")
+
+    def _parse_YPOS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="YPOS")
+
+    def _parse_HEX_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="HEX_S")
+
+    def _parse_SPC(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SPC")
+
+    def _parse_ERL(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ERL")
+
+    def _parse_FRAME(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="FRAME")
+
+    def _parse_EOF(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="EOF")    
+
+    def _parse_TROFF(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TROFF")
+
+    def _parse_INKEY(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INKEY")
+
+    def _parse_LEFT_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LEFT_S")
+
+    def _parse_LOWER_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LOWER_S")
+
+    def _parse_PLOTR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PLOTR")
+
+    def _parse_MOVER(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MOVER")
+
+    def _parse_TEST(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TEST")
+
+    def _parse_SIN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SIN")
+
+    def _parse_MAX(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MAX")
+
+    def _parse_SPEED(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SPEED")
+
+    def _parse_LIST(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LIST")
+
+    def _parse_SOUND(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SOUND")
+
+    def _parse_EXP(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="EXP")
+
+    def _parse_SQ(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SQ")
+
+    def _parse_STR_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="STR_S")
+
+    def _parse_DRAW(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="DRAW")
+
+    def _parse_ORIGIN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ORIGIN")
+
+    def _parse_ZONE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ZONE")
+
+    def _parse_LINE_INPUT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LINE_INPUT")
+
+    def _parse_ERR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ERR")
+
+    def _parse_FILL(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="FILL")
+
+    def _parse_WRITE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="WRITE")
+
+    def _parse_TESTR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TESTR")
+
+    def _parse_OUT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="OUT")
+
+    def _parse_SYMBOL(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SYMBOL")
+
+    def _parse_MID_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MID_S")
+
+    def _parse_TAB(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TAB")
+
+    def _parse_INT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INT")
+
+    def _parse_LEN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="LEN")
+
+    def _parse_SGN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SGN")
+
+    def _parse_ERROR(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ERROR")
+
+    def _parse_VAL(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="VAL")
+
+    def _parse_INKEY_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="INKEY_S")
+
+    def _parse_WIDTH(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="WIDTH")
+
+    def _parse_SPACE_S(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="SPACE_S")
+
+
+
+    def _parse_MOVE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="MOVE")
+
+    def _parse_PEN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PEN")
+
+    def _parse_PLOT(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="PLOT")
+
+    def _parse_TAN(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="TAN")
+
+    def _parse_ROUND(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ROUND")
+
+    # ----------------- Expresions -----------------
+
+    """
+        Numeric operators precedence:
+        EXP     ^
+        SIGN    -
+        MULT    *
+        DIV     /  (Real)
+        DIV     \  (Int)
+        MOD     MOD
+        ADD     +
+        SUB     -
+
+        Logic operators precedence:
+        NOT
+        AND
+        OR
+        XOR
+    """
+
+    def _parse_expression(self) -> AST.Statement:
+        """ <expression> ::= <logic_or> """
+        return self._parse_logic_xor()
+
+    def _parse_logic_xor(self) -> AST.Statement:
+        """ <logic_xor> ::= <logic_or> [OR <logic_or>] """
+        node = self._parse_logic_or()
+        while self._current_is(TokenType.OP, "XOR"):
+            op = self._advance()
+            right = self._parse_logic_and()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            # AND, OR and XOR produce integer results, they round real numbers before
+            # performing the operation
+            node = AST.BinaryOp(op="XOR", left=node, right=right, etype=AST.ExpType.Integer)
+        return node
+
+    def _parse_logic_or(self) -> AST.Statement:
+        """ <logic_or> ::= <logic_and> [OR <logic_and>] """
+        node = self._parse_logic_and()
+        while self._current_is(TokenType.OP, "OR"):
+            op = self._advance()
+            right = self._parse_logic_and()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            # AND, OR and XOR produce integer results, they round real numbers before
+            # performing the operation
+            node = AST.BinaryOp(op="OR", left=node, right=right, etype=AST.ExpType.Integer)
+        return node
+
+    def _parse_logic_and(self) -> AST.Statement:
+        """ <logic_and> ::= <comparison> [AND <comparison>] """
+        node = self._parse_comparison()
+        while self._current_is(TokenType.OP, "AND"):
+            op = self._advance()
+            right = self._parse_comparison()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            # AND, OR and XOR produce integer results, they round real numbers before
+            # performing the operation
+            node = AST.BinaryOp(op="AND", left=node, right=right, etype=AST.ExpType.Integer)
+        return node
+
+    def _parse_comparison(self) -> AST.Statement:
+        """ <comparison> ::= <mod> [(= | < | > | <= | =< | >= | => | <>) <mod>] """
+        node = self._parse_mod()
+        while self._current_is(TokenType.COMP):
+            op = self._advance()
+            right = self._parse_mod()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            # Logic OP always produces an integer result (0=FALSE, -1=TRUE)
+            # but can operate with strings, for example "STRING1" >= "STRING"
+            # which returns -1 (TRUE)    
+            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=AST.ExpType.Integer)
+        return node
+
+    def _parse_mod(self) -> AST.Statement:
+        """ <MOD> ::= <term> [MOD <term>] """
+        node = self._parse_term()
+        while self._current_is(TokenType.OP, "MOD"):
+            op = self._advance()
+            right = self._parse_term()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            # MOD always produces an integer result
+            node = AST.BinaryOp(op="MOD", left=node, right=right, etype=AST.ExpType.Integer)
+        return node
+
+    def _parse_term(self) -> AST.Statement:
+        """ <term> ::= <factor> [( + | - ) <factor>] """
+        node = self._parse_factor()
+        while self._current_in((TokenType.OP,),  ('+', '-')):
+            op = self._advance()
+            right = self._parse_factor()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isvalid(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            if etype == AST.ExpType.String and op.lexeme == "-":
+                """ Strings only work with + (concatenate) """
+                self._raise_error(13, line=op.line, col=op.col)
+            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
+        return node
+
+    def _parse_factor(self) -> AST.Statement:
+        """ <factor> ::= <unary> [( * | / | \ ) <unary>] """
+        node = self._parse_unary()
+        while self._current_in((TokenType.OP,), ('*', '/', '\\')):
+            op = self._advance()
+            right = self._parse_unary()
+            etype = AST.exptype_derive(node, right)
+            if not AST.exptype_isnum(etype):
+                self._raise_error(13, line=op.line, col=op.col)
+            elif op.lexeme == '\\':
+                etype = AST.ExpType.Integer
+            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
+        return node
+
+    def _parse_unary(self) -> AST.Statement:
+        """ <unary> ::= ( - | NOT ) <primary> | <primary> """
+        if self._current_in((TokenType.OP,), ('-', 'NOT')):
+            op = self._advance()
+            operand = self._parse_primary()
+            if not AST.exptype_isnum(operand.etype):
+                # NOT and - only work with INT and REAL
+                self._raise_error(13, line=op.line, col=op.col) 
+            return AST.UnaryOp(op=op.lexeme, operand=operand, etype=operand.etype)
+        return self._parse_primary()
+
+    def _parse_primary(self) -> AST.Statement:
+        """
+        <primary> ::= POINTER | INT | REAL | STRING | (<expression>)
+        <primary> ::= IDENT | IDENT(INT[,INT]) | <fun_keyword> | <fun_user>
+        """
+        tok = self._current()
+        if tok.type == TokenType.AT:
+            return self._parse_pointer()
+        if tok.type == TokenType.INT:
+            self._advance()
+            return AST.Integer(value=cast(int, tok.value))
+        if tok.type == TokenType.REAL:
+            self._advance()
+            return AST.Real(value=cast(float, tok.value))
+        if tok.type == TokenType.STRING:
+            self._advance()
+            return AST.String(value=tok.lexeme.strip('"'))
+        if tok.type == TokenType.IDENT:
+            return self._parse_primary_ident()
+        if tok.type == TokenType.KEYWORD:
+            if not self._next_is(TokenType.LPAREN):
+                self._raise_error(2)    
+            return self._parse_keyword()
+        if self._match(TokenType.LPAREN):
+            expr = self._parse_expression()
+            self._expect(TokenType.RPAREN)
+            return expr
+        self._raise_error(2, f"Unexpected symbol {tok.lexeme} in expression")
+        return AST.Nop()
+    
+    def _parse_primary_ident(self, checksym: bool = True) -> AST.Statement:
+        """ <primary_ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) | <user_fun> """
+        if self._current().lexeme[:2].upper() == "FN":
+            # this is a user function defined by DEF FN as FN are reserved
+            # and cannot be used in Locomotive Basic as the starting chars
+            # for variables
+            return self._parse_user_fun()
+        tk = self._expect(TokenType.IDENT)
+        if self._current_is(TokenType.LPAREN):
+            # Array item
+            self._advance()
+            indexes = [self._parse_expression()]
+            if not AST.exptype_isint(indexes[0].etype):
+                self._raise_error(13)
+            while self._current_is(TokenType.COMMA):
+                self._advance()
+                indexes.append(self._parse_expression())
+                if not AST.exptype_isint(indexes[-1].etype):
+                    self._raise_error(13)
+            self._expect(TokenType.RPAREN)
+            entry = self.symtable.find(tk.lexeme, self.context)
+            if entry is None or entry.symtype != SymType.Array:
+                self._raise_error(2)
+            if entry.nargs != len(indexes): # type: ignore[union-attr]
+                self._raise_error(2)
+            return AST.ArrayItem(name=tk.lexeme, etype=entry.exptype, args=indexes) # type: ignore[union-attr]
+        # regular variable
+        etype = AST.exptype_fromname(tk.lexeme)
+        entry = self.symtable.find(tk.lexeme, context=self.context)
+        if entry is None and checksym:
+            self._raise_error(2)
+        if entry is not None: etype = entry.exptype
+        return AST.Variable(name=tk.lexeme, etype=etype)
+
+    def _parse_user_fun(self) -> AST.Statement:
+        """ <user_fun> ::= FNIDENT([<expression>[,<expression>]])"""
+        tk = self._expect(TokenType.IDENT)
+        # functions are always declared in the global context
+        entry = self.symtable.find(ident=tk.lexeme, context="")
+        if entry is None:
+            self._raise_error(18)
+        args: list[AST.Statement] = []
+        self._expect(TokenType.LPAREN)
+        if not self._current_is(TokenType.RPAREN):
+            args = [self._parse_expression()]
+            while self._current_is(TokenType.COMMA):
+                self._advance()
+                args.append(self._parse_expression()) 
+        self._expect(TokenType.RPAREN)
+        if entry.nargs != len(args): # type: ignore[union-attr]
+            self._raise_error(5)
+        return AST.UserFun(name=tk.lexeme, etype=entry.exptype, args=args) # type: ignore[union-attr]
+
+    def _parse_constant(self) -> AST.Statement:
+        """ <constant> ::= INT | REAL | "STRING" | STRING """
+        tok = self._current()
+        if tok.type == TokenType.INT:
+            self._advance()
+            return AST.Integer(value=cast(int, tok.value))
+        if tok.type == TokenType.REAL:
+            self._advance()
+            return AST.Real(value=cast(float, tok.value))
+        if tok.type == TokenType.STRING:
+            self._advance()
+            return AST.String(value=tok.lexeme.strip('"'))
+        if tok.type == TokenType.IDENT:
+            name = self._advance().lexeme
+            return AST.String(value=name)
+        self._raise_error(2)
+        return AST.Nop()
+
+    def _parse_pointer(self) -> AST.Pointer:
+        """ <pointer> ::= @IDENT """
+        self._advance()
+        tk = self._expect(TokenType.IDENT)
+        vartype = AST.exptype_fromname(tk.lexeme)
+        var = AST.Variable(name=tk.lexeme, etype=vartype)
+        return AST.Pointer(var=var)
+
+    def _parse_range(self) -> AST.Statement:
+        """ <range> ::= CHAR[-CHAR] | INT[-INT]"""
+        if self._current_is(TokenType.IDENT):
+            low = self._expect(TokenType.IDENT).lexeme.upper()
+            high = low
+            if self._current_is(TokenType.OP, lexeme="-"):
+                self._advance()
+                high = self._expect(TokenType.IDENT).lexeme.upper()
+            if len(low) > 1 or len(high) > 1:
+                self._raise_error(2)
+            etype = AST.ExpType.String
         else:
-            self.sub_term()
+            high = low = self._expect(TokenType.INT).value # type: ignore[assignment]
+            if self._current_is(TokenType.OP, lexeme="-"):
+                self._advance()
+                high = self._expect(TokenType.INT).value  # type: ignore[assignment]
+            etype = AST.ExpType.Integer
+        if low > high:
+            self._raise_error(2)
+        return AST.Range(etype=etype, low=low, high=high)
 
-    def sub_term(self) -> None:
-        """ <sub_term> ::= '(' <expression> ')' | <factor> """
-        assert self.cur_token is not None
-        if self.match_current(TokenType.LPAR):
-            partoken = self.cur_token
-            self.next_token()
-            self.expression()
-            if self.match_current(TokenType.RPAR):
-                self.next_token()
-            else:
-                self.reset_curexpr()
-                self.error(partoken.srcline, ErrorCode.SYNTAX)
-        else:
-            self.factor()
+    # ----------------- AST Generation -----------------
 
-    def factor(self) -> None:
-        """<factor> ::= <ident_factor> | <int_factor> | <real_factor> | <str_factor> | <fun_call>"""
-        assert self.cur_token is not None
-        if self.match_current(TokenType.IDENT):
-            self.ident_factor()
-        elif self.match_current(TokenType.INTEGER):
-            self.int_factor()
-        elif self.match_current(TokenType.REAL):
-            self.real_factor()
-        elif self.match_current(TokenType.STRING):
-            self.str_factor()
-        else:
-            self.fun_call()
+    def _parse_assignment(self) -> AST.Assignment:
+        """ <assignment> ::= <primary_ident> = <expression>"""
+        # The asignement is the way to declare variables so
+        # we do not check in the sym table for left variable
+        target = self._parse_primary_ident(checksym=False)
+        self._expect(TokenType.COMP, "=")
+        source = self._parse_expression()
+        etype = AST.exptype_derive(target, source)
+        if not AST.exptype_isvalid(etype):
+            self._raise_error(13)
+        # assignament type is always the one from the target variable
+        if isinstance(target, AST.Variable):
+            # Simple variables are declared through assinements so we
+            # have to add them to the symtable now
+            self.symtable.add(
+                ident=target.name,
+                info=SymEntry(SymType.Variable, exptype=target.etype, locals=SymTable()),
+                context=self.context
+            )
+        return AST.Assignment(target=target, source=source, etype=target.etype)
 
-    def ident_factor(self):
-        """ <ident_factor> := IDENT """
-        assert self.cur_token is not None
-        sym = self.symtab_search(self.cur_token.text)
-        if sym is not None:
-            # store the token in the expression with the name keep in the
-            # symbols table
-            token = Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline)
-            self.cur_expr.pushval(token, sym.valtype)
-            sym.inc_reads()
-            self.next_token()
-        else:
-            self.reset_curexpr()
-            self.error(self.cur_token.srcline, ErrorCode.NOIDENT)
+    def _parse_code_block(self) -> list[AST.Statement]:
+        """ <code_block> ::= <line><parse_block> | (NEXT | WEND | ELSE | IFEND) """
+        codeblock = self.codeblocks[-1]
+        self._expect(TokenType.LINE_NUMBER)
+        stmts: list[AST.Statement] = self._parse_statement_list()
+        while codeblock.alive:
+            self._expect(TokenType.EOL)
+            self._expect(TokenType.LINE_NUMBER)
+            stmts += self._parse_statement_list()
+        if not isinstance(stmts[-1], AST.BlockEnd):
+            # The line continued after the BlockEnd keyword
+            # which is an error for us
+            self._rewind()
+            self._raise_error(2, "Extra statements aren't allowed after a codeblock end")
+        return stmts
 
-    def int_factor(self):
-        """ <int_factor> := NUMBER """
-        assert self.cur_token is not None
-        self.cur_expr.pushval(self.cur_token, BASTypes.INT)
-        self.next_token()
+    def _parse_keyword(self) -> AST.Statement:
+        """ <keyword> ::= <FUNCTION> | <COMMAND> """
+        keyword = self._current().lexeme
+        funcname = "_parse_" + keyword.replace('$','SS').replace(' ', '_')
+        parse_keyword = getattr(self, funcname , None)
+        if parse_keyword is None:
+            self._raise_error(2, f"Unknown keyword {keyword}")
+        return parse_keyword() # type: ignore[misc]
 
-    def real_factor(self):
-        """ <real_factor> := REAL """
-        realexpr = Expression()
-        realexpr.pushval(self.cur_token, BASTypes.REAL)
-        sym = self.symtab_newtmpvar(realexpr)
-        if sym is not None:
-            self.cur_expr.pushval(Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline), BASTypes.REAL)
-            self.next_token()
+    def _parse_statement(self) -> AST.Statement:
+        """ <statement> ::= <keyword> | COMMENT | RSX | <assignement> """
+        tok = self._current()
+        if tok.type == TokenType.KEYWORD:
+            return self._parse_keyword()     
+        if tok.type == TokenType.COMMENT:
+            return AST.Comment(text=self._advance().lexeme)
+        if tok.type == TokenType.RSX:
+            return AST.RSX(command=self._advance().lexeme)
+        if tok.type == TokenType.IDENT and tok.lexeme[:2].upper() == "FN":
+            # User call to a function defined with DEF FN
+            return self._parse_user_fun()
+        if tok.type == TokenType.IDENT:
+            # Assignment without LET
+            return self._parse_assignment()
+        self._raise_error(2, f"Unknown statement '{tok.lexeme}'")
+        return AST.Nop()
 
-    def str_factor(self):
-        """ <str_factor> := STRING """
-        assert self.cur_token is not None
-        strexpr = Expression()
-        strexpr.pushval(self.cur_token, BASTypes.STR)
-        sym = self.symtab_newtmpvar(strexpr)
-        if sym is not None:
-            self.cur_expr.pushval(Token(sym.symbol, TokenType.IDENT, self.cur_token.srcline), BASTypes.STR)
-            self.next_token()
+    def _parse_statement_list(self) -> list[AST.Statement]:
+        """<statement_list> ::= <statements> [:<statement>]"""
+        stmts = [self._parse_statement()]
+        while self._match(TokenType.COLON):
+            stmts.append(self._parse_statement())
+        return stmts
 
-    def fun_call(self):
-        """ <fun_call> := <function_NAME> """
-        assert self.cur_token is not None
-        fname = self.cur_token.text.replace('$', 'S').upper()
-        function_rule = getattr(self, "function_" + fname, None)
-        if function_rule is None:
-            self.reset_curexpr()
-            self.error(self.cur_token.srcline, f"function {self.cur_token.text} is not supported yet")
-        else:
-            function_rule()
+    def _parse_line(self) -> AST.Line:
+        """<line> ::= LINE_NUMBER <statement_list> EOL"""
+        tk = self._expect(TokenType.LINE_NUMBER)
+        line_number = cast(int, tk.value)
+        inserted = self.symtable.add(
+            ident=str(line_number),
+            info=SymEntry(symtype=SymType.Label, exptype=AST.ExpType.Integer, locals=SymTable()),
+            context=""
+        )
+        if not inserted:
+            self._raise_error(34)
+        statements = self._parse_statement_list()
+        self._expect(TokenType.EOL)
+        return AST.Line(number=line_number, statements=statements)
+
+    def parse_program(self) -> tuple[AST.Program, SymTable]:
+        """ <program> ::= <line><program> | EOL<program> | EOF"""
+        lines = []
+        while not self._current_is(TokenType.EOF):
+            if self._current_is(TokenType.EOL):
+                self._advance()
+                continue
+            lines.append(self._parse_line())
+        return AST.Program(lines=lines), self.symtable
+
+if __name__ == "__main__":
+    program = r"""
+5  LET A = 0
+10 FOR I = 1 TO 5
+20   PRINT I
+30 NEXT I
+40 WHILE I < 10
+50   I = I + 1
+60 WEND
+70 IF I > 5 THEN
+80   PRINT "OK"
+90 ELSE
+100  PRINT "FAIL"
+110 IFEND
+120 END
+"""
+    try:
+        lx = LocBasLexer(program)
+        tokens = list(lx.tokens())
+        code = [CodeLine("example.bas", i, line) for i,line in enumerate(program.split('\n'))]
+        parser = LocBasParser(code, tokens)
+        ast, _ = parser.parse_program()
+        print(AST.to_json(ast))
+    except BasError as e:
+        print(e)

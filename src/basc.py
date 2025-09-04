@@ -15,16 +15,19 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
+from __future__ import annotations
+import sys, os
+import argparse
+from baspp import LocBasPreprocessor, CodeLine
+from baslex import LocBasLexer
+from basparse import LocBasParser
+from symbols import symsto_json
+import astlib as AST
+import json
+
 __author__='Javier "Dwayne Hicks" Garcia'
 __version__='0.0dev'
 
-import argparse
-import baspp
-import baslex
-import basparse
-import basemit
-import basz80
-import abasm
 
 def process_args():
     parser = argparse.ArgumentParser(
@@ -33,37 +36,74 @@ def process_args():
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
-    parser.add_argument('--verbose', action='store_true', help="Prints extra information during the compilation process.")
-    parser.add_argument('-v', '--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
+    parser.add_argument('--nopp', action='store_true', help="Do not preprocess the source file.")
+    parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
 
     args = parser.parse_args()
     return args
+
+def clear(sourcefile: str):
+    basefile = sourcefile.upper() 
+    files: list[str] = [
+        basefile.replace('.BAS', '.PP'),
+        basefile.replace('.BAS', '.LEX'),
+        basefile.replace('.BAS', '.AST'),
+    ]
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
 
 def main() -> None:
     args = process_args()
     if args.out == None:
         args.out = args.infile.rsplit('.')[0]
 
-    pp = baspp.BASPreprocessor()
-    code = pp.preprocess(args.infile, 10)
-    pp.save_output(args.out + '.bpp', [c for _, _, c in code])
-    
-    lexer = baslex.BASLexer(code)
-    emitter = basemit.SMEmitter()
-    parser = basparse.BASParser(lexer, emitter, args.verbose)
-    parser.parse()
-    
+    try:
+        with open(args.infile, "r") as fd:
+            bascontent = fd.read()
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
+    clear(args.infile)
+    codelines: list[CodeLine] = []
+    code: str = ""
+    pp = LocBasPreprocessor()
+    if not args.nopp:
+        try:
+            codelines, code = pp.preprocess(args.infile, bascontent, 10)
+            if args.verbose:
+                ppfile = args.infile.upper().replace('BAS', 'PP')
+                pp.save_output(ppfile, code)
+        except Exception as e:
+            print(str(e))
+            sys.exit(1)
+    else:
+        codelines, code = pp.ascodelines(args.infile, bascontent)
+
+    lx = LocBasLexer(code)
+    lexjson, tokens = lx.tokens_json()
     if args.verbose:
-        # InteRmediate Code
-        with open(args.out + '.irc', 'w') as fo:
-            fo.writelines([f"{op}({param})\n" for op, param, _ in emitter.code])
-
-    asmout = args.out + '.asm'
-    backend = basz80.Z80Backend()
-    backend.save_output(asmout, emitter.code, parser.symbols)
-    abasm.create_opdict()
-    abasm.assemble(asmout)
-
+        lexfile = args.infile.upper().replace('BAS','LEX')
+        with open(lexfile, "w") as fd:
+            fd.write(lexjson)
+    
+    parser = LocBasParser(codelines, tokens)
+    try:
+        ast, symtable = parser.parse_program()
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
+    if args.verbose:
+        astjson = AST.asdict(ast)
+        astfile = args.infile.upper().replace('BAS','AST')
+        with open(astfile, "w") as fd:
+            fd.write(json.dumps(astjson, indent=4))
+        symfile = args.infile.upper().replace('BAS','SYM')
+        symjson = symsto_json(symtable.syms)
+        with open(symfile, "w") as fd:
+            fd.write(json.dumps(symjson, indent=4))
+    print("Done")
 
 if __name__ == "__main__":
     main()

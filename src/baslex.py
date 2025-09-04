@@ -1,4 +1,4 @@
-"""
+r"""
 Lexycal scanner for Amstrad locomotive BASIC code.
 
 This program is free software; you can redistribute it and/or modify
@@ -13,257 +13,446 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+
+Use example:
+
+from lexer import LocBasLexer
+
+program = '''
+10 REM Demo
+20 a%=3: b!=&H2A: c$="HELLO"
+30 IF a%<=10 THEN PRINT b! \ 2, c$
+40 ' the other way to comment a line
+50 PRINT "END"
+60 END
+'''
+
+lx = LocBasLexer(program)
+for t in lx.tokens():
+    print(f"{t.line:02d}:{t.col:02d}  {t.type.name:10s}  {t.lexeme!r}  {t.value}")
+
 """
 
-import sys
-import os
-from bastypes import TokenType, Token
-from typing import List, Tuple, Optional
+from __future__ import annotations
+from dataclasses import dataclass, is_dataclass
+from enum import Enum, auto
+from typing import Union, Any, Optional, Tuple, Iterator
+import re
+import json
 
-class BASLexer:
-    """
-    Lexer object keeps track of current position in the source code and produces each token.
-    """
-    def __init__(self, code: List[Tuple[str, int, str]]) -> None:
-        self.orgcode = code
-        self.reset()
+# -------------------------------
+# Token types
+# -------------------------------
 
-    def reset(self) -> None:
-        """
-        Sets the code as a continuous string, appends a newline to
-        simplify lexing/parsing the last token/statement and points
-        to the first char in the code.
-        """
-        self.source:    str = ''.join(l for _, _, l in self.orgcode) + '\n'
-        self.cur_char:  str = ''   # Current character in the string.
-        self.cur_pos:   int = -1    # Current position in the string.
-        self.cur_line:  int = 0
-        self.last_token: Optional[Token] = None
-        self.next_char()
+class TokenType(Enum):
+    LINE_NUMBER = auto()
+    EOL = auto()
+    EOF = auto()
+    COLON = auto()          # :
+    COMMA = auto()          # ,
+    SEMICOLON = auto()      # ;
+    LPAREN = auto()         # (
+    RPAREN = auto()         # )
+    LBRACK = auto()         # [
+    RBRACK = auto()         # ]
+    HASH = auto()           # #  (streams)
+    AT = auto()             # @  (pointers)
 
-    def get_srccode(self, linenum: int) -> Tuple[str, int , str]:
-        if linenum >= len(self.orgcode):
-            return (self.orgcode[0][0], -1, "EOF")
-        return self.orgcode[linenum]
+    IDENT = auto()          # user defined names (variables, FN*, etc.)
+    RSX = auto()            # |COMMAND
+    INT = auto()            # numeric literals (decimal, &H/&hex, &Xbin)
+    REAL= auto()            # numeric literals (float)
+    STRING = auto()         # "..."
+    KEYWORD = auto()        # reserved words (PRINT, IF, THEN, ELSE, etc.)
+    OP = auto()             # operators (+ - * / ^ \ AND OR XOR NOT MOD etc.)
+    COMP = auto()           # logic comparations (=, <, >, <=, =>, <>, etc.)
+    COMMENT = auto()        # REM ...  or  ' ...
 
-    def next_char(self) -> None:
-        """
-        Points to the next character in the source code.
-        Returns 0 if end-of-file is reached
-        """
-        self.cur_pos += 1
-        if self.cur_pos >= len(self.source):
-            self.cur_char = '\0'  # EOF
+@dataclass
+class Token:
+    type: TokenType
+    lexeme: str
+    line: int
+    col: int
+    value: Optional[int | float | str] = None
+
+class TokenEncoder(json.JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if is_dataclass(o):
+            return {
+                "type": str(o.type).split('.')[1],
+                "lexeme": o.lexeme,
+                "line": o.line,
+                "col": o.col,
+                "value": o.value
+            }
+        return super().default(o)
+
+# -------------------------------
+# Reserved words and operators
+# -------------------------------
+
+# List of Locomotive BASIC reserved words (commands and functions)
+_KEYWORDS = {
+    # Commands
+    "AFTER","AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR","CLG",
+    "CLOSEIN","CLOSEOUT","CLS","CONT","CURSOR","DATA","DEF","DEF FN","DEFINT",
+    "DEFREAL","DEFSTR","DEG","DELETE","DI","DIM","DRAW","DRAWR","EDIT","EI",
+    "ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL","FN","FOR",
+    "FRAME","GOSUB","GOTO","GRAPHICS","IF","IFEND","INK","INPUT","KEY","LET",
+    "LINE","LINE INPUT","LIST","LOAD","LOCATE","MASK","MEMORY","MERGE","MID$",
+    "MODE","MOVE","MOVER","NEW","NEXT","ON","ON BREAK","ON ERROR GOTO", "ON SQ",
+    "OPENIN","OPENOUT","ORIGIN","OUT","PAPER","PEN","PLOT","PLOTR","POKE",
+    "PRINT","RAD","RANDOMIZE","READ","RELEASE","REM","RENUM","RESTORE",
+    "RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","STOP","SWAP","SYMBOL",
+    "SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN","USING",
+    "WAIT","WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
+    # Functions
+    "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
+    "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
+    "JOY","LEFT$","LEN","LOG","LOG10","LOWER$","MAX","MIN","PEEK","PI","POS",
+    "REMAIN","RIGHT$","RND","ROUND","SGN","SIN","SPACE$","SQ","SQR","STR$",
+    "STRING$","TAN","TEST","TESTR","TIME","UNT","UPPER$","VAL","VPOS","XPOS","YPOS"
+}
+
+# Operators and comparators that will share the type TokenType.OP
+_OPERATORS = {
+    "AND","OR","XOR","NOT","MOD"
+}
+
+# Logic comparators
+_COMPARATORS = {
+    "=","<",">","<>","<=","=<",">=","=>"
+}
+
+_SINGLE_CHARS = {
+    ":": TokenType.COLON, ",": TokenType.COMMA, ";": TokenType.SEMICOLON,
+    "(": TokenType.LPAREN, ")": TokenType.RPAREN, "[": TokenType.LBRACK,
+    "]": TokenType.RBRACK, "#": TokenType.HASH, "@": TokenType.AT
+}
+
+# -------------------------------
+# Lexer
+# -------------------------------
+
+class LocBasLexer:
+    def __init__(self, text: str, enforce_varlen: bool = True):
+        # Windows/Amstrad line end to \n
+        self.text = text.replace("\r\n", "\n").replace("\r", "\n")
+        self.pos = 0
+        self.line = 1
+        self.col = 1
+        self.enforce_varlen = enforce_varlen
+
+    def _peek(self, n=0) -> str:
+        nextch = self.pos + n
+        return self.text[nextch] if nextch < len(self.text) else ""
+
+    def _advance(self) -> str:
+        ch = self._peek()
+        if not ch:
+            return ""
+        self.pos += 1
+        if ch == "\n":
+            self.line += 1
+            self.col = 1
         else:
-            self.cur_char = self.source[self.cur_pos]
+            self.col += 1
+        return ch
 
-    def peek(self) -> str:
-        """Returns the lookahead character"""
-        if self.cur_pos + 1 >= len(self.source):
-            return '\0'
-        return self.source[self.cur_pos + 1]
+    def _match(self, s: str) -> bool:
+        if self.text.startswith(s, self.pos):
+            for _ in s:
+                self._advance()
+            return True
+        return False
 
-    def abort(self, message: str, extrainfo: str = "") -> None:
-        """Stops with an error message adding file name and original file number"""
-        file, linenum, line = self.orgcode[self.cur_line]
-        file = os.path.basename(file)
-        print("Fatal error in %s:%d: %s -> %s %s" % (file, linenum, line.strip(), message, extrainfo))
-        sys.exit(1)
+    def _skip_spaces(self):
+        while self._peek() in (" ", "\t"):
+            self._advance()
 
-    def _get_operator(self) -> Optional[Token]:
-        """ Returns a token describing an operator (numeric o logical). None if the
-        current character does not belong to an operator."""
-        if self.cur_char == '+':
-            return Token(self.cur_char, TokenType.PLUS, self.cur_line)
-        elif self.cur_char == '-':
-            return Token(self.cur_char, TokenType.MINUS, self.cur_line)
-        elif self.cur_char == '*':
-            return Token(self.cur_char, TokenType.ASTERISK, self.cur_line)
-        elif self.cur_char == '/':
-            return Token(self.cur_char, TokenType.SLASH, self.cur_line)
-        elif self.cur_char == '\\':
-            return Token(self.cur_char, TokenType.LSLASH, self.cur_line)
-        elif self.cur_char == '(':
-            return Token(self.cur_char, TokenType.LPAR, self.cur_line)
-        elif self.cur_char == ')':
-            return Token(self.cur_char, TokenType.RPAR, self.cur_line)
-        elif self.cur_char == '=':
-            return Token(self.cur_char, TokenType.EQ, self.cur_line)
-        elif self.cur_char == '>':
-            # Check whether this is token is > or >=
-            if self.peek() == '=':
-                last_char = self.cur_char
-                self.next_char()
-                return Token(last_char + self.cur_char, TokenType.GTEQ, self.cur_line)
+    def _consume_until_eol(self) -> str:
+        out = ""
+        while self._peek() and self._peek() != "\n":
+            out += self._advance()
+        return out
+
+    def _consume_rsx(self) -> str:
+        # |NAME search for EOL, ':' or arguments
+        out = self._advance()  # '|' symbol
+        while True:
+            ch = self._peek()
+            if ch == "" or ch == "\n":
+                break
+            if ch in " ,:":
+                break
+            out += self._advance()
+        return out.upper()
+
+    def _consume_string(self) -> str:
+        out = self._advance()  # " symbol
+        while True:
+            ch = self._peek()
+            if ch == "":
+                # string without end-quotes
+                # lets return what we have and leave the
+                # parser to provide an error
+                break
+            c = self._advance()
+            out += c
+            if c == '"':
+                break
+        return out
+
+    def _consume_digits(self, base_re: re.Pattern) -> str:
+        out = ""
+        while True:
+            ch = self._peek()
+            if ch and base_re.match(ch):
+                out += self._advance()
             else:
-                return Token(self.cur_char, TokenType.GT, self.cur_line)
-        elif self.cur_char == '<':
-            # Check whether this token is < or <=
-            last_char = self.cur_char
-            if self.peek() == '=':
-                self.next_char()
-                return Token(last_char + self.cur_char, TokenType.LTEQ, self.cur_line)
-            elif self.peek() == '>':
-                self.next_char()
-                return Token(last_char + self.cur_char, TokenType.NOTEQ, self.cur_line)
+                break
+        return out
+
+    def _consume_integer(self) -> str:
+        return self._consume_digits(re.compile(r"[0-9]"))
+
+    def _consume_identifier_with_suffix(self) -> str:
+        out = ""
+        while True:
+            ch = self._peek()
+            if not ch:
+                break
+            # Locomotive BASIC in the CPC allows '.' as part
+            # of identifier names
+            # 10 a.b=5
+            # above line is valid
+            if ch.isalnum() or ch == '.':
+                out += self._advance()
             else:
-                return Token(self.cur_char, TokenType.LT, self.cur_line)
+                break
+        # Optional sufixes
+        if self._peek() in "%!$":
+            out += self._advance()
+        return out
+
+    def _consume_cmp_sequence(self) -> str:
+        # =, <, >, <>, <=, =<, >=, =>, etc.
+        out = self._advance()
+        # Amstrad CPC parser allows spaces in between operators like '>  ='
+        # which will be converted to >=
+        self._skip_spaces()
+        if out == '<' and self._peek() in "=>":
+            out += self._advance()
+        elif out == '>' and self._peek() in "=":
+            out += self._advance()
+        elif out == '=' and self._peek() in "><":
+            out += self._advance()
+        return out
+
+    def _try_number(self) -> Optional[Tuple[str, Union[int | float | str], "TokenType"]]:
+        start_i = self.pos
+        ch = self._peek()
+
+        # Check for Hex/Bin with &-prefix (&Hxxxx or &xxxx for hex, &Xbbbb for bin)
+        if ch == "&":
+            self._advance()
+            nxt = self._peek().upper()
+            if nxt == "H" or nxt=="h":
+                self._advance()
+                digits = self._consume_digits(re.compile(r"[0-9A-Fa-f]"))
+                if digits:
+                    lex = "&H" + digits.upper()
+                    return lex, int(digits, 16), TokenType.INT
+            elif nxt == "X" or nxt == "x":
+                self._advance()
+                digits = self._consume_digits(re.compile(r"[01]"))
+                if digits:
+                    lex = "&X" + digits
+                    return lex, int(digits, 2), TokenType.INT
+            else:
+                # direct hex number after symbol &
+                digits = self._consume_digits(re.compile(r"[0-9A-Fa-f]"))
+                if digits:
+                    lex = "&H" + digits.upper()
+                    return lex, int(digits, 16), TokenType.INT
+            # Not a &-formated number
+            self.pos = start_i
+            return None
+
+        # Decimal / real:  [digits][.digits][E[+-]?digits]?
+        num_re = re.compile(r"""
+            (?:
+                (?:\d+\.\d*|\.\d+|\d+)
+                (?:[Ee][\+\-]?\d+)?   # exponente opcional
+            )
+        """, re.VERBOSE)
+        m = num_re.match(self.text[start_i:])
+        if m:
+            lex = m.group(0)
+            # float or int depending on '.' or 'E/e' symbols
+            if ('.' in lex or 'E' in lex.upper()):
+                val = float(lex)
+                ttype = TokenType.REAL
+            else:
+                val = int(lex, 10)
+                ttype = TokenType.INT
+            # consume all read digits
+            for _ in lex:
+                self._advance()
+            return lex, val, ttype
         return None
 
-    def _get_quotedtext(self) -> Token:
-        """ Returns all characters between quotations as a STRING token"""
-        self.next_char()
-        start_pos = self.cur_pos
-        while self.cur_char != '\"':
-            self.next_char()
-            if self.cur_char == '\n':
-                self.abort("strings must be enclosed in quotation marks")
-        text = self.source[start_pos : self.cur_pos]
-        return Token(text, TokenType.STRING, self.cur_line)
+    def _try_word(self, word: str) -> bool:
+        pos = self.pos
+        # espaces
+        self._skip_spaces()
+        if self.text.startswith(word, self.pos):
+            for _ in word:
+                self._advance()
+            return True
+        # no: restaurar
+        self.pos = pos
+        return False
 
-    def _get_hexnumber(self) -> Token:
+    def _try_compound_keyword(self, head_upper: str) -> Tuple[str, bool]:
         """
-        Returns all consecutive valid digits [0-9A-F] as a numeric token
+        checks for multi-word reserved words like
+        ON ERROR GOTO, SYMBOL AFTER, LINE INPUT, etc.
         """
-        start_pos = self.cur_pos
-        while self.peek().isdigit() or self.peek().upper() in 'ABCDEF':
-            self.next_char()
-        text = self.source[start_pos : self.cur_pos + 1]
-        return Token('0x' + text, TokenType.INTEGER, self.cur_line)
-    
-    def _get_binnumber(self) -> Token:
-        """
-        Returns all consecutive valid digits [0-1] as a numeric token
-        """
-        start_pos = self.cur_pos
-        while self.peek().isdigit() and self.peek() in '01':
-            self.next_char()
-        text = self.source[start_pos : self.cur_pos + 1]
-        return Token('0b' + text, TokenType.INTEGER, self.cur_line)
-    
-    def _get_number(self) -> Token:
-        """
-        Returns all consecutive digits (and decimal if there is one) as a
-        Numeric token.
-        """
-        if self.cur_char == '&': # HEX or BIN number
-            self.next_char()
-            if self.cur_char.upper() == 'X':
-                return self._get_binnumber()
-            else:
-                return self._get_hexnumber()
+        save_i, save_line, save_col = self.pos, self.line, self.col
+        compound = {
+            "ON": ["BREAK", "ERROR GOTO", "ERROR GOTO", "SQ"],
+            "SYMBOL": ["AFTER"],
+            "LINE": ["INPUT"],
+            "CHAIN": ["MERGE"],
+            "DEF": ["FN"]
+        }
+        if head_upper in compound:
+            for tail in compound[head_upper]:
+                pos_before = (self.pos, self.line, self.col)
+                # At least there is a space before the tail word
+                if self._peek() != " ":
+                    continue
+                self._skip_spaces()
+                if self._match(tail):
+                    lex = head_upper + " " + tail
+                    return lex, True
+                # restore before test another tail
+                self.pos, self.line, self.col = pos_before
 
-        tktype = TokenType.INTEGER    
-        start_pos = self.cur_pos
-        while self.peek().isdigit():
-            self.next_char()
-        if self.peek() == '.': # REAL!
-            tktype = TokenType.REAL
-            self.next_char()
-            # Must have at least one digit after decimal.
-            if not self.peek().isdigit(): 
-                self.abort("number contains illegal characters")
-            while self.peek().isdigit():
-                self.next_char()
-        text = self.source[start_pos : self.cur_pos + 1]
-        return Token(text, tktype, self.cur_line)
+        # not a compounded word
+        self.pos, self.line, self.col = save_i, save_line, save_col
+        return head_upper, False
 
-    def _get_identifier_text(self) -> str:
-        """
-        Returns all characters that compose a valid word. Words can be
-        labels, variables or keywords.
-        """
-        start_pos = self.cur_pos
-        while self.peek().isalnum():
-            self.next_char()
-        if self.peek() in ['!', '%', '$']:
-            # Type symbols and end character for some functions
-            self.next_char()
-        return self.source[start_pos : self.cur_pos + 1].upper()
+    def _next_token(self) -> Token:
+        self._skip_spaces()
+        start_line, start_col = self.line, self.col
+        ch = self._peek()
 
-    def rollback(self) -> Optional[Token]:
-        if self.last_token is not None:
-            self.cur_pos = self.last_token.srcpos
-            self.cur_line = self.last_token.srcline
-            self.cur_char = self.source[self.cur_pos]
-            return self.get_token()
-        return None
+        if ch == "":
+            return Token(TokenType.EOF, "", self.line, self.col)
 
-    def get_token(self) -> Optional[Token]:
-        """
-        Consumes source code characters until a valid Token can be created or
-        an error is raised.
-        """
-        self.lstrip()
-        self.skip_comment()
-        token = None
-        inipos = self.cur_pos
-    
-        # Check current pointed character to see if we can decide what it is.
-        if self.cur_char == '\n':
-            token = Token('', TokenType.NEWLINE, self.cur_line)
+        if ch == "\n":
+            self._advance()
+            return Token(TokenType.EOL, "\\n", start_line, start_col)
 
-        elif self.cur_char == '\0':
-            token = Token('', TokenType.CODE_EOF, self.cur_line)
+        if ch in _SINGLE_CHARS:
+            self._advance()
+            t = _SINGLE_CHARS[ch]
+            return Token(t, ch, start_line, start_col)
 
-        elif self.cur_char == ':':
-            token = Token(':', TokenType.COLON, self.cur_line)
+        if ch == "'":
+            comment = self._consume_until_eol()
+            return Token(TokenType.COMMENT, comment[1:], start_line, start_col)
 
-        elif self.cur_char == ';':
-            token = Token(';', TokenType.SEMICOLON, self.cur_line)
+        if ch == "|":
+            rsx = self._consume_rsx()
+            return Token(TokenType.RSX, rsx, start_line, start_col, rsx[1:])
 
-        elif self.cur_char == ',':
-            token = Token(',', TokenType.COMMA, self.cur_line)
+        if ch == '"':
+            s = self._consume_string()
+            return Token(TokenType.STRING, s, start_line, start_col, s.replace('"',''))
 
-        elif self.cur_char in "+-*/=><()":
-            token = self._get_operator()
+        # Starting line number
+        if start_col == 1 and ch.isdigit():
+            num = self._consume_integer()
+            try:
+                val = int(num, 10)
+            except ValueError:
+                val = None
+            return Token(TokenType.LINE_NUMBER, num, start_line, start_col, val)
+
+        # Numbers including &H / & / &X and reals, even reals starting by .
+        # like .5
+        if ch.isdigit() or ch in "&.":
+            numtok = self._try_number() # (lex, val, type)
+            if numtok:
+                return Token(numtok[2], numtok[0], start_line, start_col, numtok[1])
+
+        # Identifiers / reserved words including FN... and sufixes %,!,$
+        if ch.isalpha():
+            ident = self._consume_identifier_with_suffix()
+            uident = ident.upper()
+            # compounded reserved words (e.g. "ON ERROR GOTO")
+            extended, advanced = self._try_compound_keyword(uident)
+            if advanced:
+                ident = extended
+                uident = extended.upper()
+
+            if uident in _OPERATORS:
+                return Token(TokenType.OP, uident, start_line, start_col)
+
+            if uident == "REM":
+                rest = self._consume_until_eol()
+                return Token(TokenType.COMMENT, rest, start_line, start_col)
+
+            if uident in _KEYWORDS:
+                return Token(TokenType.KEYWORD, uident, start_line, start_col)
+
+            # User Identifier (variable, FN..., etc.)
+            if self.enforce_varlen and len(ident.rstrip("%!$")) > 40:
+                ident = ident[:40]
+            return Token(TokenType.IDENT, ident, start_line, start_col, ident.upper())
+
+        # Pure one-character arithmetic operators
+        if ch in "+-*/^\\":
+            self._advance()
+            return Token(TokenType.OP, ch, start_line, start_col)
+
+        # Comparative operators < y >
+        if ch in "=<>":
+            # =, <=, =<, >=, =>, <>...
+            lex = self._consume_cmp_sequence()
+            return Token(TokenType.COMP, lex, start_line, start_col)
+
+        # Uknown character, lets add it as a one-char ident
+        self._advance()
+        return Token(TokenType.IDENT, ch, start_line, start_col)
+
+    def tokens(self) -> Iterator[Token]:
+        while True:
+            tok = self._next_token()
+            yield tok
+            if tok.type == TokenType.EOF:
+                break
+
+    def tokens_json(self) -> tuple[str, list[Token]]:
+        tokens = list(self.tokens())
+        return json.dumps(tokens, indent=4, cls=TokenEncoder), tokens
         
-        elif self.cur_char == '\"':
-            token = self._get_quotedtext()
-        
-        elif self.cur_char == '#':
-            token = Token('#', TokenType.CHANNEL, self.cur_line)
-
-        elif self.cur_char == '@':
-            token = Token('AT', TokenType.AT, self.cur_line)
+# Use example:
     
-        elif self.cur_char == '&':
-            # hexadecimal number
-            token = self._get_number()
+if __name__ == "__main__":
+    program = r"""
+10 REM Demo
+20 LET a%=3: b!=&H2A: c$="HELLO"
+30 IF a%<=10 THEN PRINT b! \ 2, c$
+40 ' the other way to comment a line
+50 PRINT "END"
+60 END
+"""
 
-        elif self.cur_char.isdigit():
-            token = self._get_number()
-           
-        elif self.cur_char.isalpha():
-            # can be an identifier, keyword or special operator (like MOD)
-            text = self._get_identifier_text()
-            keyword = Token.get_keyword(text)
-            if keyword is not None:
-                token = Token(text, keyword, self.cur_line)
-            elif text.upper() == 'MOD':
-                token = Token('%', TokenType.MOD, self.cur_line)
-            else:
-                # Identifier or label
-                token = Token(text, TokenType.IDENT, self.cur_line)
-        else:
-            self.abort("unexpected character found '" + self.cur_char + "'")
-
-        if token is not None:
-            token.srcpos = inipos
-            if token.type == TokenType.NEWLINE:
-                # we are going to start a new line of code
-                self.cur_line = self.cur_line + 1
-            self.last_token = token
-        self.next_char()
-        return token
-
-    def lstrip(self) -> None:
-        """Skip whitespace except newlines, which we will use to indicate the end of a statement."""
-        while self.cur_char == ' ' or self.cur_char == '\t' or self.cur_char == '\r':
-            self.next_char()
-
-    def skip_comment(self) -> None:
-        if self.cur_char == "'":
-            while self.cur_char != '\n':
-                self.next_char()
-
+    lx = LocBasLexer(program)
+    jsonstr, _ = lx.tokens_json()
+    print(jsonstr)

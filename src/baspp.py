@@ -15,106 +15,122 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
+from __future__ import annotations
 import sys
 import os
 import re
 import argparse
-from typing import List, Any, Tuple
+from typing import Any, Tuple
+from dataclasses import dataclass
+from baserror import BasError
 
-class BASPreprocessor:
+@dataclass
+class CodeLine:
+    source: str
+    line: int
+    code: str
 
-    def abort(self, message: str, file: str = "", iline: int = -1, sline: str= "") -> None:
-        if file == "":
-            print(f"Fatal error: {message}")
-        else:
-            print(f"Fatal error in {file}:{iline}: {sline.strip()} -> {message}")
-        sys.exit(1)
+class LocBasPreprocessor:
 
-    def _insert_file(self, basedir, iline: int, line: str, lines: List[Tuple[str, int, str]]) -> Any:
-        relpath = re.search(r'(?<=")(.*)(?=")', line)
+    def _raise_error(self, ecode: int, info: str, file: str = "", line: int = -1, code: str= "") -> None:
+        raise BasError(
+            ecode = ecode,
+            source = file,
+            info = info,
+            code = code,
+            line = line
+        )
+
+    def _insert_file(self, basedir, line: int, code: str, lines: list[CodeLine]) -> list[CodeLine]:
+        relpath = re.search(r'(?<=")(.*)(?=")', code)
         if relpath is None:
-            self.abort(
-                f"the file to be included in '{line}' must be specified between double quotes",
-                lines[iline][0],
-                lines[iline][1],
-                lines[iline][2]
+            self._raise_error(
+                5,
+                f"File must appear between double quotes",
+                os.path.basename(lines[line].source),
+                lines[line].line,
+                code
             )
         else:
-            if ":" in line.replace(relpath.group(0), ''):
+            if ":" in code.replace(relpath.group(0), ''):
                 # colon outside of quotes
-                self.abort(
-                    "lines with INCBAS keyword cannot include other commands in the same line",
-                    lines[iline][0],
-                    lines[iline][1],
-                    lines[iline][2]
+                self._raise_error(
+                    2,
+                    "INCBAS keyword doesn't support other commands in the same line",
+                    os.path.basename(lines[line].source),
+                    lines[line].line,
+                    code
                 )
             infile = os.path.join(basedir, relpath.group(0))
             try:
-                print("Including BAS file", infile)
                 with open(infile, 'r') as f:
-                    filecontent = f.readlines()
-                    newlines = [(infile, i, line) for i, line in enumerate(filecontent)]
-                    return lines[0:iline+1] + newlines + lines[iline+1:]
+                    filecontent = f.read()
+                    newlines, _ = self.ascodelines(infile, filecontent) 
+                    lines = lines[0:line] + newlines + lines[line+1:]
             except IOError:
-                self.abort(
+                self._raise_error(
+                    25,
                     f"cannot read included file {relpath.group(0)}",
-                    lines[iline][0],
-                    lines[iline][1],
-                    lines[iline][2]
+                    lines[line].source,
+                    lines[line].line,
+                    code
                 )
+        return lines
 
-    def _parse_input(self, inputfile: str, increment: int) -> Any:
-        outlines = []
+    def preprocess(self, inputfile: str, code: str, increment: int = 10) -> tuple[list[CodeLine],str]:
+        srclines, _ = self.ascodelines(inputfile, code)
+        srcline = 0
         autonum = increment
+        outlines: list[CodeLine] = []
+        while srcline < len(srclines):
+            codeline = srclines[srcline]
+            line = codeline.code.strip()
+            if "INCBAS " == line[0:7].upper():
+                # insert content from another BAS file
+                basedir = os.path.dirname(inputfile)
+                srclines = self._insert_file(basedir, srcline, line, srclines)
+                srcline -= 1
+            elif line != "":
+                line = str(autonum) + ' ' + line
+                outlines.append(CodeLine(codeline.source, codeline.line, line))
+                autonum = autonum + increment
+            srcline = srcline + 1
+        finalcode = "\n".join([c.code for c in outlines]) + '\n'
+        return outlines, finalcode
+    
+    def preprocess_file(self, inputf: str, lineinc: int) -> tuple[list[CodeLine], str]:
+        if not os.path.isfile(inputf):
+            self._raise_error(25, info = f"{inputf} doesn't exist")
+        if lineinc < 1:
+            self._raise_error(5, info="Line increments must be equal or greater than 1")
         try:
-            with open(inputfile, 'r') as f:
-                filecontent = f.readlines()
-                srclines = [(inputfile, i+1, line) for i, line in enumerate(filecontent)]
-                srcline = 0
-                while srcline < len(srclines):
-                    filename, fileline, line = srclines[srcline]
-                    line = line.strip()
-                    if "INCBAS " == line[0:7].upper():
-                        # insert content from another BAS file
-                        basedir = os.path.dirname(inputfile)
-                        srclines = self._insert_file(basedir, srcline, line, srclines)
-                        srcline = srcline + 1
-                    elif line != "":
-                        line = str(autonum) + ' ' + line
-                        outlines.append((filename, fileline, line + '\n'))
-                        autonum = autonum + increment
-                    srcline = srcline + 1
-            return outlines
+            with open(inputf, 'r') as f:
+                code = f.read()
         except IOError:
-            self.abort(f"couldn't read input file {input}")
+            self._raise_error(25, f"Couldn't read from file {inputf}")
+        output, finalcode = self.preprocess(inputf, code, lineinc)
+        if len(output) == 0:
+            self._raise_error(25, f"{inputf} seems empty")
+        return output, finalcode
 
-    def save_output(self, output: str, code: List[str]) -> Any:
+    def ascodelines(self, inputfile: str, code: str) -> tuple[list[CodeLine],str]:
+        lines: list[str] = code.replace('\r\n', '\n').replace('\r','\n').split('\n')
+        codelines = [CodeLine(inputfile, i+1, line) for i, line in enumerate(lines)]
+        finalcode = "\n".join([c.code for c in codelines]) + '\n'
+        return codelines, finalcode
+
+    def save_output(self, output: str, code: str) -> None:
         try:
             with open(output, 'w') as f:
-                f.writelines(code)
-            print(f"Writting preprocessed file {output}")
-            return True
+                f.write(code)
         except IOError:
-            self.abort(f"couldn't write file {output}")
-
-    def preprocess(self, input: str, lineinc: int) -> List[Tuple[str, int, str]]:
-        if not os.path.isfile(input):
-            self.abort("couldn't access input file {input}")
-
-        if lineinc < 1:
-            self.abort("line increments must be a number equal or greater than 1")
-        
-        code = self._parse_input(input, lineinc)
-        if len(code) == 0:
-            self.abort(f"input file {input} is empty or cannot be read")
-        return code
+            self._raise_error(25, info=f"couldn't write file {output}")
 
 def process_args():
     parser = argparse.ArgumentParser(
         prog='baspp.py',
         description="""
-        Utility to parser a pseudo Locomotive .BAS file adding line numbers and replacing
-        ::label by equivalent line numbers in GOTO, GOSUB and IF staments.
+        Utility to parser a pseudo Locomotive .BAS file adding line numbers.
         This utility also removes lines that start with ' symbol and strips spaces at the 
         beginning and the end of each line. For example, baspp.py MYFILE.BAS CPCFILE.BAS --inc=10
         will generate CPCFILE.BAS with lines going 10 by 10.
@@ -129,12 +145,13 @@ def process_args():
 def main() -> None:
     args = process_args()
     try:
-        pp = BASPreprocessor()
-        code = pp.preprocess(args.infile, args.inc)
-        sys.exit(pp.save_output(args.outfile, [c for _, _, c in code]))
+        pp = LocBasPreprocessor()
+        _, code = pp.preprocess_file(args.infile, args.inc)
+        pp.save_output(args.outfile, code)
+        sys.exit(0)
     except Exception as e:
         print(str(e))
-    
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
