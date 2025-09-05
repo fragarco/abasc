@@ -493,7 +493,47 @@ class LocBasParser:
                 if sizes[-1] < 0: self._raise_error(9)
         self._expect(TokenType.RPAREN)
         return AST.Array(name=var, etype=vartype, sizes=sizes)
-    
+
+    def _parse_DRAW(self) -> AST.Command:
+        """ <DRAW> ::= DRAW <int_expression>,<int_expression>[,<int_expression>] """
+        self._advance()
+        args = [self._parse_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_expression())
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        return AST.Command(name="DRAW", args=args)
+
+    def _parse_DRAWR(self) -> AST.Command:
+        """ <DRAWR> ::= DRAWR <int_expression>,<int_expression>[,<int_expression>] """
+        self._advance()
+        args = [self._parse_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_expression())
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        return AST.Command(name="DRAWR", args=args)
+
+    def _parse_EDIT(self) -> AST.Command:
+        """ <EDIT> ::= EDIT INT """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="EDIT")
+
+    def _parse_EI(self) -> AST.Command:
+        """ <EI> ::= EI """
+        self._advance()
+        return AST.Command(name="EI")
+
     def _parse_ELSE(self) -> AST.BlockEnd:
         """ <ELSE> ::== ELSE """
         self._advance()
@@ -509,6 +549,7 @@ class LocBasParser:
         """ <END> ::= END """
         self._advance()
         return AST.Command(name="END")
+
 
     def _parse_FOR(self) -> AST.ForLoop:
         """ <FOR> ::= FOR IDENT = <expression> TO <expression> [STEP <expression>] <for_body> """
@@ -754,11 +795,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="RND")
-
-    def _parse_EI(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="EI")
 
     def _parse_XPOS(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1065,20 +1101,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="ON_ERROR_GOTO")
 
-    def _parse_DRAWR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="DRAWR")
-
     def _parse_SAVE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SAVE")
-
-    def _parse_EDIT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="EDIT")
 
     def _parse_RUN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1189,11 +1215,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="STR_S")
-
-    def _parse_DRAW(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="DRAW")
 
     def _parse_ORIGIN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER

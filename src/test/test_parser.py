@@ -584,5 +584,37 @@ class TestParser(unittest.TestCase):
             with self.assertRaises(BasError):
                 self.parse_code(code)
 
+    def test_draw_basic(self):
+        code = "10 I=5: DRAW 10,10: DRAW 100,200,I: END"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].name, "DRAW")
+        self.assertEqual(ast.lines[0].statements[2].args[0].value, 100)
+        self.assertEqual(ast.lines[0].statements[2].args[1].value, 200)
+        codes = ['10 DRAW 100', '10 DRAW 2.5,2.5', '10 DRAW 100,100,"A"']
+        for code in codes:
+            with self.assertRaises(BasError):
+                self.parse_code(code)
+    
+    def test_drawr_basic(self):
+        code = "10 I=5: DRAWR 10,10: DRAWR 100,200,I: END"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].name, "DRAWR")
+        self.assertEqual(ast.lines[0].statements[2].args[0].value, 100)
+        self.assertEqual(ast.lines[0].statements[2].args[1].value, 200)
+        codes = ['10 DRAWR 100', '10 DRAWR 2.5,2.5', '10 DRAWR 100,100,"A"']
+        for code in codes:
+            with self.assertRaises(BasError):
+                self.parse_code(code)
+
+    def test_edit_basic(self):
+        code = "10 EDIT 100"
+        with self.assertRaises(BasError):
+            self.parse_code(code)
+
+    def test_ei_basic(self):
+        code = "10 EI: END"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "EI")
+
 if __name__ == "__main__":
     unittest.main()
