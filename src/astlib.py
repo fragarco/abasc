@@ -69,12 +69,22 @@ class ASTNode:
     def __init__(self, id: str):
         self.id = id
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+        }
+
 class Program(ASTNode):
     lines: list["Line"]
 
     def __init__(self, lines: list["Line"]):
         super().__init__(id="Program")
         self.lines = lines
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["lines"] = [l.to_json() for l in self.lines]
+        return d
 
 class Line(ASTNode):
     number: int
@@ -85,6 +95,12 @@ class Line(ASTNode):
         self.number=number
         self.statements=statements
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["number"] = self.number,
+        d["statements"] = [s.to_json() for s in self.statements]
+        return d
+
 class Statement(ASTNode):
     etype: ExpType
 
@@ -92,11 +108,19 @@ class Statement(ASTNode):
         super().__init__(id=id)
         self.etype = etype
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["etype"] = str(self.etype)
+        return d
+
 class Nop(Statement):
     """ can be used to return something after an error occurred """
 
     def __init__(self):
         super().__init__(etype=ExpType.Void, id="NOP")
+
+    def to_json(self) -> dict:
+        return super().to_json()
 
 # ---------- Expresions ----------
 
@@ -110,6 +134,12 @@ class Assignment(Statement):
         self.target = target
         self.source = source
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["target"] = self.target.to_json(),
+        d["source"] = self.source.to_json()
+        return d
+
 class BinaryOp(Statement):
     op: str
     left: Statement
@@ -121,6 +151,13 @@ class BinaryOp(Statement):
         self.right = right
         self.op = op
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["op"] = self.op
+        d["left"] = self.left.to_json()
+        d["right"] = self.right.to_json()
+        return d
+
 class UnaryOp(Statement):
     op: str
     operand: Statement
@@ -129,6 +166,12 @@ class UnaryOp(Statement):
         super().__init__(etype=etype, id="UnaryOp")
         self.operand = operand
         self.op = op
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["op"] = self.op
+        d["operand"] = self.operand.to_json()
+        return d
 
 class Range(Statement):
     low: str | int
@@ -139,12 +182,23 @@ class Range(Statement):
         self.low = low
         self.high = high
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["low"] = self.low
+        d["hight"] = self.high
+        return d
+
 class Integer(Statement):
     value: int
 
     def __init__(self, value: int):
         super().__init__(etype=ExpType.Integer, id="Integer")
         self.value = value
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["value"] = self.value
+        return d
 
 class Real(Statement):
     value: float
@@ -153,6 +207,11 @@ class Real(Statement):
         super().__init__(etype=ExpType.Real, id="Real")
         self.value = value
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["value"] = self.value
+        return d
+
 class String(Statement):
     value: str
 
@@ -160,12 +219,22 @@ class String(Statement):
         super().__init__(etype=ExpType.String, id="String")
         self.value = value
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["value"] = self.value
+        return d
+
 class Variable(Statement):
     name: str
 
     def __init__(self, name: str, etype: ExpType):
         super().__init__(etype=etype, id="Variable")
         self.name = name
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        return d
     
 class Array(Statement):
     name: str
@@ -176,6 +245,12 @@ class Array(Statement):
         self.name = name
         self.sizes = sizes
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["sizes"] = self.sizes
+        return d
+
 class ArrayItem(Statement):
     name: str
     args: list[Statement]
@@ -185,6 +260,12 @@ class ArrayItem(Statement):
         self.name = name
         self.args = args
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d
+
 class Pointer(Statement):
     var: Variable
 
@@ -192,12 +273,22 @@ class Pointer(Statement):
         super().__init__(etype=ExpType.Integer, id="Pointer")
         self.var = var
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["variable"] = self.var.to_json()
+        return d
+
 class Stream(Statement):
     value: int
 
     def __init__(self, value: int = 0):
         super().__init__(etype=ExpType.Integer, id="Stream")
         self.value = value
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["value"] = self.value
+        return d
 
 # ---------- Statement Nodes ----------
 
@@ -212,6 +303,13 @@ class If(Statement):
         self.then_block = then_block
         self.else_block = else_block
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["condition"] = self.condition.to_json()
+        d["then_block"] = [a.to_json() for a in self.then_block]
+        d["else_block"] = [a.to_json() for a in self.else_block]
+        return d
+    
 class ForLoop(Statement):
     var: Variable
     start: Statement
@@ -227,6 +325,16 @@ class ForLoop(Statement):
         self.step = step
         self.body = body
 
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["var"] = self.var.to_json()
+        d["start"] = self.start.to_json()
+        d["end"] = self.end.to_json()
+        d["step"] = None if self.step is None else self.step.to_json()
+        d["body"] = [a.to_json() for a in self.body]
+        return d
+    
 class WhileLoop(Statement):
     condition: Statement
     body: list[Statement]
@@ -235,6 +343,12 @@ class WhileLoop(Statement):
         super().__init__(etype=ExpType.Void, id="WhileLoop")
         self.condition = condition
         self.body = body
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["condition"] = self.condition.to_json()
+        d["body"] = [a.to_json() for a in self.body]
+        return d
 
 class BlockEnd(Statement):
     name: str
@@ -245,12 +359,23 @@ class BlockEnd(Statement):
         self.name = name
         self.var = var 
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["var"] = self.var
+        return d
+
 class Comment(Statement):
     text: str = ""
 
     def __init__(self, text: str):
         super().__init__(etype=ExpType.Void, id="Comment")
         self.text = text
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["text"] = self.text
+        return d
 
 # ------ Commands and Functions -------
     
@@ -261,6 +386,11 @@ class RSX(Statement):
         super().__init__(etype=ExpType.Void, id="RSX")
         self.command = command
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["command"] = self.command
+        return d
+
 class Command(Statement):
     name: str
     args: list[Statement]
@@ -269,6 +399,12 @@ class Command(Statement):
         super().__init__(etype=ExpType.Void, id="Command")
         self.name = name
         self.args = args
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d
 
 class Function(Statement):
     name: str
@@ -279,6 +415,12 @@ class Function(Statement):
         self.name = name
         self.args = args
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d
+
 class UserFun(Statement):
     name: str
     args: list[Statement]
@@ -288,6 +430,13 @@ class UserFun(Statement):
         self.name = name
         self.args = args
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d
+
+
 class Print(Statement):
     items: list[Statement]
 
@@ -295,12 +444,22 @@ class Print(Statement):
         super().__init__(etype=ExpType.Void, id="Print")
         self.items = items
 
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["items"] = [a.to_json() for a in self.items]
+        return d
+
 class Input(Statement):
     vars: list[str]
 
     def __init__(self, vars: list[str]):
         super().__init__(etype=ExpType.Void, id="Input")
         self.vars = vars
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["vars"] = self.vars
+        return d
 
 class DefFN(Statement):
     name: str 
@@ -312,8 +471,15 @@ class DefFN(Statement):
         self.name = name
         self.args = args
         self.body = body
-    
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        d["body"] = self.body.to_json()
+        return d
+
 # ------ Serialize -------
     
 def to_json(root: Program) -> str:
-    return json.dumps({}, indent=2)
+    return json.dumps(root.to_json(), indent=2)
