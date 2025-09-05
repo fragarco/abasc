@@ -97,7 +97,7 @@ class Line(ASTNode):
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["number"] = self.number,
+        d["number"] = self.number
         d["statements"] = [s.to_json() for s in self.statements]
         return d
 
