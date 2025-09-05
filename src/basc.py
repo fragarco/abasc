@@ -95,7 +95,7 @@ def main() -> None:
         print(str(e))
         sys.exit(1)
     if args.verbose:
-        astjson = AST.asdict(ast)
+        astjson = ast.to_json()
         astfile = args.infile.upper().replace('BAS','AST')
         with open(astfile, "w") as fd:
             fd.write(json.dumps(astjson, indent=4))

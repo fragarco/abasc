@@ -478,8 +478,3 @@ class DefFN(Statement):
         d["args"] = [a.to_json() for a in self.args]
         d["body"] = self.body.to_json()
         return d
-
-# ------ Serialize -------
-    
-def to_json(root: Program) -> str:
-    return json.dumps(root.to_json(), indent=2)

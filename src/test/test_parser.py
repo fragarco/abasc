@@ -567,7 +567,7 @@ class TestParser(unittest.TestCase):
         with self.assertRaises(BasError):
             self.parse_code(code)
 
-    def test_deg_basic(self):
+    def test_di_basic(self):
         code = "10 DI: END"
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[0].name, "DI")

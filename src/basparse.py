@@ -1701,6 +1701,6 @@ if __name__ == "__main__":
         code = [CodeLine("example.bas", i, line) for i,line in enumerate(program.split('\n'))]
         parser = LocBasParser(code, tokens)
         ast, _ = parser.parse_program()
-        print(AST.to_json(ast))
+        print(ast.to_json())
     except BasError as e:
         print(e)
