@@ -74,6 +74,9 @@ class ASTNode:
             "id": self.id,
         }
 
+    def __str__(self) -> str:
+        return json.dumps(self.to_json(), indent=2)
+
 class Program(ASTNode):
     lines: list["Line"]
 

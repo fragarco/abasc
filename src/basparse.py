@@ -459,7 +459,7 @@ class LocBasParser:
         return AST.Command(name="DI")
 
     def _parse_DIM(self) -> AST.Command:
-        """ <DIM> ::= DIM <array_declaration>[,<array_declaraion>]*"""
+        """ <DIM> ::= DIM <array_declaration>[,<array_declaration>]*"""
         # El numero dado como "size" es el maximo indice que se puede
         # usar, de esta forma es valido 10 DIM I(0): I(0) = 5
         self._advance()
@@ -582,6 +582,93 @@ class LocBasParser:
             self._raise_error(5)
         return AST.Command(name="ENV", args=args)
 
+    def _parse_EOF(self) -> AST.Function:
+        """ <EOF> ::= EOF """
+        self._advance()
+        return AST.Function(name="EOF", etype=AST.ExpType.Integer)    
+
+    def _parse_ERASE(self) -> AST.Command:
+        """ <ERASE> ::= ERASE IDENT[,IDENT]* """
+        self._advance()
+        args: list[AST.Statement] = []
+        tk = self._expect(TokenType.IDENT)
+        entry = self.symtable.find(tk.lexeme, context=self.context)
+        if entry is None or entry.symtype != SymType.Array:
+            self._raise_error(2)
+        else:
+            args.append(AST.Variable(name=tk.lexeme, etype=entry.exptype))
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            tk = self._expect(TokenType.IDENT)
+            entry = self.symtable.find(tk.lexeme, context=self.context)
+            if entry is None or entry.symtype != SymType.Array:
+                self._raise_error(2)
+            else:
+                args.append(AST.Variable(name=tk.lexeme, etype=entry.exptype))
+        return AST.Command(name="ERASE", args=args)
+
+    def _parse_ERL(self) -> AST.Function:
+        """ <ERL> ::= ERL """
+        # Will return the line number where the last ERROR command was executed 
+        self._advance()
+        return AST.Function(name="ERL", etype=AST.ExpType.Integer)
+
+    def _parse_ERR(self) -> AST.Function:
+        """ <ERR> ::= ERR """
+        # Will return the error code number used in the last executed ERROR command
+        self._advance()
+        return AST.Function(name="ERR", etype=AST.ExpType.Integer)
+
+    def _parse_ERROR(self) -> AST.Command:
+        """ <ERROR> ::= ERROR <int_expression> """
+        # Sets the values for ERR and ERL
+        self._advance()
+        args = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(5)
+        return AST.Command(name="ERROR", args=args)
+
+    def _parse_EVERY(self) -> AST.Command:
+        """ <EVERY> ::= EVERY <int_expression>[,<int_expression>] <GOSUB> """
+        self._advance()
+        args = [self._parse_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        if not self._current_is(TokenType.KEYWORD, lexeme="GOSUB"):
+            self._raise_error(2)
+        args.append(self._parse_GOSUB())
+        return AST.Command(name="EVERY", args=args)
+
+    def _parse_EXP(self) -> AST.Function:
+        """ <EXP> ::= EXP(<expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(5)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="EXP", etype=AST.ExpType.Real, args=args)
+
+    def _parse_FIX(self) -> AST.Command:
+        """ <FIX> ::= FIX(<expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        if not AST.exptype_isnum(args[0].etype):
+            self._raise_error(5)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="FIX", etype=AST.ExpType.Integer, args=args)
+    
+    def _parse_FN(self) -> AST.Command:
+        # DEF parses FN so if we arrive here is a syntax error
+        self._advance()
+        self._raise_error(2)
+        return AST.Command(name="FN")
+
     def _parse_FOR(self) -> AST.ForLoop:
         """ <FOR> ::= FOR IDENT = <expression> TO <expression> [STEP <expression>] <for_body> """
         """ <for_body> ::= : <for_inline> | EOL <for_block> """
@@ -642,8 +729,6 @@ class LocBasParser:
         self._advance()
         num = self._expect(TokenType.INT)
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
-        if self.symtable.find(str(cast(int, num.value))) is None:
-            self._raise_error(8)
         return AST.Command(name="GOSUB", args=args)
 
     def _parse_GOTO(self) -> AST.Command:
@@ -651,8 +736,6 @@ class LocBasParser:
         self._advance()
         num = self._expect(TokenType.INT)
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
-        if self.symtable.find(str(cast(int, num.value))) is None:
-            self._raise_error(8)
         return AST.Command(name="GOTO", args=args)
 
     def _parse_IF(self) -> AST.If:
@@ -977,11 +1060,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="HIMEM")
 
-    def _parse_FIX(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="FIX")
-
     def _parse_MEMORY(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1042,20 +1120,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="DEF")
 
-    def _parse_ERASE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ERASE")
-
     def _parse_INK(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="INK")
-
-    def _parse_EVERY(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="EVERY")
 
     def _parse_TAG(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1107,11 +1175,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="OPENOUT")
 
-    def _parse_FN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="FN")
-
     def _parse_LINE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1147,20 +1210,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SPC")
 
-    def _parse_ERL(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ERL")
-
     def _parse_FRAME(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="FRAME")
-
-    def _parse_EOF(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="EOF")    
 
     def _parse_TROFF(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1222,11 +1275,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SOUND")
 
-    def _parse_EXP(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="EXP")
-
     def _parse_SQ(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1251,11 +1299,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="LINE_INPUT")
-
-    def _parse_ERR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ERR")
 
     def _parse_FILL(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1306,11 +1349,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SGN")
-
-    def _parse_ERROR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ERROR")
 
     def _parse_VAL(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1512,9 +1550,7 @@ class LocBasParser:
             return AST.String(value=tok.lexeme.strip('"'))
         if tok.type == TokenType.IDENT:
             return self._parse_primary_ident()
-        if tok.type == TokenType.KEYWORD:
-            if not self._next_is(TokenType.LPAREN):
-                self._raise_error(2)    
+        if tok.type == TokenType.KEYWORD:   
             return self._parse_keyword()
         if self._match(TokenType.LPAREN):
             expr = self._parse_expression()

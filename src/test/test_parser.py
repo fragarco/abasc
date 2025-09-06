@@ -630,5 +630,49 @@ class TestParser(unittest.TestCase):
         self.assertEqual(len(ast.lines[0].statements[0].args), 6)
         self.assertEqual(ast.lines[0].statements[0].args[5].value, 4000)
 
+    def test_eof_basic(self):
+        code = '10 WHILE NOT EOF: PRINT "PRINT READING": WEND'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].condition.op, "NOT")
+        self.assertEqual(ast.lines[0].statements[0].condition.etype, AST.ExpType.Integer)
+        self.assertEqual(ast.lines[0].statements[0].condition.operand.name, "EOF")
+
+    def test_erase_basic(self):
+        code = '10 DIM a(100), b$(100): ERASE a,b$'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].name, "ERASE")
+        self.assertEqual(len(ast.lines[0].statements[1].args), 2)
+
+    def test_error_basic(self):
+        code = '10 IF ERR=17 THEN 10 ELSE ERROR 17\n20 PRINT ERR,ERL'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].id, "If")
+        self.assertEqual(ast.lines[0].statements[0].else_block[0].name, "ERROR")
+        self.assertEqual(len(ast.lines[0].statements[0].else_block[0].args), 1)
+
+    def test_every_basic(self):
+        code = """
+10 EVERY 50,1 GOSUB 30
+20 GOTO 20
+30 PRINT "."
+40 RETURN
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "EVERY")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 3)
+        self.assertEqual(ast.lines[0].statements[0].args[2].name, "GOSUB")
+
+    def test_exp_basic(self):
+        code = '10 PRINT EXP(6.876)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "EXP")
+        self.assertEqual(ast.lines[0].statements[0].items[0].args[0].value, 6.876)
+
+    def test_fix_basic(self):
+        code = '10 PRINT FIX(9.999)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "FIX")
+        self.assertEqual(ast.lines[0].statements[0].items[0].args[0].value, 9.999)
+
 if __name__ == "__main__":
     unittest.main()

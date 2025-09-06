@@ -1,6 +1,6 @@
 @echo off
 cd src
-mypy . --explicit-package-bases
-python3 -m unittest
+call mypy . --explicit-package-bases
+call python3 -m unittest
 cd ..
 @echo on
