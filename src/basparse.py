@@ -653,7 +653,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="EXP", etype=AST.ExpType.Real, args=args)
 
-    def _parse_FIX(self) -> AST.Command:
+    def _parse_FIX(self) -> AST.Function:
         """ <FIX> ::= FIX(<expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
@@ -724,6 +724,14 @@ class LocBasParser:
             body.append(last_stmt)
         return body
 
+    def _parse_FRE(self) -> AST.Function:
+        """ <FRE> ::= FRE(0) | FRE("") """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="FRE", etype=AST.ExpType.Integer, args=args)
+
     def _parse_GOSUB(self) -> AST.Command:
         """ <GOSUB> ::= GOSUB INT """
         self._advance()
@@ -738,6 +746,25 @@ class LocBasParser:
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="GOTO", args=args)
 
+    def _parse_HEXSS(self) -> AST.Function:
+        """ <HEXSS> ::= HEX$(<int_expression>[,<int_expression>]) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isnum(args[0].etype):
+                self._raise_error(5)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="HEX$", etype=AST.ExpType.String, args=args)
+
+    def _parse_HIMEM(self) -> AST.Function:
+        """ <HIMEN> ::= HIMEN """
+        self._advance()
+        return AST.Function(name="HIMEM", etype=AST.ExpType.Integer)
+    
     def _parse_IF(self) -> AST.If:
         """ <IF> ::= IF <expression> THEN <then_block> [ELSE <else_block>] """
         self._advance()
@@ -970,11 +997,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="OPENIN")
 
-    def _parse_FRE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="FRE")
-
     def _parse_PI(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1054,11 +1076,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WINDOW")
-
-    def _parse_HIMEM(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="HIMEM")
 
     def _parse_MEMORY(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1199,11 +1216,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="YPOS")
-
-    def _parse_HEX_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="HEX_S")
 
     def _parse_SPC(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER

@@ -674,5 +674,21 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[0].items[0].name, "FIX")
         self.assertEqual(ast.lines[0].statements[0].items[0].args[0].value, 9.999)
 
+    def test_fre_basic(self):
+        code = '10 PRINT FRE(0),FRE("")'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "FRE")
+        self.assertEqual(ast.lines[0].statements[0].items[0].etype, AST.ExpType.Integer)
+        self.assertEqual(ast.lines[0].statements[0].items[0].args[0].etype, AST.ExpType.Integer)
+        self.assertEqual(ast.lines[0].statements[0].items[1].args[0].etype, AST.ExpType.String)
+
+    def test_hexss_basic(self):
+        code = '10 PRINT HEX$(255,4)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "HEX$")
+        self.assertEqual(ast.lines[0].statements[0].items[0].etype, AST.ExpType.String)
+        self.assertEqual(ast.lines[0].statements[0].items[0].args[0].etype, AST.ExpType.Integer)
+        self.assertEqual(ast.lines[0].statements[0].items[0].args[1].etype, AST.ExpType.Integer)
+
 if __name__ == "__main__":
     unittest.main()
