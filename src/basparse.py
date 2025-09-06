@@ -550,6 +550,37 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="END")
 
+    def _parse_ENT(self) -> AST.Command:
+        """ <ENT> ::= ENT <int_expression>[,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>] """
+        """ <ent_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
+        # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or 2-bytes, byte.
+        self._advance()
+        args: list[AST.Statement] = [self._parse_expression()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        if len(args) > 5*3:
+            self._raise_error(5)
+        return AST.Command(name="ENT", args=args)
+
+    def _parse_ENV(self) -> AST.Command:
+        """ <ENV> ::= ENV <int_expression>[,<env_section>][,<env_section>][,<env_section>][,<env_section>][,<env_section>] """
+        """ <env_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
+        # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or byte, 2-bytes.
+        self._advance()
+        args: list[AST.Statement] = [self._parse_expression()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        if len(args) > 5*3:
+            self._raise_error(5)
+        return AST.Command(name="ENV", args=args)
 
     def _parse_FOR(self) -> AST.ForLoop:
         """ <FOR> ::= FOR IDENT = <expression> TO <expression> [STEP <expression>] <for_body> """
@@ -936,11 +967,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="LOAD")
 
-    def _parse_ENT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ENT")
-
     def _parse_WINDOW(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1075,11 +1101,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="REM")
-
-    def _parse_ENV(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ENV")
 
     def _parse_OPENOUT(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER

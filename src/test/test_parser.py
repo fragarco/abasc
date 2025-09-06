@@ -616,5 +616,19 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[0].name, "EI")
 
+    def test_ent_basic(self):
+        code = "10 ENT -1,128,128,128,4000,128"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "ENT")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 6)
+        self.assertEqual(ast.lines[0].statements[0].args[5].value, 128)
+        
+    def test_env_basic(self):
+        code = "10 ENV 1,128,128,128,128,4000"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "ENV")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 6)
+        self.assertEqual(ast.lines[0].statements[0].args[5].value, 4000)
+
 if __name__ == "__main__":
     unittest.main()
