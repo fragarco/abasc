@@ -371,6 +371,13 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="DEC$", args=args, etype=AST.ExpType.String)
 
+    def _parse_DEF(self) -> AST.Command:
+        # We decode DEF FN and not only DEF so if we find this
+        # is an error
+        self._advance()
+        self._raise_error(2)
+        return AST.Command(name="DEF")
+
     def _parse_DEF_FN(self) -> AST.DefFN:
         """ <DEF_FN> ::== DEF FNIDENT[(IDENT[,IDENT]*)]=<num_expression>"""
         self._advance()
@@ -834,6 +841,45 @@ class LocBasParser:
         self.codeblocks.pop()
         return AST.BlockEnd(name="IFEND")
 
+    def _parse_INK(self) -> AST.Command:
+        """ <INK> ::= INK <int_expression()>,<int_expression>[,<int_expression>] """
+        self._advance()
+        args = [self._parse_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_expression())
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_expression())
+        for a in args:
+            if not AST.exptype_isint(a.etype):
+                self._raise_error(5)
+        return AST.Command(name="INK", args=args)
+
+    def _parse_INKEY(self) -> AST.Function:
+        """ <INKEY> ::= INKEY(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(5)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="INKEY", etype=AST.ExpType.Integer, args=args)
+    
+    def _parse_INKEYSS(self) -> AST.Function:
+        """ <INKEYSS> ::= INKEY$ """
+        self._advance()
+        return AST.Function(name="INKEY$", etype=AST.ExpType.String)
+
+    def _parse_INP(self) -> AST.Function:
+        """ <INP> ::= INP(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_expression()]
+        if not AST.exptype_isint(args[0].etype):
+            self._raise_error(5)
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="INP", etype=AST.ExpType.Integer, args=args)
+
     def _parse_INPUT(self) -> AST.Input:
         self._advance()
         vars = []
@@ -868,9 +914,10 @@ class LocBasParser:
         items: list[AST.Statement] = []
         while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
             if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
-                self._advance()
-                continue
-            items.append(self._parse_expression())
+                code = self._advance().lexeme
+                items.append(AST.ControlCode(code=code))
+            else:
+                items.append(self._parse_expression())
         return AST.Print(items=items)
 
     def _parse_RETURN(self) -> AST.Command:
@@ -951,11 +998,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WAIT")
-
-    def _parse_INP(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INP")
 
     def _parse_RANDOMIZE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1132,16 +1174,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="STRING_S")
 
-    def _parse_DEF(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="DEF")
-
-    def _parse_INK(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INK")
-
     def _parse_TAG(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1231,11 +1263,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="TROFF")
-
-    def _parse_INKEY(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INKEY")
 
     def _parse_LEFT_S(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1366,11 +1393,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="VAL")
-
-    def _parse_INKEY_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INKEY_S")
 
     def _parse_WIDTH(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1695,7 +1717,7 @@ class LocBasParser:
         return AST.Assignment(target=target, source=source, etype=target.etype)
 
     def _parse_code_block(self) -> list[AST.Statement]:
-        """ <code_block> ::= <line><parse_block> | (NEXT | WEND | ELSE | IFEND) """
+        """ <code_block> ::= <line><parse_block> | (NEXT | WEND | ELSE | IFEND) """
         codeblock = self.codeblocks[-1]
         self._expect(TokenType.LINE_NUMBER)
         stmts: list[AST.Statement] = self._parse_statement_list()
@@ -1706,6 +1728,7 @@ class LocBasParser:
         if not isinstance(stmts[-1], AST.BlockEnd):
             # The line continued after the BlockEnd keyword
             # which is an error for us
+            # TODO: review the problem of 30 NEXT I: NEXT J
             self._rewind()
             self._raise_error(2, "Extra statements aren't allowed after a codeblock end")
         return stmts

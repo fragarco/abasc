@@ -293,6 +293,18 @@ class Stream(Statement):
         d["value"] = self.value
         return d
 
+class ControlCode(Statement):
+    code: str
+    
+    def __init__(self, code: str):
+        super().__init__(etype=ExpType.Void, id="ControlCode")
+        self.code = code
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["code"] = self.code
+        return d
+
 # ---------- Statement Nodes ----------
 
 class If(Statement):
