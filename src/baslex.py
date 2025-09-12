@@ -104,9 +104,9 @@ _KEYWORDS = {
     "LOCATE","MASK","MEMORY","MERGE","MID$","MODE","MOVE","MOVER","NEW","NEXT","ON",
     "ON BREAK","ON ERROR GOTO", "ON SQ","OPENIN","OPENOUT","ORIGIN","OUT","PAPER",
     "PEN","PLOT","PLOTR","POKE","PRINT","RAD","RANDOMIZE","READ","RELEASE","REM",
-    "RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","STOP",
-    "SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN",
-    "USING","WAIT","WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
+    "RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","STEP",
+    "STOP","SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON",
+    "THEN","USING","WAIT","WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
     # Functions
     "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
@@ -328,7 +328,7 @@ class LocBasLexer:
             "GRAPHICS": ["PAPER", "PEN"],
             "KEY": ["DEF"],
             "LINE": ["INPUT"],
-            "ON": ["BREAK", "ERROR GOTO", "ERROR GOTO", "SQ"],
+            "ON": ["BREAK", "ERROR GOTO", "SQ"],
             "SYMBOL": ["AFTER"],
         }
         if head_upper in compound:

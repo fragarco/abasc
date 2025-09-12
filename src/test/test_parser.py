@@ -10,6 +10,7 @@ from basparse import LocBasParser
 from baslex import LocBasLexer
 from baspp import CodeLine
 import astlib as AST
+import json
 
 class TestParser(unittest.TestCase):
 
@@ -204,12 +205,6 @@ class TestParser(unittest.TestCase):
             self.assertEqual(ast.lines[0].statements[0].name, "CALL")
             self.assertEqual(ast.lines[0].statements[0].etype, AST.ExpType.Void)
         codes = ['10 CALL "2"', '10 CALL 2,@"3"', '10 CALL 2,"H",@2']
-        for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
-
-    def test_cat_basic(self):
-        codes = ['10 CAT', '10 I=10: CAT']
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -989,6 +984,171 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[1].items[0].name, "MID$")
         self.assertEqual(len(ast.lines[0].statements[1].items[0].args), 3)
+
+    def test_on_GOSUB_basic(self):
+        code = "10 DAY=1: ON DAY GOSUB 100,200,300,400,500"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].name, "ON GOSUB")
+        self.assertEqual(len(ast.lines[0].statements[1].args), 6)
+        self.assertEqual(ast.lines[0].statements[1].args[1].value, 100)
+
+    def test_on_GOTO_basic(self):
+        code = r"10 RATE%=0: ON RATE% GOTO 1000,2000,3000,4000"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].name, "ON GOTO")
+        self.assertEqual(len(ast.lines[0].statements[1].args), 5)
+        self.assertEqual(ast.lines[0].statements[1].args[1].value, 1000)
+
+    def test_on_break_example(self):
+        code = """
+10 ON BREAK GOSUB 40
+20 PRINT "program running"
+30 GOTO 20
+40 CLS
+50 PRINT "pressing [ESC] twice calls GOSUB routine"
+60 FOR t=1 TO 2000:NEXT
+65 ON BREAK STOP
+70 RETURN
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "ON BREAK GOSUB")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 40)
+        self.assertEqual(ast.lines[6].statements[0].name, "ON BREAK STOP")
+
+    def test_on_error_example(self):
+        code = """
+10 ON ERROR GOTO 80  
+20 CLS 
+30 PRINT"if there is an error, I would"  
+40 PRINT"like the program listed, so that"  
+50 PRINT"I can see where I went wrong"  
+60 FOR t=1 TO 4000:NEXT   
+70 GOTO 100 
+80 CLS:PRINT"THERE IS AN ERROR IN LINE";ERL:PRINT   
+90 LIST
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "ON ERROR GOTO")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 80)
+
+    def test_on_sq_example(self):
+        code = "10 ON SQ(2) GOSUB 2000"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "ON SQ")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 2)
+        self.assertEqual(ast.lines[0].statements[0].args[1].value, 2000)
+
+    def test_openin_openout_basic(self):
+        code = '10 OPENIN "DATA.TXT": OPENOUT "DATA.TXT"'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "OPENIN")
+        self.assertEqual(ast.lines[0].statements[1].name, "OPENOUT")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, "DATA.TXT")
+
+    def test_origin_example(self):
+        code = """
+10 CLS:BORDER 13 
+20 ORIGIN 0,0,50,590,350,50  
+30 DRAW 540,350 
+40 GOTO 20
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].name, "ORIGIN")
+        self.assertEqual(len(ast.lines[1].statements[0].args), 6)
+        self.assertEqual(ast.lines[1].statements[0].args[3].value, 590)
+
+    def test_out_example(self):
+        code = "10 OUT &7F00,10:OUT &7F00,&4B"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "OUT")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 32512)
+        self.assertEqual(ast.lines[0].statements[1].args[1].value, 75)
+
+    def test_paper_pen_example(self):
+        code = """
+10 MODE 0 
+20 FOR p=0 TO 15 
+30 PAPER p:CLS 
+40 PEN 15-p 
+50 LOCATE 6,12:PRINT "PAPER"p  
+60 FOR t=1 TO 500: NEXT t  
+70 NEXT p  
+"""         
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0].body[0]
+        self.assertEqual(cmd.name, "PAPER")
+        self.assertIsInstance(cmd.args[0], AST.Variable)
+
+    def test_peek_example(self):
+        code = """
+10 MODE 2 
+20 INK 1,0: INK 0,12: BORDER 12 
+30 INPUT "Start address for examination";first  
+40 INPUT "End address for examination";last  
+50 FOR n= first TO last  
+60 VALUE$=HEX$(PEEK(n),2)  
+70 PRINT VALUE$; 
+80 PRINT" at ";HEX$(n,4),  
+90 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[4].statements[0].body[0].source.args[0]
+        self.assertEqual(cmd.name, "PEEK")
+        self.assertEqual(cmd.etype, AST.ExpType.Integer)
+        self.assertIsInstance(cmd.args[0], AST.Variable)
+
+    def test_pi_example(self):
+        code = """
+10 REM Perspective drawing  
+20 MODE 2 
+30 RAD 
+40 INK 1,0 
+50 INK 0,12 
+60 BORDER 9 
+70 FOR N= 1 TO 200 
+80 ORIGIN 420,0 
+90 DRAW 0,200 
+100 REM draw angles from vanishing point  
+110 DRAW CINT(30*N*SIN(N*PI/4)),CINT(SIN(PI/2)*N*SIN(N)) 
+120 NEXT 
+130 MOVE 0,200 
+140 DRAWR 0,50 
+150 DRAWR 40,0 
+160 WINDOW 1,40,1,10  
+170 PRINT"Now you can finish the Hangman program!"
+"""
+        ast, _ = self.parse_code(code)
+        # it's enough to check that PI is correctly parsed
+        self.assertIsInstance(ast.lines[6].statements[0].body[3], AST.Command)
+
+    def test_plot_example(self):
+        code = """
+10 MODE 2:PRINT "Enter 4 numbers, separated by commas":PRINT  
+20 PRINT "Enter X origin (0-639), Y origin (O-399), radius and angle to to step":INPUT x,y,r,s
+30 ORIGIN x,y
+40 FOR angle = 1 to 360 STEP s
+50 XPOINT = r*COS(angle)
+60 YPOINT = r*SIN(angle)
+70 PLOT XPOINT,YPOINT
+74 REM MOVE 0,0
+75 REM DRAW XPOINT,YPOINT
+80 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[3].statements[0].body[2]
+        self.assertEqual(cmd.name, "PLOT")
+        self.assertIsInstance(cmd.args[0], AST.Variable)
+        self.assertIsInstance(cmd.args[1], AST.Variable)
+
+    def test_poke_pos_example(self):
+        code = """
+10 V=POS(#0)
+20 POKE &00FF,V
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].name, "POKE")
+        self.assertEqual(ast.lines[1].statements[0].args[0].value, 255)
+        self.assertIsInstance(ast.lines[1].statements[0].args[1], AST.Variable)
 
 if __name__ == "__main__":
     unittest.main()
