@@ -244,6 +244,18 @@ class TestParser(unittest.TestCase):
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
+
+    def test_clear_input_basic(self):
+        code = """
+10 CLS
+20 PRINT "Type in letters now!"
+30 FOR t=1 TO 3000
+40 NEXT
+50 CLEAR INPUT
+"""
+        ast, _ = self.parse_code(code)
+        # FOR + NEXT form a single line/block
+        self.assertEqual(ast.lines[3].statements[0].name, "CLEAR INPUT")
  
     def test_clg_basic(self):
         codes = ["10 CLG 1", "10 CLG 1+1", "10 CLG"]
@@ -285,6 +297,22 @@ class TestParser(unittest.TestCase):
             with self.assertRaises(BasError):
                 self.parse_code(code)
 
+
+    def test_copychrss_example(self):
+        code = """
+10 CLS
+20 PRINT "top corner"
+30 LOCATE 1,1
+40 a$=COPYCHR$(#0)
+50 LOCATE 1,20
+60 PRINT a$
+"""
+        ast, _ = self.parse_code(code)
+        cpcmd = ast.lines[3].statements[0].source
+        self.assertEqual(cpcmd.name, "COPYCHR$")
+        self.assertEqual(len(cpcmd.args), 1)
+        self.assertEqual(cpcmd.args[0].value, 0)
+
     def test_cos_basic(self):
         codes = ['10 COS(2.5)', '10 COS(2+2*5)', '10 COS(&HA0)']
         for code in codes:
@@ -310,6 +338,20 @@ class TestParser(unittest.TestCase):
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
+
+    def test_cursor_example(self):
+        code = """
+10 CURSOR 1
+20 PRINT "question?";
+30 a$=INKEY$:IF a$="" THEN 30
+40 PRINT a$
+50 CURSOR 0
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0]
+        self.assertEqual(cmd.name, "CURSOR")
+        self.assertEqual(len(cmd.args), 1)
+        self.assertEqual(cmd.args[0].value, 1)
 
     def test_data_basic(self):
         code = '10 DATA 1,2,3,HELLO,"HELLO",&HFF,1.5'
@@ -730,6 +772,223 @@ class TestParser(unittest.TestCase):
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
+
+    def test_input_full(self):
+        code = '10 INPUT #0,"ENTER YOUR NAME:";n$'
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0]
+        self.assertIsInstance(cmd, AST.Input)
+        self.assertEqual(cmd.stream.value, 0)
+        self.assertEqual(cmd.prompt, "ENTER YOUR NAME:")
+        self.assertFalse(cmd.question)
+        self.assertEqual(cmd.vars[0].name, "n$")
+
+    def test_input_options(self):
+        codes = [
+            '10 INPUT "QUESTION",n$',
+            '10 INPUT "QUESTION";n$,a$,b$',
+            "10 INPUT a",
+            "10 INPUT ;b$,c$",
+            "10 INPUT #1;num",
+            '10 INPUT "",a,b'
+            ""
+        ]
+        for code in codes:
+            ast, _ = self.parse_code(code)
+            cmd = ast.lines[0].statements[0]
+            self.assertIsInstance(cmd, AST.Input)
+
+    def test_input_errors(self):
+        codes = [
+            "10 INPUT 'QUESTION',n$",
+            '10 INPUT 12,"QUESTION";n$',
+            '10 INPUT a,12,"a"',
+            "10 INPUT ;b$;c$",
+            '10 INPUT #1+"a";num',
+            '10 INPUT "",a;b'
+            ""
+        ]
+        for code in codes:
+            with self.assertRaises(BasError):
+                self.parse_code(code)
+
+    def test_input_createvars(self):
+        code = '10 INPUT n$: a$="ASNWER: "+n$'
+        ast,symt = self.parse_code(code)
+        cmd = ast.lines[0].statements[0]
+        self.assertIsInstance(cmd, AST.Input)
+        self.assertTrue(symt.find(ident="n$", context="") is not None)
+
+    def test_input_if_example(self):
+        code = """
+10 CLS 
+20 INPUT "Give me two numbers, separated by a comma ";A,B 
+30 IF A=B THEN PRINT "The two numbers are the same" 
+40 IF A>B THEN PRINT A "is greater than" B  
+50 IF A<B THEN PRINT A "is less than" B  
+60 CLEAR:GOTO 20
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0]
+        self.assertIsInstance(cmd, AST.Input)
+
+
+    def test_instr_basic(self):
+        code = '10 PRINT INSTR(2,"BANANA","AN")'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "INSTR")
+        self.assertEqual(ast.lines[0].statements[0].items[0].etype, AST.ExpType.Integer)
+
+    def test_int_basic(self):
+        code = '10 PRINT INT(-1.995)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "INT")
+        self.assertEqual(ast.lines[0].statements[0].items[0].etype, AST.ExpType.Integer)
+
+    def test_joy_basic(self):
+        code = '10 IF JOY(0) AND 8 THEN GOTO 100'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].condition.left.name, "JOY")
+        self.assertEqual(ast.lines[0].statements[0].condition.left.etype, AST.ExpType.Integer)
+    
+    def test_key_basic(self):
+        code = '10 KEY 140,"RUN"+CHR$(13)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "KEY")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 2)
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 140)
+
+    def test_graphics_paper_mask_example(self):
+        code = """
+10 MODE 0
+20 MASK 15
+30 GRAPHICS PAPER 3
+40 DRAW 200,200
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].name, "MASK")
+        self.assertEqual(ast.lines[1].statements[0].args[0].value, 15)
+        self.assertEqual(ast.lines[2].statements[0].name, "GRAPHICS PAPER")
+        self.assertEqual(ast.lines[2].statements[0].args[0].value, 3)
+
+    def test_graphics_pen_move_example(self):
+        code = """
+10 MODE 0
+20 GRAPHICS PEN 15
+30 MOVE 200,0
+40 DRAW 200,400
+50 MOVE 639,0
+60 FILL 15
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[2].statements[0].name, "MOVE")
+        self.assertEqual(ast.lines[2].statements[0].args[0].value, 200)
+        self.assertEqual(ast.lines[2].statements[0].args[1].value, 0)
+        self.assertEqual(ast.lines[1].statements[0].name, "GRAPHICS PEN")
+        self.assertEqual(ast.lines[1].statements[0].args[0].value, 15)
+
+    def test_key_def_basic(self):
+        code = '10 KEY DEF 46,1,110'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "KEY DEF")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 3)
+
+    def test_leftss_example(self):
+        code = """
+10 CLS 
+20 A$ = "AMSTRAD" 
+30 B$ = LEFT$(A$,3) 
+40 PRINT B$ 
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[2].statements[0].source
+        self.assertEqual(cmd.name, "LEFT$")
+        self.assertEqual(cmd.etype, AST.ExpType.String)
+        self.assertEqual(len(cmd.args), 2)
+
+    def test_len_basic(self):
+        code = '10 A$="AMSTRAD":PRINT LEN(A$)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].items[0].name, "LEN")
+        self.assertEqual(len(ast.lines[0].statements[1].items[0].args), 1)
+
+    def test_line_input_basic(self):
+        codes = ['10 LINE INPUT ;A$', '10 LINE INPUT "NAME"; N$']
+        for code in codes:
+            ast, _ = self.parse_code(code)
+            self.assertIsInstance(ast.lines[0].statements[0], AST.LineInput)
+            self.assertFalse(ast.lines[0].statements[0].carriage)
+
+    def test_load_basic(self):
+        code = '10 LOAD "TITLE.SCN",&C000'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "LOAD")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, "TITLE.SCN")
+        self.assertEqual(ast.lines[0].statements[0].args[1].value, 49152)
+
+    def test_log_log10_basic(self):
+        codes = ['10 LOG(9999)', '10 LOG10(9999)']
+        for code in codes:
+            ast, _ = self.parse_code(code)
+            self.assertEqual(ast.lines[0].statements[0].args[0].value, 9999)
+
+    def test_lowerss_basic(self):
+        code = '10 A$="AMSTRAD":PRINT LOWER$(A$)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].items[0].name, "LOWER$")
+        self.assertEqual(len(ast.lines[0].statements[1].items[0].args), 1)
+
+    def test_mask_example(self):
+        code="""
+10 CLS:TAG
+20 MASK 1:MOVE 0,250:DRAWR 240,0
+30 PRINT "(binary 00000001 in mask)"
+40 MASK 3:MOVE 0,200:DRAWR 240,0
+50 PRINT "(binary 00000011 in mask)"
+60 MASK 7:MOVE 0,150:DRAWR 240,0
+70 PRINT "(binary 00000111 in mask)"
+80 MASK 15:MOVE 0,100:DRAWR 240,0
+90 PRINT "(binary 00001111 in mask)"
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].name, "MASK")
+        self.assertEqual(ast.lines[1].statements[0].args[0].value, 1)
+
+    def test_max_example(self):
+        code="""
+10 n=66 
+20 PRINT MAX(1,n,3,6,4,3)
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].items[0].name, "MAX")
+        self.assertEqual(ast.lines[1].statements[0].items[0].etype, AST.ExpType.Integer)
+
+    def test_min_example(self):
+        code="""
+10 n=66 
+20 PRINT MIN(1,n,3.0,6,4,3)
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[1].statements[0].items[0].name, "MIN")
+        self.assertEqual(ast.lines[1].statements[0].items[0].etype, AST.ExpType.Real)
+
+    def test_memory_basic(self):
+        code = '10 MEMORY &20AA'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "MEMORY")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 8362)
+
+    def test_merge_basic(self):
+        code = '10 MERGE "PLAN"'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "MERGE")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, "PLAN")
+    
+    def test_midss_basic(self):
+        code = '10 A$="AMSTRAD":PRINT MID$(A$,2,4)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[1].items[0].name, "MID$")
+        self.assertEqual(len(ast.lines[0].statements[1].items[0].args), 3)
 
 if __name__ == "__main__":
     unittest.main()

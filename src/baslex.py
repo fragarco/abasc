@@ -95,18 +95,18 @@ class TokenEncoder(json.JSONEncoder):
 # List of Locomotive BASIC reserved words (commands and functions)
 _KEYWORDS = {
     # Commands
-    "AFTER","AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR","CLG",
-    "CLOSEIN","CLOSEOUT","CLS","CONT","CURSOR","DATA","DEF","DEF FN","DEFINT",
-    "DEFREAL","DEFSTR","DEG","DELETE","DI","DIM","DRAW","DRAWR","EDIT","EI",
-    "ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL","FN","FOR",
-    "FRAME","GOSUB","GOTO","GRAPHICS","IF","IFEND","INK","INPUT","KEY","LET",
-    "LINE","LINE INPUT","LIST","LOAD","LOCATE","MASK","MEMORY","MERGE","MID$",
-    "MODE","MOVE","MOVER","NEW","NEXT","ON","ON BREAK","ON ERROR GOTO", "ON SQ",
-    "OPENIN","OPENOUT","ORIGIN","OUT","PAPER","PEN","PLOT","PLOTR","POKE",
-    "PRINT","RAD","RANDOMIZE","READ","RELEASE","REM","RENUM","RESTORE",
-    "RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","STOP","SWAP","SYMBOL",
-    "SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN","USING",
-    "WAIT","WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
+    "AFTER","AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR","CLEAR INPUT",
+    "CLG", "CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA","DEF","DEF FN",
+    "DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI","DIM","DRAW","DRAWR",
+    "EDIT","EI","ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL","FN",
+    "FOR","FRAME","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF",
+    "IFEND","INK","INPUT","KEY","KEY DEF","LET","LINE","LINE INPUT","LIST","LOAD",
+    "LOCATE","MASK","MEMORY","MERGE","MID$","MODE","MOVE","MOVER","NEW","NEXT","ON",
+    "ON BREAK","ON ERROR GOTO", "ON SQ","OPENIN","OPENOUT","ORIGIN","OUT","PAPER",
+    "PEN","PLOT","PLOTR","POKE","PRINT","RAD","RANDOMIZE","READ","RELEASE","REM",
+    "RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","STOP",
+    "SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN",
+    "USING","WAIT","WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
     # Functions
     "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
@@ -321,12 +321,15 @@ class LocBasLexer:
         ON ERROR GOTO, SYMBOL AFTER, LINE INPUT, etc.
         """
         save_i, save_line, save_col = self.pos, self.line, self.col
-        compound = {
+        compound = {       
+            "CHAIN": ["MERGE"],
+            "CLEAR": ["INPUT"],
+            "DEF": ["FN"],
+            "GRAPHICS": ["PAPER", "PEN"],
+            "KEY": ["DEF"],
+            "LINE": ["INPUT"],
             "ON": ["BREAK", "ERROR GOTO", "ERROR GOTO", "SQ"],
             "SYMBOL": ["AFTER"],
-            "LINE": ["INPUT"],
-            "CHAIN": ["MERGE"],
-            "DEF": ["FN"]
         }
         if head_upper in compound:
             for tail in compound[head_upper]:

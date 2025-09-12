@@ -145,24 +145,18 @@ class LocBasParser:
         """ <ABS> := ABS(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ABS", etype=AST.ExpType.Integer, args=args)
 
     def _parse_AFTER(self) -> AST.Command:
         """ <AFTER> ::= AFTER <int_expression>[,<int_expression>] GOSUB INT """
         self._advance()
-        delay = self._parse_expression()
-        if not AST.exptype_isint(delay.etype):
-            self._raise_error(13)
+        delay = self._parse_int_expression()
         args = [delay]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            timer = self._parse_expression()
-            if not AST.exptype_isint(timer.etype):
-                self._raise_error(13)
+            timer = self._parse_int_expression()
             args.append(timer)
         self._expect(TokenType.KEYWORD, "GOSUB")
         num = self._expect(TokenType.INT)
@@ -173,9 +167,7 @@ class LocBasParser:
         """ <ASC> ::= ASC(<str_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isstr(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_str_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ASC", etype=AST.ExpType.Integer, args=args)
 
@@ -183,9 +175,7 @@ class LocBasParser:
         """ <ATN> ::= ATN(<num_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ATN", etype=AST.ExpType.Real, args=args)
 
@@ -200,14 +190,10 @@ class LocBasParser:
         """ <BINSS> ::= BIN$(<int_expression>[,<int_expression>])"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_int_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            width = self._parse_expression()
-            if not AST.exptype_isint(width.etype):
-                self._raise_error(13)
+            width = self._parse_int_expression()
             args.append(width)
         self._expect(TokenType.RPAREN)
         return AST.Function(name="BIN$", etype=AST.ExpType.String, args=args)
@@ -215,23 +201,17 @@ class LocBasParser:
     def _parse_BORDER(self) -> AST.Command:
         """ <BORDER> ::= BORDER <int_expression>[,<int_expression>] """
         self._advance()
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_int_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            color2 = self._parse_expression()
-            if not AST.exptype_isint(color2.etype):
-                self._raise_error(13)
+            color2 = self._parse_int_expression()
             args.append(color2)
         return AST.Command(name="BORDER", args=args)
 
     def _parse_CALL(self) -> AST.Command:
         """ <CALL> ::= CALL <int_expression>[,<expression>]* """
         self._advance()
-        dir = self._parse_expression()
-        if not AST.exptype_isint(dir.etype):
-            self._raise_error(13)
+        dir = self._parse_int_expression()
         args = [dir]
         while self._current_is(TokenType.COMMA):
             self._advance()
@@ -267,9 +247,7 @@ class LocBasParser:
         """ <CHRSS> ::= CHR$(<int_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CHR$", etype=AST.ExpType.String, args=args)
 
@@ -277,9 +255,7 @@ class LocBasParser:
         """ <CINT> ::= CINT(<real_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CINT", etype=AST.ExpType.Integer, args=args)
 
@@ -287,18 +263,23 @@ class LocBasParser:
         """ <CLEAR> ::= CLEAR """
         # This command resets several areas of the BASIC interpreter
         # and doesn't seem to be very useful for a compiled program
+        # but let's decide that to the code emiter as we can reuse CLEAR
+        # to free some other generated structures
         self._advance()
-        self._raise_error(2, info="Command not supported")
         return AST.Command(name="CLEAR")
+
+    def _parse_CLEAR_INPUT(self) -> AST.Command:
+        """ <CLEAR_INPUT> ::= CLEAR INPUT"""
+        # BASIC 1.1
+        self._advance()
+        return AST.Command(name="CLEAR INPUT")
 
     def _parse_CLG(self) -> AST.Command:
         """ <CLG> ::= CLG [<int_expression>] """
         self._advance()
         args: list[AST.Statement] = []
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
-            args = [self._parse_expression()]
-            if not AST.exptype_isint(args[0].etype):
-                self._raise_error(13)
+            args = [self._parse_int_expression()]
         return AST.Command(name="CLG", args=args)
 
     def _parse_CLOSEIN(self) -> AST.Command:
@@ -317,9 +298,7 @@ class LocBasParser:
         args: list[AST.Statement] = []
         if self._current_is(TokenType.HASH):
             self._advance()
-            args = [self._parse_expression()]
-            if not AST.exptype_isint(args[0].etype):
-                self._raise_error(13)
+            args = [self._parse_int_expression()]
         return AST.Command(name="CLS", args=args)
 
     def _parse_CONT(self) -> AST.Command:
@@ -329,13 +308,21 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="CONT")
 
+    def _parse_COPYCHRSS(self) -> AST.Function:
+        """ <COPYCHRSS> ::= COPYCHR$(#<int_expression>) """
+        # BASIC 1.1
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        self._expect(TokenType.HASH)
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="COPYCHR$", etype=AST.ExpType.String, args=args)
+
     def _parse_COS(self) -> AST.Function:
         """ <COS> ::= COS(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="COS", etype=AST.ExpType.Real, args=args)
     
@@ -343,11 +330,19 @@ class LocBasParser:
         """ <CREAL> ::= CREAL(<num_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CREAL", etype=AST.ExpType.Real, args=args)
+
+    def _parse_CURSOR(self) -> AST.Command:
+        """ <CURSOR> ::= CURSOR <int_expression>[,<int_expression>] """
+        # BASIC 1.1
+        self._advance()
+        args = [self._parse_int_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="CURSOR", args=args)
 
     def _parse_DATA(self) -> AST.Command:
         """ <DATA> ::= DATA <primary>[,<primary>]*"""
@@ -362,9 +357,7 @@ class LocBasParser:
         """ <DECSS> ::= DEC$(<num_expression>, STRING) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(13)
+        args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.COMMA)
         tk = self._expect(TokenType.STRING)
         args.append(AST.String(value=tk.lexeme))
@@ -414,9 +407,7 @@ class LocBasParser:
                 self.symtable.add(ident=tk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         self._expect(TokenType.COMP, "=")
-        fbody = self._parse_expression()
-        if not AST.exptype_isnum(fbody.etype):
-            self._raise_error(13)
+        fbody = self._parse_num_expression()
         self.context = ""
         # Lets update our entry for the function with
         # the last calculated parameters
@@ -459,6 +450,11 @@ class LocBasParser:
         self._advance()
         self._raise_error(21)
         return AST.Command(name="DELETE")
+
+    def _parse_DERR(self) -> AST.Function:
+        """ <DERR> ::= DERR """
+        self._advance()
+        return AST.Function(name="DERR", etype=AST.ExpType.Integer)
 
     def _parse_DI(self) -> AST.Command:
         """ <DI> ::= DI """
@@ -504,29 +500,23 @@ class LocBasParser:
     def _parse_DRAW(self) -> AST.Command:
         """ <DRAW> ::= DRAW <int_expression>,<int_expression>[,<int_expression>] """
         self._advance()
-        args = [self._parse_expression()]
+        args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
-        args.append(self._parse_expression())
+        args.append(self._parse_int_expression())
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         return AST.Command(name="DRAW", args=args)
 
     def _parse_DRAWR(self) -> AST.Command:
         """ <DRAWR> ::= DRAWR <int_expression>,<int_expression>[,<int_expression>] """
         self._advance()
-        args = [self._parse_expression()]
+        args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
-        args.append(self._parse_expression())
+        args.append(self._parse_int_expression())
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         return AST.Command(name="DRAWR", args=args)
 
     def _parse_EDIT(self) -> AST.Command:
@@ -562,13 +552,10 @@ class LocBasParser:
         """ <ent_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
         # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or 2-bytes, byte.
         self._advance()
-        args: list[AST.Statement] = [self._parse_expression()]
+        args: list[AST.Statement] = [self._parse_int_expression()]
         while self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         if len(args) > 5*3:
             self._raise_error(5)
         return AST.Command(name="ENT", args=args)
@@ -578,13 +565,10 @@ class LocBasParser:
         """ <env_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
         # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or byte, 2-bytes.
         self._advance()
-        args: list[AST.Statement] = [self._parse_expression()]
+        args: list[AST.Statement] = [self._parse_int_expression()]
         while self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         if len(args) > 5*3:
             self._raise_error(5)
         return AST.Command(name="ENV", args=args)
@@ -630,43 +614,41 @@ class LocBasParser:
         """ <ERROR> ::= ERROR <int_expression> """
         # Sets the values for ERR and ERL
         self._advance()
-        args = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(5)
+        args = [self._parse_int_expression()]
         return AST.Command(name="ERROR", args=args)
 
     def _parse_EVERY(self) -> AST.Command:
         """ <EVERY> ::= EVERY <int_expression>[,<int_expression>] <GOSUB> """
         self._advance()
-        args = [self._parse_expression()]
+        args = [self._parse_int_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         if not self._current_is(TokenType.KEYWORD, lexeme="GOSUB"):
             self._raise_error(2)
         args.append(self._parse_GOSUB())
         return AST.Command(name="EVERY", args=args)
 
     def _parse_EXP(self) -> AST.Function:
-        """ <EXP> ::= EXP(<expression>) """
+        """ <EXP> ::= EXP(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(5)
+        args = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="EXP", etype=AST.ExpType.Real, args=args)
 
+    def _parse_FILL(self) -> AST.Command:
+        """ <FILL> ::= FILL <int_expression> """
+        # BASIC 1.1
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="FILL", args=args)
+
     def _parse_FIX(self) -> AST.Function:
-        """ <FIX> ::= FIX(<expression>) """
+        """ <FIX> ::= FIX(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_expression()]
-        if not AST.exptype_isnum(args[0].etype):
-            self._raise_error(5)
+        args = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="FIX", etype=AST.ExpType.Integer, args=args)
     
@@ -677,7 +659,7 @@ class LocBasParser:
         return AST.Command(name="FN")
 
     def _parse_FOR(self) -> AST.ForLoop:
-        """ <FOR> ::= FOR IDENT = <expression> TO <expression> [STEP <expression>] <for_body> """
+        """ <FOR> ::= FOR IDENT = <int_expression> TO <int_expression> [STEP <int_expression>] <for_body> """
         """ <for_body> ::= : <for_inline> | EOL <for_block> """
         self._advance()
         var = self._expect(TokenType.IDENT).lexeme.upper()
@@ -694,18 +676,12 @@ class LocBasParser:
                 info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
                 context=self.context
             )
-        start = self._parse_expression()
-        if not AST.exptype_isint(start.etype):
-            self._raise_error(13)
+        start = self._parse_int_expression()
         self._expect(TokenType.KEYWORD, "TO")
-        end = self._parse_expression()
-        if not AST.exptype_isint(end.etype):
-            self._raise_error(13)
+        end = self._parse_int_expression()
         step = None
         if self._match(TokenType.KEYWORD, "STEP"):
-            step = self._parse_expression()
-            if not AST.exptype_isint(step.etype):
-                self._raise_error(13)
+            step = self._parse_int_expression()
         self.codeblocks.append(CodeBlock(type=BlockType.FOR, until_keywords=("NEXT",)))
         if self._current_is(TokenType.COLON):
             body = self._parse_for_inline()
@@ -731,6 +707,12 @@ class LocBasParser:
             body.append(last_stmt)
         return body
 
+    def _parse_FRAME(self) -> AST.Command:
+        """ <FRAME> ::= FRAME """
+        # BASIC 1.1
+        self._advance()
+        return AST.Command(name="FRAME")
+
     def _parse_FRE(self) -> AST.Function:
         """ <FRE> ::= FRE(0) | FRE("") """
         self._advance()
@@ -753,17 +735,28 @@ class LocBasParser:
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="GOTO", args=args)
 
+    def _parse_GRAPHICS_PAPER(self) -> AST.Command:
+        """ <GRAPHICS_PAPER> ::= GRAPHICS PAPER <int_expression> """
+        # BASIC 1.1
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="GRAPHICS PAPER", args=args)
+    
+    def _parse_GRAPHICS_PEN(self) -> AST.Command:
+        """ <GRAPHICS_PEN> ::= GRAPHICS PEN <int_expression> """
+        # BASIC 1.1
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="GRAPHICS PEN", args=args)
+
     def _parse_HEXSS(self) -> AST.Function:
         """ <HEXSS> ::= HEX$(<int_expression>[,<int_expression>]) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_expression()]
+        args = [self._parse_int_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isnum(args[0].etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         self._expect(TokenType.RPAREN)
         return AST.Function(name="HEX$", etype=AST.ExpType.String, args=args)
 
@@ -773,9 +766,9 @@ class LocBasParser:
         return AST.Function(name="HIMEM", etype=AST.ExpType.Integer)
     
     def _parse_IF(self) -> AST.If:
-        """ <IF> ::= IF <expression> THEN <then_block> [ELSE <else_block>] """
+        """ <IF> ::= IF <int_expression> THEN <then_block> [ELSE <else_block>] """
         self._advance()
-        condition = self._parse_expression()
+        condition = self._parse_int_expression()
         self._expect(TokenType.KEYWORD, "THEN")
         then_block = self._parse_then_block()
         else_block: list[AST.Statement] = []
@@ -844,24 +837,19 @@ class LocBasParser:
     def _parse_INK(self) -> AST.Command:
         """ <INK> ::= INK <int_expression()>,<int_expression>[,<int_expression>] """
         self._advance()
-        args = [self._parse_expression()]
+        args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
-        args.append(self._parse_expression())
+        args.append(self._parse_int_expression())
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_expression())
-        for a in args:
-            if not AST.exptype_isint(a.etype):
-                self._raise_error(5)
+            args.append(self._parse_int_expression())
         return AST.Command(name="INK", args=args)
 
     def _parse_INKEY(self) -> AST.Function:
         """ <INKEY> ::= INKEY(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(5)
+        args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INKEY", etype=AST.ExpType.Integer, args=args)
     
@@ -874,25 +862,294 @@ class LocBasParser:
         """ <INP> ::= INP(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_expression()]
-        if not AST.exptype_isint(args[0].etype):
-            self._raise_error(5)
+        args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INP", etype=AST.ExpType.Integer, args=args)
 
     def _parse_INPUT(self) -> AST.Input:
+        """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] IDENT [,IDENT] """
         self._advance()
-        vars = []
+        stream: Optional[AST.Statement] = None; 
+        prompt: str = ""
+        vars: list[AST.Variable] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            stream = self._parse_int_expression()
+            self._match(TokenType.COMMA)
+        if self._current_is(TokenType.STRING):
+            prompt = self._advance().lexeme.strip('"')
+        if stream is not None or prompt != "":
+            if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
+                self._raise_error(2)
+        question: bool = False if self._match(TokenType.SEMICOLON) else True
+        self._match(TokenType.COMMA)
         while True:
-            tok = self._expect(TokenType.IDENT)
-            vars.append(tok.lexeme)
+            var = self._expect(TokenType.IDENT).lexeme
+            vartype = AST.exptype_fromname(var)
+            vars.append(AST.Variable(name=var, etype=vartype))
             if not self._match(TokenType.COMMA):
                 break
-        return AST.Input(vars=vars)
+        # Input can declare variables so we need to add any new ones to the symtable
+        for v in vars:
+            if self.symtable.find(ident=v.name, context=self.context) is None:
+                self.symtable.add(
+                    ident=v.name,
+                    info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
+                    context=self.context
+                )
+        return AST.Input(stream=stream, prompt=prompt, question=question, vars=vars)
+
+    def _parse_INSTR(self) -> AST.Function:
+        """ <INSTR> ::= INSTR([<int_expression>,]<str_expression(),<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_expression()]
+        remain = 2 if args[0].etype == AST.ExpType.Integer else 1
+        while remain:
+            self._match(TokenType.COMMA)
+            args.append(self._parse_str_expression())
+            remain -= 1
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="INSTR", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_INT(self) -> AST.Function:
+        """ <INT> ::= INT(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="INT", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_JOY(self) -> AST.Function:
+        """ <JOY> ::= JOY(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="JOY", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_KEY(self) -> AST.Command:
+        """ <KEY> ::= KEY <int_expression>,<str_expression> """
+        self._advance()
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_str_expression())
+        return AST.Command(name="KEY", args=args)
+
+    def _parse_KEY_DEF(self) -> AST.Command:
+        """
+        <KEY> ::= KEY DEF <int_expression>,<int_expression>[,<keydefoptions>]
+        <keydefoptions> ::== <int_expression>[,<int_expression>[,<int_expression>]]
+        """
+        self._advance()
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="KEY DEF", args=args)
+    
+    def _parse_LEFTSS(self) -> AST.Function:
+        """ <LEFTSS> ::== LEFT$(<st_expression>,<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LEFT$", etype=AST.ExpType.String, args=args)
+
+    def _parse_LEN(self) -> AST.Function:
+        """ <LEN> ::= LEN(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LEN", etype=AST.ExpType.Integer, args=args)
 
     def _parse_LET(self) -> AST.Assignment:
+        """ <LET> ::= LET <assignment> """
         self._advance()
         return self._parse_assignment()
+
+    def _parse_LINE_INPUT(self) -> AST.LineInput:
+        """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][STRING(;|,)]<IDENT> """
+        self._advance()
+        stream: Optional[AST.Statement] = None; 
+        prompt: str = ""
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            stream = self._parse_int_expression()
+            self._match(TokenType.COMMA)
+        if self._current_is(TokenType.STRING):
+            prompt = self._advance().lexeme.strip('"')
+        if stream is not None or prompt != "":
+            if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
+                self._raise_error(2)
+        carriage: bool = False if self._match(TokenType.SEMICOLON) else True
+        self._match(TokenType.COMMA)
+        varname = self._expect(TokenType.IDENT).lexeme
+        vartype = AST.exptype_fromname(varname)
+        var = AST.Variable(name=varname, etype=vartype)
+        # LINE INPUT can declare a new variable so we need to add it
+        if self.symtable.find(ident=varname, context=self.context) is None:
+            self.symtable.add(
+                ident=varname,
+                info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
+                context=self.context
+            )
+        return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, var=var)
+ 
+    def _parse_LIST(self) -> AST.Command:
+        """ <LIST> ::= LIST """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="LIST")
+
+    def _parse_LOAD(self) -> AST.Command:
+        """ <LOAD> ::= LOAD <str_expression>[,<int_expression>]"""
+        self._advance()
+        args = [self._parse_str_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="LOAD", args=args)
+
+    def _parse_LOCATE(self) -> AST.Command:
+        """ <LOCATE> ::= LOCATE [#<int_expression>,]<int_expression>,<int_expression> """
+        self._advance()
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            args.append(self._parse_int_expression())
+            self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        return AST.Command(name="LOCATE", args=args)
+
+    def _parse_LOG(self) -> AST.Function:
+        """ <LOG> ::= LOG(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LOG", etype=AST.ExpType.Real, args=args)
+
+    def _parse_LOG10(self) -> AST.Function:
+        """ <LOG10> ::= LOG10(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LOG10", etype=AST.ExpType.Real, args=args)
+
+    def _parse_LOWERSS(self) -> AST.Function:
+        """ <LOWERSS> ::= LOWER$(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LOWER$", etype=AST.ExpType.String, args=args)
+
+    def _parse_MASK(self) -> AST.Command:
+        """ <MASK> ::= MASK <int_expression>[,<int_expression>] """
+        self._advance()
+        args = [self._parse_int_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="MASK", args=args)
+
+    def _parse_MAX(self) -> AST.Function:
+        """ <MAX> ::= MAX(<num_expression>[,<num_expression>]*) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        etype = args[-1].etype
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_num_expression())
+            etype = etype if args[-1].etype == etype else AST.ExpType.Real
+        self._expect(TokenType.RPAREN)
+        if len(args) < 2:
+            self._raise_error(2)
+        return AST.Function(name="MAX", etype=etype, args=args)
+
+    def _parse_MEMORY(self) -> AST.Command:
+        """ <MEMORY> ::= MEMORY <int_expression>"""
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="MEMORY", args=args)
+
+    def _parse_MERGE(self) -> AST.Command:
+        """ <MERGE> ::= MERGE <str_expression> """
+        self._advance()
+        args = [self._parse_str_expression()]
+        return AST.Command(name="MERGE", args=args)
+
+    def _parse_MIDSS(self) -> AST.Function:
+        """ <MIDSS> ::= MID$(<str_expression>,<int_expression>[,<int_expression>]) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="MID$", etype=AST.ExpType.String, args=args)
+
+    def _parse_MIN(self) -> AST.Function:
+        """ <MIN> ::= MIN(<num_expression>[,<num_expression>]*) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        etype = args[-1].etype
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_num_expression())
+            etype = etype if args[-1].etype == etype else AST.ExpType.Real
+        self._expect(TokenType.RPAREN)
+        if len(args) < 2:
+            self._raise_error(2)
+        return AST.Function(name="MIN", etype=etype, args=args)
+
+    def _parse_MODE(self) -> AST.Command:
+        """ <MODEA> ::= MODE <int_expression>"""
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="MODE", args=args)
+
+    def _parse_MOVE(self) -> AST.Command:
+        """ <MOVE> ::= MOVE <int_expression>,<int_expression>[,<int_expression>[,<int_expression>]] """
+        self._advance()
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        while self._current_is(TokenType.COMMA):
+            args.append(self._parse_int_expression())
+        return AST.Command(name="MOVE", args=args)
+
+    def _parse_MOVER(self) -> AST.Command:
+        """ <MOVER> ::= MOVER <int_expression>,<int_expression>[,<int_expression>[,<int_expression>]] """
+        self._advance()
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        while self._current_is(TokenType.COMMA):
+            args.append(self._parse_int_expression())
+        return AST.Command(name="MOVER", args=args)
+    
+    def _parse_NEW(self) -> AST.Command:
+        """ <NEW> ::= NEW """
+        # A direct command that is not allowed in compiled programs    
+        self._advance()
+        self._raise_error(21)
+        return AST.Command(name="NEW")
 
     def _parse_NEXT(self) -> AST.BlockEnd:
         """ <NEXT> ::= NEXT [IDENT]"""
@@ -921,8 +1178,14 @@ class LocBasParser:
         return AST.Print(items=items)
 
     def _parse_RETURN(self) -> AST.Command:
+        """ <RETURN> ::= RETURN """
         self._advance()
         return AST.Command(name="RETURN")
+
+    def _parse_TAG(self) -> AST.Command:
+        """ <TAG> ::= TAG """
+        self._advance()
+        return AST.Command(name="TAG")
 
     def _parse_THEN(self):
         """ This is always an error """
@@ -939,10 +1202,10 @@ class LocBasParser:
         return AST.BlockEnd(name="WEND")
     
     def _parse_WHILE(self) -> AST.WhileLoop:
-        """ <WHILE> ::= WHILE <expression> <while_body> """
+        """ <WHILE> ::= WHILE <int_expression> <while_body> """
         """ <while_body> ::= : <while_inline> | EOL <code_block> """
         self._advance()
-        cond = self._parse_expression()
+        cond = self._parse_int_expression()
         self.codeblocks.append(CodeBlock(type=BlockType.WHILE, until_keywords=("WEND",)))
         if self._current_is(TokenType.COLON):
             self._advance()
@@ -964,20 +1227,10 @@ class LocBasParser:
 
     # ------------- Keyword placeholders -----------
 
-    def _parse_JOY(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="JOY")
-
     def _parse_RENUM(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="RENUM")
-
-    def _parse_MIN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MIN")
 
     def _parse_RND(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1014,21 +1267,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="UNT")
 
-    def _parse_LOCATE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LOCATE")
-
-    def _parse_MASK(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MASK")
-
-    def _parse_NEW(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="NEW")
-
     def _parse_SWAP(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1049,11 +1287,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="VPOS")
 
-    def _parse_LOG10(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LOG10")
-
     def _parse_TRON(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1068,11 +1301,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="RIGHT_S")
-
-    def _parse_INSTR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INSTR")
 
     def _parse_RESTORE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1094,11 +1322,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="ON_SQ")
 
-    def _parse_LOG(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LOG")
-
     def _parse_RESUME(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1109,25 +1332,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="READ")
 
-    def _parse_LOAD(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LOAD")
-
     def _parse_WINDOW(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WINDOW")
-
-    def _parse_MEMORY(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MEMORY")
-
-    def _parse_GRAPHICS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="GRAPHICS")
 
     def _parse_RAD(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1144,40 +1352,20 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="POS")
 
-    def _parse_KEY(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="KEY")
-
     def _parse_RELEASE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="RELEASE")
-
-    def _parse_MERGE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MERGE")
 
     def _parse_TIME(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="TIME")
 
-    def _parse_MODE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MODE")
-
     def _parse_STRING_S(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="STRING_S")
-
-    def _parse_TAG(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TAG")
 
     def _parse_TAGOFF(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1203,11 +1391,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="UPPER_S")
-
-    def _parse_CURSOR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="CURSOR")
 
     def _parse_SQR(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1254,35 +1437,15 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SPC")
 
-    def _parse_FRAME(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="FRAME")
-
     def _parse_TROFF(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="TROFF")
 
-    def _parse_LEFT_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LEFT_S")
-
-    def _parse_LOWER_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LOWER_S")
-
     def _parse_PLOTR(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="PLOTR")
-
-    def _parse_MOVER(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MOVER")
 
     def _parse_TEST(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1294,20 +1457,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SIN")
 
-    def _parse_MAX(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MAX")
-
     def _parse_SPEED(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SPEED")
-
-    def _parse_LIST(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LIST")
 
     def _parse_SOUND(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1334,16 +1487,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="ZONE")
 
-    def _parse_LINE_INPUT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LINE_INPUT")
-
-    def _parse_FILL(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="FILL")
-
     def _parse_WRITE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1364,25 +1507,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SYMBOL")
 
-    def _parse_MID_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MID_S")
-
     def _parse_TAB(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="TAB")
-
-    def _parse_INT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="INT")
-
-    def _parse_LEN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LEN")
 
     def _parse_SGN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1403,13 +1531,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SPACE_S")
-
-
-
-    def _parse_MOVE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="MOVE")
 
     def _parse_PEN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1450,6 +1571,27 @@ class LocBasParser:
         OR
         XOR
     """
+
+    def _parse_int_expression(self) -> AST.Statement:
+        """ <int_expression> ::= <expression>.type=INT """
+        stat = self._parse_logic_xor()
+        if not AST.exptype_isint(stat.etype):
+            self._raise_error(13)
+        return stat
+
+    def _parse_num_expression(self) -> AST.Statement:
+        """ <int_expression> ::= <expression>.type=(INT|REAL) """
+        stat = self._parse_logic_xor()
+        if not AST.exptype_isnum(stat.etype):
+            self._raise_error(13)
+        return stat
+
+    def _parse_str_expression(self) -> AST.Statement:
+        """ <int_expression> ::= <expression>.type=STRING """
+        stat = self._parse_logic_xor()
+        if not AST.exptype_isstr(stat.etype):
+            self._raise_error(13)
+        return stat
 
     def _parse_expression(self) -> AST.Statement:
         """ <expression> ::= <logic_or> """

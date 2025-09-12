@@ -65,13 +65,25 @@ def exptype_isvalid(etype: ExpType) -> bool:
 
 class ASTNode:
     id: str
+    line: int
+    col: int
 
     def __init__(self, id: str):
         self.id = id
+        self.line = 0
+        self.col = 0
+
+    def set_origin(self, line: int, col: int):
+        self.line = line
+        self.col = col
 
     def to_json(self) -> dict:
         return {
             "id": self.id,
+            "origin": {
+                "line": self.line,
+                "col": self.col
+            }
         }
 
     def __str__(self) -> str:
@@ -465,15 +477,45 @@ class Print(Statement):
         return d
 
 class Input(Statement):
-    vars: list[str]
+    stream: Optional[Statement]
+    prompt: str
+    question: bool
+    vars: list[Variable]
 
-    def __init__(self, vars: list[str]):
+    def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable]):
         super().__init__(etype=ExpType.Void, id="Input")
+        self.stream = stream
+        self.prompt = prompt
+        self.question = question
         self.vars = vars
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["vars"] = self.vars
+        d["stream"] = self.stream.to_json() if self.stream is not None else None
+        d["prompt"] = self.prompt
+        d["question"] = self.question
+        d["vars"] = [v.to_json() for v in self.vars]
+        return d
+
+class LineInput(Statement):
+    stream: Optional[Statement]
+    prompt: str
+    carriage: bool
+    var: Variable
+
+    def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, var: Variable):
+        super().__init__(etype=ExpType.Void, id="LineInput")
+        self.stream = stream
+        self.prompt = prompt
+        self.carriage = carriage
+        self.var = var
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["stream"] = self.stream.to_json() if self.stream is not None else None
+        d["prompt"] = self.prompt
+        d["carriage"] = self.carriage
+        d["var"] = self.var.to_json()
         return d
 
 class DefFN(Statement):
