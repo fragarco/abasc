@@ -1393,10 +1393,112 @@ class LocBasParser:
             args = [self._parse_num_expression()]
         return AST.Command(name="RANDOMIZE", args=args)
 
+    def _parse_READ(self) -> AST.Command:
+        """ <READ> ::= READ IDENT[,IDENT]* """
+        self._advance()
+        vars: list[AST.Statement] = []
+        while True:
+            varname = self._expect(TokenType.IDENT).lexeme
+            vartype = AST.exptype_fromname(varname)
+            vars.append(AST.Variable(name=varname, etype=vartype))
+            # READ can declare new variables so we need to add any new ones to the symtable
+            if self.symtable.find(ident=varname, context=self.context) is None:
+                self.symtable.add(
+                    ident=varname,
+                    info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
+                    context=self.context
+                )
+            if not self._current_is(TokenType.COMMA):
+                break
+            self._advance()
+        return AST.Command(name="READ", args=vars)
+
+    def _parse_RELEASE(self) -> AST.Command:
+        """ <RELEASE> ::= RELEASE <int_expression> """
+        self._advance()
+        args = [self._parse_int_expression()]
+        return AST.Command(name="RELEASE", args=args)
+
+    def _parse_REMAIN(self) -> AST.Function:
+        """ <REMAIN> ::= REMAIN(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="REMAIN", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_RENUM(self) -> AST.Command:
+        """ <RENUM> ::= RENUM [<int_expression>[,<int_expression>[,<int_expression>]]] """
+        self._advance()
+        # This command doesn't make sense in a compiled program
+        self._raise_error(21)
+        return AST.Command(name="RENUM")
+
+    def _parse_RESTORE(self) -> AST.Command:
+        """ <RESTORE> ::= RESTORE [<int_expression>] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            args = [self._parse_int_expression()]
+        return AST.Command(name="RESTORE", args=args)
+
+    def _parse_RESUME(self) -> AST.Command:
+        """ <RESUME> ::= RESUME [<int_expression> | NEXT] """
+        self._advance()
+        # Probably this doesn't make sense in a compiled program
+        # but leave the emiter to fail if needed
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            if self._current_is(TokenType.KEYWORD, "NEXT"):
+                self._advance()
+                return AST.Command(name="RESUME", args=[AST.Command(name="NEXT")])
+            args = [self._parse_int_expression()]
+        return AST.Command(name="RESUME", args=args)
+
     def _parse_RETURN(self) -> AST.Command:
         """ <RETURN> ::= RETURN """
         self._advance()
         return AST.Command(name="RETURN")
+
+    def _parse_RIGHTSS(self) -> AST.Function:
+        """ <RIGHTSS> ::== RIGHT$(<str_expression>,<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="RIGHT$", etype=AST.ExpType.String, args=args)
+
+    def _parse_RND(self) -> AST.Function:
+        """ <RND> ::= RND [(<num_expression>)] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.LPAREN):
+            self._advance()
+            args = [self._parse_num_expression()]
+            self._expect(TokenType.RPAREN)
+        return AST.Function(name="RND", etype=AST.ExpType.Real, args=args)
+
+
+    def _parse_ROUND(self) -> AST.Function:
+        """ <ROUND> ::= ROUND(<num_expression>[,<int_expression>]) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="ROUND", etype=AST.ExpType.Real, args=args)
+
+    def _parse_RUN(self) -> AST.Command:
+        """ <RUN> ::= RUN <str_expression> """
+        self._advance()
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            args = [self._parse_str_expression()]  
+        return AST.Command(name="RUN", args=args)
 
     def _parse_SIN(self) -> AST.Function:
         """ <SIN> ::= SIN(<num_expression>) """
@@ -1483,16 +1585,6 @@ class LocBasParser:
 
     # ------------- Keyword placeholders -----------
 
-    def _parse_RENUM(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RENUM")
-
-    def _parse_RND(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RND")
-
     def _parse_XPOS(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1528,35 +1620,10 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="STOP")
 
-    def _parse_RIGHT_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RIGHT_S")
-
-    def _parse_RESTORE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RESTORE")
-
-    def _parse_RESUME(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RESUME")
-
-    def _parse_READ(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="READ")
-
     def _parse_SYMBOL_AFTER(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SYMBOL_AFTER")
-
-    def _parse_RELEASE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RELEASE")
 
     def _parse_TIME(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1573,11 +1640,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="TAGOFF")
 
-    def _parse_REMAIN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="REMAIN")
-
     def _parse_UPPER_S(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1588,11 +1650,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SQR")
 
-    def _parse_REM(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="REM")
-
     def _parse_LINE(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1602,11 +1659,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SAVE")
-
-    def _parse_RUN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RUN")
 
     def _parse_YPOS(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1688,10 +1740,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="TAN")
 
-    def _parse_ROUND(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ROUND")
 
     # ----------------- Expresions -----------------
 
@@ -1942,6 +1990,8 @@ class LocBasParser:
             self._advance()
             return AST.String(value=tok.lexeme.strip('"'))
         if tok.type == TokenType.IDENT:
+            # It only allows single words without spaces
+            # which is different from what is supported in Locomotive Basic
             name = self._advance().lexeme
             return AST.String(value=name)
         self._raise_error(2)

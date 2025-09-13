@@ -1171,6 +1171,91 @@ class TestParser(unittest.TestCase):
         self.assertIsInstance(ast.lines[7].statements[0], AST.Print)
         self.assertIsInstance(ast.lines[8].statements[0], AST.Print)
 
+    def test_read_example(self):
+        code = """
+10 FOR n=1 TO 8
+20 READ a$,c
+30 PRINT a$;" ";c;:NEXT
+40 DATA "AMSTRAD",1,"CPC",2,"464",3,"6128",5
+50 DATA "128",8
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0].body[0]
+        self.assertEqual(cmd.name, "READ")
+        self.assertEqual(len(cmd.args), 2)
+
+    def test_release_example(self):
+        code = "10 RELEASE &X111"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "RELEASE")
+        self.assertEqual(ast.lines[0].statements[0].args[0].value, 7)
+
+    def test_remain_example(self):
+        code = """
+10 AFTER 500,1 GOSUB 40
+20 AFTER 100,2 GOSUB 50
+30 PRINT "Program running":GOTO 30
+40 REM this routine won't be called because line 80 blocks that
+50 PRINT:PRINT "The timer 1 will be ";
+60 PRINT "disabeld by REMAIN command"
+70 PRINT "Remaining time:";
+80 PRINT REMAIN(1)
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[7].statements[0].items[0].name, "REMAIN")
+        self.assertEqual(ast.lines[7].statements[0].items[0].args[0].value, 1)
+
+    def test_restore_example(self):
+        code = """
+10 READ a$:PRINT a$;" ";
+20 RESTORE 50
+30 FOR t=1 TO 500: NEXT
+35 GOTO 10
+40 DATA "restore data pointer to read data"
+50 DATA "again and again"
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0]
+        self.assertEqual(cmd.name, "RESTORE")
+        self.assertEqual(cmd.args[0].value, 50)
+
+    def test_rightss_example(self):
+        code = """
+10 MODE 0:a$="Computer CPC464" 
+20 FOR n=1 TO LEN(a$)
+25 LOCATE 21-n,n
+30 PRINT RIGHT$(a$,n)
+40 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0].body[1].items[0]
+        self.assertEqual(cmd.name, "RIGHT$")
+        self.assertEqual(cmd.etype, AST.ExpType.String)
+        self.assertEqual(len(cmd.args), 2)
+
+    def test_rnd_basic(self):
+        code = '10 PRINT RND(1), RND(0), RND(-1)'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].items[0].name, "RND")
+        self.assertEqual(ast.lines[0].statements[0].items[0].etype, AST.ExpType.Real)
+        # item 1 is a Separator
+        self.assertEqual(ast.lines[0].statements[0].items[2].name, "RND")
+        self.assertEqual(len(ast.lines[0].statements[0].items), 5)
+
+    def test_round_example(self):
+        code = """
+10 x=0.123456789 
+20 FOR r=9 TO 0 STEP -1:PRINT r,ROUND(x,r):NEXT   
+25 x=123456789 
+30 FOR r=0 TO -9 STEP -1
+40 PRINT r,ROUND (x,r)  
+50 NEXT 
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0].body[0].items[2]
+        self.assertEqual(cmd.name, "ROUND")
+        self.assertEqual(cmd.etype, AST.ExpType.Real)
+        self.assertEqual(len(cmd.args), 2)
 
 if __name__ == "__main__":
     unittest.main()
