@@ -139,6 +139,13 @@ class LocBasParser:
         if lexeme != None and lexeme != nexttk.lexeme: return False
         return True
 
+    def _next_in(self, types: tuple, lexemes: Optional[tuple] = None) -> bool:
+        tk = self.tokens[self.pos + 1]
+        if tk.type not in types: return False
+        if lexemes is not None:
+            return tk.lexeme in lexemes
+        return True
+
     # ----------------- Statements -----------------
 
     def _parse_ABS(self) -> AST.Function:
@@ -1334,21 +1341,58 @@ class LocBasParser:
         return AST.Function(name="POS", etype=AST.ExpType.Integer, args=args)
 
     def _parse_PRINT(self) -> AST.Print:
+        """
+        <PRINT> ::= PRINT [#<int_expression>,][<print_items>][print_using][print_separator]
+        <print_items> ::= <expression>[;|,]<print_items> | <expression>
+        <print_using> ::= USING <str_expression>,<expression>[]
+        <print_separator> ::= ; | , 
+        """
         self._advance()
+        stream: Optional[AST.Statement] = None
         items: list[AST.Statement] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            stream = self._parse_int_expression()
+            self._expect(TokenType.COMMA)
         while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
             if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
-                code = self._advance().lexeme
-                items.append(AST.ControlCode(code=code))
+                sym = self._advance().lexeme
+                items.append(AST.Separator(symbol=sym))
+            elif self._current_in((TokenType.KEYWORD,), ("USING",)):
+                self._advance()
+                args = [self._parse_str_expression()]
+                self._expect(TokenType.SEMICOLON)
+                args.append(self._parse_expression())
+                etype = args[-1].etype
+                while self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
+                    if self._next_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+                        break
+                    self._advance()
+                    args.append(self._parse_expression())
+                    if not AST.exptype_compatible(etype, args[-1].etype):
+                        self._raise_error(13)
+                items.append(AST.Function(name="USING", etype=AST.ExpType.String, args=args))
+                if self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
+                    sym = self._advance().lexeme
+                    items.append(AST.Separator(symbol=sym))
+                break
             else:
                 items.append(self._parse_expression())
-        return AST.Print(items=items)
+        return AST.Print(stream=stream, items=items)      
 
     def _parse_RAD(self) -> AST.Command:
         """ <RAD> ::= RAD """
         self._advance()
         return AST.Command(name="RAD")
     
+    def _parse_RANDOMIZE(self) -> AST.Command:
+        """ <RANDOMIZE> ::= RANDOMIZE [<num_expression>] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            args = [self._parse_num_expression()]
+        return AST.Command(name="RANDOMIZE", args=args)
+
     def _parse_RETURN(self) -> AST.Command:
         """ <RETURN> ::= RETURN """
         self._advance()
@@ -1361,6 +1405,22 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SIN", etype=AST.ExpType.Real, args=args)
+
+    def _parse_SPC(self) -> AST.Function:
+        """ <SPC> ::= SPC(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="SPC", etype=AST.ExpType.String, args=args)
+
+    def _parse_TAB(self) -> AST.Function:
+        """ <TAB> ::= TAB(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="TAB", etype=AST.ExpType.String, args=args)
 
     def _parse_TAG(self) -> AST.Command:
         """ <TAG> ::= TAG """
@@ -1442,16 +1502,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WAIT")
-
-    def _parse_RANDOMIZE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="RANDOMIZE")
-
-    def _parse_USING(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="USING")
 
     def _parse_UNT(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1563,11 +1613,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="YPOS")
 
-    def _parse_SPC(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SPC")
-
     def _parse_TROFF(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1617,11 +1662,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SYMBOL")
-
-    def _parse_TAB(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TAB")
 
     def _parse_SGN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER

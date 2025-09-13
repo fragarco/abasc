@@ -61,6 +61,13 @@ def exptype_isstr(etype: ExpType) -> bool:
 def exptype_isvalid(etype: ExpType) -> bool:
     return etype in (ExpType.Integer, ExpType.Real, ExpType.String)
 
+def exptype_compatible(etype1: ExpType, etype2: ExpType) -> bool:
+    if ExpType.Mismatch in (etype1, etype2) or ExpType.Void in (etype1, etype2):
+        return False
+    if ExpType.String in (etype1, etype2):
+        return etype1 == etype2
+    return True
+
 # ---------- Basic Tree Nodes ----------
 
 class ASTNode:
@@ -305,16 +312,16 @@ class Stream(Statement):
         d["value"] = self.value
         return d
 
-class ControlCode(Statement):
-    code: str
+class Separator(Statement):
+    sym: str
     
-    def __init__(self, code: str):
-        super().__init__(etype=ExpType.Void, id="ControlCode")
-        self.code = code
+    def __init__(self, symbol: str):
+        super().__init__(etype=ExpType.Void, id="Separator")
+        self.sym = symbol
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["code"] = self.code
+        d["symbol"] = self.sym
         return d
 
 # ---------- Statement Nodes ----------
@@ -465,14 +472,17 @@ class UserFun(Statement):
 
 
 class Print(Statement):
+    stream: Optional[Statement]
     items: list[Statement]
 
-    def __init__(self, items: list[Statement]):
+    def __init__(self, stream: Optional[Statement], items: list[Statement]):
         super().__init__(etype=ExpType.Void, id="Print")
+        self.stream = stream
         self.items = items
 
     def to_json(self) -> dict:
         d = super().to_json()
+        d["stream"] = self.stream.to_json() if self.stream is not None else None
         d["items"] = [a.to_json() for a in self.items]
         return d
 

@@ -1150,5 +1150,27 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[1].statements[0].args[0].value, 255)
         self.assertIsInstance(ast.lines[1].statements[0].args[1], AST.Variable)
 
+    def test_print_example(self):
+        code = """
+10 a$="small"
+20 b$="this is a larger string"
+30 PRINT a$;a$
+40 PRINT a$;b$;"which end here"
+50 FOR x=6 TO 15
+60 PRINT SPC(5)"a";SPC(x)"b"
+70 PRINT TAB(5)"a";TAB(x)"b"
+80 NEXT
+90 a$="££######,.##"
+100 b$="!"
+110 PRINT USING a$;12345.6789
+120 PRINT USING b$;"pence"
+"""
+        ast, _ = self.parse_code(code)
+        self.assertIsInstance(ast.lines[2].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[3].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[7].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[8].statements[0], AST.Print)
+
+
 if __name__ == "__main__":
     unittest.main()
