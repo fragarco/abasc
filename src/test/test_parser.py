@@ -109,10 +109,10 @@ class TestParser(unittest.TestCase):
 """
         ast, symt = self.parse_code(code)
         # 40 and 50 get inside the ForLoop block
-        self.assertEqual(len(ast.lines), 7)
+        self.assertEqual(len(ast.lines), 9)
         # X is a local variable inside FNADD context
-        # so 4 symbols + 7 labels (line numbers)
-        self.assertEqual(len(symt.syms), 4+7)
+        # so 4 symbols + 9 labels (line numbers)
+        self.assertEqual(len(symt.syms), 4+9)
 
 # ------------------ Commands and Functions
 
@@ -250,7 +250,7 @@ class TestParser(unittest.TestCase):
 """
         ast, _ = self.parse_code(code)
         # FOR + NEXT form a single line/block
-        self.assertEqual(ast.lines[3].statements[0].name, "CLEAR INPUT")
+        self.assertEqual(ast.lines[4].statements[0].name, "CLEAR INPUT")
  
     def test_clg_basic(self):
         codes = ["10 CLG 1", "10 CLG 1+1", "10 CLG"]
@@ -474,8 +474,8 @@ class TestParser(unittest.TestCase):
         code = '10 IF ERR=17 THEN 10 ELSE ERROR 17\n20 PRINT ERR,ERL'
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[0].id, "If")
-        self.assertEqual(ast.lines[0].statements[0].else_block[0].name, "ERROR")
-        self.assertEqual(len(ast.lines[0].statements[0].else_block[0].args), 1)
+        self.assertEqual(ast.lines[0].statements[0].inline_else[0].name, "ERROR")
+        self.assertEqual(len(ast.lines[0].statements[0].inline_else[0].args), 1)
 
     def test_every_basic(self):
         code = """
@@ -506,17 +506,16 @@ class TestParser(unittest.TestCase):
             "10 FOR I=1 TO 5: PRINT I: NEXT: END",
             "10 FOR I%=1 TO 5: PRINT I%: NEXT: END",
             "10 FOR I=1 TO 5: PRINT I: NEXT I: END",
-            "10 FOR I=1 TO 5: FOR J=1 TO 10: NEXT: NEXT: END",
-            "10 FOR I=1 TO 5: FOR J=1 TO 10: NEXT J: NEXT I: END"
+            "10 FOR I=1 TO 5: FOR J=1 TO 10: NEXT: NEXT",
+            "10 FOR I=1 TO 5: FOR J=1 TO 10: NEXT J: NEXT I"
         ]
         for code in codes:
             ast, _ = self.parse_code(code)
             self.assertEqual(len(ast.lines), 1)
-            self.assertEqual(len(ast.lines[0].statements), 2)
+            self.assertEqual(len(ast.lines[0].statements), 4)
             self.assertEqual(ast.lines[0].statements[0].id, "ForLoop")
-            self.assertEqual(ast.lines[0].statements[1].name, "END")
 
-    def test_for_inline_error(self):
+    def test_for_errors(self):
         codes = [
             "10 FOR I=1 TO 5: PRINT I: END",
             "10 FOR I$=1 TO 5: PRINT I: NEXT: END",
@@ -528,11 +527,12 @@ class TestParser(unittest.TestCase):
             "10 FOR I=1 TO 5: FOR J=1 TO 10: NEXT I: NEXT J: END"
         ]
         for code in codes:
-            with self.assertRaises(BasError):
+            with self.assertRaises(BasError, msg=code):
                 self.parse_code(code)
             
     def test_for_nested_loops(self):
-        code = """10 FOR I=1 TO 2
+        code = """      
+10 FOR I=1 TO 2
 20 FOR J=1 TO 2
 30 PRINT I,J
 40 NEXT J
@@ -540,20 +540,9 @@ class TestParser(unittest.TestCase):
 """
         ast, _ = self.parse_code(code)
         outer_for = ast.lines[0].statements[0]
-        self.assertIsInstance(outer_for, AST.ForLoop)
-        self.assertIsInstance(outer_for.body[0], AST.ForLoop)
-        inner_for = outer_for.body[0]
-        self.assertIsInstance(inner_for.body[0], AST.Print)
-
-    def test_for_mixed_fails(self):
-        codes = [
-            "10 FOR I=1 TO 2: PRINT I\n20 NEXT",
-            "10 FOR I=1 TO 2\n20 PRINT I: NEXT: PRINT I",
-            "10 FOR I=1 TO 2\n20 PRINT I: NEXT: FOR J=1 TO 5: NEXT"
-        ]
-        for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
+        self.assertIsInstance(ast.lines[0].statements[0], AST.ForLoop)
+        self.assertIsInstance(ast.lines[1].statements[0], AST.ForLoop)
+        self.assertIsInstance(ast.lines[2].statements[0], AST.Print)
 
     def test_for_no_case(self):
         code ="""
@@ -563,12 +552,11 @@ class TestParser(unittest.TestCase):
 40 NEXT I
 """
         ast, _ = self.parse_code(code)
-        # CLS + FOR block
-        self.assertEqual(len(ast.lines), 2)
+        self.assertEqual(len(ast.lines), 4)
         self.assertIsInstance(ast.lines[0].statements[0], AST.Command)
         self.assertEqual(ast.lines[0].statements[0].name, "CLS")
         self.assertIsInstance(ast.lines[1].statements[0], AST.ForLoop)
-        self.assertIsInstance(ast.lines[1].statements[0].body[0], AST.Print)
+        self.assertIsInstance(ast.lines[2].statements[0], AST.Print)
 
     def test_fre_basic(self):
         code = '10 PRINT FRE(0),FRE("")'
@@ -595,12 +583,10 @@ class TestParser(unittest.TestCase):
             ast, _ = self.parse_code(code)
             ifnode = ast.lines[0].statements[1]
             self.assertIsInstance(ifnode, AST.If)
-            # GOTO + ELSE
-            self.assertEqual(len(ifnode.then_block), 2)
-            self.assertEqual(ifnode.then_block[0].args[0].value, 10)
-            # GOTO + IFEND
-            self.assertEqual(len(ifnode.else_block), 2)
-            self.assertEqual(ifnode.else_block[0].args[0].value, 10)
+            self.assertEqual(len(ifnode.inline_then), 1)
+            self.assertEqual(ifnode.inline_then[0].args[0].value, 10)
+            self.assertEqual(len(ifnode.inline_then), 1)
+            self.assertEqual(ifnode.inline_then[0].args[0].value, 10)
 
     def test_if_then_basic(self):
         codes = [
@@ -611,80 +597,47 @@ class TestParser(unittest.TestCase):
             ast, _ = self.parse_code(code)
             ifnode = ast.lines[0].statements[1]
             self.assertIsInstance(ifnode, AST.If)
-            # GOTO + IFEND
-            self.assertEqual(len(ifnode.then_block), 2)
-            self.assertEqual(ifnode.then_block[0].args[0].value, 10)
-            self.assertIsInstance(ifnode.then_block[1], AST.BlockEnd)
+            self.assertEqual(ifnode.inline_then[0].args[0].value, 10)
+            self.assertEqual(len(ifnode.inline_then), 1)
 
     def test_if_else_inline(self):
         code = """10 I=0: IF I=10 THEN PRINT "A": J=1 ELSE PRINT "B": J=0"""
         ast, _ = self.parse_code(code)
         ifnode = ast.lines[0].statements[1]
         self.assertIsInstance(ifnode, AST.If)
-        # PRINT + J + ELSE
-        self.assertEqual(len(ifnode.then_block), 3)
-        # PRINT + J + IFEND
-        self.assertEqual(len(ifnode.else_block), 3)
+        self.assertEqual(len(ifnode.inline_then), 2)
+        self.assertEqual(len(ifnode.inline_else), 2)
 
-    def test_if_else_block(self):
-        code = """10 X=0 
-20IF X=1 THEN
+    def test_if_then_else_block(self):
+        code = """
+10 X=0 
+20 IF X=1 THEN
 30 PRINT "YES": J=1
 40 ELSE
 50 PRINT "NO": J=1
-60 IFEND"""
-        ast, _ = self.parse_code(code)
-        stmt = ast.lines[1].statements[0]
-        self.assertIsInstance(stmt, AST.If)
-        # PRINT + Assignement + ELSE
-        self.assertEqual(len(stmt.then_block), 3)
-        # PRINT + Assignement + IFEND
-        self.assertEqual(len(stmt.else_block), 3)
-
-    def test_if_then_inline_else_block(self):
-        code = """10 X=0: IF X=1 THEN PRINT "YES": J=1 ELSE
-30 PRINT "NO": J=1
-40 IFEND"""
-        ast, _ = self.parse_code(code)
-        stmt = ast.lines[0].statements[1]
-        self.assertIsInstance(stmt, AST.If)
-        # PRINT + Assignement + ELSE
-        self.assertEqual(len(stmt.then_block), 3)
-        # PRINT + Assignement + IFEND
-        self.assertEqual(len(stmt.else_block), 3)
-
-    def test_if_then_block_else_inline(self):
-        code = """10 x=0: IF X=1 THEN
-20 PRINT "YES"
-30 J=1
-40 ELSE PRINT "NO": J=1
+60 IFEND
 """
         ast, _ = self.parse_code(code)
-        stmt = ast.lines[0].statements[1]
-        self.assertIsInstance(stmt, AST.If)
-        # PRINT + Assignement + ELSE
-        self.assertEqual(len(stmt.then_block), 3)
-        # PRINT + Assignement + IFEND
-        self.assertEqual(len(stmt.else_block), 3)
+        self.assertIsInstance(ast.lines[1].statements[0], AST.If)
+        self.assertEqual(ast.lines[3].statements[0].name, "ELSE")
+        self.assertEqual(ast.lines[5].statements[0].name, "IFEND")
 
     def test_if_else_while_nested(self):
         code = "10 I=10: IF I=10 THEN WHILE I>0: I=I-1: PRINT I: WEND ELSE J=I MOD 2: PRINT I"
         ast, _ = self.parse_code(code)
         ifnode = ast.lines[0].statements[1]
         self.assertIsInstance(ifnode, AST.If)
-        # WHILE + ELSE
-        self.assertEqual(len(ifnode.then_block), 2)
-        self.assertIsInstance(ifnode.then_block[0], AST.WhileLoop)
-        self.assertEqual(ifnode.then_block[1].name, "ELSE")
-        # Assignement + Print + IFEND
-        self.assertEqual(len(ifnode.else_block), 3)
-        self.assertIsInstance(ifnode.else_block[0], AST.Assignment)
-        self.assertIsInstance(ifnode.else_block[1], AST.Print)
-        self.assertEqual(ifnode.else_block[2].name, "IFEND")
+        self.assertEqual(len(ifnode.inline_then), 4)
+        self.assertIsInstance(ifnode.inline_then[0], AST.WhileLoop)
+        self.assertEqual(len(ifnode.inline_else), 2)
+        self.assertIsInstance(ifnode.inline_else[0], AST.Assignment)
+        self.assertIsInstance(ifnode.inline_else[1], AST.Print)
 
     def test_if_missing_end(self):
-        code = """10 IF X>0 THEN
-20 PRINT X"""
+        code = """
+10 IF X>0 THEN
+20 PRINT X
+"""
         with self.assertRaises(BasError):
             self.parse_code(code)
 
@@ -699,12 +652,10 @@ class TestParser(unittest.TestCase):
 70 INK 1,2,16
 """
         ast, _ = self.parse_code(code)
-        # The FOR loop will flatten all lines until NEXT P in a
-        # single AST line
-        self.assertEqual(ast.lines[1].statements[0].name, "INK")
-        self.assertEqual(ast.lines[1].statements[0].args[0].value, 1)
-        self.assertEqual(ast.lines[1].statements[0].args[1].value, 2)
-        self.assertEqual(ast.lines[1].statements[0].args[2].value, 16)
+        self.assertEqual(ast.lines[6].statements[0].name, "INK")
+        self.assertEqual(ast.lines[6].statements[0].args[0].value, 1)
+        self.assertEqual(ast.lines[6].statements[0].args[1].value, 2)
+        self.assertEqual(ast.lines[6].statements[0].args[2].value, 16)
 
     def test_inkey_basic(self):
         code = '10 IF INKEY(55)=32 THEN PRINT "V+SHIFT PRESSED"'
@@ -735,13 +686,15 @@ class TestParser(unittest.TestCase):
         for code in codes:
             ast, _ = self.parse_code(code)
             self.assertEqual(len(ast.lines), 1)
-            self.assertEqual(len(ast.lines[0].statements), 3)
+            statements = len(code.split(":"))
+            self.assertEqual(len(ast.lines[0].statements), statements)
             self.assertEqual(ast.lines[0].statements[0].id, "Assignment")
             self.assertEqual(ast.lines[0].statements[1].id, "WhileLoop")
-            self.assertEqual(ast.lines[0].statements[2].name, "END")
+            self.assertEqual(ast.lines[0].statements[statements-1].name, "END")
 
     def test_while_nested_loops(self):
-        code = """10 I=10
+        code = """
+10 I=10
 20 WHILE I>0
 30 PRINT I: I=I-1
 40 J=10
@@ -751,22 +704,14 @@ class TestParser(unittest.TestCase):
 80 WEND
 """
         ast, _ = self.parse_code(code)
-        outer_while = ast.lines[1].statements[0]
-        self.assertIsInstance(outer_while, AST.WhileLoop)
-        self.assertIsInstance(outer_while.body[3], AST.WhileLoop)
-        inner_while = outer_while.body[3]
-        self.assertIsInstance(inner_while.body[0], AST.Assignment)
+        self.assertIsInstance(ast.lines[1].statements[0], AST.WhileLoop)
+        self.assertIsInstance(ast.lines[4].statements[0], AST.WhileLoop)
+        self.assertIsInstance(ast.lines[5].statements[0], AST.Assignment)
 
-    def test_while_mixed_fails(self):
-        codes = [
-            '10 I$="HELLO": WHILE I$>0: PRINT I$: WEND',
-            "10 I=10: WHILE I>0: PRINT I\n20 I=I-1: WEND",
-            "10 I=10: WHILE I>0\n 20 PRINT I\n30 I=I-1: WEND: END",
-            "10 I=10: WHILE I>0\n 20 PRINT I: WEND: WHILE I>0: WEND",
-        ]
-        for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
+    def test_while_fails(self):
+        code = '10 I$="HELLO": WHILE I$>0: PRINT I$: WEND'
+        with self.assertRaises(BasError, msg=code):
+            self.parse_code(code)
 
     def test_input_full(self):
         code = '10 INPUT #0,"ENTER YOUR NAME:";n$'
@@ -1075,7 +1020,7 @@ class TestParser(unittest.TestCase):
 70 NEXT p  
 """         
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[1].statements[0].body[0]
+        cmd = ast.lines[2].statements[0]
         self.assertEqual(cmd.name, "PAPER")
         self.assertIsInstance(cmd.args[0], AST.Variable)
 
@@ -1092,7 +1037,7 @@ class TestParser(unittest.TestCase):
 90 NEXT
 """
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[4].statements[0].body[0].source.args[0]
+        cmd = ast.lines[5].statements[0].source.args[0]
         self.assertEqual(cmd.name, "PEEK")
         self.assertEqual(cmd.etype, AST.ExpType.Integer)
         self.assertIsInstance(cmd.args[0], AST.Variable)
@@ -1118,8 +1063,8 @@ class TestParser(unittest.TestCase):
 170 PRINT"Now you can finish the Hangman program!"
 """
         ast, _ = self.parse_code(code)
-        # it's enough to check that PI is correctly parsed
-        self.assertIsInstance(ast.lines[6].statements[0].body[3], AST.Command)
+        # We simply check that PI is recognized as a function
+        self.assertIsInstance(ast.lines[10].statements[0], AST.Command)
 
     def test_plot_example(self):
         code = """
@@ -1135,7 +1080,7 @@ class TestParser(unittest.TestCase):
 80 NEXT
 """
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[3].statements[0].body[2]
+        cmd = ast.lines[6].statements[0]
         self.assertEqual(cmd.name, "PLOT")
         self.assertIsInstance(cmd.args[0], AST.Variable)
         self.assertIsInstance(cmd.args[1], AST.Variable)
@@ -1168,8 +1113,10 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         self.assertIsInstance(ast.lines[2].statements[0], AST.Print)
         self.assertIsInstance(ast.lines[3].statements[0], AST.Print)
-        self.assertIsInstance(ast.lines[7].statements[0], AST.Print)
-        self.assertIsInstance(ast.lines[8].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[5].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[6].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[10].statements[0], AST.Print)
+        self.assertIsInstance(ast.lines[11].statements[0], AST.Print)
 
     def test_read_example(self):
         code = """
@@ -1180,7 +1127,7 @@ class TestParser(unittest.TestCase):
 50 DATA "128",8
 """
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[0].statements[0].body[0]
+        cmd = ast.lines[1].statements[0]
         self.assertEqual(cmd.name, "READ")
         self.assertEqual(len(cmd.args), 2)
 
@@ -1228,7 +1175,7 @@ class TestParser(unittest.TestCase):
 40 NEXT
 """
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[1].statements[0].body[1].items[0]
+        cmd = ast.lines[3].statements[0].items[0]
         self.assertEqual(cmd.name, "RIGHT$")
         self.assertEqual(cmd.etype, AST.ExpType.String)
         self.assertEqual(len(cmd.args), 2)
@@ -1252,10 +1199,48 @@ class TestParser(unittest.TestCase):
 50 NEXT 
 """
         ast, _ = self.parse_code(code)
-        cmd = ast.lines[1].statements[0].body[0].items[2]
+        # items = var(r), sep(,) and ROUND
+        cmd = ast.lines[4].statements[0].items[2]
         self.assertEqual(cmd.name, "ROUND")
         self.assertEqual(cmd.etype, AST.ExpType.Real)
         self.assertEqual(len(cmd.args), 2)
+
+    def test_save_basic(self):
+        code = '10 SAVE "myfile.xyz",B,&4000,&4000,&4001'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "SAVE")
+        self.assertEqual(len(ast.lines[0].statements[0].args), 5)
+
+    def test_sgn_example(self):
+        code ="""
+10 FOR n=200 TO -200 STEP -20
+20 PRINT "SGN outputs";
+30 PRINT SGN(n);"when the number is";n
+40 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[2].statements[0].items[0]
+        self.assertEqual(cmd.name, "SGN")
+        self.assertEqual(len(cmd.args), 1)
+        
+    def test_sound_example(self):
+        code ="""
+10 FOR z=0 TO 4095
+20 SOUND 1,z,1,12
+30 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0]
+        self.assertEqual(cmd.name, "SOUND")
+        self.assertEqual(len(cmd.args), 4)
+
+    def test_spacess_basic(self):
+        code = '10 PRINT SPACE$(8);"HELLO"'
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0].items[0]
+        self.assertEqual(cmd.name, "SPACE$")
+        self.assertEqual(cmd.etype, AST.ExpType.String)
+        self.assertEqual(cmd.args[0].value, 8)
 
 if __name__ == "__main__":
     unittest.main()

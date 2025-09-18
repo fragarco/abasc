@@ -328,20 +328,27 @@ class Separator(Statement):
 
 class If(Statement):
     condition: Statement
-    then_block: list[Statement]
-    else_block: list[Statement]
+    has_else: bool
+    is_inline: bool
+    inline_then: list[Statement] = []
+    inline_else: list[Statement] = []
 
-    def __init__(self, condition: Statement, then_block: list[Statement], else_block: list[Statement]):
+    def __init__(self, condition: Statement, inline_then: list[Statement] = [], inline_else: list[Statement] = []):
         super().__init__(etype=ExpType.Void, id="If")
         self.condition = condition
-        self.then_block = then_block
-        self.else_block = else_block
+        self.inline_then = inline_then
+        self.inline_else = inline_else
+        self.has_else = False
+        self.is_inline = len(inline_then) > 0
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["condition"] = self.condition.to_json()
-        d["then_block"] = [a.to_json() for a in self.then_block]
-        d["else_block"] = [a.to_json() for a in self.else_block]
+        d["is_inline"] = self.is_inline
+        d["has_else"] = self.has_else
+        if self.is_inline:
+            d["inline_then"] = [s.to_json() for s in self.inline_then]
+            d["inline_else"] = [s.to_json() for s in self.inline_else]
         return d
     
 class ForLoop(Statement):
@@ -349,16 +356,13 @@ class ForLoop(Statement):
     start: Statement
     end: Statement
     step: Optional[Statement]
-    body: list[Statement]
 
-    def __init__(self, var: Variable, start: Statement, end: Statement, body: list[Statement], step: Optional[Statement]=None):
+    def __init__(self, var: Variable, start: Statement, end: Statement, step: Optional[Statement]=None):
         super().__init__(etype=ExpType.Void, id="ForLoop")
         self.var = var
         self.start = start
         self.end = end
         self.step = step
-        self.body = body
-
 
     def to_json(self) -> dict:
         d = super().to_json()
@@ -366,22 +370,18 @@ class ForLoop(Statement):
         d["start"] = self.start.to_json()
         d["end"] = self.end.to_json()
         d["step"] = None if self.step is None else self.step.to_json()
-        d["body"] = [a.to_json() for a in self.body]
         return d
     
 class WhileLoop(Statement):
     condition: Statement
-    body: list[Statement]
 
-    def __init__(self, condition: Statement, body: list[Statement]):
+    def __init__(self, condition: Statement):
         super().__init__(etype=ExpType.Void, id="WhileLoop")
         self.condition = condition
-        self.body = body
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["condition"] = self.condition.to_json()
-        d["body"] = [a.to_json() for a in self.body]
         return d
 
 class BlockEnd(Statement):

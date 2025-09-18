@@ -144,6 +144,9 @@ _ERRORCODES = {
     # -------- Custom error codes used by BASC ---------
     "033": "File doesn't exist",
     "034": "Line number already exists",
+    "035": "IFEND missing",
+    "036": "Unexpected IFEND",
+    "037": "Unexpected ELSE",
 }
 
 class BasError(Exception):

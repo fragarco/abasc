@@ -60,7 +60,7 @@ class BlockType(Enum):
 class CodeBlock:
     type: BlockType
     until_keywords: tuple
-    alive: bool = True
+    start_node: AST.Statement
 
 class LocBasParser:
     def __init__(self, code: list[CodeLine], tokens: list[Token], warning_level=-1):
@@ -542,11 +542,13 @@ class LocBasParser:
         """ <ELSE> ::== ELSE """
         self._advance()
         if len(self.codeblocks) == 0 or "ELSE" not in self.codeblocks[-1].until_keywords:
-            self._raise_error(2, "Unexpected ELSE keyword")
-        if not self.codeblocks[-1].alive:
-             self._raise_error(2, "Unexpected ELSE keyword")
-        self.codeblocks[-1].alive = False
-        self.codeblocks.pop()
+            self._raise_error(37)
+        codeblock = self.codeblocks[-1]
+        if isinstance(codeblock.start_node, AST.If):
+            codeblock.start_node.has_else = True
+            codeblock.until_keywords = ("IFEND",)
+        else:
+            self._raise_error(2)
         return AST.BlockEnd(name="ELSE")
 
     def _parse_END(self) -> AST.Command:
@@ -666,8 +668,7 @@ class LocBasParser:
         return AST.Command(name="FN")
 
     def _parse_FOR(self) -> AST.ForLoop:
-        """ <FOR> ::= FOR IDENT = <int_expression> TO <int_expression> [STEP <int_expression>] <for_body> """
-        """ <for_body> ::= : <for_inline> | EOL <for_block> """
+        """ <FOR> ::= FOR IDENT = <int_expression> TO <int_expression> [STEP <int_expression>] """
         self._advance()
         var = self._expect(TokenType.IDENT).lexeme.upper()
         vartype = AST.exptype_fromname(var)
@@ -689,30 +690,14 @@ class LocBasParser:
         step = None
         if self._match(TokenType.KEYWORD, "STEP"):
             step = self._parse_int_expression()
-        self.codeblocks.append(CodeBlock(type=BlockType.FOR, until_keywords=("NEXT",)))
-        if self._current_is(TokenType.COLON):
-            body = self._parse_for_inline()
-        else:
-            self._expect(TokenType.EOL)
-            body = self._parse_code_block()
-        # Last statement of the block is the NEXT otherwise
-        # we won't be here
-        next_var = body[-1].var.upper() # type: ignore[attr-defined]
-        if next_var != "" and next_var != var:
-            self._raise_error(5)            
         index = AST.Variable(name=var, etype=vartype)
-        return AST.ForLoop(var=index, start=start, end=end, step=step, body=body)
-    
-    def _parse_for_inline(self) -> list[AST.Statement]:
-        """ <for_inline> ::= :<statement><for_inline> | :<NEXT>"""
-        self._advance()
-        last_stmt = self._parse_statement() 
-        body = [last_stmt]
-        while not isinstance(last_stmt, AST.BlockEnd):
-            self._expect(TokenType.COLON)
-            last_stmt = self._parse_statement()
-            body.append(last_stmt)
-        return body
+        node = AST.ForLoop(var=index, start=start, end=end, step=step)
+        self.codeblocks.append(CodeBlock(
+            type=BlockType.FOR,
+            until_keywords=("NEXT",),
+            start_node=node
+        ))
+        return node
 
     def _parse_FRAME(self) -> AST.Command:
         """ <FRAME> ::= FRAME """
@@ -737,7 +722,9 @@ class LocBasParser:
 
     def _parse_GOTO(self) -> AST.Command:
         """ <GOTO> ::= GOTO INT """
-        self._advance()
+        # THEN and ELSE can arrive here parsing just a number so we use 
+        # match and not advance
+        self._match(TokenType.KEYWORD, "GOTO")
         num = self._expect(TokenType.INT)
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="GOTO", args=args)
@@ -773,71 +760,59 @@ class LocBasParser:
         return AST.Function(name="HIMEM", etype=AST.ExpType.Integer)
     
     def _parse_IF(self) -> AST.If:
-        """ <IF> ::= IF <int_expression> THEN <then_block> [ELSE <else_block>] """
+        """ <IF> ::= IF <int_expression> THEN [<inline_then>[ELSE >inline_else>]] """
         self._advance()
         condition = self._parse_int_expression()
         self._expect(TokenType.KEYWORD, "THEN")
-        then_block = self._parse_then_block()
-        else_block: list[AST.Statement] = []
-        if isinstance(then_block[-1], AST.BlockEnd) and then_block[-1].name == "ELSE":
-            else_block = self._parse_else_block()
-        return AST.If(condition=condition, then_block=then_block, else_block=else_block)
-
-    def _parse_then_block(self) -> list[AST.Statement]:
-        """ <then_block> :== (INT | <statements>) | EOL <code_block>"""
-        then_block: list[AST.Statement] = []
         if not self._current_is(TokenType.EOL):
-            if self._current_is(TokenType.INT):
-                tk = self._advance()
-                if self.symtable.find(str(cast(int, tk.value))) is None:
-                    self._raise_error(8)
-                then_block = [AST.Command(name="GOTO", args=[AST.Integer(value = cast(int, tk.value))])]
-            else:
-                then_block.append(self._parse_statement())
-                while self._current_is(TokenType.COLON):
-                    self._advance()
-                    then_block.append(self._parse_statement())
+            else_body: list[AST.Statement] = []
+            then_body = self._parse_inline_then()
             if self._current_is(TokenType.KEYWORD, "ELSE"):
                 self._advance()
-                then_block.append(AST.BlockEnd(name="ELSE"))
-            else:
-                then_block.append(AST.BlockEnd(name="IFEND"))
-        else:
-            self._advance()
-            self.codeblocks.append(CodeBlock(type=BlockType.IF, until_keywords=("ELSE","IFEND")))
-            statements = self._parse_code_block()
-            then_block = then_block + statements
-        return then_block                    
-        
-    def _parse_else_block(self) -> list[AST.Statement]:
-        """ <then_else> :== (INT | <statements> ) | EOL <code_block>"""
-        else_block: list[AST.Statement] = []
-        if not self._current_is(TokenType.EOL):
+                else_body = self._parse_inline_else()
+            return AST.If(condition=condition, inline_then=then_body, inline_else=else_body)
+        node = AST.If(condition=condition)
+        self.codeblocks.append(CodeBlock(
+            type=BlockType.IF,
+            until_keywords=("ELSE","IFEND"),
+            start_node=node
+        ))
+        return node 
+
+    def _parse_inline_then(self) -> list[AST.Statement]:
+        """ <inline_then> ::= <statement>[:<statement>]* """
+        then_body: list[AST.Statement] = []
+        while not self._current_in((TokenType.EOL, TokenType.EOF)):
             if self._current_is(TokenType.INT):
-                tk = self._advance()
-                if self.symtable.find(str(cast(int, tk.value))) is None:
-                    self._raise_error(8)
-                else_block = [AST.Command(name="GOTO", args=[AST.Integer(value = cast(int, tk.value))])]
-            else:
-                else_block.append(self._parse_statement())
-                while self._current_is(TokenType.COLON):
-                    self._advance()
-                    else_block.append(self._parse_statement())
-            else_block.append(AST.BlockEnd(name="IFEND"))
-        else:
-            self._advance()
-            self.codeblocks.append(CodeBlock(type=BlockType.IF, until_keywords=("IFEND",)))
-            statements = self._parse_code_block()
-            else_block = else_block + statements
-        return else_block                    
-        
+                return [self._parse_GOTO()]
+            stmt = self._parse_statement()
+            then_body.append(stmt)
+            if self._current_is(TokenType.COLON):
+                self._advance()
+            if self._current_is(TokenType.KEYWORD, "ELSE"):
+                return then_body
+        if len(then_body) == 0:
+            self._raise_error(2)
+        return then_body
+
+    def _parse_inline_else(self) -> list[AST.Statement]:
+        """ <inline_else> ::= <statement>[:<statement>]* """
+        else_body: list[AST.Statement] = []
+        while not self._current_in((TokenType.EOL, TokenType.EOF)):
+            if self._current_is(TokenType.INT):
+                return [self._parse_GOTO()]
+            stmt = self._parse_statement()
+            else_body.append(stmt)
+            if self._current_is(TokenType.COLON):
+                self._advance()
+        if len(else_body) == 0:
+            self._raise_error(2)
+        return else_body
+
     def _parse_IFEND(self) -> AST.BlockEnd:
         self._advance()
         if len(self.codeblocks) == 0 or "IFEND" not in self.codeblocks[-1].until_keywords:
-            self._raise_error(2, "Unexpected IFEND")
-        if not self.codeblocks[-1].alive:
-            self._raise_error(2, "Unexpected IFEND")
-        self.codeblocks[-1].alive = False
+            self._raise_error(36, "Unexpected IFEND")
         self.codeblocks.pop()
         return AST.BlockEnd(name="IFEND")
 
@@ -1163,14 +1138,20 @@ class LocBasParser:
         self._advance()
         if len(self.codeblocks) == 0 or "NEXT" not in self.codeblocks[-1].until_keywords:
             self._raise_error(1)
-        self.codeblocks[-1].alive = False
-        self.codeblocks.pop()
         next_var = ""
         if self._current_is(TokenType.IDENT):
             next_var = self._advance().lexeme
             vartype = AST.exptype_fromname(next_var)
             if not AST.exptype_isint(vartype):
                 self._raise_error(13)
+            node = self.codeblocks[-1].start_node
+            if isinstance(node, AST.ForLoop):
+                orgvar = node.var.name.upper()
+                if orgvar != next_var.upper():
+                    self._raise_error(1)
+            else:
+                self._raise_error(2)
+        self.codeblocks.pop()
         return AST.BlockEnd(name="NEXT", var=next_var)
 
     def _parse_ON(self) -> AST.Command:
@@ -1500,6 +1481,30 @@ class LocBasParser:
             args = [self._parse_str_expression()]  
         return AST.Command(name="RUN", args=args)
 
+    def _parse_SAVE(self) -> AST.Command:
+        """ <SAVE> ::= SAVE STRING[,CHAR][,<int_expression>[,<int_expression>[,<int_expression]]] """
+        self._advance()
+        lex = self._expect(TokenType.STRING).lexeme
+        args: list[AST.Statement] = [AST.String(value=lex)]
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            self._expect(TokenType.COMMA)
+            lex = self._expect(TokenType.IDENT).lexeme.upper()
+            if lex not in ('A','B','P'):
+                self._raise_error(5)
+            args.append(AST.String(value=lex))
+            while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+                self._expect(TokenType.COMMA)
+                args.append(self._parse_int_expression())
+        return AST.Command(name="SAVE", args=args)
+
+    def _parse_SGN(self) -> AST.Function:
+        """ <SGN> ::= SGN(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="SGN", etype=AST.ExpType.Integer, args=args)
+
     def _parse_SIN(self) -> AST.Function:
         """ <SIN> ::= SIN(<num_expression>) """
         self._advance()
@@ -1507,6 +1512,29 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SIN", etype=AST.ExpType.Real, args=args)
+
+    def _parse_SOUND(self) -> AST.Command:
+        """ <SOUND> ::= SOUND <int_expression>,<int_expression>[,<int_expression>]* """
+        # the extra int parameters are:
+        # duration, volume, volume envelope, tone envelope, noise period 
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        if len(args) > 7:
+            self._raise_error(5)
+        return AST.Command(name="SOUND", args=args)
+
+    def _parse_SPACESS(self) -> AST.Function:
+        """ <SPACESS> ::= SPACE$(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="SPACE$", etype=AST.ExpType.String, args=args)
 
     def _parse_SPC(self) -> AST.Function:
         """ <SPC> ::= SPC(<int_expression>) """
@@ -1539,33 +1567,20 @@ class LocBasParser:
         self._advance()
         if len(self.codeblocks) == 0 or "WEND" not in self.codeblocks[-1].until_keywords:
             self._raise_error(2, "Unexpected WEND keyword")
-        self.codeblocks[-1].alive = False
         self.codeblocks.pop()
         return AST.BlockEnd(name="WEND")
     
     def _parse_WHILE(self) -> AST.WhileLoop:
-        """ <WHILE> ::= WHILE <int_expression> <while_body> """
-        """ <while_body> ::= : <while_inline> | EOL <code_block> """
+        """ <WHILE> ::= WHILE <int_expression> """
         self._advance()
         cond = self._parse_int_expression()
-        self.codeblocks.append(CodeBlock(type=BlockType.WHILE, until_keywords=("WEND",)))
-        if self._current_is(TokenType.COLON):
-            self._advance()
-            body = self._parse_while_inline()
-        else:
-            self._expect(TokenType.EOL)
-            body = self._parse_code_block()
-        return AST.WhileLoop(condition=cond, body=body)
-    
-    def _parse_while_inline(self) -> list[AST.Statement]:
-        """ <while_inline> ::= :<statement><while_inline> | :<WEND>"""
-        last_stmt = self._parse_statement() 
-        body = [last_stmt]
-        while not isinstance(last_stmt, AST.BlockEnd):
-            self._expect(TokenType.COLON)
-            last_stmt = self._parse_statement()
-            body.append(last_stmt)
-        return body
+        node = AST.WhileLoop(condition=cond)
+        self.codeblocks.append(CodeBlock(
+            type=BlockType.WHILE,
+            until_keywords=("WEND",),
+            start_node=node
+        ))
+        return node
 
     def _parse_WINDOW(self) -> AST.Command:
         """ 
@@ -1655,11 +1670,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="LINE")
 
-    def _parse_SAVE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SAVE")
-
     def _parse_YPOS(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1679,11 +1689,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="SPEED")
-
-    def _parse_SOUND(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SOUND")
 
     def _parse_SQ(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -1715,11 +1720,6 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="SYMBOL")
 
-    def _parse_SGN(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SGN")
-
     def _parse_VAL(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
@@ -1729,11 +1729,6 @@ class LocBasParser:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WIDTH")
-
-    def _parse_SPACE_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SPACE_S")
 
     def _parse_TAN(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
@@ -2049,23 +2044,6 @@ class LocBasParser:
             )
         return AST.Assignment(target=target, source=source, etype=target.etype)
 
-    def _parse_code_block(self) -> list[AST.Statement]:
-        """ <code_block> ::= <line><parse_block> | (NEXT | WEND | ELSE | IFEND) """
-        codeblock = self.codeblocks[-1]
-        self._expect(TokenType.LINE_NUMBER)
-        stmts: list[AST.Statement] = self._parse_statement_list()
-        while codeblock.alive:
-            self._expect(TokenType.EOL)
-            self._expect(TokenType.LINE_NUMBER)
-            stmts += self._parse_statement_list()
-        if not isinstance(stmts[-1], AST.BlockEnd):
-            # The line continued after the BlockEnd keyword
-            # which is an error for us
-            # TODO: review the problem of 30 NEXT I: NEXT J
-            self._rewind()
-            self._raise_error(2, "Extra statements aren't allowed after a codeblock end")
-        return stmts
-
     def _parse_keyword(self) -> AST.Statement:
         """ <keyword> ::= <FUNCTION> | <COMMAND> """
         keyword = self._current().lexeme
@@ -2123,6 +2101,15 @@ class LocBasParser:
                 self._advance()
                 continue
             lines.append(self._parse_line())
+        if len(self.codeblocks) > 0:
+            if "NEXT" in self.codeblocks[-1].until_keywords:
+                self._raise_error(26)
+            elif "WEND" in self.codeblocks[-1].until_keywords:
+                self._raise_error(29)
+            elif "IFEND" in self.codeblocks[-1].until_keywords:
+                self._raise_error(35)
+            else:
+                self._raise_error(24)
         return AST.Program(lines=lines), self.symtable
 
 if __name__ == "__main__":
