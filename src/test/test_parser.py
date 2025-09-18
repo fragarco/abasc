@@ -1242,5 +1242,114 @@ class TestParser(unittest.TestCase):
         self.assertEqual(cmd.etype, AST.ExpType.String)
         self.assertEqual(cmd.args[0].value, 8)
 
+    def test_speed_ink_example(self):
+        code="""
+10 INK 0,9,12:INK 1,0,26  
+20 BORDER 12,9 
+30 SPEED INK 50,20 
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[2].statements[0]
+        self.assertEqual(cmd.name, "SPEED INK")
+        self.assertEqual(cmd.args[0].value, 50)
+        self.assertEqual(cmd.args[1].value, 20)
+
+    def test_speed_key(self):
+        code="10 SPEED KEY 20,3"
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0]
+        self.assertEqual(cmd.name, "SPEED KEY")
+        self.assertEqual(cmd.args[0].value, 20)
+        self.assertEqual(cmd.args[1].value, 3)
+
+    def test_speed_write_basic(self):
+        code="10 SPEED WRITE 1"
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0]
+        self.assertEqual(cmd.name, "SPEED WRITE")
+        self.assertEqual(cmd.args[0].value, 1)
+
+    def test_sq_example(self):
+        code="""
+10 MODE 1 
+20 FOR n=20 TO 0 STEP -1 
+30 PRINT n; 
+40 SOUND 1,10+n,100,7  
+50 WHILE SQ(1)>127:WEND  
+60 NEXT
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[4].statements[0].condition.left
+        self.assertEqual(cmd.name, "SQ")
+        self.assertEqual(cmd.etype, AST.ExpType.Integer)
+        self.assertEqual(cmd.args[0].value, 1)
+
+    def test_sqr_basic(self):
+        code="10 I=SQR(3) + SQR(9)"
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0].source
+        self.assertEqual(cmd.left.name, "SQR")
+        self.assertEqual(cmd.left.args[0].value, 3)
+    
+    def test_strss_basic(self):
+        code="10 PRINT STR$(&766)"
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0].items[0]
+        self.assertEqual(cmd.name, "STR$")
+        self.assertEqual(cmd.args[0].value, 1894)
+
+    def test_stringss_basic(self):
+        code='10 PRINT STRING$(&16,"*")'
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[0].statements[0].items[0]
+        self.assertEqual(cmd.name, "STRING$")
+        self.assertEqual(cmd.args[0].value, 22)
+
+    def test_symbol_example(self):
+        code="""
+5 MODE 2 
+10 SYMBOL AFTER 90 
+20 SYMBOL 93,&80,&40,&20,&10,&8,&4,&2,&1   
+30 FOR n=1 TO 2000 
+40 PRINT CHR$(93); 
+50 NEXT 
+60 GOTO 60 
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[2].statements[0]
+        self.assertEqual(cmd.name, "SYMBOL")
+        self.assertEqual(cmd.args[0].value, 93)
+        self.assertEqual(cmd.args[1].value, 128)
+
+    def test_tag_example(self):
+        code="""
+10 MODE 2
+11 BORDER 9
+14 INK 0,12
+15 INK 1,0
+20 FOR n=1 TO 100
+30 MOVE 200+n,320+n
+40 TAG
+50 IF n<70 THEN 60 ELSE 70
+60 PRINT"Hello";:GOTO 80
+70 PRINT" Farewell";
+80 NEXT
+90 GOTO 20
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[6].statements[0]
+        self.assertEqual(cmd.name, "TAG")
+
+    def test_time_example(self):
+        code="""
+10 DATUM = INT(TIME/300)  
+20 TICKER=((TIME/300)-DATUM) 
+30 PRINT TICKER; 
+40 GOTO 20
+"""
+        ast, _ = self.parse_code(code)
+        cmd = ast.lines[1].statements[0].source.left.left
+        self.assertEqual(cmd.name, "TIME")
+
 if __name__ == "__main__":
     unittest.main()

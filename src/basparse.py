@@ -1521,11 +1521,11 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
         args.append(self._parse_int_expression())
-        while self._current_is(TokenType.COMMA):
+        for _ in range(5):
+            if not self._current_is(TokenType.COMMA):
+                break
             self._advance()
             args.append(self._parse_int_expression())
-        if len(args) > 7:
-            self._raise_error(5)
         return AST.Command(name="SOUND", args=args)
 
     def _parse_SPACESS(self) -> AST.Function:
@@ -1544,6 +1544,82 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SPC", etype=AST.ExpType.String, args=args)
 
+    def _parse_SPEED_INK(self) -> AST.Command:
+        """ <SPEED_INK> ::= SPEED INK <int_expression>,<int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        return AST.Command(name="SPEED INK", args=args)
+
+    def _parse_SPEED_KEY(self) -> AST.Command:
+        """ <SPEED_KEY> ::= SPEED KEY <int_expression>,<int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        return AST.Command(name="SPEED KEY", args=args)
+
+    def _parse_SPEED_WRITE(self) -> AST.Command:
+        """ <SPEED_WRITE> ::= SPEED WRITE <int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        return AST.Command(name="SPEED WRITE", args=args)
+
+    def _parse_SQ(self) -> AST.Function:
+        """ <SQ> ::= SQ(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="SQ", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_SQR(self) -> AST.Function:
+        """ <SQR> ::= SQR(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="SQR", etype=AST.ExpType.Real, args=args)
+
+    def _parse_STOP(self) -> AST.Command:
+        """ <STOP> ::= STOP """
+        self._advance()
+        return AST.Command(name="STOP")
+
+    def _parse_STRSS(self) -> AST.Function:
+        """ <STRSS> ::= STR$(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="STR$", etype=AST.ExpType.String, args=args)
+
+    def _parse_STRINGSS(self) -> AST.Function:
+        """ <STRINGSS> ::= STRING$(<int_expression>,<str_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_str_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="STRING$", etype=AST.ExpType.String, args=args)
+
+    def _parse_SYMBOL(self) -> AST.Command:
+        """ <SYMBOL> ::= SYMBOL <int_expression>(,<int_expression>)* """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        for _ in range(8):
+            self._expect(TokenType.COMMA)
+            args.append(self._parse_int_expression())
+        return AST.Command(name="SYMBOL", args=args)
+
+    def _parse_SYMBOL_AFTER(self) -> AST.Command:
+        """ <SYMBOL AFTER> ::= SYMBOL AFTER <int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        return AST.Command(name="SYMBOL_AFTER", args=args)
+
     def _parse_TAB(self) -> AST.Function:
         """ <TAB> ::= TAB(<int_expression>) """
         self._advance()
@@ -1553,14 +1629,103 @@ class LocBasParser:
         return AST.Function(name="TAB", etype=AST.ExpType.String, args=args)
 
     def _parse_TAG(self) -> AST.Command:
-        """ <TAG> ::= TAG """
+        """ <TAG> ::= TAG [#<int_expression>] """
         self._advance()
-        return AST.Command(name="TAG")
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            args = [self._parse_int_expression()]
+        return AST.Command(name="TAG", args=args)
+
+    def _parse_TAGOFF(self) -> AST.Command:
+        """ <TAGOFF> ::= TAGOFF [#<int_expression>] """
+        self._advance()
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            args = [self._parse_int_expression()]
+        return AST.Command(name="TAGOFF", args=args)
+
+    def _parse_TAN(self) -> AST.Function:
+        """ <TAN> ::= TAN(<num_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="TAN", etype=AST.ExpType.Real, args=args)
+
+    def _parse_TEST(self) -> AST.Function:
+        """ <TEST> ::= TEST(<int_expression>,<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="TEST", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_TESTR(self) -> AST.Function:
+        """ <TESTR> ::= TESTR(<int_expression>,<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="TESTR", etype=AST.ExpType.Integer, args=args)
 
     def _parse_THEN(self):
         """ This is always an error """
         self._advance()
         self._raise_error(2, "Unexpected THEN keyword")
+
+    def _parse_TIME(self) -> AST.Function:
+        """ <TIME> ::= TIME """
+        self._advance()
+        return AST.Function(name="TIME", etype=AST.ExpType.Real)
+
+    def _parse_TRON(self) -> AST.Command:
+        """ <TRON> ::= TRON """
+        self._advance()
+        return AST.Command(name="TRON")
+    
+    def _parse_TROFF(self) -> AST.Command:
+        """ <TROFF> ::= TROFF """
+        self._advance()
+        return AST.Command(name="TROFF")
+
+    def _parse_UNT(self) -> AST.Function:
+        """ <UNT> ::= UNT(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="UNT", etype=AST.ExpType.Integer, args=args)
+
+    def _parse_UPPERSS(self) -> AST.Function:
+        """ <UPPERSS> ::= UPPER$(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="UPPER$", etype=AST.ExpType.String, args=args)
+
+    def _parse_VAL(self) -> AST.Function:
+        """ <VAL> ::= VAL(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="UNT", etype=AST.ExpType.Real, args=args)
+
+    def _parse_VPOS(self) -> AST.Function:
+        """ <VPOS> ::= VPOS(#<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        self._expect(TokenType.HASH)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="VPOS", etype=AST.ExpType.Integer, args=args)
 
     def _parse_WEND(self) -> AST.BlockEnd:
         """ <WEND> ::= WEND """
@@ -1600,141 +1765,40 @@ class LocBasParser:
 
     # ------------- Keyword placeholders -----------
 
-    def _parse_XPOS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="XPOS")
-
     def _parse_WAIT(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WAIT")
-
-    def _parse_UNT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="UNT")
-
-    def _parse_SWAP(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SWAP")
-
-    def _parse_VPOS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="VPOS")
-
-    def _parse_TRON(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TRON")
-
-    def _parse_STOP(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="STOP")
-
-    def _parse_SYMBOL_AFTER(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SYMBOL_AFTER")
-
-    def _parse_TIME(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TIME")
-
-    def _parse_STRING_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="STRING_S")
-
-    def _parse_TAGOFF(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TAGOFF")
-
-    def _parse_UPPER_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="UPPER_S")
-
-    def _parse_SQR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SQR")
-
-    def _parse_LINE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="LINE")
-
-    def _parse_YPOS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="YPOS")
-
-    def _parse_TROFF(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TROFF")
-
-    def _parse_TEST(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TEST")
-
-    def _parse_SPEED(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SPEED")
-
-    def _parse_SQ(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SQ")
-
-    def _parse_STR_S(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="STR_S")
-
-    def _parse_ZONE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="ZONE")
-
-    def _parse_WRITE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="WRITE")
-
-    def _parse_TESTR(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="TESTR")
-
-    def _parse_SYMBOL(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="SYMBOL")
-
-    def _parse_VAL(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="VAL")
 
     def _parse_WIDTH(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
         return AST.Command(name="WIDTH")
 
-    def _parse_TAN(self) -> AST.Command:
+    def _parse_WINDOW_SWAP(self) -> AST.Command:
         # AUTOGEN PLACEHOLDER
         self._advance()
-        return AST.Command(name="TAN")
+        return AST.Command(name="WINDOW SWAP")
 
+    def _parse_WRITE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="WRITE")
+
+    def _parse_XPOS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="XPOS")
+    
+    def _parse_YPOS(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="YPOS")
+
+    def _parse_ZONE(self) -> AST.Command:
+        # AUTOGEN PLACEHOLDER
+        self._advance()
+        return AST.Command(name="ZONE")
 
     # ----------------- Expresions -----------------
 
