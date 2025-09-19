@@ -528,6 +528,21 @@ class LineInput(Statement):
         d["var"] = self.var.to_json()
         return d
 
+class Write(Statement):
+    stream: Optional[Statement]
+    items: list[Statement]
+
+    def __init__(self, stream: Optional[Statement], items: list[Statement]):
+        super().__init__(etype=ExpType.Void, id="Write")
+        self.stream = stream
+        self.items = items
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["stream"] = self.stream.to_json() if self.stream is not None else None
+        d["items"] = [a.to_json() for a in self.items]
+        return d
+
 class DefFN(Statement):
     name: str 
     args: list[Variable]

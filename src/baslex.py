@@ -107,7 +107,7 @@ _KEYWORDS = {
     "REM","RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED",
     "SPEED KEY", "SPEED INK", "SPEED WRITE","STEP","STOP","SWAP","SYMBOL",
     "SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN","USING","WAIT",
-    "WEND","WHILE","WIDTH","WINDOW","WRITE","ZONE",
+    "WEND","WHILE","WIDTH","WINDOW","WINDOW SWAP","WRITE","ZONE",
     # Functions
     "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
@@ -332,6 +332,7 @@ class LocBasLexer:
             "ON": ["BREAK", "ERROR GOTO", "SQ"],
             "SPEED": ["KEY", "INK", "WRITE"],
             "SYMBOL": ["AFTER"],
+            "WINDOW": ["SWAP"],
         }
         if head_upper in compound:
             for tail in compound[head_upper]:

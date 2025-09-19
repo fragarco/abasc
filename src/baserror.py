@@ -102,6 +102,17 @@ Table of ERRor codes:
 """
 
 from __future__ import annotations
+import os
+os.system("")  # enables ansi escape characters in terminal
+
+TERM = {
+    "HEADER": "\033[95m",
+    "BLUE": "\033[94m",
+    "GREEN": "\033[92m",
+    "RED": "\033[91m",
+    "UNDER": "\033[4m",
+    "END": "\033[0m",
+}
 
 _ERRORCODES = {
     """ 
@@ -147,6 +158,7 @@ _ERRORCODES = {
     "035": "IFEND missing",
     "036": "Unexpected IFEND",
     "037": "Unexpected ELSE",
+    "038": "Undefined identifier"
 }
 
 class BasError(Exception):
@@ -165,6 +177,9 @@ class BasError(Exception):
             msg = msg + (f":{self.line}" if self.line != -1 else "")
             msg = msg + (f":{self.col} " if self.col != -1 else " ")
         msg = msg + f"{_ERRORCODES[self.ecode]} "
-        msg = msg + (f"in {self.code}" if self.code != "" else "")
-        msg = msg + (f"\n    {self.info}" if self.info != "" else "")
+        msg = msg + (f"{self.info} " if self.info != "" else "")
+        code = self.code
+        if code != "" and self.col != -1:
+            code = code[:self.col-1] + TERM["UNDER"] + code[self.col-1:] + TERM["END"]
+        msg = msg + (f"in {code}" if code != "" else "")
         return msg

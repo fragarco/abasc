@@ -1351,5 +1351,73 @@ class TestParser(unittest.TestCase):
         cmd = ast.lines[1].statements[0].source.left.left
         self.assertEqual(cmd.name, "TIME")
 
+    def test_wait_basic(self):
+        code='10 WAIT &FF34,20,25: WAIT &F500,&X00000001'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "WAIT")
+        self.assertEqual(ast.lines[0].statements[0].args[1].value, 20)
+        self.assertEqual(ast.lines[0].statements[1].name, "WAIT")
+        self.assertEqual(ast.lines[0].statements[1].args[1].value, 1)
+
+    def test_window_example(self):
+        code="""
+10 MODE 1  
+20 BORDER 6 
+30 WINDOW 10,30,7,18  
+40 PAPER 2:PEN 3 
+50 CLS 
+60 PRINT CHR$(143);CHR$(242);"THIS IS LOCATION"  
+70 PRINT "1,1 IN TEXT WINDOW"   
+80 GOTO 80
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[2].statements[0].name, "WINDOW")
+        self.assertEqual(len(ast.lines[2].statements[0].args), 4)
+        self.assertEqual(ast.lines[2].statements[0].args[1].value, 30)
+        self.assertEqual(ast.lines[2].statements[0].args[3].value, 18)
+    
+    def test_window_swap_basic(self):
+        code='10 WINDOW SWAP 0,1: WINDOW SWAP #0,#1'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "WINDOW SWAP")
+        self.assertEqual(ast.lines[0].statements[0].args[1].value, 1)
+        self.assertEqual(ast.lines[0].statements[1].name, "WINDOW SWAP")
+        self.assertEqual(ast.lines[0].statements[1].args[1].value, 1)
+
+    def test_write_example(self):
+        code="""
+10 OPENOUT "DUMMY"
+20 INPUT A$,A
+30 WRITE #9,A$,A
+40 CLOSEOUT
+"""
+        ast, _ = self.parse_code(code)
+        self.assertIsInstance(ast.lines[2].statements[0], AST.Write)
+        self.assertEqual(ast.lines[2].statements[0].stream.value, 9)
+        self.assertEqual(len(ast.lines[2].statements[0].items), 2)
+
+    def test_xpos_ypos_example(self):
+        code="""
+10 MODE 1:DRAW 320,200
+20 PRINT "graphics cursor X,Y position = ";
+30 PRINT XPOS,YPOS
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[2].statements[0].items[0].name, "XPOS")
+        self.assertEqual(ast.lines[2].statements[0].items[2].name, "YPOS")
+
+    def test_zone_example(self):
+        code="""
+10 MODE 2
+20 PRINT"normal zone (13)"
+30 PRINT 1,2,3,4
+40 PRINT"now with different zone(5)"
+50 ZONE 5
+60 PRINT 1,2,3,4
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[4].statements[0].name, "ZONE")
+        self.assertEqual(ast.lines[4].statements[0].args[0].value, 5)
+
 if __name__ == "__main__":
     unittest.main()

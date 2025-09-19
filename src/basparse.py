@@ -42,9 +42,10 @@ for line in ast.lines:
 """
 
 from __future__ import annotations
-from typing import List, Optional, cast
+from typing import Any, Callable, Optional, cast
 from dataclasses import dataclass
 from enum import Enum, auto
+from functools import wraps
 from baserror import BasError
 from baspp import CodeLine
 from baslex import LocBasLexer, TokenType, Token
@@ -71,6 +72,18 @@ class LocBasParser:
         self.warning_level = warning_level
         self.symtable = SymTable()
         self.context = ""
+
+    @staticmethod
+    def astnode(func: Callable[[LocBasParser], AST.ASTNode]):
+        """ Decorator to store token line and col in the required AST nodes """
+        @wraps(func)
+        def inner(inst, *args, **kwargs):
+            tk = inst._current()
+            node = func(inst, *args, **kwargs)
+            node.line = tk.line
+            node.col = tk.col
+            return node
+        return inner
 
     # ----------------- Error management -----------------
 
@@ -148,6 +161,7 @@ class LocBasParser:
 
     # ----------------- Statements -----------------
 
+    @astnode
     def _parse_ABS(self) -> AST.Function:
         """ <ABS> := ABS(<num_expression>) """
         self._advance()
@@ -156,6 +170,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ABS", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_AFTER(self) -> AST.Command:
         """ <AFTER> ::= AFTER <int_expression>[,<int_expression>] GOSUB INT """
         self._advance()
@@ -170,6 +185,7 @@ class LocBasParser:
         args.append(AST.Integer(value = cast(int, num.value)))
         return AST.Command(name="AFTER", args=args)
     
+    @astnode
     def _parse_ASC(self) -> AST.Function:
         """ <ASC> ::= ASC(<str_expression>)"""
         self._advance()
@@ -178,6 +194,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ASC", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_ATN(self) -> AST.Function:
         """ <ATN> ::= ATN(<num_expression>)"""
         self._advance()
@@ -186,6 +203,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ATN", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_AUTO(self) -> AST.Command:
         """ <AUTO> ::= AUTO <int_expression>[,<int_expression>] """
         # A direct command that is not allowed in compiled programs    
@@ -193,6 +211,7 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="AUTO")
     
+    @astnode
     def _parse_BINSS(self) -> AST.Function:
         """ <BINSS> ::= BIN$(<int_expression>[,<int_expression>])"""
         self._advance()
@@ -205,6 +224,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="BIN$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_BORDER(self) -> AST.Command:
         """ <BORDER> ::= BORDER <int_expression>[,<int_expression>] """
         self._advance()
@@ -215,6 +235,7 @@ class LocBasParser:
             args.append(color2)
         return AST.Command(name="BORDER", args=args)
 
+    @astnode
     def _parse_CALL(self) -> AST.Command:
         """ <CALL> ::= CALL <int_expression>[,<expression>]* """
         self._advance()
@@ -225,6 +246,7 @@ class LocBasParser:
             args.append(self._parse_expression())
         return AST.Command(name="CALL", args=args)
 
+    @astnode
     def _parse_CAT(self) -> AST.Command:
         """ <CAT> ::= CAT """
         # A direct command that is not allowed in compiled programs
@@ -232,6 +254,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="CAT")
 
+    @astnode
     def _parse_CHAIN(self) -> AST.Command:
         """ <CHAIN> ::= CHAIN <str_expression>[,<int_expression>] """
         # This command appends a new Basic program form a loaded
@@ -241,6 +264,7 @@ class LocBasParser:
         self._raise_error(2, info="Command not supported, use INCBAS instead")
         return AST.Command(name="CHAIN")
 
+    @astnode
     def _parse_CHAIN_MERGE(self) -> AST.Command:
         """ <CHAIN_MERGE> ::= CHAIN MERGE <str_expression>[,<int_expression>][,DELETE <int_expression>] """
         # This command appends a new Basic program form a loaded
@@ -250,6 +274,7 @@ class LocBasParser:
         self._raise_error(2, info="Command not supported, use INCBAS instead")
         return AST.Command(name="CHAIN_MERGE")
 
+    @astnode
     def _parse_CHRSS(self) -> AST.Function:
         """ <CHRSS> ::= CHR$(<int_expression>)"""
         self._advance()
@@ -258,6 +283,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CHR$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_CINT(self) -> AST.Function:
         """ <CINT> ::= CINT(<real_expression>)"""
         self._advance()
@@ -266,6 +292,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CINT", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_CLEAR(self) -> AST.Command:
         """ <CLEAR> ::= CLEAR """
         # This command resets several areas of the BASIC interpreter
@@ -281,6 +308,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="CLEAR INPUT")
 
+    @astnode
     def _parse_CLG(self) -> AST.Command:
         """ <CLG> ::= CLG [<int_expression>] """
         self._advance()
@@ -289,16 +317,19 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="CLG", args=args)
 
+    @astnode
     def _parse_CLOSEIN(self) -> AST.Command:
         """ <CLOSEIN> ::= CLOSEIN """
         self._advance()
         return AST.Command(name="CLOSEIN")
 
+    @astnode
     def _parse_CLOSEOUT(self) -> AST.Command:
         """ <CLOSEOUT> ::= CLOSEOUT """
         self._advance()
         return AST.Command(name="CLOSEOUT")
 
+    @astnode
     def _parse_CLS(self) -> AST.Command:
         """ <CLS> := CLS [#<int_expression>] """
         self._advance()
@@ -308,6 +339,7 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="CLS", args=args)
 
+    @astnode
     def _parse_CONT(self) -> AST.Command:
         """ <CONT> ::= CONT """
         # A direct command that is not allowed in compiled programs
@@ -315,6 +347,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="CONT")
 
+    @astnode
     def _parse_COPYCHRSS(self) -> AST.Function:
         """ <COPYCHRSS> ::= COPYCHR$(#<int_expression>) """
         # BASIC 1.1
@@ -325,6 +358,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="COPYCHR$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_COS(self) -> AST.Function:
         """ <COS> ::= COS(<num_expression>) """
         self._advance()
@@ -332,7 +366,8 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="COS", etype=AST.ExpType.Real, args=args)
-    
+   
+    @astnode 
     def _parse_CREAL(self) -> AST.Function:
         """ <CREAL> ::= CREAL(<num_expression>)"""
         self._advance()
@@ -341,6 +376,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="CREAL", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_CURSOR(self) -> AST.Command:
         """ <CURSOR> ::= CURSOR <int_expression>[,<int_expression>] """
         # BASIC 1.1
@@ -351,6 +387,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="CURSOR", args=args)
 
+    @astnode
     def _parse_DATA(self) -> AST.Command:
         """ <DATA> ::= DATA <primary>[,<primary>]*"""
         self._advance()
@@ -360,6 +397,7 @@ class LocBasParser:
             args.append(self._parse_constant())
         return AST.Command(name="DATA", args=args)
 
+    @astnode
     def _parse_DECSS(self) -> AST.Function:
         """ <DECSS> ::= DEC$(<num_expression>, STRING) """
         self._advance()
@@ -371,6 +409,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="DEC$", args=args, etype=AST.ExpType.String)
 
+    @astnode
     def _parse_DEF(self) -> AST.Command:
         # We decode DEF FN and not only DEF so if we find this
         # is an error
@@ -378,6 +417,7 @@ class LocBasParser:
         self._raise_error(2)
         return AST.Command(name="DEF")
 
+    @astnode
     def _parse_DEF_FN(self) -> AST.DefFN:
         """ <DEF_FN> ::== DEF FNIDENT[(IDENT[,IDENT]*)]=<num_expression>"""
         self._advance()
@@ -420,11 +460,12 @@ class LocBasParser:
         # the last calculated parameters
         info = self.symtable.find(ident=fname) # type: ignore[assignment]
         if info is None:
-            self._raise_error(2)
+            self._raise_error(38)
         info.exptype = fbody.etype
         info.nargs = len(fargs)
         return AST.DefFN(name=fname, args=fargs, body=fbody)
 
+    @astnode
     def _parse_DEFINT(self) -> AST.Command:
         """ <DEFINT> ::= DEFINT <str_range> """
         self._raise_warning(level=3, msg="DEFINT is ignored")
@@ -432,6 +473,7 @@ class LocBasParser:
         args = [self._parse_range()]
         return AST.Command(name="DEFINT", args=args)
 
+    @astnode
     def _parse_DEFREAL(self) -> AST.Command:
         """ <DEFREAL> ::= DEFREAL <str_range> """
         self._raise_warning(level=3, msg="DEFREAL is ignored")
@@ -439,6 +481,7 @@ class LocBasParser:
         args = [self._parse_range()]
         return AST.Command(name="DEFREAL", args=args)
 
+    @astnode
     def _parse_DEFSTR(self) -> AST.Command:
         """ <DEFSTR> ::= DEFSTR <str_range> """
         self._raise_warning(level=3, msg="DEFSTR is ignored")
@@ -446,6 +489,7 @@ class LocBasParser:
         args = [self._parse_range()]
         return AST.Command(name="DEFSTR", args=args)
 
+    @astnode
     def _parse_DEG(self) -> AST.Command:
         """ <DEG> ::= DEG """
         self._advance()
@@ -458,16 +502,19 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="DELETE")
 
+    @astnode
     def _parse_DERR(self) -> AST.Function:
         """ <DERR> ::= DERR """
         self._advance()
         return AST.Function(name="DERR", etype=AST.ExpType.Integer)
 
+    @astnode
     def _parse_DI(self) -> AST.Command:
         """ <DI> ::= DI """
         self._advance()
         return AST.Command(name="DI")
 
+    @astnode
     def _parse_DIM(self) -> AST.Command:
         """ <DIM> ::= DIM <array_declaration>[,<array_declaration>]*"""
         # El numero dado como "size" es el maximo indice que se puede
@@ -488,6 +535,7 @@ class LocBasParser:
                 self._raise_error(2)
         return AST.Command(name="DIM", args=args)
 
+    @astnode
     def _parse_array_declaration(self) -> AST.Statement:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
         var = self._expect(TokenType.IDENT).lexeme
@@ -504,6 +552,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Array(name=var, etype=vartype, sizes=sizes)
 
+    @astnode
     def _parse_DRAW(self) -> AST.Command:
         """ <DRAW> ::= DRAW <int_expression>,<int_expression>[,<int_expression>] """
         self._advance()
@@ -515,6 +564,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="DRAW", args=args)
 
+    @astnode
     def _parse_DRAWR(self) -> AST.Command:
         """ <DRAWR> ::= DRAWR <int_expression>,<int_expression>[,<int_expression>] """
         self._advance()
@@ -526,6 +576,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="DRAWR", args=args)
 
+    @astnode
     def _parse_EDIT(self) -> AST.Command:
         """ <EDIT> ::= EDIT INT """
         # A direct command that is not allowed in compiled programs    
@@ -533,11 +584,13 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="EDIT")
 
+    @astnode
     def _parse_EI(self) -> AST.Command:
         """ <EI> ::= EI """
         self._advance()
         return AST.Command(name="EI")
 
+    @astnode
     def _parse_ELSE(self) -> AST.BlockEnd:
         """ <ELSE> ::== ELSE """
         self._advance()
@@ -551,11 +604,13 @@ class LocBasParser:
             self._raise_error(2)
         return AST.BlockEnd(name="ELSE")
 
+    @astnode
     def _parse_END(self) -> AST.Command:
         """ <END> ::= END """
         self._advance()
         return AST.Command(name="END")
 
+    @astnode
     def _parse_ENT(self) -> AST.Command:
         """ <ENT> ::= ENT <int_expression>[,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>] """
         """ <ent_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
@@ -569,6 +624,7 @@ class LocBasParser:
             self._raise_error(5)
         return AST.Command(name="ENT", args=args)
 
+    @astnode
     def _parse_ENV(self) -> AST.Command:
         """ <ENV> ::= ENV <int_expression>[,<env_section>][,<env_section>][,<env_section>][,<env_section>][,<env_section>] """
         """ <env_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
@@ -582,6 +638,7 @@ class LocBasParser:
             self._raise_error(5)
         return AST.Command(name="ENV", args=args)
 
+    @astnode
     def _parse_EOF(self) -> AST.Function:
         """ <EOF> ::= EOF """
         self._advance()
@@ -607,12 +664,14 @@ class LocBasParser:
                 args.append(AST.Variable(name=tk.lexeme, etype=entry.exptype))
         return AST.Command(name="ERASE", args=args)
 
+    @astnode
     def _parse_ERL(self) -> AST.Function:
         """ <ERL> ::= ERL """
         # Will return the line number where the last ERROR command was executed 
         self._advance()
         return AST.Function(name="ERL", etype=AST.ExpType.Integer)
 
+    @astnode
     def _parse_ERR(self) -> AST.Function:
         """ <ERR> ::= ERR """
         # Will return the error code number used in the last executed ERROR command
@@ -626,6 +685,7 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         return AST.Command(name="ERROR", args=args)
 
+    @astnode
     def _parse_EVERY(self) -> AST.Command:
         """ <EVERY> ::= EVERY <int_expression>[,<int_expression>] <GOSUB> """
         self._advance()
@@ -638,6 +698,7 @@ class LocBasParser:
         args.append(self._parse_GOSUB())
         return AST.Command(name="EVERY", args=args)
 
+    @astnode
     def _parse_EXP(self) -> AST.Function:
         """ <EXP> ::= EXP(<num_expression>) """
         self._advance()
@@ -646,6 +707,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="EXP", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_FILL(self) -> AST.Command:
         """ <FILL> ::= FILL <int_expression> """
         # BASIC 1.1
@@ -653,6 +715,7 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         return AST.Command(name="FILL", args=args)
 
+    @astnode
     def _parse_FIX(self) -> AST.Function:
         """ <FIX> ::= FIX(<num_expression>) """
         self._advance()
@@ -660,13 +723,15 @@ class LocBasParser:
         args = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="FIX", etype=AST.ExpType.Integer, args=args)
-    
+   
+    @astnode 
     def _parse_FN(self) -> AST.Command:
         # DEF parses FN so if we arrive here is a syntax error
         self._advance()
         self._raise_error(2)
         return AST.Command(name="FN")
 
+    @astnode
     def _parse_FOR(self) -> AST.ForLoop:
         """ <FOR> ::= FOR IDENT = <int_expression> TO <int_expression> [STEP <int_expression>] """
         self._advance()
@@ -699,12 +764,14 @@ class LocBasParser:
         ))
         return node
 
+    @astnode
     def _parse_FRAME(self) -> AST.Command:
         """ <FRAME> ::= FRAME """
         # BASIC 1.1
         self._advance()
         return AST.Command(name="FRAME")
 
+    @astnode
     def _parse_FRE(self) -> AST.Function:
         """ <FRE> ::= FRE(0) | FRE("") """
         self._advance()
@@ -713,6 +780,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="FRE", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_GOSUB(self) -> AST.Command:
         """ <GOSUB> ::= GOSUB INT """
         self._advance()
@@ -720,6 +788,7 @@ class LocBasParser:
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="GOSUB", args=args)
 
+    @astnode
     def _parse_GOTO(self) -> AST.Command:
         """ <GOTO> ::= GOTO INT """
         # THEN and ELSE can arrive here parsing just a number so we use 
@@ -729,13 +798,15 @@ class LocBasParser:
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="GOTO", args=args)
 
+    @astnode
     def _parse_GRAPHICS_PAPER(self) -> AST.Command:
         """ <GRAPHICS_PAPER> ::= GRAPHICS PAPER <int_expression> """
         # BASIC 1.1
         self._advance()
         args = [self._parse_int_expression()]
         return AST.Command(name="GRAPHICS PAPER", args=args)
-    
+ 
+    @astnode   
     def _parse_GRAPHICS_PEN(self) -> AST.Command:
         """ <GRAPHICS_PEN> ::= GRAPHICS PEN <int_expression> """
         # BASIC 1.1
@@ -743,6 +814,7 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         return AST.Command(name="GRAPHICS PEN", args=args)
 
+    @astnode
     def _parse_HEXSS(self) -> AST.Function:
         """ <HEXSS> ::= HEX$(<int_expression>[,<int_expression>]) """
         self._advance()
@@ -754,16 +826,20 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="HEX$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_HIMEM(self) -> AST.Function:
         """ <HIMEN> ::= HIMEN """
         self._advance()
         return AST.Function(name="HIMEM", etype=AST.ExpType.Integer)
-    
+ 
+    @astnode   
     def _parse_IF(self) -> AST.If:
-        """ <IF> ::= IF <int_expression> THEN [<inline_then>[ELSE >inline_else>]] """
+        """ <IF> ::= IF <int_expression> (THEN | GOTO) [<inline_then>[ELSE >inline_else>]] """
         self._advance()
         condition = self._parse_int_expression()
-        self._expect(TokenType.KEYWORD, "THEN")
+        if not self._current().lexeme in ("THEN", "GOTO"):
+            self._raise_error(2, ", THEN missing")
+        self._advance()
         if not self._current_is(TokenType.EOL):
             else_body: list[AST.Statement] = []
             then_body = self._parse_inline_then()
@@ -809,13 +885,15 @@ class LocBasParser:
             self._raise_error(2)
         return else_body
 
+    @astnode
     def _parse_IFEND(self) -> AST.BlockEnd:
         self._advance()
         if len(self.codeblocks) == 0 or "IFEND" not in self.codeblocks[-1].until_keywords:
-            self._raise_error(36, "Unexpected IFEND")
+            self._raise_error(36)
         self.codeblocks.pop()
         return AST.BlockEnd(name="IFEND")
 
+    @astnode
     def _parse_INK(self) -> AST.Command:
         """ <INK> ::= INK <int_expression()>,<int_expression>[,<int_expression>] """
         self._advance()
@@ -827,6 +905,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="INK", args=args)
 
+    @astnode
     def _parse_INKEY(self) -> AST.Function:
         """ <INKEY> ::= INKEY(<int_expression>) """
         self._advance()
@@ -834,12 +913,14 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INKEY", etype=AST.ExpType.Integer, args=args)
-    
+ 
+    @astnode   
     def _parse_INKEYSS(self) -> AST.Function:
         """ <INKEYSS> ::= INKEY$ """
         self._advance()
         return AST.Function(name="INKEY$", etype=AST.ExpType.String)
 
+    @astnode
     def _parse_INP(self) -> AST.Function:
         """ <INP> ::= INP(<int_expression>) """
         self._advance()
@@ -848,6 +929,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INP", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_INPUT(self) -> AST.Input:
         """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] IDENT [,IDENT] """
         self._advance()
@@ -881,6 +963,7 @@ class LocBasParser:
                 )
         return AST.Input(stream=stream, prompt=prompt, question=question, vars=vars)
 
+    @astnode
     def _parse_INSTR(self) -> AST.Function:
         """ <INSTR> ::= INSTR([<int_expression>,]<str_expression(),<str_expression>) """
         self._advance()
@@ -894,6 +977,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INSTR", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_INT(self) -> AST.Function:
         """ <INT> ::= INT(<num_expression>) """
         self._advance()
@@ -902,6 +986,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="INT", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_JOY(self) -> AST.Function:
         """ <JOY> ::= JOY(<int_expression>) """
         self._advance()
@@ -910,6 +995,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="JOY", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_KEY(self) -> AST.Command:
         """ <KEY> ::= KEY <int_expression>,<str_expression> """
         self._advance()
@@ -918,6 +1004,7 @@ class LocBasParser:
         args.append(self._parse_str_expression())
         return AST.Command(name="KEY", args=args)
 
+    @astnode
     def _parse_KEY_DEF(self) -> AST.Command:
         """
         <KEY> ::= KEY DEF <int_expression>,<int_expression>[,<keydefoptions>]
@@ -931,7 +1018,8 @@ class LocBasParser:
             self._advance()
             args.append(self._parse_int_expression())
         return AST.Command(name="KEY DEF", args=args)
-    
+  
+    @astnode  
     def _parse_LEFTSS(self) -> AST.Function:
         """ <LEFTSS> ::== LEFT$(<st_expression>,<int_expression>) """
         self._advance()
@@ -942,6 +1030,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LEFT$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_LEN(self) -> AST.Function:
         """ <LEN> ::= LEN(<str_expression>) """
         self._advance()
@@ -950,11 +1039,13 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LEN", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_LET(self) -> AST.Assignment:
         """ <LET> ::= LET <assignment> """
         self._advance()
         return self._parse_assignment()
 
+    @astnode
     def _parse_LINE_INPUT(self) -> AST.LineInput:
         """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][STRING(;|,)]<IDENT> """
         self._advance()
@@ -983,6 +1074,7 @@ class LocBasParser:
             )
         return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, var=var)
  
+    @astnode
     def _parse_LIST(self) -> AST.Command:
         """ <LIST> ::= LIST """
         # This command doesn't make sense in a compiled program but
@@ -990,6 +1082,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="LIST")
 
+    @astnode
     def _parse_LOAD(self) -> AST.Command:
         """ <LOAD> ::= LOAD <str_expression>[,<int_expression>]"""
         self._advance()
@@ -999,6 +1092,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="LOAD", args=args)
 
+    @astnode
     def _parse_LOCATE(self) -> AST.Command:
         """ <LOCATE> ::= LOCATE [#<int_expression>,]<int_expression>,<int_expression> """
         self._advance()
@@ -1012,6 +1106,7 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="LOCATE", args=args)
 
+    @astnode
     def _parse_LOG(self) -> AST.Function:
         """ <LOG> ::= LOG(<num_expression>) """
         self._advance()
@@ -1020,6 +1115,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LOG", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_LOG10(self) -> AST.Function:
         """ <LOG10> ::= LOG10(<num_expression>) """
         self._advance()
@@ -1028,6 +1124,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LOG10", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_LOWERSS(self) -> AST.Function:
         """ <LOWERSS> ::= LOWER$(<str_expression>) """
         self._advance()
@@ -1036,6 +1133,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LOWER$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_MASK(self) -> AST.Command:
         """ <MASK> ::= MASK <int_expression>[,<int_expression>] """
         self._advance()
@@ -1045,6 +1143,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="MASK", args=args)
 
+    @astnode
     def _parse_MAX(self) -> AST.Function:
         """ <MAX> ::= MAX(<num_expression>[,<num_expression>]*) """
         self._advance()
@@ -1060,18 +1159,21 @@ class LocBasParser:
             self._raise_error(2)
         return AST.Function(name="MAX", etype=etype, args=args)
 
+    @astnode
     def _parse_MEMORY(self) -> AST.Command:
         """ <MEMORY> ::= MEMORY <int_expression>"""
         self._advance()
         args = [self._parse_int_expression()]
         return AST.Command(name="MEMORY", args=args)
 
+    @astnode
     def _parse_MERGE(self) -> AST.Command:
         """ <MERGE> ::= MERGE <str_expression> """
         self._advance()
         args = [self._parse_str_expression()]
         return AST.Command(name="MERGE", args=args)
 
+    @astnode
     def _parse_MIDSS(self) -> AST.Function:
         """ <MIDSS> ::= MID$(<str_expression>,<int_expression>[,<int_expression>]) """
         self._advance()
@@ -1085,6 +1187,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="MID$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_MIN(self) -> AST.Function:
         """ <MIN> ::= MIN(<num_expression>[,<num_expression>]*) """
         self._advance()
@@ -1100,12 +1203,14 @@ class LocBasParser:
             self._raise_error(2)
         return AST.Function(name="MIN", etype=etype, args=args)
 
+    @astnode
     def _parse_MODE(self) -> AST.Command:
         """ <MODEA> ::= MODE <int_expression>"""
         self._advance()
         args = [self._parse_int_expression()]
         return AST.Command(name="MODE", args=args)
 
+    @astnode
     def _parse_MOVE(self) -> AST.Command:
         """ <MOVE> ::= MOVE <int_expression>,<int_expression>[,<int_expression>[,<int_expression>]] """
         self._advance()
@@ -1116,6 +1221,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="MOVE", args=args)
 
+    @astnode
     def _parse_MOVER(self) -> AST.Command:
         """ <MOVER> ::= MOVER <int_expression>,<int_expression>[,<int_expression>[,<int_expression>]] """
         self._advance()
@@ -1125,7 +1231,8 @@ class LocBasParser:
         while self._current_is(TokenType.COMMA):
             args.append(self._parse_int_expression())
         return AST.Command(name="MOVER", args=args)
-    
+ 
+    @astnode   
     def _parse_NEW(self) -> AST.Command:
         """ <NEW> ::= NEW """
         # A direct command that is not allowed in compiled programs    
@@ -1133,6 +1240,7 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="NEW")
 
+    @astnode
     def _parse_NEXT(self) -> AST.BlockEnd:
         """ <NEXT> ::= NEXT [IDENT]"""
         self._advance()
@@ -1154,6 +1262,7 @@ class LocBasParser:
         self.codeblocks.pop()
         return AST.BlockEnd(name="NEXT", var=next_var)
 
+    @astnode
     def _parse_ON(self) -> AST.Command:
         """ 
         <ON> ::= ON <int_expression> <on_body> 
@@ -1172,6 +1281,7 @@ class LocBasParser:
             self._advance()
         return AST.Command(name=cmd, args=args)
 
+    @astnode
     def _parse_ON_BREAK(self) -> AST.Command:
         """ 
         <ON_BREAK> ::= ON BREAK <on_break_body>
@@ -1193,7 +1303,8 @@ class LocBasParser:
         else:
             self._raise_error(2)
         return AST.Command(name=cmd, args=args)
-    
+ 
+    @astnode   
     def _parse_ON_ERROR_GOTO(self) -> AST.Command:
         """ <ON_ERROR_GOTO> ::= ON ERROR GOTO INT"""
         self._advance()
@@ -1201,6 +1312,7 @@ class LocBasParser:
         args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
         return AST.Command(name="ON ERROR GOTO", args=args)
 
+    @astnode
     def _parse_ON_SQ(self) -> AST.Command:
         """ <ON_SQ> ::= ON SQ(<int_expression>) GOSUB INT """
         self._advance()
@@ -1212,18 +1324,21 @@ class LocBasParser:
         args.append(AST.Integer(value = cast(int, num.value)))
         return AST.Command(name="ON SQ", args=args)
 
+    @astnode
     def _parse_OPENIN(self) -> AST.Command:
         """ <OPENIN> ::= OPENIN <str_expression> """
         self._advance()
         args = [self._parse_str_expression()]
         return AST.Command(name="OPENIN", args=args)
-    
+  
+    @astnode  
     def _parse_OPENOUT(self) -> AST.Command:
         """ <OPENOUT> ::= OPENOUT <str_expression> """
         self._advance()
         args = [self._parse_str_expression()]
         return AST.Command(name="OPENOUT", args=args)
 
+    @astnode
     def _parse_ORIGIN(self) -> AST.Command:
         """
         <ORIGIN> ::= ORIGIN <int_expression>,<int_expression>[<origin_wnd>]
@@ -1239,6 +1354,7 @@ class LocBasParser:
                 args.append(self._parse_int_expression())
         return AST.Command(name="ORIGIN", args=args)
 
+    @astnode
     def _parse_OUT(self) -> AST.Command:
         """ <OUT> ::= OUT <int_expression>,<int_expression> """
         self._advance()
@@ -1247,6 +1363,7 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="OUT", args=args)
 
+    @astnode
     def _parse_PAPER(self) -> AST.Command:
         """ <PAPER> ::= PAPER [#<int_expression>,]<int_expression> """
         self._advance()
@@ -1258,6 +1375,7 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="PAPER", args=args)
 
+    @astnode
     def _parse_PEEK(self) -> AST.Function:
         """ <PEEK> ::= PEEK(<int_expression>) """
         self._advance()
@@ -1266,6 +1384,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="PEEK", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_PEN(self) -> AST.Command:
         """ <PEN> ::= PEN [#<int_expression>,]<int_expression> """
         self._advance()
@@ -1277,11 +1396,13 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="PEN", args=args)
 
+    @astnode
     def _parse_PI(self) -> AST.Function:
         """ <PI> ::= PI """
         self._advance()
         return AST.Function(name="PI", etype=AST.ExpType.Real)
 
+    @astnode
     def _parse_PLOT(self) -> AST.Command:
         """ <PLOT> ::= PLOT <int_expression>,<int_expression>[,<int_expression>][,<int_expression>] """
         self._advance()
@@ -1293,6 +1414,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="PLOT", args=args)
 
+    @astnode
     def _parse_PLOTR(self) -> AST.Command:
         """ <PLOTR> ::= PLOTR <int_expression>,<int_expression>[,<int_expression>][,<int_expression>] """
         self._advance()
@@ -1304,6 +1426,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="PLOTR", args=args)
 
+    @astnode
     def _parse_POKE(self) -> AST.Command:
         """ <POKE> ::= POKE <int_expression>,<int_expression> """
         self._advance()
@@ -1312,6 +1435,7 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="POKE", args=args)
 
+    @astnode
     def _parse_POS(self) -> AST.Function:
         """ <POS> ::= POS(#<int_expression>) """
         self._advance()
@@ -1321,6 +1445,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="POS", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_PRINT(self) -> AST.Print:
         """
         <PRINT> ::= PRINT [#<int_expression>,][<print_items>][print_using][print_separator]
@@ -1361,11 +1486,13 @@ class LocBasParser:
                 items.append(self._parse_expression())
         return AST.Print(stream=stream, items=items)      
 
+    @astnode
     def _parse_RAD(self) -> AST.Command:
         """ <RAD> ::= RAD """
         self._advance()
         return AST.Command(name="RAD")
-    
+  
+    @astnode  
     def _parse_RANDOMIZE(self) -> AST.Command:
         """ <RANDOMIZE> ::= RANDOMIZE [<num_expression>] """
         self._advance()
@@ -1374,6 +1501,7 @@ class LocBasParser:
             args = [self._parse_num_expression()]
         return AST.Command(name="RANDOMIZE", args=args)
 
+    @astnode
     def _parse_READ(self) -> AST.Command:
         """ <READ> ::= READ IDENT[,IDENT]* """
         self._advance()
@@ -1394,12 +1522,14 @@ class LocBasParser:
             self._advance()
         return AST.Command(name="READ", args=vars)
 
+    @astnode
     def _parse_RELEASE(self) -> AST.Command:
         """ <RELEASE> ::= RELEASE <int_expression> """
         self._advance()
         args = [self._parse_int_expression()]
         return AST.Command(name="RELEASE", args=args)
 
+    @astnode
     def _parse_REMAIN(self) -> AST.Function:
         """ <REMAIN> ::= REMAIN(<int_expression>) """
         self._advance()
@@ -1408,6 +1538,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="REMAIN", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_RENUM(self) -> AST.Command:
         """ <RENUM> ::= RENUM [<int_expression>[,<int_expression>[,<int_expression>]]] """
         self._advance()
@@ -1415,6 +1546,7 @@ class LocBasParser:
         self._raise_error(21)
         return AST.Command(name="RENUM")
 
+    @astnode
     def _parse_RESTORE(self) -> AST.Command:
         """ <RESTORE> ::= RESTORE [<int_expression>] """
         self._advance()
@@ -1423,6 +1555,7 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="RESTORE", args=args)
 
+    @astnode
     def _parse_RESUME(self) -> AST.Command:
         """ <RESUME> ::= RESUME [<int_expression> | NEXT] """
         self._advance()
@@ -1436,11 +1569,13 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="RESUME", args=args)
 
+    @astnode
     def _parse_RETURN(self) -> AST.Command:
         """ <RETURN> ::= RETURN """
         self._advance()
         return AST.Command(name="RETURN")
 
+    @astnode
     def _parse_RIGHTSS(self) -> AST.Function:
         """ <RIGHTSS> ::== RIGHT$(<str_expression>,<int_expression>) """
         self._advance()
@@ -1451,6 +1586,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="RIGHT$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_RND(self) -> AST.Function:
         """ <RND> ::= RND [(<num_expression>)] """
         self._advance()
@@ -1461,7 +1597,7 @@ class LocBasParser:
             self._expect(TokenType.RPAREN)
         return AST.Function(name="RND", etype=AST.ExpType.Real, args=args)
 
-
+    @astnode
     def _parse_ROUND(self) -> AST.Function:
         """ <ROUND> ::= ROUND(<num_expression>[,<int_expression>]) """
         self._advance()
@@ -1473,6 +1609,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ROUND", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_RUN(self) -> AST.Command:
         """ <RUN> ::= RUN <str_expression> """
         self._advance()
@@ -1481,6 +1618,7 @@ class LocBasParser:
             args = [self._parse_str_expression()]  
         return AST.Command(name="RUN", args=args)
 
+    @astnode
     def _parse_SAVE(self) -> AST.Command:
         """ <SAVE> ::= SAVE STRING[,CHAR][,<int_expression>[,<int_expression>[,<int_expression]]] """
         self._advance()
@@ -1497,6 +1635,7 @@ class LocBasParser:
                 args.append(self._parse_int_expression())
         return AST.Command(name="SAVE", args=args)
 
+    @astnode
     def _parse_SGN(self) -> AST.Function:
         """ <SGN> ::= SGN(<num_expression>) """
         self._advance()
@@ -1505,6 +1644,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SGN", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_SIN(self) -> AST.Function:
         """ <SIN> ::= SIN(<num_expression>) """
         self._advance()
@@ -1513,6 +1653,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SIN", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_SOUND(self) -> AST.Command:
         """ <SOUND> ::= SOUND <int_expression>,<int_expression>[,<int_expression>]* """
         # the extra int parameters are:
@@ -1528,6 +1669,7 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="SOUND", args=args)
 
+    @astnode
     def _parse_SPACESS(self) -> AST.Function:
         """ <SPACESS> ::= SPACE$(<int_expression>) """
         self._advance()
@@ -1536,6 +1678,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SPACE$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_SPC(self) -> AST.Function:
         """ <SPC> ::= SPC(<int_expression>) """
         self._advance()
@@ -1544,6 +1687,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SPC", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_SPEED_INK(self) -> AST.Command:
         """ <SPEED_INK> ::= SPEED INK <int_expression>,<int_expression> """
         self._advance()
@@ -1552,6 +1696,7 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="SPEED INK", args=args)
 
+    @astnode
     def _parse_SPEED_KEY(self) -> AST.Command:
         """ <SPEED_KEY> ::= SPEED KEY <int_expression>,<int_expression> """
         self._advance()
@@ -1560,12 +1705,14 @@ class LocBasParser:
         args.append(self._parse_int_expression())
         return AST.Command(name="SPEED KEY", args=args)
 
+    @astnode
     def _parse_SPEED_WRITE(self) -> AST.Command:
         """ <SPEED_WRITE> ::= SPEED WRITE <int_expression> """
         self._advance()
         args: list[AST.Statement] = [self._parse_int_expression()]
         return AST.Command(name="SPEED WRITE", args=args)
 
+    @astnode
     def _parse_SQ(self) -> AST.Function:
         """ <SQ> ::= SQ(<int_expression>) """
         self._advance()
@@ -1574,6 +1721,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SQ", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_SQR(self) -> AST.Function:
         """ <SQR> ::= SQR(<num_expression>) """
         self._advance()
@@ -1582,11 +1730,13 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SQR", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_STOP(self) -> AST.Command:
         """ <STOP> ::= STOP """
         self._advance()
         return AST.Command(name="STOP")
 
+    @astnode
     def _parse_STRSS(self) -> AST.Function:
         """ <STRSS> ::= STR$(<num_expression>) """
         self._advance()
@@ -1595,16 +1745,21 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="STR$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_STRINGSS(self) -> AST.Function:
-        """ <STRINGSS> ::= STRING$(<int_expression>,<str_expression>)"""
+        """ <STRINGSS> ::= STRING$(<int_expression>,(<str_expression>|<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
         args: list[AST.Statement] = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
-        args.append(self._parse_str_expression())
+        # char o ASCII code number
+        args.append(self._parse_expression())
+        if args[-1].etype not in (AST.ExpType.Integer, AST.ExpType.String):
+            self._raise_error(5)
         self._expect(TokenType.RPAREN)
         return AST.Function(name="STRING$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_SYMBOL(self) -> AST.Command:
         """ <SYMBOL> ::= SYMBOL <int_expression>(,<int_expression>)* """
         self._advance()
@@ -1614,12 +1769,14 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="SYMBOL", args=args)
 
+    @astnode
     def _parse_SYMBOL_AFTER(self) -> AST.Command:
         """ <SYMBOL AFTER> ::= SYMBOL AFTER <int_expression> """
         self._advance()
         args: list[AST.Statement] = [self._parse_int_expression()]
         return AST.Command(name="SYMBOL_AFTER", args=args)
 
+    @astnode
     def _parse_TAB(self) -> AST.Function:
         """ <TAB> ::= TAB(<int_expression>) """
         self._advance()
@@ -1628,6 +1785,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="TAB", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_TAG(self) -> AST.Command:
         """ <TAG> ::= TAG [#<int_expression>] """
         self._advance()
@@ -1637,6 +1795,7 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="TAG", args=args)
 
+    @astnode
     def _parse_TAGOFF(self) -> AST.Command:
         """ <TAGOFF> ::= TAGOFF [#<int_expression>] """
         self._advance()
@@ -1646,6 +1805,7 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="TAGOFF", args=args)
 
+    @astnode
     def _parse_TAN(self) -> AST.Function:
         """ <TAN> ::= TAN(<num_expression>) """
         self._advance()
@@ -1654,6 +1814,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="TAN", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_TEST(self) -> AST.Function:
         """ <TEST> ::= TEST(<int_expression>,<int_expression>) """
         self._advance()
@@ -1664,6 +1825,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="TEST", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_TESTR(self) -> AST.Function:
         """ <TESTR> ::= TESTR(<int_expression>,<int_expression>) """
         self._advance()
@@ -1677,23 +1839,27 @@ class LocBasParser:
     def _parse_THEN(self):
         """ This is always an error """
         self._advance()
-        self._raise_error(2, "Unexpected THEN keyword")
+        self._raise_error(2, "unexpected THEN keyword")
 
+    @astnode
     def _parse_TIME(self) -> AST.Function:
         """ <TIME> ::= TIME """
         self._advance()
         return AST.Function(name="TIME", etype=AST.ExpType.Real)
 
+    @astnode
     def _parse_TRON(self) -> AST.Command:
         """ <TRON> ::= TRON """
         self._advance()
         return AST.Command(name="TRON")
-    
+ 
+    @astnode   
     def _parse_TROFF(self) -> AST.Command:
         """ <TROFF> ::= TROFF """
         self._advance()
         return AST.Command(name="TROFF")
 
+    @astnode
     def _parse_UNT(self) -> AST.Function:
         """ <UNT> ::= UNT(<int_expression>) """
         self._advance()
@@ -1702,6 +1868,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="UNT", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
     def _parse_UPPERSS(self) -> AST.Function:
         """ <UPPERSS> ::= UPPER$(<str_expression>) """
         self._advance()
@@ -1710,6 +1877,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="UPPER$", etype=AST.ExpType.String, args=args)
 
+    @astnode
     def _parse_VAL(self) -> AST.Function:
         """ <VAL> ::= VAL(<str_expression>) """
         self._advance()
@@ -1718,6 +1886,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="UNT", etype=AST.ExpType.Real, args=args)
 
+    @astnode
     def _parse_VPOS(self) -> AST.Function:
         """ <VPOS> ::= VPOS(#<int_expression>) """
         self._advance()
@@ -1727,14 +1896,28 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         return AST.Function(name="VPOS", etype=AST.ExpType.Integer, args=args)
 
+    @astnode
+    def _parse_WAIT(self) -> AST.Command:
+        """ <WAIT> ::= WAIT <int_expression>,<int_expression>[,<int_expression>]"""
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_int_expression())
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="WAIT", args=args)
+
+    @astnode
     def _parse_WEND(self) -> AST.BlockEnd:
         """ <WEND> ::= WEND """
         self._advance()
         if len(self.codeblocks) == 0 or "WEND" not in self.codeblocks[-1].until_keywords:
-            self._raise_error(2, "Unexpected WEND keyword")
+            self._raise_error(30)
         self.codeblocks.pop()
         return AST.BlockEnd(name="WEND")
-    
+  
+    @astnode  
     def _parse_WHILE(self) -> AST.WhileLoop:
         """ <WHILE> ::= WHILE <int_expression> """
         self._advance()
@@ -1747,6 +1930,14 @@ class LocBasParser:
         ))
         return node
 
+    @astnode
+    def _parse_WIDTH(self) -> AST.Command:
+        """ <WIDTH> ::= WIDTH <int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        return AST.Command(name="WIDTH", args=args)
+
+    @astnode
     def _parse_WINDOW(self) -> AST.Command:
         """ 
         <WINDOW> ::= WINDOW [#<int_expression>,]<wnd_rect>
@@ -1763,42 +1954,50 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="WINDOW", args=args)
 
-    # ------------- Keyword placeholders -----------
-
-    def _parse_WAIT(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="WAIT")
-
-    def _parse_WIDTH(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="WIDTH")
-
+    @astnode
     def _parse_WINDOW_SWAP(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
+        """ <WINDOWS_SWAP> ::= WINDOWS SWAP [#]<int_expression>,[#]<int_expression> """
         self._advance()
-        return AST.Command(name="WINDOW SWAP")
-
-    def _parse_WRITE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="WRITE")
-
-    def _parse_XPOS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
-        self._advance()
-        return AST.Command(name="XPOS")
+        self._match(TokenType.HASH)
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        self._expect(TokenType.COMMA)
+        self._match(TokenType.HASH)
+        args.append(self._parse_int_expression())
+        return AST.Command(name="WINDOW SWAP", args=args)
     
-    def _parse_YPOS(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
+    @astnode
+    def _parse_WRITE(self) -> AST.Write:
+        """ <WRITE> ::= [#<int_expression>,]<expression>* """
         self._advance()
-        return AST.Command(name="YPOS")
+        stream: Optional[AST.Statement] = None
+        if self._current_is(TokenType.HASH):
+            self._advance()
+            stream = self._parse_int_expression()
+            self._expect(TokenType.COMMA)
+        items: list[AST.Statement] = [self._parse_expression()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            items.append(self._parse_expression())
+        return AST.Write(stream=stream, items=items)
 
-    def _parse_ZONE(self) -> AST.Command:
-        # AUTOGEN PLACEHOLDER
+    @astnode
+    def _parse_XPOS(self) -> AST.Function:
+        """ <XPOS> ::= XPOS """
         self._advance()
-        return AST.Command(name="ZONE")
+        return AST.Function(name="XPOS", etype=AST.ExpType.Integer)
+    
+    @astnode
+    def _parse_YPOS(self) -> AST.Function:
+        """ <YPOS> ::= YPOS """
+        self._advance()
+        return AST.Function(name="YPOS", etype=AST.ExpType.Integer)
+
+    @astnode
+    def _parse_ZONE(self) -> AST.Command:
+        """ <ZONE> ::= ZONE <int_expression> """
+        self._advance()
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        return AST.Command(name="ZONE", args=args)
 
     # ----------------- Expresions -----------------
 
@@ -1845,6 +2044,7 @@ class LocBasParser:
         """ <expression> ::= <logic_or> """
         return self._parse_logic_xor()
 
+    @astnode
     def _parse_logic_xor(self) -> AST.Statement:
         """ <logic_xor> ::= <logic_or> [OR <logic_or>] """
         node = self._parse_logic_or()
@@ -1859,6 +2059,7 @@ class LocBasParser:
             node = AST.BinaryOp(op="XOR", left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
+    @astnode
     def _parse_logic_or(self) -> AST.Statement:
         """ <logic_or> ::= <logic_and> [OR <logic_and>] """
         node = self._parse_logic_and()
@@ -1873,6 +2074,7 @@ class LocBasParser:
             node = AST.BinaryOp(op="OR", left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
+    @astnode
     def _parse_logic_and(self) -> AST.Statement:
         """ <logic_and> ::= <comparison> [AND <comparison>] """
         node = self._parse_comparison()
@@ -1887,6 +2089,7 @@ class LocBasParser:
             node = AST.BinaryOp(op="AND", left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
+    @astnode
     def _parse_comparison(self) -> AST.Statement:
         """ <comparison> ::= <mod> [(= | < | > | <= | =< | >= | => | <>) <mod>] """
         node = self._parse_mod()
@@ -1902,6 +2105,7 @@ class LocBasParser:
             node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
+    @astnode
     def _parse_mod(self) -> AST.Statement:
         """ <MOD> ::= <term> [MOD <term>] """
         node = self._parse_term()
@@ -1915,6 +2119,7 @@ class LocBasParser:
             node = AST.BinaryOp(op="MOD", left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
+    @astnode
     def _parse_term(self) -> AST.Statement:
         """ <term> ::= <factor> [( + | - ) <factor>] """
         node = self._parse_factor()
@@ -1930,6 +2135,7 @@ class LocBasParser:
             node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
         return node
 
+    @astnode
     def _parse_factor(self) -> AST.Statement:
         r""" <factor> ::= <unary> [( * | / | \ ) <unary>] """
         node = self._parse_unary()
@@ -1944,6 +2150,7 @@ class LocBasParser:
             node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
         return node
 
+    @astnode
     def _parse_unary(self) -> AST.Statement:
         """ <unary> ::= ( - | NOT ) <primary> | <primary> """
         if self._current_in((TokenType.OP,), ('-', 'NOT')):
@@ -1955,6 +2162,7 @@ class LocBasParser:
             return AST.UnaryOp(op=op.lexeme, operand=operand, etype=operand.etype)
         return self._parse_primary()
 
+    @astnode
     def _parse_primary(self) -> AST.Statement:
         """
         <primary> ::= POINTER | INT | REAL | STRING | (<expression>)
@@ -1980,17 +2188,22 @@ class LocBasParser:
             expr = self._parse_expression()
             self._expect(TokenType.RPAREN)
             return expr
-        self._raise_error(2, f"Unexpected symbol {tok.lexeme} in expression")
+        self._raise_error(2, f"unexpected symbol {tok.lexeme}")
         return AST.Nop()
     
-    def _parse_primary_ident(self, checksym: bool = True) -> AST.Statement:
+    @astnode
+    def _parse_primary_ident(self) -> AST.Statement:
         """ <primary_ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) | <user_fun> """
         if self._current().lexeme[:2].upper() == "FN":
             # this is a user function defined by DEF FN as FN are reserved
             # and cannot be used in Locomotive Basic as the starting chars
             # for variables
             return self._parse_user_fun()
+        # This is the first pass and some variables can be defined later
+        # in the code so we cannot fail if an undefined variable arrives here
+        # emiter will do
         tk = self._expect(TokenType.IDENT)
+        etype = AST.exptype_fromname(tk.lexeme)
         if self._current_is(TokenType.LPAREN):
             # Array item
             self._advance()
@@ -2003,27 +2216,18 @@ class LocBasParser:
                 if not AST.exptype_isint(indexes[-1].etype):
                     self._raise_error(13)
             self._expect(TokenType.RPAREN)
-            entry = self.symtable.find(tk.lexeme, self.context)
-            if entry is None or entry.symtype != SymType.Array:
-                self._raise_error(2)
-            if entry.nargs != len(indexes): # type: ignore[union-attr]
-                self._raise_error(2)
-            return AST.ArrayItem(name=tk.lexeme, etype=entry.exptype, args=indexes) # type: ignore[union-attr]
+            return AST.ArrayItem(name=tk.lexeme, etype=etype, args=indexes) # type: ignore[union-attr]
         # regular variable
-        etype = AST.exptype_fromname(tk.lexeme)
-        entry = self.symtable.find(tk.lexeme, context=self.context)
-        if entry is None and checksym:
-            self._raise_error(2)
-        if entry is not None: etype = entry.exptype
         return AST.Variable(name=tk.lexeme, etype=etype)
 
+    @astnode
     def _parse_user_fun(self) -> AST.Statement:
         """ <user_fun> ::= FNIDENT([<expression>[,<expression>]])"""
         tk = self._expect(TokenType.IDENT)
         # functions are always declared in the global context
         entry = self.symtable.find(ident=tk.lexeme, context="")
         if entry is None:
-            self._raise_error(18)
+            self._raise_error(18, col=tk.col)
         args: list[AST.Statement] = []
         self._expect(TokenType.LPAREN)
         if not self._current_is(TokenType.RPAREN):
@@ -2036,6 +2240,7 @@ class LocBasParser:
             self._raise_error(5)
         return AST.UserFun(name=tk.lexeme, etype=entry.exptype, args=args) # type: ignore[union-attr]
 
+    @astnode
     def _parse_constant(self) -> AST.Statement:
         """ <constant> ::= INT | REAL | "STRING" | STRING """
         tok = self._current()
@@ -2056,6 +2261,7 @@ class LocBasParser:
         self._raise_error(2)
         return AST.Nop()
 
+    @astnode
     def _parse_pointer(self) -> AST.Pointer:
         """ <pointer> ::= @IDENT """
         self._advance()
@@ -2064,6 +2270,7 @@ class LocBasParser:
         var = AST.Variable(name=tk.lexeme, etype=vartype)
         return AST.Pointer(var=var)
 
+    @astnode
     def _parse_range(self) -> AST.Statement:
         """ <range> ::= CHAR[-CHAR] | INT[-INT]"""
         if self._current_is(TokenType.IDENT):
@@ -2086,12 +2293,13 @@ class LocBasParser:
         return AST.Range(etype=etype, low=low, high=high)
 
     # ----------------- AST Generation -----------------
-
+    
+    @astnode
     def _parse_assignment(self) -> AST.Assignment:
         """ <assignment> ::= <primary_ident> = <expression>"""
         # The asignement is the way to declare variables so
         # we do not check in the sym table for left variable
-        target = self._parse_primary_ident(checksym=False)
+        target = self._parse_primary_ident()
         self._expect(TokenType.COMP, "=")
         source = self._parse_expression()
         etype = AST.exptype_derive(target, source)
@@ -2114,9 +2322,10 @@ class LocBasParser:
         funcname = "_parse_" + keyword.replace('$','SS').replace(' ', '_')
         parse_keyword = getattr(self, funcname , None)
         if parse_keyword is None:
-            self._raise_error(2, f"Unknown keyword {keyword}")
+            self._raise_error(2, f", unknown keyword {keyword}")
         return parse_keyword() # type: ignore[misc]
 
+    @astnode
     def _parse_statement(self) -> AST.Statement:
         """ <statement> ::= <keyword> | COMMENT | RSX | <assignement> """
         tok = self._current()
@@ -2139,9 +2348,13 @@ class LocBasParser:
         """<statement_list> ::= <statements> [:<statement>]"""
         stmts = [self._parse_statement()]
         while self._match(TokenType.COLON):
+            # it's possible to end a line with just : and EOL
+            if self._current_is(TokenType.EOL):
+                break
             stmts.append(self._parse_statement())
         return stmts
 
+    @astnode
     def _parse_line(self) -> AST.Line:
         """<line> ::= LINE_NUMBER <statement_list> EOL"""
         tk = self._expect(TokenType.LINE_NUMBER)

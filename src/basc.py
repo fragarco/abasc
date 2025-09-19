@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 from __future__ import annotations
 import sys, os
 import argparse
+import time
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer
 from basparse import LocBasParser
@@ -55,6 +56,7 @@ def clear(sourcefile: str):
             os.remove(f)
 
 def main() -> None:
+    start_t = time.process_time()
     args = process_args()
     if args.out == None:
         args.out = args.infile.rsplit('.')[0]
@@ -64,6 +66,7 @@ def main() -> None:
             bascontent = fd.read()
     except Exception as e:
         print(str(e))
+        print(f"{time.process_time()-start_t:.2f} seconds")
         sys.exit(1)
     clear(args.infile)
     codelines: list[CodeLine] = []
@@ -77,6 +80,7 @@ def main() -> None:
                 pp.save_output(ppfile, code)
         except Exception as e:
             print(str(e))
+            print(f"{time.process_time()-start_t:.2f} seconds")
             sys.exit(1)
     else:
         codelines, code = pp.ascodelines(args.infile, bascontent)
@@ -93,6 +97,7 @@ def main() -> None:
         ast, symtable = parser.parse_program()
     except Exception as e:
         print(str(e))
+        print(f"{time.process_time()-start_t:.2f} seconds")
         sys.exit(1)
     if args.verbose:
         astjson = ast.to_json()
@@ -103,7 +108,7 @@ def main() -> None:
         symjson = symsto_json(symtable.syms)
         with open(symfile, "w") as fd:
             fd.write(json.dumps(symjson, indent=4))
-    print("Done")
+    print(f"Done in {time.process_time()-start_t:.2f} seconds")
 
 if __name__ == "__main__":
     main()
