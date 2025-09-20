@@ -19,6 +19,7 @@ from __future__ import annotations
 import sys, os
 import argparse
 import time
+import traceback
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer, Token
 from basparse import LocBasParser
@@ -41,7 +42,7 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
     parser.add_argument('--nopp', action='store_true', help="Do not preprocess the source file.")
     parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
-
+    parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
     return args
 
@@ -115,6 +116,8 @@ def main() -> None:
         emit(infile, codelines, ast, symtable)
     except Exception as e:
         print(str(e))
+        if args.debug:
+            print(traceback.format_exc())
     print(f"Done in {time.process_time()-start_t:.2f} seconds")
 
 if __name__ == "__main__":
