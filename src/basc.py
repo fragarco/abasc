@@ -22,6 +22,7 @@ import time
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer
 from basparse import LocBasParser
+from z80emitter import z80Emitter
 from symbols import symsto_json
 import astlib as AST
 import json
@@ -95,19 +96,24 @@ def main() -> None:
     parser = LocBasParser(codelines, tokens)
     try:
         ast, symtable = parser.parse_program()
+        if args.verbose:
+            astjson = ast.to_json()
+            astfile = args.infile.upper().replace('BAS','AST')
+            with open(astfile, "w") as fd:
+                fd.write(json.dumps(astjson, indent=4))
+            symfile = args.infile.upper().replace('BAS','SYM')
+            symjson = symsto_json(symtable.syms)
+            with open(symfile, "w") as fd:
+                fd.write(json.dumps(symjson, indent=4))
+        emitter = z80Emitter(codelines, ast, symtable)
+        asmcode = emitter.emit_program()
+        asmfile = args.infile.upper().replace('BAS','ASM')
+        with open(asmfile, "w") as fd:
+                fd.write(asmcode)
     except Exception as e:
         print(str(e))
         print(f"{time.process_time()-start_t:.2f} seconds")
         sys.exit(1)
-    if args.verbose:
-        astjson = ast.to_json()
-        astfile = args.infile.upper().replace('BAS','AST')
-        with open(astfile, "w") as fd:
-            fd.write(json.dumps(astjson, indent=4))
-        symfile = args.infile.upper().replace('BAS','SYM')
-        symjson = symsto_json(symtable.syms)
-        with open(symfile, "w") as fd:
-            fd.write(json.dumps(symjson, indent=4))
     print(f"Done in {time.process_time()-start_t:.2f} seconds")
 
 if __name__ == "__main__":
