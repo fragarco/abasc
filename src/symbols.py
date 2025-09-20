@@ -38,12 +38,28 @@ class SymEntry:
     writes: int = 1
     reads: int = 0
     nargs: int = 0
+    label: str = ""
 
 class SymTable:
     syms: dict[str, SymEntry]
 
     def __init__(self):
         self.syms = {}
+
+    def _gen_label(self, name: str, entry: SymEntry) -> str:
+        name = name.replace("!","_REAL")
+        name = name.replace("$","_STR")
+        name = name.replace("%","_INT")
+        name = name.replace(".","_")
+        if entry.symtype == SymType.Variable:
+            return f"VAR_{name}"
+        elif entry.symtype == SymType.Array:
+            return f"ARRAY_{name}"
+        elif entry.symtype == SymType.Label:
+            return f"LABEL_{name}"
+        elif entry.symtype == SymType.Function:
+            return f"FN_{name}"
+        return ""
 
     def add(self, ident: str, info: SymEntry, context: str = "") -> bool:
         ident = ident.upper()
@@ -52,6 +68,7 @@ class SymTable:
             # Global context
             if ident not in self.syms:
                 self.syms[ident] = copy.deepcopy(info)
+                self.syms[ident].label = self._gen_label(ident, self.syms[ident])
                 return True
             else:
                 # If the sym exists and it is a variable or array that keeps

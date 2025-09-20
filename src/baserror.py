@@ -177,7 +177,7 @@ class BasError(Exception):
             msg = msg + (f":{self.line}" if self.line != -1 else "")
             msg = msg + (f":{self.col} " if self.col != -1 else " ")
         msg = msg + f"{_ERRORCODES[self.ecode]} "
-        msg = msg + (f"{self.info} " if self.info != "" else "")
+        msg = msg + (f"({self.info}) " if self.info != "" else "")
         code = self.code
         if code != "" and self.col != -1:
             code = code[:self.col-1] + TERM["UNDER"] + code[self.col-1:] + TERM["END"]
