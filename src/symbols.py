@@ -47,9 +47,9 @@ class SymTable:
         self.syms = {}
 
     def _gen_label(self, name: str, entry: SymEntry) -> str:
-        name = name.replace("!","_REAL")
-        name = name.replace("$","_STR")
-        name = name.replace("%","_INT")
+        name = name.replace("!","_R")
+        name = name.replace("$","_S")
+        name = name.replace("%","_I")
         name = name.replace(".","_")
         if entry.symtype == SymType.Variable:
             return f"VAR_{name}"
