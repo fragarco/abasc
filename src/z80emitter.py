@@ -737,14 +737,14 @@ class z80Emitter:
             self._raise_error(2, node, 'not implemented yet')
 
     def _emit_variable(self, node: AST.Variable):
-        if node.etype == AST.ExpType.Integer:
-            var = self.symtable.find(node.name)
-            if var is not None:
+        var = self.symtable.find(node.name)
+        if var is not None:
+            if node.etype == AST.ExpType.Integer:  
                 self._emit_code(f"ld    hl,({var.label})")
             else:
-                self._raise_error(38, node)
+                self._raise_error(2, node, 'var type not implemented yet')
         else:
-            self._raise_error(2, node, 'not implemented yet')
+            self._raise_error(38, node)
     
     def _emit_binaryop(self, node: AST.BinaryOp):
         """ 
@@ -752,10 +752,14 @@ class z80Emitter:
         and leaves it in HL
         """
         self._emit_expression(node.right)
-        self._emit_code("ex    de,hl")
+        self._emit_code("push  hl")
         self._emit_expression(node.left)
-        self._emit_int_op(node)
-
+        self._emit_code("pop   de")
+        if node.etype == AST.ExpType.Integer:
+            self._emit_int_op(node)
+        else:
+            self._raise_error(2, node, 'type op not implemented yet')
+    
     def _emit_int_op(self, node: AST.BinaryOp):
         op = node.op.upper()
         if op == '+':
@@ -766,13 +770,13 @@ class z80Emitter:
         elif op in ('=', '<>', '<', '<=', '=<', '>', '>=', '=>'):
             self._emit_compare(node)
         else:
-            self._raise_error(2, node, 'not implemented yet')
+            self._raise_error(2, node, 'int op not implemented yet')
     
     def _emit_compare(self, node: AST.BinaryOp):
         op = node.op.upper()
-        self._raise_error(2, node, 'not implemented yet')
+        self._raise_error(2, node, 'comp op not implemented yet')
 
-    # ----------------- AST Trasversal functionsr -----------------
+    # ----------------- AST Trasversal functions -----------------
 
     def _emit_comment(self, node: AST.Comment):
         pass
