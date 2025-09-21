@@ -17,144 +17,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from typing import List, Optional, cast
+from typing import List, Optional, cast, Any
 from baspp import CodeLine
 from baserror import BasError
 from symbols import SymTable, SymEntry, SymType
 import astlib as AST
-
-#
-# Amstrad Firmware Rutines 
-#
-class FWCALL:
-    KM_INITIALISE       = "&BB00"
-    KM_RESET            = "&BB03"
-    KM_WAIT_CHAR        = "&BB06"
-    KM_READ_CHAR        = "&BB09"
-    KM_CHAR_RETURN      = "&BB0C"
-    KM_SET_EXPAND       = "&BB0F"
-    KM_GET_EXPAND       = "&BB12"
-    KM_EXP_BUFFER       = "&BB15"
-    KM_WAIT_KEY         = "&BB18"
-    KM_READ_KEY         = "&BB1B"
-    KM_TEST_KEY         = "&BB1E"
-    KM_GET_STATE        = "&BB21"
-    KM_GET_JOYSTICK     = "&BB24"
-    KM_SET_TRANSLATE    = "&BB27"
-    KM_GET_TRANSLATE    = "&BB2A"
-    KM_SET_SHIFT        = "&BB2D"
-    KM_GET_SHIFT        = "&BB30"
-    KM_SET_CONTROL      = "&BB33"
-    KM_GET_CONTROL      = "&BB36"
-    KM_SET_REPEAT       = "&BB39"
-    KM_GET_REPEAT       = "&BB3C"
-    KM_SET_DELAY        = "&BB3F"
-    KM_GET_DELAY        = "&BB42"
-    KM_ARM_BREAK        = "&BB45"
-    KM_DISARM_BREAK     = "&BB48"
-    KM_BREAK_EVENT      = "&BB4B"
-    KM_TEST_BREAK       = "&BDEE"
-    KM_SCAN_KEYS        = "&BDF4"
-
-    TXT_INITIALISE      = "&BB4E"
-    TXT_RESET           = "&BB51"
-    TXT_VDU_ENABLE      = "&BB54"
-    TXT_VDU_DISABLE     = "&BB57"
-    TXT_OUTPUT          = "&BB5A"
-    TXT_WR_CHAR         = "&BB5D"
-    TXT_RD_CHAR         = "&BB60"
-    TXT_SET_GRAPHIC     = "&BB63"
-    TXT_WIN_ENABLE      = "&BB66"
-    TXT_GET_WINDOW      = "&BB69"
-    TXT_CLEAR_WINDOW    = "&BB6C"
-    TXT_SET_COLUMN      = "&BB6F"
-    TXT_SET_ROW         = "&BB72"
-    TXT_SET_CURSOR      = "&BB75"
-    TXT_GET_CURSOR      = "&BB78"
-    TXT_CUR_ENABLE      = "&BB7B"
-    TXT_CUR_DISABLE     = "&BB7E"
-    TXT_CUR_ON          = "&BB81"
-    TXT_CUR_OFF         = "&BB84"
-    TXT_VALIDATE        = "&BB87"
-    TXT_PLACE_CURSOR    = "&BB8A"
-    TXT_REMOVE_CURSOR   = "&BB8D"
-    TXT_SET_PEN         = "&BB90"
-    TXT_GET_PEN         = "&BB93"
-    TXT_SET_PAPER       = "&BB96"
-    TXT_GET_PAPER       = "&BB99"
-    TXT_INVERSE         = "&BB9C"
-    TXT_SET_BACK        = "&BB9F"
-    TXT_GET_BACK        = "&BBA2"
-    TXT_GET_MATRIX      = "&BBA5"
-    TXT_SET_MATRIX      = "&BBA8"
-    TXT_SET_M_TABLE     = "&BBAB"
-    TXT_GET_M_TABLE     = "&BBAE"
-    TXT_GET_CONTROLS    = "&BBB1"
-    TXT_STR_SELECT      = "&BBB4"
-    TXT_SWAP_STREAMS    = "&BBB7"
-
-    SCR_INITIALISE      = "&BBFF"
-    SCR_RESET           = "&BC02"
-    SCR_SET_OFFSET      = "&BC05"
-    SCR_SET_BASE        = "&BC08"
-    SCR_GET_LOCATION    = "&BC0B"
-    SCR_SET_MODE        = "&BC0E"
-    SCR_GET_MODE        = "&BC11"
-    SCR_CLEAR           = "&BC14"
-    SCR_CHAR_LIMITS     = "&BC17"
-    SCR_CHAR_POSITION   = "&BC1A"
-    SCR_DOT_POSITION    = "&BC1D"
-    SCR_NEXT_BYTE       = "&BC20"
-    SCR_PREV_BYTE       = "&BC23"
-    SCR_NEXT_LINE       = "&BC26"
-    SCR_PREV_LINE       = "&BC29"
-    SCR_INK_ENCODE      = "&BC2C"
-    SCR_INK_DECODE      = "&BC2F"
-    SCR_SET_INK         = "&BC32"
-    SCR_GET_INK         = "&BC35"
-    SCR_SET_BORDER      = "&BC38"
-    SCR_GET_BORDER      = "&BC3B"
-    SCR_SET_FLASHING    = "&BC3E"
-    SCR_GET_FLASHING    = "&BC41"
-    SCR_FILL_BOX        = "&BC44"
-    SCR_FLOOD_BOX       = "&BC17"
-    SCR_CHAR_INVERT     = "&BC4A"
-    SCR_HW_ROLL         = "&BC4D"
-    SCR_SW_ROLL         = "&BC50"
-    SCR_UNPACK          = "&BC53"
-    SCR_REPACK          = "&BC56"
-    SCR_ACCESS          = "&BC59"
-    SCR_PIXELS          = "&BC5C"
-    SCR_HORIZONTAL      = "&BC5F"
-    SCR_VERTICAL        = "&BC62"
-    
-    # WATCH OUT: this are 464 only addresses
-    MATH_MOVE_REAL      = "&BD3D"
-    MATH_INT_TO_REAL    = "&BD40"
-    MATH_BIN_TO_REAL    = "&BD43"
-    MATH_REAL_TO_INT    = "&BD46"
-    MATH_REAL_TO_BIN    = "&BD49"
-    MATH_REAL_FIX       = "&BD4C"
-    MATH_REAL_INT       = "&BD4F"
-    MATH_REAL_10A       = "&BD55"
-    MATH_REAL_ADD       = "&BD58"
-    MATH_REAL_REV_SUBS  = "&BD5E"
-    MATH_REAL_MULT      = "&BD61"
-    MATH_REAL_DIV       = "&BD64"
-    MATH_REAL_COMP      = "&BD6A"
-    MATH_REAL_UMINUS    = "&BD6D"
-    MATH_REAL_SIGNUM    = "&BD70"
-    MATH_SET_ANGLE_MODE = "&BD73"
-    MATH_REAL_PI        = "&BD76"
-    MATH_REAL_SQR       = "&BD79"
-    MATH_REAL_POWER     = "&BD7C"
-    MATH_REAL_LOG       = "&BD7F"
-    MATH_REAL_LOG_10    = "&BD82"
-    MATH_REAL_EXP       = "&BD85"
-    MATH_REAL_SINE      = "&BD88"
-    MATH_REAL_COSINE    = "&BD8B"
-    MATH_REAL_TANGENT   = "&BD8E"
-    MATH_REAL_ARCTANGENT= "&BD91"
+from basruntime import RT_FWCALL, RT_STR, RT_MATH, RT_INPUT
 
 class z80Emitter:
     def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1):
@@ -164,6 +32,8 @@ class z80Emitter:
         self.warning_level = warning_level
         self.data= ""
         self.code= ""
+        self.rtcode: list[str] = []
+        self.runtime: list[str] = []
         self.org = 0x4000
 
     def _emit_code(self, line: str="", indent: int=4):
@@ -181,6 +51,15 @@ class z80Emitter:
         codeline = self.source[line-1]
         self._emit_code("; " + codeline.code, indent)
 
+    def _emit_import(self, lib: Any, fname: str) -> bool:
+        if fname not in self.runtime:
+            self.runtime.append(fname)
+            fcode: List[str] = lib[fname]
+            self.rtcode = self.rtcode + fcode
+            self.rtcode.append('\n')
+            return True
+        return False
+
     def _emit_head(self):
         self._emit_code("; FILE GENERATED BY BASC COMPILER", 0)
         self._emit_code("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
@@ -188,11 +67,15 @@ class z80Emitter:
         self._emit_code(f"org   {hex(self.org)}", 0)
         self._emit_code()
         self._emit_code("_init_:", 0)
-        self._emit_code(f"call   {FWCALL.TXT_INITIALISE}    ; TXT_INITIALISE")
-        self._emit_code(f"call   {FWCALL.TXT_CLEAR_WINDOW}    ; TXT_CLEAR_WINDOW")
+        self._emit_code(f"call   {RT_FWCALL.TXT_INITIALISE}    ; TXT_INITIALISE")
+        self._emit_code(f"call   {RT_FWCALL.TXT_CLEAR_WINDOW}    ; TXT_CLEAR_WINDOW")
         self._emit_code()
         self._emit_code("_code_:", 0)
         self._emit_data("_data_:", 0)
+
+    def _emit_code_end(self):
+        self._emit_code()
+        self._emit_code("_end_: jr _end_   ; infinite end loop", 0)
 
     def _emit_global_symbols(self):
         for sym in self.symtable.syms:
@@ -204,6 +87,9 @@ class z80Emitter:
                     self._emit_data(f"{entry.label}: defs 255")
                 if entry.exptype == AST.ExpType.Real:
                     self._emit_data(f"{entry.label}: db   0,0,0,0,0")
+     
+    def _emit_runtime(self) -> str:
+        return "__runtime__:\n\n" + ''.join(self.rtcode) + '\n'
     
     # ----------------- Error management -----------------
 
@@ -767,10 +653,24 @@ class z80Emitter:
         elif op == '-':
             self._emit_code("or    a      ; clear carry")
             self._emit_code("sbc   hl,de  ; HL = right - left")
+        elif op == '*':
+            self._emit_import(RT_MATH, "rt_sign_extract")
+            self._emit_import(RT_MATH, "rt_sign_strip")
+            self._emit_import(RT_MATH, "rt_mul16_unsigned")
+            self._emit_import(RT_MATH, "rt_mul16_signed")
+            self._emit_code("call   rt_mul16_signed")
+        elif op == '\\':
+            self._emit_import(RT_MATH, "rt_sign_extract")
+            self._emit_import(RT_MATH, "rt_sign_strip")
+            self._emit_import(RT_MATH, "rt_div16_unsigned")
+            self._emit_import(RT_MATH, "rt_div16_signed")
+            self._emit_code("call   rt_div16_signed")
+        elif op == '/':
+            self._raise_error(2, node, 'real div not implemented yet')
         elif op in ('=', '<>', '<', '<=', '=<', '>', '>=', '=>'):
             self._emit_compare(node)
         else:
-            self._raise_error(2, node, 'int op not implemented yet')
+            self._raise_error(2, node, 'uknown int op')
     
     def _emit_compare(self, node: AST.BinaryOp):
         op = node.op.upper()
@@ -853,5 +753,6 @@ class z80Emitter:
         for line in self.program.lines:
             self._emit_srcline(line.line)
             self._emit_line(line)
+        self._emit_code_end()
         self._emit_global_symbols()
-        return self.code + "\n" + self.data
+        return self.code + "\n" + self.data + "\n" + self._emit_runtime()
