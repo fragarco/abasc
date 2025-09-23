@@ -444,6 +444,7 @@ class LocBasLexer:
                 break
 
     def tokens_json(self) -> tuple[str, list[Token]]:
+        print("Parsing source files...")
         tokens = list(self.tokens())
         return json.dumps(tokens, indent=4, cls=TokenEncoder), tokens
         

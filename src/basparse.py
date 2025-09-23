@@ -2372,6 +2372,7 @@ class LocBasParser:
 
     def parse_program(self) -> tuple[AST.Program, SymTable]:
         """ <program> ::= <line><program> | EOL<program> | EOF"""
+        print("Checking syntax...")
         lines = []
         while not self._current_is(TokenType.EOF):
             if self._current_is(TokenType.EOL):

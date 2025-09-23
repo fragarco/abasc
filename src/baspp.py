@@ -78,6 +78,7 @@ class LocBasPreprocessor:
         return lines
 
     def preprocess(self, inputfile: str, code: str, increment: int = 10) -> tuple[list[CodeLine],str]:
+        print("Preprocessing source files...")
         srclines, _ = self.ascodelines(inputfile, code)
         srcline = 0
         autonum = increment

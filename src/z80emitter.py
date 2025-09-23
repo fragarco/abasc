@@ -868,6 +868,7 @@ class z80Emitter:
             self._emit_statement(stmt)
 
     def emit_program(self) -> str:
+        print("Generating assembly code...")
         self.asm = ""
         self._emit_head()
         for line in self.program.lines:

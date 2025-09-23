@@ -26,6 +26,7 @@ from basparse import LocBasParser
 from z80emitter import z80Emitter
 from symbols import symsto_json, SymTable
 import astlib as AST
+from basopt import BasOptimizer
 import json
 
 __author__='Javier "Dwayne Hicks" Garcia'
@@ -113,6 +114,8 @@ def main() -> None:
         codelines, code = preprocess(infile, bascontent, args.verbose, args.nopp)
         tokens = lexpass(infile, code, args.verbose)
         ast, symtable = parser(infile, codelines, tokens, args.verbose)
+        optimizer = BasOptimizer()
+        ast, symtable = optimizer.optimize_expressions(ast, symtable)
         emit(infile, codelines, ast, symtable)
     except Exception as e:
         print(str(e))
