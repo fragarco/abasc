@@ -28,7 +28,7 @@ class BasOptimizer:
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
-            command = f'''{repr(node.left.value)} {node.op} {repr(node.right.value)}'''
+            command = f'''{repr(node.left.value)} {node.op} {repr(node.right.value)}''' # type: ignore[attr-defined]
             try:
                 result = eval(command)                 
                 self.modified = True
