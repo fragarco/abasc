@@ -115,7 +115,7 @@ def main() -> None:
         tokens = lexpass(infile, code, args.verbose)
         ast, symtable = parser(infile, codelines, tokens, args.verbose)
         optimizer = BasOptimizer()
-        ast, symtable = optimizer.optimize_expressions(ast, symtable)
+        # ast, symtable = optimizer.optimize_ast(ast, symtable)
         emit(infile, codelines, ast, symtable)
     except Exception as e:
         print(str(e))

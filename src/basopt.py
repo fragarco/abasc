@@ -32,13 +32,19 @@ class BasOptimizer:
             try:
                 result = eval(command)                 
                 self.modified = True
-                if type(result) == str: return AST.String(value=result)
-                if type(result) == int: return AST.Integer(value=result)
-                if type(result) == float: return AST.Real(value=result)
+                nnode: AST.Statement = node
+                if type(result) == str:
+                    nnode = AST.String(value=result)
+                if type(result) == int:
+                    nnode = AST.Integer(value=result)
+                if type(result) == float:
+                    nnode = AST.Real(value=result)
                 if type(result) == bool:
                     result = -1 if result else 0
-                    return AST.Integer(value=result)
-                return node
+                    nnode = AST.Integer(value=result)
+                nnode.line = node.line
+                nnode.col = node.col
+                return nnode
             except:
                 return node
         # functions calls, variables, etc.
@@ -77,7 +83,7 @@ class BasOptimizer:
                 stmt.args[i] = self._op_statement(stmt.args[i])
         return stmt
       
-    def optimize_expressions(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:
+    def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:
         print("Optimizing expressions...")
         self.modified = True
         while self.modified:
