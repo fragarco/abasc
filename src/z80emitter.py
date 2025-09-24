@@ -769,6 +769,7 @@ class z80Emitter:
             self._emit_import(RT_STR, "rt_strcat")
             self._emit_code("push  de")
             self._emit_code("ex    de,hl")
+            self._emit_code("ld    a,255      ; max length for a string")
             self._emit_code("call  rt_malloc")
             self._emit_code("call  rt_strcopy")
             self._emit_code("pop   de")

@@ -213,7 +213,7 @@ RT_STR = {
         ";     HL points to the destination string\n",
         ";     AF, BC and DE are modified\n",
         "rt_strcopy:\n",
-        "\tpush hl\n",
+        "\tpush    hl\n",
         "\tex      hl,de\n",
         "\txor     c\n"
         "\tld      b,(hl)     ; total characters to copy\n",
@@ -223,7 +223,7 @@ RT_STR = {
         "\tldir\n",
         "\tpop     bc\n",
         "\tpop     hl\n",
-        "\tld      (hl),b     ; number of copied characters"
+        "\tld      (hl),b     ; number of copied characters\n",
         "\tret\n\n",
     ],
     "rt_strcat": [
