@@ -747,13 +747,13 @@ class z80Emitter:
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_mul16_unsigned")
             self._emit_import(RT_MATH, "rt_mul16_signed")
-            self._emit_code("call   rt_mul16_signed")
+            self._emit_code("call   rt_mul16_signed  ; HL = HL * DE")
         elif op == '\\':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_div16_unsigned")
             self._emit_import(RT_MATH, "rt_div16_signed")
-            self._emit_code("call   rt_div16_signed")
+            self._emit_code("call   rt_div16_signed  ; HL = HL \\ DE ")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '=<', '>', '>=', '=>'):
@@ -770,10 +770,10 @@ class z80Emitter:
             self._emit_code("push  de")
             self._emit_code("ex    de,hl")
             self._emit_code("ld    a,255      ; max length for a string")
-            self._emit_code("call  rt_malloc")
-            self._emit_code("call  rt_strcopy")
+            self._emit_code("call  rt_malloc  ; HL points to empty mem")
+            self._emit_code("call  rt_strcopy ; (HL) <- (DE)")
             self._emit_code("pop   de")
-            self._emit_code("call  rt_strcat")
+            self._emit_code("call  rt_strcat  ; (HL) <- (HL) + (DE)")
             self.free_tmp_memory = True
         elif op in ('=', '<>', '<', '<=', '=<', '>', '>=', '=>'):
             self._emit_str_compare(node)
@@ -787,41 +787,41 @@ class z80Emitter:
         if node.op == '=':
             self._emit_code("xor   a")
             self._emit_code("sbc   hl,de")
-            self._emit_code("ld    hl,&FFFF  ; hl = -1 TRUE")
+            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
             self._emit_code("jr    z,$+3")
-            self._emit_code("inc   hl        ; hl = 0 FALSE")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
         elif node.op == '<>':
             self._emit_code("xor   a")
             self._emit_code("sbc   hl,de")
-            self._emit_code("ld    hl,&FFFF  ; hl = -1 TRUE")
+            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
             self._emit_code("jr    nz,$+3")
-            self._emit_code("inc   hl        ; hl = 0 FALSE")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
         elif node.op == '<':
             self._emit_import(RT_MATH, "rt_comp16_signed")
             self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,&FFFF  ; hl =-1 TRUE")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; hl = 0 FALSE")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
         elif node.op == '<=' or node.op == '=<':
             self._emit_import(RT_MATH, "rt_comp16_signed")
             self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,0      ; hl = 0 TRUE")
+            self._emit_code("ld    hl,0      ; HL = 0 TRUE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; hl =-1 FALSE")
+            self._emit_code("dec   hl        ; HL =-1 FALSE")
         elif node.op == '>':
             self._emit_import(RT_MATH, "rt_comp16_signed")
             self._emit_code("ex    de,hl")
             self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,&FFFF  ; hl =-1 TRUE")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; hl = 0 FALSE")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
         elif node.op == '>=' or node.op == '=>':
             self._emit_import(RT_MATH, "rt_comp16_signed")
             self._emit_code("ex    de,hl")
             self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,0      ; hl = 0 FALSE")
+            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; hl =-1 TRUE")
+            self._emit_code("dec   hl        ; HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'int "{node.op}" op not implemented yet')
 
