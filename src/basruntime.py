@@ -461,7 +461,7 @@ RT_MATH = {
         ";     AF Z=1 if HL=DE; Z=0 & C=1 if HL < DE\n"
         ";     HL is modified\n",
         ";     BC, DE are preserved\n",
-        "\txor     a\n",
+        "\txor     a         ; Clear C flag\n",
         "\tsbc     hl,de\n",
         "\tret     z\n",
         "\tjp      m,__comp16_cs1\n",
@@ -474,7 +474,6 @@ RT_MATH = {
     "rt_comp16_unsigned": [
         "; Unsigned comparison HL-DE, set Z and C flags,\n",
         "; where C indicates that HL < DE\n",
-        "rt_comp16_signed:\n",
         ";Inputs:\n",
         ";     HL, DE\n",
         ";Outputs:\n",
@@ -482,7 +481,7 @@ RT_MATH = {
         ";     HL is modified\n",
         ";     BC, DE are preserved\n",
         "rt_comp16_unsigned:\n",
-        "\txor     a\n",
+        "\txor     a          ; Clear C flag\n",
         "\tsbc     hl,de\n",
         "\tret\n",
     ],

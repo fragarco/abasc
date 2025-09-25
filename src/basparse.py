@@ -2101,8 +2101,9 @@ class LocBasParser:
                 self._raise_error(13, line=op.line, col=op.col)
             # Logic OP always produces an integer result (0=FALSE, -1=TRUE)
             # but can operate with strings, for example "STRING1" >= "STRING"
-            # which returns -1 (TRUE)    
-            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=AST.ExpType.Integer)
+            # which returns -1 (TRUE)
+            opname = op.lexeme.replace('=>','>=').replace('=<','<=') # one operation one symbol
+            node = AST.BinaryOp(op=opname, left=node, right=right, etype=AST.ExpType.Integer)
         return node
 
     @astnode
