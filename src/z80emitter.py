@@ -689,6 +689,8 @@ class z80Emitter:
             self._emit_variable(node)
         elif isinstance(node, AST.BinaryOp):
             self._emit_binaryop(node)
+        elif isinstance(node, AST.UnaryOp):
+            self._emit_unaryop(node)
         else:
             self._raise_error(2, node, 'not implemented yet')
 
@@ -735,6 +737,26 @@ class z80Emitter:
         else:
             self._raise_error(2, node, f'{node.etype} operations are not supported yet')
     
+    def _emit_unaryop(self, node: AST.UnaryOp):
+        self._emit_expression(node.operand)
+        if node.etype == AST.ExpType.Integer:
+            if node.op == 'NOT':
+                self._emit_code("ex    de,hl")
+                self._emit_code("ld    hl,&FFFF")
+                self._emit_code("ld    a,d")
+                self._emit_code("or    e")
+                self._emit_code("jr    z,$+3")
+                self._emit_code("inc   hl")
+            elif node.op == '-':
+                self._emit_code("ld    de,0")
+                self._emit_code("ex    de,hl")
+                self._emit_code("xor   a       ; Clear C flag")
+                self._emit_code("sbc   hl,de")
+            else:
+                self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
+        else:
+            self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
+
     def _emit_int_op(self, node: AST.BinaryOp):
         op = node.op.upper()
         if op == '+':
