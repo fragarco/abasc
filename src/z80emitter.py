@@ -714,6 +714,10 @@ class z80Emitter:
         if var is not None:
             if node.etype == AST.ExpType.Integer:  
                 self._emit_code(f"ld    hl,({var.label})")
+            elif node.etype == AST.ExpType.String:
+                self._emit_code(f"ld    hl,{var.label}")
+            elif node.etype == AST.ExpType.Real:
+                self._emit_code(f"ld    hl,{var.label}")
             else:
                 self._raise_error(2, node, 'var type not implemented yet')
         else:
@@ -797,8 +801,6 @@ class z80Emitter:
             self._emit_code("pop   de")
             self._emit_code("call  rt_strcat  ; (HL) <- (HL) + (DE)")
             self.free_tmp_memory = True
-        elif op in ('=', '<>', '<', '<=', '>', '>='):
-            self._emit_str_compare(node)
         else:
             self._raise_error(2, node, f'unknown "{op}" string op')
 
@@ -806,6 +808,9 @@ class z80Emitter:
         self._raise_error(2, node, 'real operations are not supported yet')
 
     def _emit_int_compare(self, node: AST.BinaryOp):
+        if node.left.etype == AST.ExpType.String:
+            self._emit_str_compare(node)
+            return
         if node.op == '=':
             self._emit_code("xor   a         ; Clear C flag")
             self._emit_code("sbc   hl,de")
@@ -848,7 +853,41 @@ class z80Emitter:
             self._raise_error(2, node, f'int "{node.op}" op not implemented yet')
 
     def _emit_str_compare(self, node: AST.BinaryOp):
-        self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
+        self._emit_import(RT_STR, "rt_strcmp")
+        if node.op == '=':
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr    z,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        elif node.op == '<>':
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr    nz,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        elif node.op == '<':
+            self._emit_code("ex    de,hl")
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr    c,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        elif node.op == '>':
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr    c,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        elif node.op == '<=':
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr    c,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        elif node.op == '>=':
+            self._emit_code("ex    de,hl")
+            self._emit_code("call  rt_strcmp")
+            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr    c,$+3")
+            self._emit_code("inc   hl        ; HL = 0 FALSE")
+        else:
+            self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
 
     # ----------------- AST Trasversal functions -----------------
 
