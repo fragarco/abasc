@@ -877,15 +877,15 @@ class z80Emitter:
             self._emit_code("inc   hl        ; HL = 0 FALSE")
         elif node.op == '<=':
             self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("dec   hl        ; HL =-1 TRUE")
         elif node.op == '>=':
             self._emit_code("ex    de,hl")
             self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
             self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("dec   hl        ; HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
 
