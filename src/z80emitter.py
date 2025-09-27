@@ -37,6 +37,8 @@ class z80Emitter:
         self.constants: int = 0
         self.free_tmp_memory: bool = False
         self.org = 0x4000
+        self.forloops: list[AST.ForLoop] = []
+        self.wloops: list[AST.WhileLoop] = []
 
     def _emit_code(self, line: str="", indent: int=4):
         pad = ""
@@ -157,6 +159,10 @@ class z80Emitter:
         self.constants +=1
         return f"__const_real_{self.constants}"
     
+    def _get_for_labels(self) -> tuple[str,str]:
+        self.constants +=1
+        return (f"__forloop_start_{self.constants}", f"__forloop_end_{self.constants}")
+
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
@@ -340,8 +346,27 @@ class z80Emitter:
     def _emit_FN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_FOR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_FOR(self, node:AST.ForLoop):
+        sym = self.symtable.find(node.var.name)
+        start, end = self._get_for_labels()
+        node.start_label = start
+        node.end_label = end
+        if sym is not None:
+            self._emit_code("; FOR initialization")
+            self._emit_expression(node.start)
+            self._emit_code(f"ld    ({sym.label}),hl")
+            self._emit_code("; FOR condition")
+            self._emit_code(start, 0)
+            self._emit_expression(node.end)
+            self._emit_code(f"ld    de,({sym.label})")
+            self._emit_code("or    a")
+            self._emit_code("sbc   hl,de")
+            self._emit_code(f"jp    c,{end}")
+            self._emit_code("; FOR BODY")
+            node.var_label = sym.label
+            self.forloops.append(node)
+        else:
+            self._raise_error(2, node, "undeclared variable {var.name}")
 
     def _emit_FRAME(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -463,8 +488,21 @@ class z80Emitter:
     def _emit_NEW(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_NEXT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_NEXT(self, node:AST.BlockEnd):
+        fornode = self.forloops.pop()
+        self._emit_code("; FOR STEP")
+        if fornode.step is not None:
+            self._emit_expression(fornode.step)
+            self._emit_code("ex    de,hl")
+            self._emit_code(f"ld    hl,({fornode.var_label})")
+            self._emit_code("add   hl,de")
+            self._emit_code(f"ld    ({fornode.var_label}),hl")
+        else:
+            self._emit_code(f"ld    hl,({fornode.var_label})")
+            self._emit_code("inc   hl")
+            self._emit_code(f"ld    ({fornode.var_label}),hl")
+        self._emit_code(f"jp    {fornode.start_label}")
+        self._emit_code(fornode.end_label, 0)
 
     def _emit_ON(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -917,7 +955,10 @@ class z80Emitter:
             self._raise_error(38, node)
 
     def _emit_blockend(self, node: AST.BlockEnd):
-        self._raise_error(2, node, "not implemented yet")
+        if node.name == "NEXT":
+            self._emit_NEXT(node)
+        else:
+            self._raise_error(2, node, "not implemented yet")
 
     def _emit_userfun(self, node: AST.UserFun):
         self._raise_error(2, node, "not implemented yet")

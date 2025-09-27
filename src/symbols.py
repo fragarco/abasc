@@ -21,7 +21,6 @@ from dataclasses import dataclass, asdict
 from typing import Optional, Any
 from enum import Enum
 import copy
-import json
 import astlib as AST
 
 class SymType(str, Enum):

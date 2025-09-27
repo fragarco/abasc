@@ -121,7 +121,9 @@ def main() -> None:
         print(str(e))
         if args.debug:
             print(traceback.format_exc())
+        sys.exit(1)
     print(f"Done in {time.process_time()-start_t:.2f} seconds")
 
 if __name__ == "__main__":
     main()
+    sys.exit(0)
