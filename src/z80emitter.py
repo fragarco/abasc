@@ -75,8 +75,8 @@ class z80Emitter:
         self._emit_code("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
         self._emit_code(";", 0)
         self._emit_code()
-        self._emit_code("org   0x170", 0)
-        self._emit_code("jp    _init_", 0)
+        self._emit_code("org     0x170", 0)
+        self._emit_code("jp      _init_", 0)
         self._emit_code()
         self._emit_code("; TEMPORAL MEMORY AREA, USED TO STORE TEMPORAL VALUES",0)
         self._emit_code("_temp_memory_area_:", 0)
@@ -84,10 +84,10 @@ class z80Emitter:
         self._emit_code("_memory_start:")
         self._emit_code()
         self._emit_code("; PROGRAM MAIN", 0)
-        self._emit_code(f"org   {hex(self.org)}", 0)
+        self._emit_code(f"org     {hex(self.org)}", 0)
         self._emit_code("_init_:", 0)
-        self._emit_code(f"call   {RT_FWCALL.TXT_INITIALISE}    ; TXT_INITIALISE")
-        self._emit_code(f"call   {RT_FWCALL.TXT_CLEAR_WINDOW}    ; TXT_CLEAR_WINDOW")
+        self._emit_code(f"call    {RT_FWCALL.TXT_INITIALISE}    ; TXT_INITIALISE")
+        self._emit_code(f"call    {RT_FWCALL.TXT_CLEAR_WINDOW}    ; TXT_CLEAR_WINDOW")
         self._emit_code()
         self._emit_code("_code_:", 0)
         self._emit_data("_data_:", 0)
@@ -162,6 +162,10 @@ class z80Emitter:
     def _get_for_labels(self) -> tuple[str,str]:
         self.constants +=1
         return (f"__forloop_start_{self.constants}", f"__forloop_end_{self.constants}")
+
+    def _get_while_labels(self) -> tuple[str,str]:
+        self.constants +=1
+        return (f"__whileloop_start_{self.constants}", f"__whileloop_end_{self.constants}")
 
     # ----------------- Error management -----------------
 
@@ -358,22 +362,22 @@ class z80Emitter:
             if node.step is not None:
                 self._emit_code("; STEP precalculation")
                 self._emit_expression(node.step)
-                self._emit_code("ld    c,l")
-                self._emit_code("ld    b,h")
+                self._emit_code("ld      c,l")
+                self._emit_code("ld      b,h")
             self._emit_code("; FOR condition")
             self._emit_code(start, 0)
             self._emit_expression(node.end)
-            self._emit_code(f"ld    de,({sym.label})")
-            self._emit_code("or    a")
+            self._emit_code(f"ld      de,({sym.label})")
+            self._emit_code("or      a")
             if node.step is not None:
                 self._emit_code("; check STEP sign")
-                self._emit_code("bit   7,b")
-                self._emit_code("jr    z,$+3")
-                self._emit_code("ex    de,hl")
-            self._emit_code("sbc   hl,de")
-            self._emit_code(f"jp    m,{end}")
+                self._emit_code("bit     7,b")
+                self._emit_code("jr      z,$+3")
+                self._emit_code("ex      de,hl")
+            self._emit_code("sbc     hl,de")
+            self._emit_code(f"jp      m,{end}")
             if node.step is not None:
-                self._emit_code("push  bc")
+                self._emit_code("push    bc")
             self._emit_code("; FOR BODY")
             node.var_label = sym.label
             self.forloops.append(node)
@@ -504,15 +508,15 @@ class z80Emitter:
         fornode = self.forloops.pop()
         self._emit_code("; FOR STEP")
         if fornode.step is not None:
-            self._emit_code("pop   bc")
-            self._emit_code(f"ld    hl,({fornode.var_label})")
-            self._emit_code("add   hl,bc")
-            self._emit_code(f"ld    ({fornode.var_label}),hl")
+            self._emit_code("pop     bc")
+            self._emit_code(f"ld      hl,({fornode.var_label})")
+            self._emit_code("add     hl,bc")
+            self._emit_code(f"ld      ({fornode.var_label}),hl")
         else:
-            self._emit_code(f"ld    hl,({fornode.var_label})")
-            self._emit_code("inc   hl")
-            self._emit_code(f"ld    ({fornode.var_label}),hl")
-        self._emit_code(f"jp    {fornode.start_label}")
+            self._emit_code(f"ld      hl,({fornode.var_label})")
+            self._emit_code("inc     hl")
+            self._emit_code(f"ld      ({fornode.var_label}),hl")
+        self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(fornode.end_label, 0)
 
     def _emit_ON(self, node:AST.Statement):
@@ -699,11 +703,23 @@ class z80Emitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_WEND(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        wnode = self.wloops.pop()
+        self._emit_code(f"jp      {wnode.start_label}")
+        self._emit_code(wnode.end_label, 0)
 
-    def _emit_WHILE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
+    def _emit_WHILE(self, node:AST.WhileLoop):
+        start, end = self._get_while_labels()
+        node.start_label = start
+        node.end_label = end
+        self._emit_code("; WHILE condition")
+        self._emit_code(start, 0)
+        self._emit_expression(node.condition)
+        self._emit_code("ld      a,h")
+        self._emit_code("or      a")
+        self._emit_code(f"jp      z,{end}")
+        self._emit_code("; WHILE BODY")
+        self.wloops.append(node)
+    
     def _emit_WIDTH(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
@@ -729,7 +745,7 @@ class z80Emitter:
 
     def _emit_expression(self, node: AST.Statement):
         if isinstance(node, AST.Integer):
-            self._emit_code(f"ld    hl,{node.value & 0xFFFF}")
+            self._emit_code(f"ld      hl,{node.value & 0xFFFF}")
         elif isinstance(node, AST.String):
             self._emit_const_str(node)
         elif isinstance(node, AST.Real):
@@ -745,12 +761,12 @@ class z80Emitter:
 
     def _emit_const_str(self, node: AST.String):
         label = self._get_conststr_label()
-        self._emit_code(f"ld    hl,{label}")
+        self._emit_code(f"ld      hl,{label}")
         self._emit_data(f'{label}: db {len(node.value)},"{node.value}"')
 
     def _emit_const_real(self, node: AST.Real):
         label = self._get_constreal_label()
-        self._emit_code(f"ld    hl,{label}")
+        self._emit_code(f"ld      hl,{label}")
         cpcreal = self._real(node.value)
         values = ""
         for b in cpcreal:
@@ -762,11 +778,11 @@ class z80Emitter:
         var = self.symtable.find(node.name)
         if var is not None:
             if node.etype == AST.ExpType.Integer:  
-                self._emit_code(f"ld    hl,({var.label})")
+                self._emit_code(f"ld      hl,({var.label})")
             elif node.etype == AST.ExpType.String:
-                self._emit_code(f"ld    hl,{var.label}")
+                self._emit_code(f"ld      hl,{var.label}")
             elif node.etype == AST.ExpType.Real:
-                self._emit_code(f"ld    hl,{var.label}")
+                self._emit_code(f"ld      hl,{var.label}")
             else:
                 self._raise_error(2, node, 'var type not implemented yet')
         else:
@@ -778,9 +794,9 @@ class z80Emitter:
         and leaves it in HL
         """
         self._emit_expression(node.right)
-        self._emit_code("push  hl")
+        self._emit_code("push    hl")
         self._emit_expression(node.left)
-        self._emit_code("pop   de")
+        self._emit_code("pop     de")
         if node.etype == AST.ExpType.Integer:
             self._emit_int_op(node)
         elif node.etype == AST.ExpType.String:
@@ -794,17 +810,17 @@ class z80Emitter:
         self._emit_expression(node.operand)
         if node.etype == AST.ExpType.Integer:
             if node.op == 'NOT':
-                self._emit_code("ex    de,hl")
-                self._emit_code("ld    hl,&FFFF")
-                self._emit_code("ld    a,d")
-                self._emit_code("or    e")
-                self._emit_code("jr    z,$+3")
-                self._emit_code("inc   hl")
+                self._emit_code("ex      de,hl")
+                self._emit_code("ld      hl,&FFFF")
+                self._emit_code("ld      a,d")
+                self._emit_code("or      e")
+                self._emit_code("jr      z,$+3")
+                self._emit_code("inc     hl")
             elif node.op == '-':
-                self._emit_code("ld    de,0")
-                self._emit_code("ex    de,hl")
-                self._emit_code("xor   a       ; clear C flag")
-                self._emit_code("sbc   hl,de")
+                self._emit_code("ld      de,0")
+                self._emit_code("ex      de,hl")
+                self._emit_code("xor     a       ; clear C flag")
+                self._emit_code("sbc     hl,de")
             else:
                 self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
         else:
@@ -813,10 +829,10 @@ class z80Emitter:
     def _emit_int_op(self, node: AST.BinaryOp):
         op = node.op.upper()
         if op == '+':
-            self._emit_code("add   hl,de")
+            self._emit_code("add     hl,de")
         elif op == '-':
-            self._emit_code("or    a      ; clear carry")
-            self._emit_code("sbc   hl,de  ; HL = right - left")
+            self._emit_code("or      a      ; clear carry")
+            self._emit_code("sbc     hl,de  ; HL = right - left")
         elif op == '*':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
@@ -828,7 +844,7 @@ class z80Emitter:
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_div16_unsigned")
             self._emit_import(RT_MATH, "rt_div16_signed")
-            self._emit_code("call   rt_div16_signed  ; HL = HL \\ DE ")
+            self._emit_code("call     rt_div16_signed  ; HL = HL \\ DE ")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
@@ -842,13 +858,13 @@ class z80Emitter:
             self._emit_import(RT_STR, "rt_straddlengths")
             self._emit_import(RT_STR, "rt_strcopy")
             self._emit_import(RT_STR, "rt_strcat")
-            self._emit_code("push  de")
-            self._emit_code("ex    de,hl")
-            self._emit_code("ld    a,255      ; max length for a string")
-            self._emit_code("call  rt_malloc  ; HL points to empty mem")
-            self._emit_code("call  rt_strcopy ; (HL) <- (DE)")
-            self._emit_code("pop   de")
-            self._emit_code("call  rt_strcat  ; (HL) <- (HL) + (DE)")
+            self._emit_code("push    de")
+            self._emit_code("ex      de,hl")
+            self._emit_code("ld      a,255      ; max length for a string")
+            self._emit_code("call    rt_malloc  ; HL points to empty mem")
+            self._emit_code("call    rt_strcopy ; (HL) <- (DE)")
+            self._emit_code("pop     de")
+            self._emit_code("call    rt_strcat  ; (HL) <- (HL) + (DE)")
             self.free_tmp_memory = True
         else:
             self._raise_error(2, node, f'unknown "{op}" string op')
@@ -861,80 +877,80 @@ class z80Emitter:
             self._emit_str_compare(node)
             return
         if node.op == '=':
-            self._emit_code("xor   a         ; Clear C flag")
-            self._emit_code("sbc   hl,de")
-            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
-            self._emit_code("jr    z,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("xor     a         ; Clear C flag")
+            self._emit_code("sbc     hl,de")
+            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<>':
-            self._emit_code("xor   a         ; Clear C flag")
-            self._emit_code("sbc   hl,de")
-            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
-            self._emit_code("jr    nz,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("xor     a         ; Clear C flag")
+            self._emit_code("sbc     hl,de")
+            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr      nz,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<':
             self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '>':
             self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("ex    de,hl")
-            self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("ex      de,hl")
+            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<=':
             self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("ex    de,hl")
-            self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; HL =-1 TRUE")
+            self._emit_code("ex      de,hl")
+            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("dec     hl        ; HL =-1 TRUE")
         elif node.op == '>=':
             self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("call  rt_comp16_signed")
-            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; HL =-1 TRUE")
+            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("dec     hl        ; HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'int "{node.op}" op not implemented yet')
 
     def _emit_str_compare(self, node: AST.BinaryOp):
         self._emit_import(RT_STR, "rt_strcmp")
         if node.op == '=':
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
-            self._emit_code("jr    z,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<>':
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL = -1 TRUE")
-            self._emit_code("jr    nz,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("jr      nz,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<':
-            self._emit_code("ex    de,hl")
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("ex      de,hl")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '>':
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,&FFFF  ; HL =-1 TRUE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("inc   hl        ; HL = 0 FALSE")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<=':
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; HL =-1 TRUE")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("dec     hl        ; HL =-1 TRUE")
         elif node.op == '>=':
-            self._emit_code("ex    de,hl")
-            self._emit_code("call  rt_strcmp")
-            self._emit_code("ld    hl,0      ; HL = 0 FALSE")
-            self._emit_code("jr    c,$+3")
-            self._emit_code("dec   hl        ; HL =-1 TRUE")
+            self._emit_code("ex      de,hl")
+            self._emit_code("call    rt_strcmp")
+            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("jr      c,$+3")
+            self._emit_code("dec     hl        ; HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
 
@@ -948,17 +964,17 @@ class z80Emitter:
         if var is not None:
             self._emit_expression(node.source)
             if var.exptype == AST.ExpType.Integer:
-                self._emit_code(f"ld    ({var.label}),hl")
+                self._emit_code(f"ld      ({var.label}),hl")
             elif var.exptype == AST.ExpType.Real:
-                self._emit_code("xor   b")
-                self._emit_code("ld    c,5")
-                self._emit_code(f"ld    de,{var.label}")
+                self._emit_code("xor     b")
+                self._emit_code("ld      c,5")
+                self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ldir")
             elif var.exptype == AST.ExpType.String:
-                self._emit_code("xor   b")
-                self._emit_code("ld    c,(hl)")
-                self._emit_code("inc   c")
-                self._emit_code(f"ld    de,{var.label}")
+                self._emit_code("xor     b")
+                self._emit_code("ld      c,(hl)")
+                self._emit_code("inc     c")
+                self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ldir")
             else:
                 self._raise_error(2, node, f'variable type not implemented yet')
@@ -968,6 +984,8 @@ class z80Emitter:
     def _emit_blockend(self, node: AST.BlockEnd):
         if node.name == "NEXT":
             self._emit_NEXT(node)
+        elif node.name == "WEND":
+            self._emit_WEND(node)
         else:
             self._raise_error(2, node, "not implemented yet")
 

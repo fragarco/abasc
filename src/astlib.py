@@ -379,10 +379,14 @@ class ForLoop(Statement):
     
 class WhileLoop(Statement):
     condition: Statement
+    start_label: str      # used during code generation
+    end_label: str      # used during code generation
 
     def __init__(self, condition: Statement):
         super().__init__(etype=ExpType.Void, id="WhileLoop")
         self.condition = condition
+        self.end_label = ""
+        self.start_label = ""
 
     def to_json(self) -> dict:
         d = super().to_json()
