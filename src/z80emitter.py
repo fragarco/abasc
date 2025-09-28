@@ -355,13 +355,25 @@ class z80Emitter:
             self._emit_code("; FOR initialization")
             self._emit_expression(node.start)
             self._emit_code(f"ld    ({sym.label}),hl")
+            if node.step is not None:
+                self._emit_code("; STEP precalculation")
+                self._emit_expression(node.step)
+                self._emit_code("ld    c,l")
+                self._emit_code("ld    b,h")
             self._emit_code("; FOR condition")
             self._emit_code(start, 0)
             self._emit_expression(node.end)
             self._emit_code(f"ld    de,({sym.label})")
             self._emit_code("or    a")
+            if node.step is not None:
+                self._emit_code("; check STEP sign")
+                self._emit_code("bit   7,b")
+                self._emit_code("jr    z,$+3")
+                self._emit_code("ex    de,hl")
             self._emit_code("sbc   hl,de")
-            self._emit_code(f"jp    c,{end}")
+            self._emit_code(f"jp    m,{end}")
+            if node.step is not None:
+                self._emit_code("push  bc")
             self._emit_code("; FOR BODY")
             node.var_label = sym.label
             self.forloops.append(node)
@@ -492,10 +504,9 @@ class z80Emitter:
         fornode = self.forloops.pop()
         self._emit_code("; FOR STEP")
         if fornode.step is not None:
-            self._emit_expression(fornode.step)
-            self._emit_code("ex    de,hl")
+            self._emit_code("pop   bc")
             self._emit_code(f"ld    hl,({fornode.var_label})")
-            self._emit_code("add   hl,de")
+            self._emit_code("add   hl,bc")
             self._emit_code(f"ld    ({fornode.var_label}),hl")
         else:
             self._emit_code(f"ld    hl,({fornode.var_label})")
@@ -792,7 +803,7 @@ class z80Emitter:
             elif node.op == '-':
                 self._emit_code("ld    de,0")
                 self._emit_code("ex    de,hl")
-                self._emit_code("xor   a       ; Clear C flag")
+                self._emit_code("xor   a       ; clear C flag")
                 self._emit_code("sbc   hl,de")
             else:
                 self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
