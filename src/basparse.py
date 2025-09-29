@@ -948,9 +948,11 @@ class LocBasParser:
         question: bool = False if self._match(TokenType.SEMICOLON) else True
         self._match(TokenType.COMMA)
         while True:
-            var = self._expect(TokenType.IDENT).lexeme
-            vartype = AST.exptype_fromname(var)
-            vars.append(AST.Variable(name=var, etype=vartype))
+            var = self._expect(TokenType.IDENT)
+            vartype = AST.exptype_fromname(var.lexeme)
+            vars.append(AST.Variable(name=var.lexeme, etype=vartype))
+            vars[-1].line = var.line
+            vars[-1].col = var.col
             if not self._match(TokenType.COMMA):
                 break
         # Input can declare variables so we need to add any new ones to the symtable

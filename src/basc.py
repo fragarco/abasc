@@ -23,7 +23,7 @@ import traceback
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer, Token
 from basparse import LocBasParser
-from z80emitter import z80Emitter
+from cpcemitter import CPCEmitter
 from symbols import symsto_json, SymTable
 import astlib as AST
 from basopt import BasOptimizer
@@ -97,7 +97,7 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
     return (ast, symtable)
 
 def emit(infile: str, codelines: list[CodeLine], ast:AST.Program, symtable: SymTable):
-    emitter = z80Emitter(codelines, ast, symtable)
+    emitter = CPCEmitter(codelines, ast, symtable)
     asmcode = emitter.emit_program()
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w") as fd:

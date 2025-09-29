@@ -22,9 +22,9 @@ from baspp import CodeLine
 from baserror import BasError
 from symbols import SymTable, SymEntry, SymType
 import astlib as AST
-from basruntime import RT_FWCALL, RT_STR, RT_MATH, RT_MEM, RT_STDIO
+from cpcrt import RT_FWCALL, RT_STR, RT_MATH, RT_MEM, RT_STDIO
 
-class z80Emitter:
+class CPCEmitter:
     def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1):
         self.source = code
         self.program = program
