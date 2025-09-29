@@ -838,11 +838,11 @@ class LocBasParser:
         self._advance()
         condition = self._parse_int_expression()
         if not self._current().lexeme in ("THEN", "GOTO"):
-            self._raise_error(2, ", THEN missing")
+            self._raise_error(2, "THEN missing")
         self._advance()
         if not self._current_is(TokenType.EOL):
-            else_body: list[AST.Statement] = []
             then_body = self._parse_inline_then()
+            else_body: list[AST.Statement] = []
             if self._current_is(TokenType.KEYWORD, "ELSE"):
                 self._advance()
                 else_body = self._parse_inline_else()
@@ -1462,8 +1462,11 @@ class LocBasParser:
             self._expect(TokenType.COMMA)
         while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
             if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
-                sym = self._advance().lexeme
-                items.append(AST.Separator(symbol=sym))
+                sym = self._advance()
+                sep = AST.Separator(symbol=sym.lexeme)
+                sep.line = sym.line
+                sep.col = sym.col
+                items.append(sep)
             elif self._current_in((TokenType.KEYWORD,), ("USING",)):
                 self._advance()
                 args = [self._parse_str_expression()]
@@ -1479,8 +1482,12 @@ class LocBasParser:
                         self._raise_error(13)
                 items.append(AST.Function(name="USING", etype=AST.ExpType.String, args=args))
                 if self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
-                    sym = self._advance().lexeme
-                    items.append(AST.Separator(symbol=sym))
+                    sym = self._advance()
+                    sep = AST.Separator(symbol=sym.lexeme)
+                    sep.line = sym.line
+                    sep.col = sym.col
+                    items.append(sep)
+                    items.append(sep)
                 break
             else:
                 items.append(self._parse_expression())

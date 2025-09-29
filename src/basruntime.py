@@ -120,6 +120,20 @@ class RT_FWCALL:
     SCR_HORIZONTAL      = "&BC5F"
     SCR_VERTICAL        = "&BC62"
     
+    MC_BOOT_PROGRAM     = "&BD13"
+    MC_START_PROGRAM    = "&BD16"
+    MC_WAIT_FLYBACK     = "&BD19"
+    MC_SET_MODE         = "&BD1C"
+    MC_SCREEN_OFFSET    = "&BD1F"
+    MC_CLEAR_INKS       = "&BD22"
+    MC_SET_INKS         = "&BD25"
+    MC_RESET_PRINTER    = "&BD28"
+    MC_PRINT_TRANSLATION= "&BD58"
+    MC_PRINT_CHAR       = "&BD2B"
+    MC_BUSY_PRINTER     = "&BD2E"
+    MC_SEND_PRINTER     = "&BD31"
+    MC_SOUND_REGISTER   = "&BD34"
+
     # WATCH OUT: this are 464 addresses
     MATH_MOVE_REAL      = "&BD3D"
     MATH_INT_TO_REAL    = "&BD40"
@@ -180,6 +194,25 @@ RT_MEM = {
 # String management rutines
 #
 RT_STR = {
+    "rt_ltrim": [
+        "; Leaves in HL the address of the first string character <> ' '\n",
+        "; and in B the number of remaining characters\n",
+        ";Inputs:\n",
+        ";     HL (address of the input string)\n",
+        ";Outputs:\n",
+        ";     B  remaining length, 0 if all the string is empty or spaces\n",
+        ";     HL points to the first character that is not ' '\n",
+        ";     AF, HL and B are modified, C and DE are preserved\n",
+        "rt_ltrim:\n",
+        "\txor     b\n",
+        "\tld      b,(hl)\n",
+        "__ltrim_loop:"
+        "\tinc     hl\n",
+        "\tld      a,(hl)\n",
+        "\tcp      &20     ; white space\n",
+        "\tret     nz\n",
+        "\tdjnz    __ltrim_loop\n\n"
+    ],
     "rt_straddlengths": [
         "; HL = points to length1 in memory\n",
         "; DE = points to length2 in memory\n",
@@ -292,14 +325,132 @@ RT_STR = {
         "\tpop     hl\n",
         "\tret\n\n"
     ],
+    "rt_int2str": [
+        "; HL = starts with the number to convert to string\n",
+        "; HL ends storing the memory address to the buffer\n",
+        "; subroutine taken from https://wikiti.brandonw.net/index.php?title=Z80_Routines:Other:DispA\n",
+        ";Inputs:\n",
+        ";     HL\n",
+        ";Outputs:\n",
+        ";     HL points to the temporal address in memory with the string\n",
+        ";     HL, BC, DE, AF are modified\n",
+        "rt_int2str_buf: defs 8\n",
+        "rt_int2str:\n",
+        "\tld      de,rt_int2str_buf\n"
+        "\tinc     de     ; first byte stores string length"
+        "\t; Detect sign of HL\n",
+        "\tbit     7, h\n",
+        "\tjr      z, __int2str_convert\n",
+        "\t; HL is negative so add '-' to string and negate HL\n"
+        '\tld      a,"-"\n',
+        "\tld      (de),a\n",
+        "\tinc     de\n",
+        "\t; Negate HL \n",
+        "\txor     a\n",
+        "\tsub     l\n",
+        "\tld      l, a\n",
+        "\tld      a, 0   ; Note that XOR A or SUB A would disturb CF\n",
+        "\tsbc     a, h\n",
+        "\tld      h, a\n",
+        "__int2str_convert:\n",
+        "\t; Convert HL to digit characters\n",
+        "\txor     b      ; B will count total length\n",
+        "__int2str_loop1:\n",
+        "\tpush    bc\n",
+        "\tcall    rt_div16_by10 ; HL = HL / A, A = remainder\n",
+        "\tpop     bc\n",
+        "\tpush    af     ; Store digit in stack in reversed order\n",
+        "\tinc     b\n",
+        "\tld      a,h\n",
+        "\tor      l      ; Stop if quotent is 0\n",
+        "\tjr      nz, __int2str_loop1\n",
+        "\t; Store string length\n",
+        "\tld      hl,rt_int2str_buf\n",
+        "\tld      a,b\n",
+        "\tld      (hl),a\n",
+        "__int2str_loop2:\n",
+        "\t; Retrieve digits from stack\n",
+        "\tpop     af\n",
+        "\tor      &30    ; '0' + A\n",
+        "\tld      (de), a\n",
+        "\tinc     de\n",
+        "\tdjnz    __int2str_loop2\n",
+        "\tret\n\n",
+    ],
 }
 
-RT_INPUT = {
+RT_STDIO = {
+    "rt_print_nl": [
+        "; Prints an EOL which in Amstrad is composed\n",
+        "; by chraracters 0x0D 0x0A\n",
+        ";Inputs:\n",
+        ";     -\n",
+        ";Outputs:\n",
+        ";     -\n",
+        ";     A is modified, all other registers are preserved\n",
+        "rt_print_nl:\n",
+        "\tld      a,13\n",
+        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        "\tld      a,10\n",
+        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        "\tret\n\n"
+    ],
+    "rt_print_spc": [
+        "; L indicates the number of spaces to print\n",
+        "; but 127 is the maximum\n",
+        ";Inputs:\n",
+        ";     L\n",
+        ";Outputs:\n",
+        ";     -\n",
+        ";     AF and B are modified, HL, DE, C are preserved\n",
+        "rt_print_spc:\n",
+        "\tld      a,l\n",
+        "\tand     &7F\n",
+        "\tcp      0\n",
+        "\tret     z\n",
+        "\tld      b,a\n",
+        "\tld      a,32   ; white space\n",
+        "__print_spc_loop:"
+        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        "\tdjnz    __print_spc_loop\n",
+        "\tret\n\n"
+    ],
+    "rt_print_str": [
+        "; Prints in the screen the string pointed by HL\n",
+        "; using the Amstrad CPC firmware routines\n",
+        ";Inputs:\n",
+        ";     HL = address to the string to print\n",
+        ";Outputs:\n",
+        ";     C stores the total number of printed chars\n",
+        ";     AF, HL and BC are modified, DE is preserved\n",
+        "rt_print_str:\n",
+        "\tld      a,(hl)\n",
+        "\tld      c,a        ; total number of printed chars\n",
+        "\tor      a\n",
+        "\tret     z          ; empty string\n",
+        "\tld      b,a\n",
+        "__print_str_loop:\n",
+        "\tinc     hl\n",
+        "\tld      a,(HL)\n",
+        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        "\tdjnz    __print_str_loop\n",
+        "\tret\n\n",
+    ],
     "rt_input": [
+        "; Prints in the screen the string pointed by HL\n",
+        "; using the Amstrad CPC firmware routines\n",
+        ";Inputs:\n",
+        ";     HL = address to the string to print\n",
+        ";Outputs:\n",
+        ";     C stores the total number of printed chars\n",
+        ";     AF, HL and BC are modified, DE is preserved\n",
+        '__input_question: db 2,"? "\n',
+        '__input_redo:     db 16,"?Redo from start"\n',
+        '__input_buf:      defs 255\n',
         "rt_input:\n",
         f"\tcall    {RT_FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE\n",
         f"\tcall    {RT_FWCALL.TXT_CUR_ON} ; TXT_CUR_ON\n",
-        "\tld      hl,__inputlib_inbuf\n",
+        "\tld      hl,__input_inbuf\n",
         "\tld      bc,0  ; Initialize characters counter\n",
         "__input_enterchar:\n",
         f"\tcall    {RT_FWCALL.KM_WAIT_KEY} ; KM_WAIT_KEY\n",
@@ -319,7 +470,7 @@ RT_INPUT = {
         "\tjr      __input_enterchar\n",
         "__input_checkenter:\n",
         "\tcp      13\n",
-        "\tjr      z,__input_end    ; Enter key pressed\n",
+        "\tjr      z,__input_end          ; Enter key pressed\n",
         f"\tcall    {RT_FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
         "\tld      (hl),a\n",
         "\tinc     hl\n",
@@ -328,7 +479,7 @@ RT_INPUT = {
         "__input_end:\n",
         "\txor     a\n",
         "\tld      (hl),a\n",
-        "\tcall    strlib_print_nl  ; Print enter character\n",
+        "\tcall    rt_print_nl             ; Print enter character\n",
         f"\tcall    {RT_FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
         f"\tjp      {RT_FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF its ret will work as input ret\n",
     ],
@@ -520,17 +671,17 @@ RT_MATH = {
         "\tsbc     hl,de\n",
         "\tret\n",
     ],
-    "rt_div16_hlby10": [
-        ";Taken from https://learn.cemetech.net/index.php/Z80:Math_Routines&Speed_Optimised_HL_div_10\n",
+    "rt_div16_by10": [
+        "; Fast integer division by 10"
+        "; Taken from https://learn.cemetech.net/index.php/Z80:Math_Routines&Speed_Optimised_HL_div_10\n",
         "; HL = HL DIV 10\n",
         ";Inputs:\n",
         ";     HL\n",
         ";Outputs:\n",
         ";     HL is the quotient\n",
         ";     A is the remainder\n",
-        ";     BC is 10\n",
-        ";     DE is preserved\n",
-        "rt_div16_hlby10:\n",
+        ";     HL, BC, AF are modified, DE is preserved\n",
+        "rt_div16_by10:\n",
         "\tld      bc,&0D0A\n",
         "\txor     a\n",
         "\tadd     hl,hl\n",
@@ -547,5 +698,24 @@ RT_MATH = {
         "\tinc     l\n",
         "\tdjnz    $-7\n",
         "\tret\n",
+    ],
+    "rt_div8_unsigned": [
+        "; 8/8 unsigned integer division,\n",
+        ";Inputs:\n",
+        ";     A = numerator, E = denominator\n",
+        ";Outputs:\n",
+        ";     D  quotient\n",
+        ";     A  remainder\n"
+        ";     BC, DE are preserved\n",
+        "rt_div8_unsigned:\n",
+        "\tld d,0           ; Initialize quotient\n",
+        "__div8_loop:\n",
+        "\tcp e             ; Compare A with E\n",
+        "\tjr c,__div8_end  ; If A < E, we're done\n",
+        "\tsub e            ; Subtract E from A\n",
+        "\tinc d            ; Increment quotient\n",
+        "\tjr __div8_loop   ; Continue dividing\n",
+        "__div8_end:\n",
+        "\tret\n\n",
     ],
 }

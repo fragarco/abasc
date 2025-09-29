@@ -332,14 +332,18 @@ class If(Statement):
     is_inline: bool
     inline_then: list[Statement] = []
     inline_else: list[Statement] = []
+    else_label: str    # used during code generation
+    end_label: str      # used during code generation
 
     def __init__(self, condition: Statement, inline_then: list[Statement] = [], inline_else: list[Statement] = []):
         super().__init__(etype=ExpType.Void, id="If")
         self.condition = condition
         self.inline_then = inline_then
         self.inline_else = inline_else
-        self.has_else = False
+        self.has_else = len(inline_else) > 0
         self.is_inline = len(inline_then) > 0
+        self.else_label = ""
+        self.end_label = ""
 
     def to_json(self) -> dict:
         d = super().to_json()
@@ -483,11 +487,17 @@ class UserFun(Statement):
 class Print(Statement):
     stream: Optional[Statement]
     items: list[Statement]
+    has_spaces: bool    # used during code generation
 
     def __init__(self, stream: Optional[Statement], items: list[Statement]):
         super().__init__(etype=ExpType.Void, id="Print")
         self.stream = stream
         self.items = items
+        self.has_spaces = False
+        for i in items:
+            if isinstance(i, Separator) and i.sym == ',':
+                self.has_spaces = True
+                break
 
     def to_json(self) -> dict:
         d = super().to_json()
