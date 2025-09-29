@@ -479,6 +479,7 @@ class CPCEmitter:
 
     def _emit_INPUT(self, node:AST.Input):
         self._emit_import(RT_STDIO, "rt_input")
+        self._emit_import(RT_STDIO, "rt_print_nl")
         self._emit_import(RT_STDIO, "rt_print_str")
         self._emit_code("; INPUT")
         if node.stream is not None:
