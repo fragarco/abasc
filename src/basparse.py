@@ -945,7 +945,7 @@ class LocBasParser:
         if stream is not None or prompt != "":
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2)
-        question: bool = False if self._match(TokenType.SEMICOLON) else True
+        question: bool = True if self._match(TokenType.SEMICOLON) else False
         self._match(TokenType.COMMA)
         while True:
             var = self._expect(TokenType.IDENT)

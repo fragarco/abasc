@@ -515,8 +515,8 @@ class Input(Statement):
         super().__init__(etype=ExpType.Void, id="Input")
         self.stream = stream
         self.prompt = prompt
-        self.question = question
         self.vars = vars
+        self.question = True if prompt == "" else question
 
     def to_json(self) -> dict:
         d = super().to_json()

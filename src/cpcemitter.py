@@ -74,7 +74,10 @@ class CPCEmitter:
             self.free_tmp_memory = False
             self.reserved_tmp_memory = 0
 
-    def _reserved_tmp_mem(self, nbytes: int):
+    def _reserve_memory(self, nbytes: int):
+        self._emit_import(RT_MEM, "rt_malloc")
+        self._emit_code(f"ld      a,{nbytes}      ; bytes to reserve")
+        self._emit_code("call    rt_malloc  ; HL points to empty mem")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
 
@@ -96,8 +99,6 @@ class CPCEmitter:
         self._emit_code()
         self._emit_code("_code_:", 0)
         self._emit_data("_data_:", 0)
-        # always present runtime rutines
-        self._emit_import(RT_MEM, "rt_malloc")
 
     def _emit_code_end(self):
         self._emit_code()
@@ -489,24 +490,7 @@ class CPCEmitter:
         if node.question:
             self._emit_code("ld      hl,__input_question")
             self._emit_code("call    rt_print_str")
-        for v in node.vars:
-            if v.etype == AST.ExpType.String:
-                self._input_string(v)
-            elif v.etype == AST.ExpType.Integer:
-                self._input_int(v)
-            elif v.etype == AST.ExpType.Real:
-                self._input_real(v)
-            else:
-                self._raise_error(2, node)
-                
-    def _input_string(self, var: AST.Variable):
-        self._raise_error(2, var, "string input not ready yet")
-
-    def _input_int(self, var: AST.Variable):
-        self._raise_error(2, var, "int input not ready yet")
-
-    def _input_real(self, var: AST.Variable):
-        self._raise_error(2, var, "real input not ready yet")
+        self._emit_code("call    rt_input")
 
     def _emit_INSTR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -988,12 +972,10 @@ class CPCEmitter:
             self._emit_import(RT_STR, "rt_strcat")
             self._emit_code("push    de")
             self._emit_code("ex      de,hl")
-            self._emit_code("ld      a,255      ; max length for a string")
-            self._emit_code("call    rt_malloc  ; HL points to empty mem")
+            self._reserve_memory(255)
             self._emit_code("call    rt_strcopy ; (HL) <- (DE)")
             self._emit_code("pop     de")
             self._emit_code("call    rt_strcat  ; (HL) <- (HL) + (DE)")
-            self._reserved_tmp_mem(255)
         else:
             self._raise_error(2, node, f'unknown "{op}" string op')
 
@@ -1105,12 +1087,12 @@ class CPCEmitter:
             if var.exptype == AST.ExpType.Integer:
                 self._emit_code(f"ld      ({var.label}),hl")
             elif var.exptype == AST.ExpType.Real:
-                self._emit_code("xor     b")
+                self._emit_code("ld      b,0")
                 self._emit_code("ld      c,5")
                 self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ldir")
             elif var.exptype == AST.ExpType.String:
-                self._emit_code("xor     b")
+                self._emit_code("ld      b,0")
                 self._emit_code("ld      c,(hl)")
                 self._emit_code("inc     c")
                 self._emit_code(f"ld      de,{var.label}")
