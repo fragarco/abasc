@@ -505,7 +505,7 @@ class CPCEmitter:
         self._emit_code(lend, 0)
         self._emit_code("ld      hl,rt_input_buf")
         for v in node.vars:
-            self._emit_code("call    rt_extract_substring")
+            self._emit_code("call    rt_extract_substrz")
             var = self.symtable.find(v.name)
             if var is not None:
                 self._emit_code("push    hl  ; current position in input buffer")
@@ -519,7 +519,7 @@ class CPCEmitter:
     
     def _emit_input_str(self, v:AST.Variable, var: SymEntry):
         self._emit_code(f"; string variable {v.name}")
-        self._emit_code("ld      de,rt_substring_buf")
+        self._emit_code("ld      de,rt_substrz_buf")
         self._emit_code(f"ld      hl,{var.label}")
         self._emit_code("ld      (hl),c  ; string len")
         self._emit_code("inc     hl")
@@ -531,10 +531,9 @@ class CPCEmitter:
         self._emit_import(RT_STR, "rt_strz2int")
         self._emit_import(RT_STR, "rt_strz2hex")
         self._emit_code(f"; integer variable {v.name}")
-        self._emit_code("ld      de,rt_substring_buf")
-        self._emit_code("call    rt_strz2hex")
+        self._emit_code("ld      de,rt_substrz_buf")
+        self._emit_code("call    rt_extract_num")
         self._emit_code(f"ld      ({var.label}),hl")
-        # self._emit_code("call    rt_strz2int")
 
     def _emit_input_real(self, v:AST.Variable, var: SymEntry):
         self._emit_code(f"; real variable {v.name}")
