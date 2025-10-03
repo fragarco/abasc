@@ -480,17 +480,63 @@ class CPCEmitter:
 
     def _emit_INPUT(self, node:AST.Input):
         self._emit_import(RT_STDIO, "rt_input")
-        self._emit_import(RT_STDIO, "rt_print_nl")
-        self._emit_import(RT_STDIO, "rt_print_str")
+        self._emit_import(RT_STDIO, "rt_print")
         self._emit_code("; INPUT")
         if node.stream is not None:
             self._emit_stream()
         if node.prompt != "":
             self._print_str(AST.String(value=node.prompt))
         if node.question:
-            self._emit_code("ld      hl,__input_question")
+            self._emit_code("ld      hl,rt_input_question")
             self._emit_code("call    rt_print_str")
+        # Ask for values and check that we get as many values as variables
+        inputs = len(node.vars)
+        lstart, lend = self._get_while_labels()
+        self._emit_code(lstart, 0)
         self._emit_code("call    rt_input")
+        self._emit_code("ld      a,c   ; check all quoted strings are terminated")
+        self._emit_code("and     &01   ; the count must be even so A turns 0")
+        self._emit_code("add     b     ; number of substrings")
+        self._emit_code(f"cp      {inputs} ; number of given variables")
+        self._emit_code(f"jr      z,{lend}")
+        self._emit_code("ld      hl,rt_input_redo")
+        self._emit_code("call    rt_print_str")
+        self._emit_code(f"jr      {lstart}")
+        self._emit_code(lend, 0)
+        self._emit_code("ld      hl,rt_input_buf")
+        for v in node.vars:
+            self._emit_code("call    rt_extract_substring")
+            var = self.symtable.find(v.name)
+            if var is not None:
+                self._emit_code("push    hl  ; current position in input buffer")
+                if v.etype == AST.ExpType.String:
+                    self._emit_input_str(v, var)
+                elif v.etype == AST.ExpType.Integer:
+                    self._emit_input_int(v, var)
+                elif v.etype == AST.ExpType.Real:
+                    self._emit_input_real(v, var)
+                self._emit_code("pop     hl  ; ready for next substring")
+    
+    def _emit_input_str(self, v:AST.Variable, var: SymEntry):
+        self._emit_code(f"; string variable {v.name}")
+        self._emit_code("ld      de,rt_substring_buf")
+        self._emit_code(f"ld      hl,{var.label}")
+        self._emit_code("ld      (hl),c  ; string len")
+        self._emit_code("inc     hl")
+        self._emit_code("ex      de,hl")
+        self._emit_code("ld      b,0")
+        self._emit_code("ldir")
+
+    def _emit_input_int(self, v:AST.Variable, var: SymEntry):
+        self._emit_import(RT_STR, "rt_str2int")
+        self._emit_code(f"; integer variable {v.name}")
+        self._emit_code("ld      de,rt_substring_buf")
+        self._emit_code(f"ld      hl,{var.label}")
+        self._emit_code("call    rt_str2int")
+
+    def _emit_input_real(self, v:AST.Variable, var: SymEntry):
+        self._emit_code(f"; real variable {v.name}")
+        self._raise_error(2, v, 'float numbers in INPUT are not supported yet')
 
     def _emit_INSTR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -652,14 +698,14 @@ class CPCEmitter:
             self._print_newline()
 
     def _print_str(self, item:AST.Statement):
-        self._emit_import(RT_STDIO, "rt_print_str")
+        self._emit_import(RT_STDIO, "rt_print")
         self._emit_code("; PRINT string item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_str")
 
     def _print_int(self, item:AST.Statement):
         self._emit_import(RT_MATH, "rt_div16_by10")
-        self._emit_import(RT_STDIO, "rt_print_str")
+        self._emit_import(RT_STDIO, "rt_print")
         self._emit_import(RT_STR, "rt_int2str")
         self._emit_code("; PRINT int item")
         self._emit_expression(item)
@@ -673,12 +719,12 @@ class CPCEmitter:
         self._emit_code(f"; PRINT separator [{item.sym}]")
         if item.sym == ',':
             # TODO: do not use fix spaces
-            self._emit_import(RT_STDIO, "rt_print_spc")
+            self._emit_import(RT_STDIO, "rt_print")
             self._emit_code("ld      l,4")
             self._emit_code("call    rt_print_spc")
 
     def _print_newline(self) -> None:
-        self._emit_import(RT_STDIO, "rt_print_nl")
+        self._emit_import(RT_STDIO, "rt_print")
         self._emit_code("; new line")
         self._emit_code("call    rt_print_nl")
 
@@ -948,15 +994,15 @@ class CPCEmitter:
         elif op == '*':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
-            self._emit_import(RT_MATH, "rt_mul16_unsigned")
-            self._emit_import(RT_MATH, "rt_mul16_signed")
-            self._emit_code("call   rt_mul16_signed  ; HL = HL * DE")
+            self._emit_import(RT_MATH, "rt_umul16")
+            self._emit_import(RT_MATH, "rt_mul16")
+            self._emit_code("call   rt_mul16 ; HL = HL * DE")
         elif op == '\\':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
-            self._emit_import(RT_MATH, "rt_div16_unsigned")
-            self._emit_import(RT_MATH, "rt_div16_signed")
-            self._emit_code("call     rt_div16_signed  ; HL = HL \\ DE ")
+            self._emit_import(RT_MATH, "rt_udiv16")
+            self._emit_import(RT_MATH, "rt_div16")
+            self._emit_code("call     rt_div16 ; HL = HL \\ DE ")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
@@ -999,28 +1045,28 @@ class CPCEmitter:
             self._emit_code("jr      nz,$+3")
             self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<':
-            self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("call    rt_comp16_signed")
+            self._emit_import(RT_MATH, "rt_comp16")
+            self._emit_code("call    rt_comp16")
             self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
             self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '>':
-            self._emit_import(RT_MATH, "rt_comp16_signed")
+            self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("ex      de,hl")
-            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("call    rt_comp16")
             self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
             self._emit_code("inc     hl        ; HL = 0 FALSE")
         elif node.op == '<=':
-            self._emit_import(RT_MATH, "rt_comp16_signed")
+            self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("ex      de,hl")
-            self._emit_code("call    rt_comp16_signed")
+            self._emit_code("call    rt_comp16")
             self._emit_code("ld      hl,0      ; HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
             self._emit_code("dec     hl        ; HL =-1 TRUE")
         elif node.op == '>=':
-            self._emit_import(RT_MATH, "rt_comp16_signed")
-            self._emit_code("call    rt_comp16_signed")
+            self._emit_import(RT_MATH, "rt_comp16")
+            self._emit_code("call    rt_comp16")
             self._emit_code("ld      hl,0      ; HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
             self._emit_code("dec     hl        ; HL =-1 TRUE")
