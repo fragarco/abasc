@@ -528,11 +528,13 @@ class CPCEmitter:
         self._emit_code("ldir")
 
     def _emit_input_int(self, v:AST.Variable, var: SymEntry):
-        self._emit_import(RT_STR, "rt_str2int")
+        self._emit_import(RT_STR, "rt_strz2int")
+        self._emit_import(RT_STR, "rt_strz2hex")
         self._emit_code(f"; integer variable {v.name}")
         self._emit_code("ld      de,rt_substring_buf")
-        self._emit_code(f"ld      hl,{var.label}")
-        self._emit_code("call    rt_str2int")
+        self._emit_code("call    rt_strz2hex")
+        self._emit_code(f"ld      ({var.label}),hl")
+        # self._emit_code("call    rt_strz2int")
 
     def _emit_input_real(self, v:AST.Variable, var: SymEntry):
         self._emit_code(f"; real variable {v.name}")
