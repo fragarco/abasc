@@ -496,8 +496,26 @@ class CPCEmitter:
     def _emit_GRAPHICS_PEN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_HEXSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_HEXSS(self, node:AST.Function):
+        """
+        Converts the number given into Hexadecimal form. The second <int expr>
+        can be used to specify the minimum length of the result. 
+        """
+        # prints 2 or 4 characters
+        self._emit_import(RT_STR, "rt_int2hex")
+        self._emit_code("; HEX$(<int expr>[,<int expr>])")
+        if len(node.args) == 2:
+            self._emit_expression(node.args[1])
+        else:
+            self._emit_code("ld      hl,&0004")
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl  ; number to convert")
+        self._reserve_memory(5)
+        self._emit_code("pop     bc     ; number of characters")
+        self._emit_code("ld      a,c    ; only 2 or 4 are valid")
+        self._emit_code("call    rt_int2hex")
+        self._emit_code(";")
 
     def _emit_HIMEM(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
