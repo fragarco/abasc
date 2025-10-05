@@ -25,11 +25,12 @@ import astlib as AST
 from cpcrt import RT_FWCALL, RT_STR, RT_MATH, RT_MEM, RT_STDIO
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1, verbose=False):
         self.source = code
         self.program = program
         self.symtable = symtable
         self.warning_level = warning_level
+        self.verbose=verbose
         self.data= ""
         self.code= ""
         self.rtcode: list[str] = []
@@ -180,6 +181,8 @@ class CPCEmitter:
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
+        if self.verbose:
+            print(node)
         codeline = self.source[node.line - 1]
         raise BasError(
             codenum,
@@ -204,8 +207,18 @@ class CPCEmitter:
     def _emit_AFTER(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_ASC(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ASC(self, node:AST.Function):
+        """
+        Gets the numeric value of the first character of a string as long as
+        ASCII characters are used.
+        """
+        self._emit_code("; ASC(<string>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("inc     hl")
+        self._emit_code("ld      a,(hl)  ; get first char numeric value")
+        self._emit_code("ld      l,a")
+        self._emit_code("ld      h,0")
+        self._emit_code(";")
 
     def _emit_ATN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -216,8 +229,26 @@ class CPCEmitter:
     def _emit_BINSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_BORDER(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_BORDER(self, node:AST.Command):
+        """
+        To change the colour of the border on the screen. If two colours are
+        specified, the border alternates between the two at the rate determined
+        in the SPEED INK command, if given. The range of border colours
+        is 0 to 26.        
+        """ 
+        self._emit_code("; BORDER <colour>[,<colour>]")
+        self._emit_expression(node.args[0])
+        if len(node.args) == 2:
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[1])
+            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("pop     de")
+            self._emit_code("ld      b,e     ; first color")
+        else:
+            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("ld      b,l     ; first color")
+        self._emit_code(f"call    {RT_FWCALL.SCR_SET_BORDER}  ;SCR_SET_BORDER")
+        self._emit_code(";")
 
     def _emit_CALL(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -231,8 +262,20 @@ class CPCEmitter:
     def _emit_CHAIN_MERGE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_CHRSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CHRSS(self, node:AST.Function):
+        """
+        Converts <integer expression> in the range 0 to 255, to its character
+        string equivalent. Note that 0 to 31 are control characters. 
+        """
+        self._emit_code("; CHR$(<integer expression>)") 
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl")
+        self._reserve_memory(2)
+        self._emit_code("ld      (hl),1")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      (hl),e")
+        self._emit_code("dec     hl")
+        self._emit_code(";")
 
     def _emit_CINT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -253,10 +296,17 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_CLS(self, node:AST.Command):
-        self._emit_code("; CLS")
+        """
+        Clear the given screen stream (window) to its paper ink. If no
+        <stream expression> is given, screen stream #0 is cleared. 
+        """
+        self._emit_code("; CLS [#<stream expression>]")
         if len(node.args):
             self._emit_expression(node.args[0])
             self._emit_stream()
+        else:
+            self._emit_code("xor     a")
+            self._emit_code(f"call    {RT_FWCALL.TXT_STR_SELECT} ; TXT_STR_SELECT")
         self._emit_code(f"call    {RT_FWCALL.TXT_CLEAR_WINDOW} ; TXT_CLEAR_WINDOW")
 
     def _emit_CONT(self, node:AST.Statement):
@@ -333,7 +383,15 @@ class CPCEmitter:
             self._raise_error(37, node)
 
     def _emit_END(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        End of program. An END is implicit in AMSTRAD BASIC as the program
+        passes the last line of instruction. END closes all cassette files and
+        returns to the direct mode. Sound queues will continue until empty.
+        """
+        # In our version, we call FULL RESET after any key is pressed
+        self._emit_code("; END")
+        self._emit_code(f"call    {RT_FWCALL.KM_WAIT_CHAR}  ; KM_WAIT_CHAR")
+        self._emit_code("call    0")
 
     def _emit_ENT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -914,8 +972,10 @@ class CPCEmitter:
             self._emit_binaryop(node)
         elif isinstance(node, AST.UnaryOp):
             self._emit_unaryop(node)
+        elif isinstance(node, AST.Function):
+            self._emit_function(node)
         else:
-            self._raise_error(2, node, 'not implemented yet')
+            self._raise_error(2, node, 'expression not supported yet')
 
     def _emit_const_str(self, node: AST.String):
         label = self._get_conststr_label()
@@ -1164,6 +1224,9 @@ class CPCEmitter:
         self._raise_error(2, node, "not implemented yet")
 
     def _emit_function(self, node: AST.Function):
+        """
+        Function's result will be placed in HL
+        """
         keyword = node.name
         funcname = "_emit_" + keyword.replace('$','SS').replace(' ', '_')
         emit_keyword = getattr(self, funcname , None)
