@@ -14,6 +14,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+
+Functions and Commands comments are taken from:
+https://www.grimware.org/doku.php/documentations/software/locomotive.basic/start
+and are not covered by the above license statement.
 """
 
 from __future__ import annotations
@@ -464,8 +468,18 @@ class CPCEmitter:
             self._raise_error(2, node, "undeclared variable {var.name}")
 
     def _emit_FRAME(self, node:AST.Statement):
-        self._emit_code("\t; FRAME")
-        self._emit_code(f"\tcall    {RT_FWCALL.MC_WAIT_FLYBACK} ; MC_WAIT_FLYBACK")
+        """
+        Only available with BASIC 1.1
+        Synchronises the writing of the graphics on the screen with the frame
+        flyback (VSYNC) of the display. The overall effect of this is that
+        character or graphics movement on the screen will appear to be smoother,
+        without flickering or tearing.
+        With BASIC 1.0, two alternatives for the FRAME command exist:
+        - CALL &BD19 (call the firmware function MC WAIT FLYBACK).
+        - WAIT &F500,1 (wait until the frame flyback bit at PPI Port B is set).
+        """
+        self._emit_code("; FRAME")
+        self._emit_code(f"call    {RT_FWCALL.MC_WAIT_FLYBACK} ; MC_WAIT_FLYBACK")
 
     def _emit_FRE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
