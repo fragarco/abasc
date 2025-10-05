@@ -74,8 +74,8 @@ class CPCEmitter:
     def _emit_free_mem(self) -> None:
         if self.free_tmp_memory:
             self._emit_code("; Free all used temporal memory")
-            self._emit_code("ld    hl,_memory_start")
-            self._emit_code("ld    (_memory_next),hl")
+            self._emit_code("ld      hl,_memory_start")
+            self._emit_code("ld      (_memory_next),hl")
             self.free_tmp_memory = False
             self.reserved_tmp_memory = 0
 
@@ -441,7 +441,7 @@ class CPCEmitter:
         if sym is not None:
             self._emit_code("; FOR initialization")
             self._emit_expression(node.start)
-            self._emit_code(f"ld    ({sym.label}),hl")
+            self._emit_code(f"ld      ({sym.label}),hl")
             if node.step is not None:
                 self._emit_code("; STEP precalculation")
                 self._emit_expression(node.step)
@@ -557,7 +557,33 @@ class CPCEmitter:
             self._raise_error(36, node)
 
     def _emit_INK(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Assigns colour(s) to a given ink. The <ink> parameter describes the ink
+        reference, which must be an integer expression in the range 0 to 15, for
+        use in the appertaining PEN or PAPER command. The first <colour>
+        parameter should be an integer expression yielding a colour value in the
+        range 0 to 26. If an optional second <colour> is specified, the ink
+        alternates between the two colours, at a rate determined by SPEED INK
+        command. Depending on the current screen mode, a number of INKs are
+        available. 
+        """
+        self._emit_code("; INK <ink>,<colour>[,<colour>]")
+        self._emit_expression(node.args[1])
+        if len(node.args) == 3:
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("pop     de")
+            self._emit_code("ld      b,e     ; first color")
+        else:
+            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("ld      b,l     ; first color")
+        self._emit_code("push    bc")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code("pop     bc")
+        self._emit_code(f"call    {RT_FWCALL.SCR_SET_INK}  ;SCR_SET_INK")
+        self._emit_code(";")
 
     def _emit_INKEY(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1094,7 +1120,13 @@ class CPCEmitter:
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_udiv16")
             self._emit_import(RT_MATH, "rt_div16")
-            self._emit_code("call     rt_div16 ; HL = HL \\ DE ")
+            self._emit_code("call    rt_div16 ; HL = HL \\ DE ")
+        elif op == 'MOD':
+            self._emit_import(RT_MATH, "rt_compute_sign")
+            self._emit_import(RT_MATH, "rt_sign_strip")
+            self._emit_import(RT_MATH, "rt_udiv16")
+            self._emit_code("call    rt_udiv16")
+            self._emit_code("ex      de,hl   ; HL = HL MOD DE")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
