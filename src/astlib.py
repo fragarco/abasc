@@ -424,6 +424,18 @@ class Comment(Statement):
         d["text"] = self.text
         return d
 
+class Label(Statement):
+    value: str
+
+    def __init__(self, value: str):
+        super().__init__(etype=ExpType.Void, id="Label")
+        self.value = value
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["value"] = self.value
+        return d
+
 # ------ Commands and Functions -------
     
 class RSX(Statement):

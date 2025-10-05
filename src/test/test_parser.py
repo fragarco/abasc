@@ -720,7 +720,7 @@ class TestParser(unittest.TestCase):
         self.assertIsInstance(cmd, AST.Input)
         self.assertEqual(cmd.stream.value, 0)
         self.assertEqual(cmd.prompt, "ENTER YOUR NAME:")
-        self.assertFalse(cmd.question)
+        self.assertTrue(cmd.question)
         self.assertEqual(cmd.vars[0].name, "n$")
 
     def test_input_options(self):

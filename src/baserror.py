@@ -158,7 +158,8 @@ _ERRORCODES = {
     "035": "IFEND missing",
     "036": "Unexpected IFEND",
     "037": "Unexpected ELSE",
-    "038": "Undefined identifier"
+    "038": "Undefined identifier",
+    "039": "Label already defined",
 }
 
 class BasError(Exception):

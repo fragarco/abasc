@@ -51,16 +51,20 @@ class SymTable:
         name = name.replace("%","_I")
         name = name.replace(".","_")
         if entry.symtype == SymType.Variable:
-            return f"VAR_{name}"
+            return f"VAR_{name.upper()}"
         elif entry.symtype == SymType.Array:
-            return f"ARRAY_{name}"
+            return f"ARRAY_{name.upper()}"
         elif entry.symtype == SymType.Label:
-            return f"LABEL_{name}"
+            return f"__label_{name.upper()}"
         elif entry.symtype == SymType.Function:
-            return f"FN_{name}"
+            return f"FN_{name.upper()}"
         return ""
 
     def add(self, ident: str, info: SymEntry, context: str = "") -> bool:
+        """ 
+        Returns FALSE if the symbol exists and is not a VARIABLE or ARRAY which
+        can be added multiple times (extra writes)
+        """
         ident = ident.upper()
         context = context.upper()
         if context == "":

@@ -47,10 +47,13 @@ class CPCEmitter:
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
 
-    def _emit_code(self, line: str="", indent: int=4):
+    def _emit_code(self, line: str="", indent: int=4, info: str=""):
         pad = ""
         for _ in range(indent): pad = pad + " "
-        self.code = self.code + f"{pad}{line}\n"
+        line = f"{pad}{line}"
+        if info != "":
+            line = f"{line:<30}; {info}"
+        self.code = self.code + line + "\n"
 
     def _emit_data(self, line: str="", indent: int=4):
         pad = ""
@@ -58,9 +61,12 @@ class CPCEmitter:
         self.data = self.data + f"{pad}{line}\n"
 
     def _emit_line_label(self, line: AST.Line):
-        label = self._get_linenum_label(line.number)
-        codeline = self.source[line.line-1]
-        self._emit_code(label + f":   ; {codeline.code}")
+        sym = self.symtable.find(str(line.number), "")
+        if sym is not None:
+            codeline = self.source[line.line-1]
+            self._emit_code(f"{sym.label}:", info=codeline.code)
+        else:
+            self._raise_error(2, line)
 
     def _emit_import(self, lib: Any, fname: str) -> bool:
         if fname not in self.runtime:
@@ -74,15 +80,16 @@ class CPCEmitter:
     def _emit_free_mem(self) -> None:
         if self.free_tmp_memory:
             self._emit_code("; Free all used temporal memory")
-            self._emit_code("ld      hl,_memory_start")
-            self._emit_code("ld      (_memory_next),hl")
+            self._emit_code("ld      de,_memory_start")
+            self._emit_code("ld      (_memory_next),de")
+            self._emit_code(";")
             self.free_tmp_memory = False
             self.reserved_tmp_memory = 0
 
     def _reserve_memory(self, nbytes: int):
         self._emit_import(RT_MEM, "rt_malloc")
-        self._emit_code(f"ld      a,{nbytes}      ; bytes to reserve")
-        self._emit_code("call    rt_malloc  ; HL points to empty mem")
+        self._emit_code(f"ld      a,{nbytes}", info="bytes to reserve")
+        self._emit_code("call    rt_malloc", info="HL points to empty mem")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
 
@@ -107,7 +114,7 @@ class CPCEmitter:
 
     def _emit_code_end(self):
         self._emit_code()
-        self._emit_code("_end_: jr _end_   ; infinite end loop", 0)
+        self._emit_code("_end_: jr _end_", info="infinite end loop", indent=0)
 
     def _emit_global_symbols(self):
         for sym in self.symtable.syms:
@@ -158,9 +165,6 @@ class CPCEmitter:
         return real
 
     # ----------------- Label generation -----------------
-
-    def _get_linenum_label(self, num: int) -> str:
-        return f"__line_{num}"
 
     def _get_conststr_label(self) -> str:
         self.constants +=1
@@ -219,7 +223,7 @@ class CPCEmitter:
         self._emit_code("; ASC(<string>)")
         self._emit_expression(node.args[0])
         self._emit_code("inc     hl")
-        self._emit_code("ld      a,(hl)  ; get first char numeric value")
+        self._emit_code("ld      a,(hl)", info="get first char numeric value")
         self._emit_code("ld      l,a")
         self._emit_code("ld      h,0")
         self._emit_code(";")
@@ -245,13 +249,13 @@ class CPCEmitter:
         if len(node.args) == 2:
             self._emit_code("push    hl")
             self._emit_expression(node.args[1])
-            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("ld      c,l", info="second color")
             self._emit_code("pop     de")
-            self._emit_code("ld      b,e     ; first color")
+            self._emit_code("ld      b,e", info="first color")
         else:
-            self._emit_code("ld      c,l     ; second color")
-            self._emit_code("ld      b,l     ; first color")
-        self._emit_code(f"call    {RT_FWCALL.SCR_SET_BORDER}  ;SCR_SET_BORDER")
+            self._emit_code("ld      c,l", info="second color")
+            self._emit_code("ld      b,l", info="first color")
+        self._emit_code(f"call    {RT_FWCALL.SCR_SET_BORDER}", info="SCR_SET_BORDER")
         self._emit_code(";")
 
     def _emit_CALL(self, node:AST.Statement):
@@ -310,8 +314,8 @@ class CPCEmitter:
             self._emit_stream()
         else:
             self._emit_code("xor     a")
-            self._emit_code(f"call    {RT_FWCALL.TXT_STR_SELECT} ; TXT_STR_SELECT")
-        self._emit_code(f"call    {RT_FWCALL.TXT_CLEAR_WINDOW} ; TXT_CLEAR_WINDOW")
+            self._emit_code(f"call    {RT_FWCALL.TXT_STR_SELECT}", info="TXT_STR_SELECT")
+        self._emit_code(f"call    {RT_FWCALL.TXT_CLEAR_WINDOW}", info="TXT_CLEAR_WINDOW")
 
     def _emit_CONT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -394,7 +398,7 @@ class CPCEmitter:
         """
         # In our version, we call FULL RESET after any key is pressed
         self._emit_code("; END")
-        self._emit_code(f"call    {RT_FWCALL.KM_WAIT_CHAR}  ; KM_WAIT_CHAR")
+        self._emit_code(f"call    {RT_FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
         self._emit_code("call    0")
 
     def _emit_ENT(self, node:AST.Statement):
@@ -450,6 +454,9 @@ class CPCEmitter:
             self._emit_code("; FOR condition")
             self._emit_code(start, 0)
             self._emit_expression(node.end)
+            # clear temporal memory if used by the condition expression before
+            # jumping. Modifies DE
+            self._emit_free_mem()
             self._emit_code(f"ld      de,({sym.label})")
             self._emit_code("or      a")
             if node.step is not None:
@@ -479,7 +486,7 @@ class CPCEmitter:
         - WAIT &F500,1 (wait until the frame flyback bit at PPI Port B is set).
         """
         self._emit_code("; FRAME")
-        self._emit_code(f"call    {RT_FWCALL.MC_WAIT_FLYBACK} ; MC_WAIT_FLYBACK")
+        self._emit_code(f"call    {RT_FWCALL.MC_WAIT_FLYBACK}", info="MC_WAIT_FLYBACK")
 
     def _emit_FRE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -487,8 +494,14 @@ class CPCEmitter:
     def _emit_GOSUB(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_GOTO(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_GOTO(self, node:AST.Command):
+        label = node.args[0]
+        if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+            sym = self.symtable.find(str(label.value), "")
+            if sym is not None:
+                self._emit_code(f"jp      {sym.label}")
+            else:
+                self._raise_error(38, label)
 
     def _emit_GRAPHICS_PAPER(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -510,10 +523,10 @@ class CPCEmitter:
             self._emit_code("ld      hl,&0004")
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._emit_code("ex      de,hl  ; number to convert")
+        self._emit_code("ex      de,hl", info="number to convert")
         self._reserve_memory(5)
-        self._emit_code("pop     bc     ; number of characters")
-        self._emit_code("ld      a,c    ; only 2 or 4 are valid")
+        self._emit_code("pop     bc", info="number of characters")
+        self._emit_code("ld      a,c", info="only 2 or 4 are valid")
         self._emit_code("call    rt_int2hex")
         self._emit_code(";")
 
@@ -526,6 +539,9 @@ class CPCEmitter:
         node.end_label = endlabel
         self._emit_code(";IF condition")
         self._emit_expression(node.condition)
+        # clear temporal memory if used by the condition expression before
+        # jumping. Modifies DE
+        self._emit_free_mem()
         self._emit_code("ld      a,h")
         self._emit_code("or      a")
         if node.has_else:
@@ -556,7 +572,7 @@ class CPCEmitter:
         else:
             self._raise_error(36, node)
 
-    def _emit_INK(self, node:AST.Statement):
+    def _emit_INK(self, node:AST.Command):
         """
         Assigns colour(s) to a given ink. The <ink> parameter describes the ink
         reference, which must be an integer expression in the range 0 to 15, for
@@ -572,24 +588,42 @@ class CPCEmitter:
         if len(node.args) == 3:
             self._emit_code("push    hl")
             self._emit_expression(node.args[2])
-            self._emit_code("ld      c,l     ; second color")
+            self._emit_code("ld      c,l", info="second color")
             self._emit_code("pop     de")
-            self._emit_code("ld      b,e     ; first color")
+            self._emit_code("ld      b,e", info="first color")
         else:
-            self._emit_code("ld      c,l     ; second color")
-            self._emit_code("ld      b,l     ; first color")
+            self._emit_code("ld      c,l", info="second color")
+            self._emit_code("ld      b,l", info="first color")
         self._emit_code("push    bc")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
         self._emit_code("pop     bc")
-        self._emit_code(f"call    {RT_FWCALL.SCR_SET_INK}  ;SCR_SET_INK")
+        self._emit_code(f"call    {RT_FWCALL.SCR_SET_INK}", info="SCR_SET_INK")
         self._emit_code(";")
 
     def _emit_INKEY(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_INKEYSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_INKEYSS(self, node:AST.Function):
+        """
+        Reads a key from the keyboard to provide operator interaction without
+        hitting [ENTER] after every answer. If there is a key pressed, then the
+        function responds - if no key is pressed, it continues to return an
+        empty string which is used to loop until a valid input is detected
+        for processing.
+        """
+        self._emit_code("; INKEY$")
+        self._reserve_memory(2)
+        self._emit_code("ld      (hl),0", info="emtpy string")
+        self._emit_code("push    hl")
+        self._emit_code(f"call    {RT_FWCALL.KM_READ_CHAR}", info="KM_READ_CHAR")
+        self._emit_code("pop     hl")
+        self._emit_code("jr      nc,$+7", info="if CF we have a character")
+        self._emit_code("ld      (hl),1")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      (hl),a")
+        self._emit_code("dec     hl")
+        self._emit_code(";")
 
     def _emit_INP(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -610,10 +644,10 @@ class CPCEmitter:
         lstart, lend = self._get_while_labels()
         self._emit_code(lstart, 0)
         self._emit_code("call    rt_input")
-        self._emit_code("ld      a,c   ; check all quoted strings are terminated")
-        self._emit_code("and     &01   ; the count must be even so A turns 0")
-        self._emit_code("add     b     ; number of substrings")
-        self._emit_code(f"cp      {inputs} ; number of given variables")
+        self._emit_code("ld      a,c", info="check all quoted strings are terminated")
+        self._emit_code("and     &01", info="the count must be even so A turns 0")
+        self._emit_code("add     b", info="number of substrings")
+        self._emit_code(f"cp      {inputs}", info="number of given variables")
         self._emit_code(f"jr      z,{lend}")
         self._emit_code("ld      hl,rt_input_redo")
         self._emit_code("call    rt_print_str")
@@ -624,20 +658,20 @@ class CPCEmitter:
             self._emit_code("call    rt_extract_substrz")
             var = self.symtable.find(v.name)
             if var is not None:
-                self._emit_code("push    hl  ; current position in input buffer")
+                self._emit_code("push    hl", info="current position in input buffer")
                 if v.etype == AST.ExpType.String:
                     self._emit_input_str(v, var)
                 elif v.etype == AST.ExpType.Integer:
                     self._emit_input_int(v, var)
                 elif v.etype == AST.ExpType.Real:
                     self._emit_input_real(v, var)
-                self._emit_code("pop     hl  ; ready for next substring")
+                self._emit_code("pop     hl", info="ready for next substring")
     
     def _emit_input_str(self, v:AST.Variable, var: SymEntry):
         self._emit_code(f"; string variable {v.name}")
         self._emit_code("ld      de,rt_substrz_buf")
         self._emit_code(f"ld      hl,{var.label}")
-        self._emit_code("ld      (hl),c  ; string len")
+        self._emit_code("ld      (hl),c", info="string len")
         self._emit_code("inc     hl")
         self._emit_code("ex      de,hl")
         self._emit_code("ld      b,0")
@@ -668,6 +702,13 @@ class CPCEmitter:
 
     def _emit_KEY_DEF(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
+
+    def _emit_LABEL(self, node:AST.Label):
+        sym = self.symtable.find(node.value, "")
+        if sym is not None:
+            self._emit_code(f"{sym.label}", info="USER DEFINED LABEL")
+        else:
+            self._raise_error(38, node)
 
     def _emit_LEFTSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -721,7 +762,7 @@ class CPCEmitter:
         self._emit_code("; MODE")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
-        self._emit_code(f"call    {RT_FWCALL.SCR_SET_MODE} ; SCR_SET_MODE")
+        self._emit_code(f"call    {RT_FWCALL.SCR_SET_MODE}", info="SCR_SET_MODE")
 
     def _emit_MOVE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -988,6 +1029,9 @@ class CPCEmitter:
         self._emit_code("; WHILE condition")
         self._emit_code(start, 0)
         self._emit_expression(node.condition)
+        # clear temporal memory if used by the condition before
+        # jumping. Modifies DE
+        self._emit_free_mem()
         self._emit_code("ld      a,h")
         self._emit_code("or      a")
         self._emit_code(f"jp      z,{end}")
@@ -1095,7 +1139,7 @@ class CPCEmitter:
             elif node.op == '-':
                 self._emit_code("ld      de,0")
                 self._emit_code("ex      de,hl")
-                self._emit_code("xor     a       ; clear C flag")
+                self._emit_code("xor     a")
                 self._emit_code("sbc     hl,de")
             else:
                 self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
@@ -1107,26 +1151,26 @@ class CPCEmitter:
         if op == '+':
             self._emit_code("add     hl,de")
         elif op == '-':
-            self._emit_code("or      a      ; clear carry")
-            self._emit_code("sbc     hl,de  ; HL = right - left")
+            self._emit_code("or      a", info="clear carry")
+            self._emit_code("sbc     hl,de", info="HL = right - left")
         elif op == '*':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_umul16")
             self._emit_import(RT_MATH, "rt_mul16")
-            self._emit_code("call   rt_mul16 ; HL = HL * DE")
+            self._emit_code("call   rt_mul16", info="HL = HL * DE")
         elif op == '\\':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_udiv16")
             self._emit_import(RT_MATH, "rt_div16")
-            self._emit_code("call    rt_div16 ; HL = HL \\ DE ")
+            self._emit_code("call    rt_div16", info="HL = HL \\ DE ")
         elif op == 'MOD':
             self._emit_import(RT_MATH, "rt_compute_sign")
             self._emit_import(RT_MATH, "rt_sign_strip")
             self._emit_import(RT_MATH, "rt_udiv16")
             self._emit_code("call    rt_udiv16")
-            self._emit_code("ex      de,hl   ; HL = HL MOD DE")
+            self._emit_code("ex      de,hl", info="HL = HL MOD DE")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
@@ -1143,9 +1187,9 @@ class CPCEmitter:
             self._emit_code("push    de")
             self._emit_code("ex      de,hl")
             self._reserve_memory(255)
-            self._emit_code("call    rt_strcopy ; (HL) <- (DE)")
+            self._emit_code("call    rt_strcopy", info="(HL) <- (DE)")
             self._emit_code("pop     de")
-            self._emit_code("call    rt_strcat  ; (HL) <- (HL) + (DE)")
+            self._emit_code("call    rt_strcat", info="(HL) <- (HL) + (DE)")
         else:
             self._raise_error(2, node, f'unknown "{op}" string op')
 
@@ -1157,43 +1201,43 @@ class CPCEmitter:
             self._emit_str_compare(node)
             return
         if node.op == '=':
-            self._emit_code("xor     a         ; Clear C flag")
+            self._emit_code("xor     a")
             self._emit_code("sbc     hl,de")
-            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
             self._emit_code("jr      z,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<>':
-            self._emit_code("xor     a         ; Clear C flag")
+            self._emit_code("xor     a")
             self._emit_code("sbc     hl,de")
-            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
             self._emit_code("jr      nz,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info ="HL = 0 FALSE")
         elif node.op == '<':
             self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("call    rt_comp16")
-            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '>':
             self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("ex      de,hl")
             self._emit_code("call    rt_comp16")
-            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<=':
             self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("ex      de,hl")
             self._emit_code("call    rt_comp16")
-            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("dec     hl        ; HL =-1 TRUE")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
         elif node.op == '>=':
             self._emit_import(RT_MATH, "rt_comp16")
             self._emit_code("call    rt_comp16")
-            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("dec     hl        ; HL =-1 TRUE")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'int "{node.op}" op not implemented yet')
 
@@ -1201,36 +1245,36 @@ class CPCEmitter:
         self._emit_import(RT_STR, "rt_strcmp")
         if node.op == '=':
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
             self._emit_code("jr      z,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<>':
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,&FFFF  ; HL = -1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
             self._emit_code("jr      nz,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<':
             self._emit_code("ex      de,hl")
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '>':
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,&FFFF  ; HL =-1 TRUE")
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("inc     hl        ; HL = 0 FALSE")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<=':
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("dec     hl        ; HL =-1 TRUE")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
         elif node.op == '>=':
             self._emit_code("ex      de,hl")
             self._emit_code("call    rt_strcmp")
-            self._emit_code("ld      hl,0      ; HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("jr      c,$+3")
-            self._emit_code("dec     hl        ; HL =-1 TRUE")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
 
@@ -1242,7 +1286,7 @@ class CPCEmitter:
         """
         self._emit_code("; SET STREAM")
         self._emit_code("ld      a,l")
-        self._emit_code("and     &0F   ; valid stream range 0-9")
+        self._emit_code("and     &0F", info="valid stream range 0-9")
         self._emit_code(f"call    {RT_FWCALL.TXT_STR_SELECT} ; TXT_STR_SELECT")
 
     # ----------------- AST Trasversal functions -----------------
@@ -1335,14 +1379,16 @@ class CPCEmitter:
             self._emit_function(stmt)
         elif isinstance(stmt, AST.Command):
             self._emit_command(stmt)
+        elif isinstance(stmt, AST.Label):
+            self._emit_LABEL(stmt)
         else:
             self._raise_error(2, stmt, "unexpected statement")
+        self._emit_free_mem()
 
     def _emit_line(self, line: AST.Line):
         self._emit_line_label(line)
         for stmt in line.statements:
             self._emit_statement(stmt)
-        self._emit_free_mem()
 
     def emit_program(self) -> str:
         print("Generating assembly code...")

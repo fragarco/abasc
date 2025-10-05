@@ -790,12 +790,19 @@ class LocBasParser:
 
     @astnode
     def _parse_GOTO(self) -> AST.Command:
-        """ <GOTO> ::= GOTO INT """
-        # THEN and ELSE can arrive here parsing just a number so we use 
+        """ <GOTO> ::= GOTO (INT | IDENT) """
+        # THEN and ELSE can arrive here parsing just a number/label so we use 
         # match and not advance
         self._match(TokenType.KEYWORD, "GOTO")
-        num = self._expect(TokenType.INT)
-        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args = [AST.Integer(value = cast(int, num.value))]
+        elif self._current_is(TokenType.IDENT):
+            label = self._advance()
+            args = [AST.Label(value = label.lexeme)]
+        else:
+            self._raise_error(2)
         return AST.Command(name="GOTO", args=args)
 
     @astnode
@@ -857,10 +864,10 @@ class LocBasParser:
 
     def _parse_inline_then(self) -> list[AST.Statement]:
         """ <inline_then> ::= <statement>[:<statement>]* """
+        if self._current_is(TokenType.INT):
+                return [self._parse_GOTO()]
         then_body: list[AST.Statement] = []
         while not self._current_in((TokenType.EOL, TokenType.EOF)):
-            if self._current_is(TokenType.INT):
-                return [self._parse_GOTO()]
             stmt = self._parse_statement()
             then_body.append(stmt)
             if self._current_is(TokenType.COLON):
@@ -873,10 +880,10 @@ class LocBasParser:
 
     def _parse_inline_else(self) -> list[AST.Statement]:
         """ <inline_else> ::= <statement>[:<statement>]* """
+        if self._current_is(TokenType.INT):
+                return [self._parse_GOTO()]
         else_body: list[AST.Statement] = []
         while not self._current_in((TokenType.EOL, TokenType.EOF)):
-            if self._current_is(TokenType.INT):
-                return [self._parse_GOTO()]
             stmt = self._parse_statement()
             else_body.append(stmt)
             if self._current_is(TokenType.COLON):
@@ -1021,6 +1028,20 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         return AST.Command(name="KEY DEF", args=args)
   
+    @astnode  
+    def _parse_LABEL(self) -> AST.Label:
+        """ <LABEL> ::== LABEL IDENT """
+        self._advance()
+        label = self._expect(TokenType.IDENT)
+        inserted = self.symtable.add(
+            ident=label.lexeme,
+            info=SymEntry(symtype=SymType.Label, exptype=AST.ExpType.Void, locals=SymTable()),
+            context=""
+        )
+        if not inserted:
+            self._raise_error(39)
+        return AST.Label(value=label.lexeme)
+
     @astnode  
     def _parse_LEFTSS(self) -> AST.Function:
         """ <LEFTSS> ::== LEFT$(<st_expression>,<int_expression>) """
