@@ -195,8 +195,8 @@ RT = {
     #
     # STRINGS
     #      
-    "rt_straddlengths": ([
-        "; RT_STRADDLENGTHS\n",
+    "rt_stradd_len": ([
+        "; RT_STRADD_LEN\n",
         "; Returns the addition of two string lenghts.\n",
         "; Final length is cropped to 254 if exceeds.\n",        
         "; Inputs:\n",
@@ -205,7 +205,7 @@ RT = {
         "; Outputs:\n",
         ";     A resulting length (HL) + (DE) truncated to 254 if needed\n",
         ";     B is modified, HL, DE and C are preserved\n",
-        "rt_straddlengths:\n",
+        "rt_stradd_len:\n",
         "\tld     b,(hl)\n",
         "\tld     a,(de)\n",
         "\tadd    a,b\n",
@@ -252,7 +252,7 @@ RT = {
         ";     HL points to the resulting string (HL+DE)\n",
         ";     AF, BC and DE are modified\n",
         "rt_strcat:\n",
-        "\tcall    rt_straddlengths  ; lets get final length\n"
+        "\tcall    rt_stradd_len     ; lets get final length\n"
         "\tld      b,(hl)            ; current length\n",
         "\tld      c,(hl)            ; current length backup\n"
         "\tld      (hl),a            ; store final length\n",
@@ -273,7 +273,7 @@ RT = {
         "\tdjnz    __strcat_loop\n",
         "\tpop     hl\n",
         "\tret\n\n"
-    ],["rt_straddlengths"]),
+    ],["rt_stradd_len"]),
     "rt_strcmp": ([
         "; RT_STRCMP\n",
         "; Compares two strings pointed by HL and DE and sets ZF and CF:\n",
@@ -284,20 +284,20 @@ RT = {
         ";     Flags ZF and CF store the result of the comparation\n",
         ";     AF and B are modified\n",
         "rt_strcmp:\n",
-        "\tpush    hl\n",
-        "\tpush    de\n",
         "\tld      a,(de)\n",
         "\tcp      (hl)\n",
-        "\tjr      c,$+3\n",
+        "\tjr      nc,$+3\n",
         "\tld      a,(hl)\n",
         "\tor      a\n",
-        "\tjr      z,__strcmp_end ; empty strings\n",
+        "\tret     z              ; empty strings\n",
+        "\tpush    hl\n",
+        "\tpush    de\n",
         "\tld      b,a            ; longer string length\n",
         "__strcmp_loop:\n",
         "\tinc     hl\n",
         "\tinc     de\n",
         "\tld      a,(de)\n",
-        "\tcp      (HL)\n",
+        "\tcp      (hl)\n",
         "\tjr      nz,__strcmp_end\n",
         "\tdjnz    __strcmp_loop\n",
         "\tpop     de            ; seems equal\n",
