@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #
 # Addresses for CPC Firmware Rutines
 #
-class RT_FWCALL:
+class FWCALL:
     KM_INITIALISE       = "&BB00"
     KM_RESET            = "&BB03"
     KM_WAIT_CHAR        = "&BB06"
@@ -164,10 +164,14 @@ class RT_FWCALL:
 
 
 #
-# Temporal memory management rutines
-#
-RT_MEM = {
-    "rt_malloc": [
+# RUNTIME rutines
+# "rutine id": (([rutine code],[]),([dependencies],[]))
+# 
+RT = {
+    #
+    # MEM
+    # 
+    "rt_malloc": ([
         "; RT_MALLOC\n",
         "; Returns in HL the address to a temporal free memory block\n",
         "; reserving as many bytes as indicated by A\n",
@@ -187,17 +191,14 @@ RT_MEM = {
         "\tld      (_memory_next),hl\n",
         "\tpop     hl\n",
         "\tret\n\n",
-    ],        
-}
-
-#
-# String management rutines
-#
-RT_STR = {
-    "rt_straddlengths": [
+    ],[]),
+    #
+    # STRINGS
+    #      
+    "rt_straddlengths": ([
         "; RT_STRADDLENGTHS\n",
         "; Returns the addition of two string lenghts.\n",
-        "  Final length is cropped to 254 if exceeds.\n",        
+        "; Final length is cropped to 254 if exceeds.\n",        
         "; Inputs:\n",
         ";    HL address to length1 in memory\n",
         ";    DE address to length2 in memory\n",
@@ -216,8 +217,8 @@ RT_STR = {
         "__addlen_crop:\n",
         "\tld     a,254\n         ; max allowed\n",
         "\tret\n\n"
-    ],
-    "rt_strcopy": [
+    ],[]),
+    "rt_strcopy": ([
         "; RT_STRCOPY\n",
         "; Strings length is limited to 254 characters\n",
         "; First byte contains the string length\n",       
@@ -240,8 +241,8 @@ RT_STR = {
         "\tdjnz    __strcopy_loop\n",
         "\tpop     hl\n",
         "\tret\n\n",
-    ],
-    "rt_strcat": [
+    ],[]),
+    "rt_strcat": ([
         "; RT_STRCAT\n",
         "; DE string gets append to the end of HL string\n",
         "; First byte contains the string length\n",
@@ -254,7 +255,7 @@ RT_STR = {
         "\tcall    rt_straddlengths  ; lets get final length\n"
         "\tld      b,(hl)            ; current length\n",
         "\tld      c,(hl)            ; current length backup\n"
-        "\tld      (HL),a            ; store final length\n",
+        "\tld      (hl),a            ; store final length\n",
         "\tsub     b\n",
         "\tld      b,a               ; B has the number of bytes to copy\n",
         "\tpush    hl\n",
@@ -272,8 +273,8 @@ RT_STR = {
         "\tdjnz    __strcat_loop\n",
         "\tpop     hl\n",
         "\tret\n\n"
-    ],
-    "rt_strcmp": [
+    ],["rt_straddlengths"]),
+    "rt_strcmp": ([
         "; RT_STRCMP\n",
         "; Compares two strings pointed by HL and DE and sets ZF and CF:\n",
         "; HL=DE ZF=1, HL<DE ZF=0 CF=0, HL>DE ZF=0 CF=1\n",
@@ -299,8 +300,8 @@ RT_STR = {
         "\tcp      (HL)\n",
         "\tjr      nz,__strcmp_end\n",
         "\tdjnz    __strcmp_loop\n",
-        "\tpop     de      ; seems equal\n",
-        "\tpop     hl      ; lets check again their lengths\n",
+        "\tpop     de            ; seems equal\n",
+        "\tpop     hl            ; lets check again their lengths\n",
         "\tld      a,(de)\n",
         "\tcp      (hl)\n",
         "\tret\n",
@@ -308,8 +309,8 @@ RT_STR = {
         "\tpop     de\n",
         "\tpop     hl\n",
         "\tret\n\n"
-    ],
-    "rt_int2str": [
+    ],[]),
+    "rt_int2str": ([
         "; RT_INT2STR\n",
         "; HL starts containing the number to convert to string\n",
         "; HL ends storing the memory address to the buffer\n",
@@ -362,8 +363,8 @@ RT_STR = {
         "\tinc     de\n",
         "\tdjnz    __int2str_loop2\n",
         "\tret\n\n",
-    ],
-    "rt_strz2num": [
+    ],["rt_div16_by10"]),
+    "rt_strz2num": ([
         "; RT_STRZ2NUM\n",
         "; Converts a string with an integer, hexadecimal or binary number to\n",
         "; its numerical 16 bits long form\n",
@@ -505,8 +506,8 @@ RT_STR = {
         "\tor      l\n",
         "\tld      l,a\n",
         "\tjr      __str2bin_next\n",
-    ],
-    "rt_int2hex": [
+    ],[]),
+    "rt_int2hex": ([
         "; RT_INT2HEX"
         "; Converts a two-byte integer in an string with its hexadecimal\n",
         "; representation. Routine inspired in the one included in\n",
@@ -554,11 +555,11 @@ RT_STR = {
         "\tinc     hl\n",
         "\tdjnz    __a2hex_conv\n",
         "\tret\n\n",
-    ],
-}
-
-RT_STDIO = {
-    "rt_print": [
+    ],[]),
+    #
+    # INPUT/OUTPUT
+    # 
+    "rt_print": ([
         "; RT_PRINT_NL\n",
         "; Prints an EOL which in Amstrad is composed\n",
         "; by chraracters 0x0D 0x0A\n",
@@ -569,9 +570,9 @@ RT_STDIO = {
         ";     AF is modified\n",
         "rt_print_nl:\n",
         "\tld      a,13\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tld      a,10\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tret\n",
         "\n"
         "; RT_PRINT_SPC\n",
@@ -590,7 +591,7 @@ RT_STDIO = {
         "\tld      b,a\n",
         "\tld      a,32   ; white space\n",
         "__print_spc_loop:"
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tdjnz    __print_spc_loop\n",
         "\tret\n",
         "\n",
@@ -611,11 +612,11 @@ RT_STDIO = {
         "__print_str_loop:\n",
         "\tinc     hl\n",
         "\tld      a,(HL)\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT}\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tdjnz    __print_str_loop\n",
         "\tret\n\n",
-    ],
-    "rt_input": [
+    ],[]),
+    "rt_input": ([
         "; RT_COUNT_SUBSTRZ\n",
         "; Returns the number of existing substrings separated\n",
         "; by commas in the null-terminated string addessed by HL.\n",
@@ -750,31 +751,31 @@ RT_STDIO = {
         'rt_input_redo:     db 16,"?Redo from start "\n',
         'rt_input_buf:      defs 255\n',
         "rt_input:\n",
-        f"\tcall    {RT_FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE\n",
-        f"\tcall    {RT_FWCALL.TXT_CUR_ON} ; TXT_CUR_ON\n",
+        f"\tcall    {FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE\n",
+        f"\tcall    {FWCALL.TXT_CUR_ON} ; TXT_CUR_ON\n",
         "\tld      hl,rt_input_buf\n",
         "\tld      (hl),0\n",
         "\tld      bc,0  ; Initialize characters counter\n",
         "__input_enterchar:\n",
-        f"\tcall    {RT_FWCALL.KM_WAIT_KEY} ; KM_WAIT_KEY\n",
+        f"\tcall    {FWCALL.KM_WAIT_KEY} ; KM_WAIT_KEY\n",
         "\tcp      &7F  ; KM_WAIT_KEY returns characters in range &00-&7F\n",
         "\tjr      nz,__input_processchar\n",
         "\tld      a,b  ; backspace key\n",
         "\tor      c\n",
         "\tjr      z,__input_enterchar    ; String length is zero\n",
         "\tld      a,8\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
         '\tld      a," "\n',
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
         "\tld      a,8\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
         "\tdec     hl\n",
         "\tdec     bc\n",
         "\tjr      __input_enterchar\n",
         "__input_processchar:\n",
         "\tcp      13\n",
         "\tjr      z,__input_end          ; Enter key pressed\n",
-        f"\tcall    {RT_FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
         "\tld      (hl),a\n",
         "\tinc     hl\n",
         "\tinc     bc\n",
@@ -783,15 +784,15 @@ RT_STDIO = {
         "\tinc     hl\n",
         "\tld      (hl),0\n",
         "\tcall    rt_print_nl\n",
-        f"\tcall    {RT_FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
-        f"\tcall    {RT_FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF\n",
+        f"\tcall    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
+        f"\tcall    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF\n",
         "\tld      hl,rt_input_buf\n",
         "\tjp      rt_count_substrz\n\n",      
-    ],
-}
-
-RT_MATH = {
-    "rt_umul16": [
+    ],["rt_print_str"]),
+    #
+    # MATH
+    # 
+    "rt_umul16": ([
         "; RT_UMULT16"
         "; 16x16 unsigned multplication\n",
         "; HL = HL * DE.\n",
@@ -818,8 +819,8 @@ RT_MATH = {
         "\tex      de,hl\n",
         "\tdjnz    __mul0_unsigned\n",
         "\tret\n",
-    ],
-    "rt_udiv16": [
+    ],[]),
+    "rt_udiv16": ([
         "; RT_UDIV16\n",
         "; 16/16 unsigned division\n",
         "; HL = HL DIV DE\n",
@@ -857,8 +858,8 @@ RT_MATH = {
         "\tld      h,a\n",
         "\tld      l,c\n",
 	    "\tret\n",
-    ],
-    "rt_compute_sign": [
+    ],[]),
+    "rt_compute_sign": ([
         "; RT_COMPUTE_SIGN\n",
         "; Computes resulting sign between HL and DE integers\n",
         "; returns C=0 (pos) if signs are equal and otherwise C=1 (neg)\n",
@@ -873,8 +874,8 @@ RT_MATH = {
         "\txor     d\n",
         "\trla		; sign to carry\n",
         "\tret\n",
-    ],
-    "rt_sign_strip": [   
+    ],[]),
+    "rt_sign_strip": ([   
         "; RT_SIGN_STRIP\n", 
         "; Strips signs from HL and DE\n",
         "; performing COMP+2 if they are negative\n",
@@ -907,8 +908,8 @@ RT_MATH = {
         "\tld      l,a\n",
         "\tinc     hl\n",
         "\tret\n",
-    ],
-    "rt_mul16": [
+    ],[]),
+    "rt_mul16": ([
         "; RT_MUL16\n",
         "; 15x15 signed multiplication\n",
         "; HL = HL * DE\n",
@@ -926,8 +927,8 @@ RT_MATH = {
         "\tpop     af\n",
         "\tret     nc\n",
         "\tjr      __sign_strip_neghl\n",
-    ],
-    "rt_div16": [
+    ],["rt_compute_sign", "rt_sign_strip", "rt_umul16"]),
+    "rt_div16": ([
         "; RT_DIV16\n",
         "; 15/15 signed division\n",
         "; HL = HL DIV DE\n",
@@ -947,8 +948,8 @@ RT_MATH = {
         "\tpop     af\n",
         "\tret     nc\n",
         "\tjr      __sign_strip_neghl\n",
-    ],
-    "rt_comp16": [
+    ],["rt_compute_sign", "rt_sign_strip", "rt_udiv16"]),
+    "rt_comp16": ([
         "; RT_COMP16\n",
         "; Signed comparison HL-DE, set Z and C flags,\n",
         "; where C indicates that HL < DE\n",
@@ -959,7 +960,7 @@ RT_MATH = {
         ";     HL is modified\n",
         ";     BC, DE are preserved\n",
         "rt_comp16:\n",
-        "\txor     a         ; Clear C flag\n",
+        "\txor     a\n",
         "\tsbc     hl,de\n",
         "\tret     z\n",
         "\tjp      m,__comp16_cs1\n",
@@ -968,8 +969,8 @@ RT_MATH = {
         "__comp16_cs1:\n",
         "\tscf\n",
         "\tret\n",
-    ],
-    "rt_ucomp16": [
+    ],[]),
+    "rt_ucomp16": ([
         "; RT_UCOMP16\n",
         "; Unsigned comparison HL-DE, set ZF and CF flags,\n",
         "; where CF indicates that HL < DE\n",
@@ -983,8 +984,8 @@ RT_MATH = {
         "\txor     a          ; Clear C flag\n",
         "\tsbc     hl,de\n",
         "\tret\n",
-    ],
-    "rt_div16_by10": [
+    ],[]),
+    "rt_div16_by10": ([
         "; RT_DIV16_BY10\n",
         "; Fast integer division by 10\n",
         "; Taken from:\n",
@@ -1013,8 +1014,8 @@ RT_MATH = {
         "\tinc     l\n",
         "\tdjnz    $-7\n",
         "\tret\n",
-    ],
-    "rt_udiv8": [
+    ],[]),
+    "rt_udiv8": ([
         " RT_UDIV8\n",
         "; 8/8 unsigned integer division,\n",
         ";Inputs:\n",
@@ -1033,5 +1034,5 @@ RT_MATH = {
         "\tjr __div8_loop   ; Continue dividing\n",
         "__div8_end:\n",
         "\tret\n\n",
-    ],
+    ],[]),
 }
