@@ -1814,7 +1814,7 @@ class LocBasParser:
 
     @astnode
     def _parse_SYMBOL_AFTER(self) -> AST.Command:
-        """ <SYMBOL AFTER> ::= SYMBOL AFTER <int_expression> """
+        """ <SYMBOL AFTER> ::= SYMBOL AFTER <INT> """
         self._advance()
         args: list[AST.Statement] = [self._parse_int_expression()]
         return AST.Command(name="SYMBOL_AFTER", args=args)
@@ -2338,7 +2338,6 @@ class LocBasParser:
 
     # ----------------- AST Generation -----------------
     
-    @astnode
     def _parse_assignment(self) -> AST.Assignment:
         """ <assignment> ::= <primary_ident> = <expression>"""
         # The asignement is the way to declare variables so
@@ -2360,6 +2359,23 @@ class LocBasParser:
             )
         return AST.Assignment(target=target, source=source, etype=target.etype)
 
+    def _parse_RSX(self) -> AST.RSX:
+        name = self._advance().lexeme[1:]   # remove '|' symbol
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.EOF, TokenType.EOL, TokenType.COLON)):
+            args = [self._parse_expression()]
+            while self._current_is(TokenType.COMMA):
+                self._advance()
+                args.append(self._parse_expression())
+        # names will be used in capitals and 16 chars max
+        name = name.upper()[0:16]
+        self.symtable.add(name, SymEntry(
+            SymType.RSX,
+            AST.ExpType.Void,
+            SymTable()
+        ), "")
+        return AST.RSX(command=name, args=args)
+
     def _parse_keyword(self) -> AST.Statement:
         """ <keyword> ::= <FUNCTION> | <COMMAND> """
         keyword = self._current().lexeme
@@ -2378,7 +2394,7 @@ class LocBasParser:
         if tok.type == TokenType.COMMENT:
             return AST.Comment(text=self._advance().lexeme)
         if tok.type == TokenType.RSX:
-            return AST.RSX(command=self._advance().lexeme)
+            return self._parse_RSX()
         if tok.type == TokenType.IDENT and tok.lexeme[:2].upper() == "FN":
             # User call to a function defined with DEF FN
             return self._parse_user_fun()

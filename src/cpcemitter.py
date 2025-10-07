@@ -46,6 +46,7 @@ class CPCEmitter:
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
+        self.symbolafter = 9999
 
     def _emit_code(self, line: str="", indent: int=4, info: str=""):
         pad = ""
@@ -91,7 +92,7 @@ class CPCEmitter:
     def _reserve_memory(self, nbytes: int):
         self._emit_import("rt_malloc")
         self._emit_code(f"; Malloc of {nbytes} bytes")
-        self._emit_code(f"ld      a,{nbytes}", info="bytes to reserve")
+        self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
         self._emit_code("call    rt_malloc", info="HL points to empty mem")
         self._emit_code(";")
         self.free_tmp_memory = True
@@ -105,8 +106,8 @@ class CPCEmitter:
         self._emit_code("org     0x170", 0)
         self._emit_code("jp      _code_", 0)
         self._emit_code()
-        self._emit_code("; TEMPORAL MEMORY AREA, USED TO STORE TEMPORAL VALUES",0)
-        self._emit_code("_temp_memory_area_:", 0)
+        self._emit_code("; DYNAMIC MEMORY AREA, USED TO STORE TEMPORAL VALUES",0)
+        self._emit_code("_dynamic_memory_area_:", 0)
         self._emit_code("_memory_next: dw _memory_start")
         self._emit_code("_memory_start:")
         self._emit_code()
@@ -130,10 +131,22 @@ class CPCEmitter:
                     self._emit_data(f"{entry.label}: defs 255")
                 if entry.exptype == AST.ExpType.Real:
                     self._emit_data(f"{entry.label}: defs 5")
+            elif entry.symtype == SymType.RSX:
+                # last char must have bit 7 set
+                lastchar = ord(sym[-1]) + 128
+                self._emit_data(f'{entry.label}: db "{sym[0:-1]}",{lastchar}')
      
     def _emit_runtime(self) -> str:
-        return "__runtime__:\n\n" + ''.join(self.rtcode) + '\n'
+        return "_runtime_:\n\n" + ''.join(self.rtcode) + '\n'
     
+    def _emit_symbol_table(self) -> None:
+        # 240 is the BASIC default if no SYMBOL AFTER is used
+        if self.symbolafter == 9999:
+            self.symbolafter = 240
+        self._emit_data()
+        self._emit_data("; Table for symbols defined with SYMBOL keyword")
+        self._emit_data(f"_symbols_table: defs {256 - self.symbolafter}")
+
     def _real(self, n: float) -> bytearray:
         """
         In Amstrad BASIC, a floating point number is stored in base-2 in a normalized form 1 x 2 ** <exp>
@@ -190,6 +203,10 @@ class CPCEmitter:
         self.constants +=1
         return (f"__if_else_{self.constants}", f"__if_end_{self.constants}")
 
+    def _get_symbol_label(self) -> str:
+        self.constants +=1
+        return f"__symbol_{self.constants}"
+
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
@@ -234,8 +251,14 @@ class CPCEmitter:
         and the second <int expr>, (in range 0 to 3), indicates which of the
         four available delay timers should be used. 
         """
-        self._emit_import("rt_timer")
         self._emit_code("; AFTER <int expr>[,<int expr>] GOSUB (INT | IDENT)")
+        self._emit_event_init(node)
+        self._emit_code("ld      bc,0", info="recharge value")
+        self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
+        self._emit_code(";")
+
+    def _emit_event_init(self, node:AST.Command):
+        self._emit_import("rt_timer")
         args = node.args
         self._emit_expression(args[0])
         self._emit_code("push    hl", info="number of ticks to fire event")
@@ -245,22 +268,19 @@ class CPCEmitter:
         else:
             self._emit_code("xor     a", info="default timer ID is 0")
         self._emit_code("call    rt_timer_get", info="HL address to event block")
-        self._emit_code("push    hl", info="Tick block address")
+        self._emit_code("push    hl", info="tick block address")
         self._emit_code("ld      bc,6")
         self._emit_code("add     hl,bc", info="HL = event block inside the tick")
         # GOSUB address
-        label = args[-1].args[0]
+        label = args[-1].args[0] # type: ignore [attr-defined]
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), "")
             if sym is not None:
                 self._emit_code(f"ld      de,{sym.label}")
         self._emit_code("ld      b,&81", info="async near call")
         self._emit_code(f"call    {FWCALL.KL_INIT_EVENT}", info="KL_INIT_EVENT")
-        self._emit_code("pop     hl", info="Tick block address")
-        self._emit_code("ld      bc,0", info="BC = 0 (don't repeat)")
+        self._emit_code("pop     hl", info="tick block address")
         self._emit_code("pop     de", info="timer ticks needed to fire the event")
-        self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
-        self._emit_code(";")
 
     def _emit_ASC(self, node:AST.Function):
         """
@@ -290,8 +310,27 @@ class CPCEmitter:
         self._emit_code("; IGNORED")
         self._raise_warning(0, 'AUTO is ignored and has not effect', node)
 
-    def _emit_BINSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_BINSS(self, node:AST.Function):
+        """
+        Produces a string of binary digits that represents the value of the
+        <unsigned integer expression>, filling with leading zeros to the number
+        of digits instructed by the second <integer expression>.
+        """
+        # prints 8 or 16 characters
+        self._emit_import("rt_int2bin")
+        self._emit_code("; BIN$(<unsigned integer expression>[,<integer expression>])")
+        if len(node.args) == 2:
+            self._emit_expression(node.args[1])
+        else:
+            self._emit_code("ld      hl,16")
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl", info="number to convert")
+        self._reserve_memory(17)
+        self._emit_code("pop     bc", info="number of characters")
+        self._emit_code("ld      a,c", info="only 8 or 16 are valid")
+        self._emit_code("call    rt_int2bin")
+        self._emit_code(";")
 
     def _emit_BORDER(self, node:AST.Command):
         """
@@ -314,11 +353,48 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SCR_SET_BORDER}", info="SCR_SET_BORDER")
         self._emit_code(";")
 
-    def _emit_CALL(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CALL(self, node:AST.Command):
+        """
+        Allows an externally developed sub-routine to be invoked from BASIC.
+        The routine is called with IX pointing to the list of parameters and A
+        containing the number of parameters. Parameters are passed in reverse
+        order, ie. (IX+0) is the last parameter supplied.
+        """
+        self._emit_code("; CALL <address expression> ,[<list of: <parameter>]")
+        if len(node.args) == 1 and isinstance(node.args[0],AST.Integer):
+            address: int = node.args[0].value
+            self._emit_code(f"call     {address}", info=f"calling {address:#04x}")
+        else:
+            self._emit_import("rt_call")
+            params = node.args[1:]
+            if len(params) > 0:
+                for a in params:
+                    self._emit_expression(a)
+                    self._emit_code("push    hl")
+                self._emit_code("ld      ix,0")
+                self._emit_code("add     ix,sp")
+            self._emit_expression(node.args[0])
+            self._emit_code(f"ld      a,{len(params)}")
+            self._emit_code("call    rt_call", info="HL has the address")
+            for a in params:
+                self._emit_code("pop     de")
+        self._emit_code(";")
 
     def _emit_CAT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Causes BASIC to start reading the directory of the current drive
+        (cassette or disc) and to display the names of all files found.
+        This does not affect the program currently in memory, and so may be used
+        to verify a program that has just been saved before altering the program
+        memory. 
+        """
+        self._emit_import("rt_malloc")
+        self._emit_code("; CAT")
+        self._emit_code("ld      bc,2048", info="buffer used by the firmware")
+        self._emit_code("call    rt_malloc")
+        self._emit_code("ex      de,hl", info="buffer address in DE")
+        self._emit_code(f"call    {FWCALL.CAS_CATALOG}")
+        self._emit_code(";")
 
     def _emit_CHAIN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -478,8 +554,20 @@ class CPCEmitter:
     def _emit_ERROR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_EVERY(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_EVERY(self, node:AST.Command):
+        """
+        The EVERY command allows a BASIC program to arrange for subroutines to
+        be called at regular intervals. Four delay timers are available, specified
+        by the 2nd <int expression> in the range 0 to 3 each of which may have a
+        subroutine associated with it.
+        """
+        self._emit_code("; EVERY <int expr>[,<int expr>] GOSUB (INT | IDENT)")
+        self._emit_event_init(node)
+        self._emit_code("ld      b,d", info="recharge value")
+        self._emit_code("ld      c,e")
+        self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
+        self._emit_code(";")
+
 
     def _emit_EXP(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1074,8 +1162,27 @@ class CPCEmitter:
     def _emit_RELEASE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_REMAIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_REMAIN(self, node:AST.Function):
+        """
+        Returns the REMAINing count from the delay timer specified in <int expr>
+        (in the range 0 to 3) and disable it. 
+        """
+        self._emit_import("rt_timer")
+        self._emit_code("; REMAIN(<integer expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code("call    rt_timer_get", info="HL address to event block")
+        self._emit_code("ld      bc,4")
+        self._emit_code("add     hl,bc", info="point to recharge value")
+        self._emit_code("ld      (hl),&0000", info="reset recharge value")
+        self._emit_code("dec     hl",   info="remaining ticks")
+        self._emit_code("ld      d,(hl)")
+        self._emit_code("dec     hl")
+        self._emit_code("ld      e,(hl)")
+        self._emit_code("ld      (hl),&0000", info="disable ticker")
+        self._emit_code("ex      de,hl")
+        self._emit_code("inc     hl", info="user count starts in 1 but system in 0")
+        self._emit_code(";") 
 
     def _emit_RENUM(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1149,11 +1256,57 @@ class CPCEmitter:
     def _emit_STRSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_SYMBOL(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SYMBOL(self, node:AST.Command):
+        """
+        The SYMBOL command redefines the representation of a given character that
+        has first been specified in the SYMBOL AFTER command. The character number,
+        is chosen from the available ASCII or other characters from the CPC464's
+        standard character set, and the following entries define the new character
+        on an 8×8 pixel matrix. A 0 in the row indicates the paper colour to be
+        used and a 1 indicates that the pixel is to be set to the current ink colour. 
+        """
+        self._emit_code("; SYMBOL <character number>,<list of: row>")
+        label = self._get_symbol_label()
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code(f"ld      hl,{label}")
+        self._emit_code(f"call    {FWCALL.TXT_SET_MATRIX}", info="TXT_SET_MATRIX")
+        self._emit_code(";")
+        data = f"{label}: db "
+        values: list[str] = []
+        for i in range(1,9):
+            arg = node.args[i]
+            if isinstance(arg, AST.Integer):
+                values.append(str(arg.value))
+            else:
+                self._raise_error(2, arg, 'an integer value was expected')
+        data = data + ','.join(values)
+        self._emit_data(data)
 
-    def _emit_SYMBOL_AFTER(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SYMBOL_AFTER(self, node:AST.Command):
+        """
+        The number of user definable characters is set by the SYMBOL AFTER command.
+        The default setting is 240, giving 16 user defined characters. If the
+        <integer expression>, is 32, then all characters from 32 to 255 are
+        redefinable. Whenever a SYMBOL AFTER command is used, all user defined
+        characters are reset to the default condition. 
+        """
+        # We use a static table that will be dimensioned to the biggest value
+        # used in a symbol after call. For that reason, we don't allow
+        # expressions and require de argument to be an integer value
+        arg = node.args[0]
+        if isinstance(arg, AST.Integer):
+            num = arg.value
+            if num < 0 or num > 255: num = 256 
+            self._emit_code("; SYMBOL AFTER <int expression>")
+            if num < self.symbolafter:
+                self.symbolafter = num
+            self._emit_code(f"ld      de,{num}")
+            self._emit_code("ld      hl,_symbols_table")
+            self._emit_code(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
+            self._emit_code(";")
+        else:
+            self._raise_error(2, arg, 'an integer value was expected')
 
     def _emit_TAB(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1497,6 +1650,27 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
+    def _emit_RSX(self, node: AST.RSX):
+        self._emit_code(f"; RSX call to {node.command}")
+        label = node.command
+        sym = self.symtable.find(label, "")
+        if sym is not None:
+            params = len(node.args)
+            if params > 0:
+                for a in node.args:
+                    self._emit_expression(a)
+                    self._emit_code("push    hl")
+                self._emit_code("ld      ix,0")
+                self._emit_code("add     ix,sp")
+            self._emit_code(f"ld      hl,{sym.label}")
+            self._emit_code(f"call    {FWCALL.KL_FIND_COMMAND}", info="KL_FIND_COMMAND")
+            self._emit_code("jr      nc,$+7", info="CF if find succeeded")         
+            self._emit_code(f"ld      a,{params}")
+            self._emit_code(f"call    {FWCALL.KL_FAR_PCHL}", info="KL_FAR_PCHL")
+            for i in range(0, params):
+                self._emit_code("pop     de")
+        self._emit_code(";")
+
     def _emit_blockend(self, node: AST.BlockEnd):
         if node.name == "NEXT":
             self._emit_NEXT(node)
@@ -1562,6 +1736,8 @@ class CPCEmitter:
             self._emit_command(stmt)
         elif isinstance(stmt, AST.Label):
             self._emit_LABEL(stmt)
+        elif isinstance(stmt, AST.RSX):
+            self._emit_RSX(stmt)
         else:
             self._raise_error(2, stmt, "unexpected statement")
         self._emit_free_mem()
@@ -1579,4 +1755,7 @@ class CPCEmitter:
             self._emit_line(line)
         self._emit_code_end()
         self._emit_global_symbols()
-        return self.code + "\n" + self.data + "\n" + self._emit_runtime()
+        self._emit_symbol_table()
+        code = self.code + "\n" + self.data + "\n" + self._emit_runtime()
+        code = code + "\n\n_program_end_:"
+        return code

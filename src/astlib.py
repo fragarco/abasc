@@ -440,14 +440,17 @@ class Label(Statement):
     
 class RSX(Statement):
     command: str = ""
+    args: list[Statement]
 
-    def __init__(self, command: str):
+    def __init__(self, command: str, args: list[Statement] = []):
         super().__init__(etype=ExpType.Void, id="RSX")
         self.command = command
+        self.args = args
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["command"] = self.command
+        d["args"] = [a.to_json() for a in self.args]
         return d
 
 class Command(Statement):

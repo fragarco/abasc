@@ -28,6 +28,7 @@ class SymType(str, Enum):
     Array = "Array"
     Label = "Label"
     Function = "Function"
+    RSX = "RSX"
 
 @dataclass
 class SymEntry:
@@ -58,6 +59,8 @@ class SymTable:
             return f"__label_{name.upper()}"
         elif entry.symtype == SymType.Function:
             return f"FN_{name.upper()}"
+        elif entry.symtype == SymType.RSX:
+            return f"RSX_{name.upper()}"
         return ""
 
     def add(self, ident: str, info: SymEntry, context: str = "") -> bool:

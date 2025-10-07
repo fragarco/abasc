@@ -136,7 +136,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[0].name, "AFTER")
         self.assertEqual(len(ast.lines[0].statements[0].args), 2)
         self.assertEqual(ast.lines[0].statements[0].args[0].value, 12)
-        self.assertEqual(ast.lines[0].statements[0].args[1].value, 200)
+        self.assertEqual(ast.lines[0].statements[0].args[1].args[0].value, 200)
         code = "10 AFTER 12,1+1+1 GOSUB 200"
         ast, _ = self.parse_code(code)
         self.assertIsInstance(ast.lines[0].statements[0].args[1], AST.BinaryOp)

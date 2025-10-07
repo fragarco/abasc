@@ -19,6 +19,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 # Addresses for CPC Firmware Rutines
 #
 class FWCALL:
+    # LOW jump block
+    KL_FAR_PCHL         = "&001B"
+
+    # HI jump block
     KM_INITIALISE       = "&BB00"
     KM_RESET            = "&BB03"
     KM_WAIT_CHAR        = "&BB06"
@@ -120,6 +124,29 @@ class FWCALL:
     SCR_HORIZONTAL      = "&BC5F"
     SCR_VERTICAL        = "&BC62"
     
+    CAS_INITIALISE      = "&BC65"
+    CAS_SET_SPEED       = "&BC68"
+    CAS_NOISY           = "&BC6B"
+    CAS_START_MOTOR     = "&BC6E"
+    CAS_STOP_MOTOR      = "&BC71"
+    CAS_RESTORE_MOTOR   = "&BC74"
+    CAS_IN_OPEN         = "&BC77"
+    CAS_IN_CLOSE        = "&BC7A"
+    CAS_IN_ABANDON      = "&BC7D"
+    CAS_IN_CHAR         = "&BC80"
+    CAS_IN_DIRECT       = "&BC83"
+    CAS_RETURN          = "&BC86"
+    CAS_TEST_EOF        = "&BC89"
+    CAS_OUT_OPEN        = "&BC8C"
+    CAS_OUT_CLOSE       = "&BC8F"
+    CAS_OUT_ABANDON     = "&BC92"
+    CAS_OUT_CHAR        = "&BC95"
+    CAS_OUT_DIRECT      = "&BC98"
+    CAS_CATALOG         = "&BC9B"
+    CAS_WRITE           = "&BC9E"
+    CAS_READ            = "&BCA1"
+    CAS_CHECK           = "&BCA4"
+
     KL_CHOKE_OFF        = "&BCC8"
     KL_ROM_WALK         = "&BCCB"
     KL_INIT_BACK        = "&BCCE"
@@ -195,28 +222,37 @@ class FWCALL:
 # 
 RT = {
     #
-    # MEM
+    # MEM AND CALLS
     # 
     "rt_malloc": ([
         "; RT_MALLOC\n",
         "; Returns in HL the address to a temporal free memory block\n",
         "; reserving as many bytes as indicated by A\n",
         "; Inputs:\n",
-        ";      A number of bytes to allocate\n",
+        ";     BC number of bytes to allocate\n",
         "; Outputs:\n",
         ";     HL address to the new reserved memory\n",
-        ";     AF, BC and DE are modified\n",
+        ";     HL and Flags are modified\n",
         "rt_malloc:\n",
         "\tld      hl,(_memory_next)\n",
         "\tpush    hl\n",
-        "\tadd     a,l\n",
-        "\tld      l,a\n",
-        "\tadc     a,h\n",
-        "\tsub     l\n",
-        "\tld      h,a\n",
+        "\tadd     hl,bc\n",
         "\tld      (_memory_next),hl\n",
         "\tpop     hl\n",
         "\tret\n\n",
+    ],[]),
+    "rt_call": ([
+        "; RT_CALL\n",
+        "; Jumps to the address passed in HL and uses the RET from the\n",
+        "; callee to return to the original caller.\n",
+        "; Inputs:\n",
+        ";      A number of additional parameters in the stack\n",
+        ";     IX address to the last parameter in the stack\n",
+        ";     HL address to call to\n",
+        "; Outputs:\n",
+        ";     Depends on the callee\n",
+        "rt_call:\n",
+        "\tjp      (hl)\n\n",
     ],[]),
     #
     # STRINGS
@@ -535,8 +571,8 @@ RT = {
     ],[]),
     "rt_int2hex": ([
         "; RT_INT2HEX"
-        "; Converts a two-byte integer in an string with its hexadecimal\n",
-        "; representation. Routine inspired in the one included in\n",
+        "; Converts a two-bytes integer in an string with its hexadecimal\n",
+        "; representation. Routine inspired by the one included in\n",
         "; 'Ready Made Machine Language Routines' book\n",
         "; Inputs:\n",
         ";     A min number of characters: 2 or 4\n",
@@ -580,6 +616,46 @@ RT = {
         "\tld      (hl),a\n",
         "\tinc     hl\n",
         "\tdjnz    __a2hex_conv\n",
+        "\tret\n\n",
+    ],[]),
+    "rt_int2bin": ([
+        "; RT_INT2BIN"
+        "; Converts a two-bytes integer in an string with its binary\n",
+        "; representation. Routine inspired by the one included in\n",
+        "; 'Ready Made Machine Language Routines' book\n",
+        "; Inputs:\n",
+        ";     A min number of characters: 8 or 16\n",
+        ";    HL string address\n",
+        ";    DE integer to convert\n",
+        "; Outputs:\n",
+        ";     HL address to the string with the conversion\n",
+        ";     BC, AF are modified\n",
+        "rt_int2bin:\n",
+        "\tpush    hl\n",
+        "\tinc     hl\n",
+        "\tld      c,8\n",
+        "\tcp      9\n",
+        "\tjr      c,__int2bin_low\n",
+        "__int2bin_high:\n",
+        "\tld      c,16\n",
+        "\tld      a,d\n",
+        "\tcall    __a2bin\n",
+        "__int2bin_low:\n",
+        "\tld      a,e\n",
+        "\tcall    __a2bin\n",
+        "\tpop     hl\n",
+        "\tld      (hl),c\n",
+        "\tret\n",
+        "__a2bin:\n",
+        "\tld      b,8\n",
+        "__a2bin_loop:\n",
+        "\trla\n",
+        "\tjr      c,$+6\n",
+        "\tld      (hl),&30\n",
+        "\tjr      $+4\n",
+        "\tld      (hl),&31\n",
+        "\tinc     hl\n",
+        "\tdjnz    __a2bin_loop\n",
         "\tret\n\n",
     ],[]),
     #
@@ -814,7 +890,7 @@ RT = {
         f"\tcall    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF\n",
         "\tld      hl,rt_input_buf\n",
         "\tjp      rt_count_substrz\n\n",      
-    ],["rt_print_str"]),
+    ],["rt_print"]),
     #
     # MATH
     # 
