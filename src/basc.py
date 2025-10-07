@@ -26,6 +26,7 @@ from basparse import LocBasParser
 from cpcemitter import CPCEmitter
 from symbols import symsto_json, SymTable
 import astlib as AST
+import abasm as ABASM
 from basopt import BasOptimizer
 import json
 
@@ -102,6 +103,7 @@ def emit(infile: str, codelines: list[CodeLine], ast:AST.Program, symtable: SymT
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w") as fd:
             fd.write(asmcode)
+    ABASM.assemble(asmfile)
 
 def main() -> None:
     start_t = time.process_time()

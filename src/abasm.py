@@ -1711,6 +1711,7 @@ def create_opdict():
             g_opcode_functions[sym] = fun
 
 def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000):
+    create_opdict()
     if (outputfile == None):
         outputfile = os.path.splitext(inputfile)[0] + ".bin"
     
@@ -1752,7 +1753,6 @@ def main():
     global g_context
     args = process_args()
     g_context.verbose = args.verbose
-    create_opdict()
     assemble(args.inputfile, args.output, args.define, args.start)
     sys.exit(0)
 

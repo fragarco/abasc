@@ -172,7 +172,7 @@ class LocBasParser:
 
     @astnode
     def _parse_AFTER(self) -> AST.Command:
-        """ <AFTER> ::= AFTER <int_expression>[,<int_expression>] GOSUB INT """
+        """ <AFTER> ::= AFTER <int_expression>[,<int_expression>] <GOSUB> """
         self._advance()
         delay = self._parse_int_expression()
         args = [delay]
@@ -180,9 +180,7 @@ class LocBasParser:
             self._advance()
             timer = self._parse_int_expression()
             args.append(timer)
-        self._expect(TokenType.KEYWORD, "GOSUB")
-        num = self._expect(TokenType.INT)
-        args.append(AST.Integer(value = cast(int, num.value)))
+        args.append(self._parse_GOSUB())
         return AST.Command(name="AFTER", args=args)
     
     @astnode
@@ -205,11 +203,17 @@ class LocBasParser:
 
     @astnode
     def _parse_AUTO(self) -> AST.Command:
-        """ <AUTO> ::= AUTO <int_expression>[,<int_expression>] """
-        # A direct command that is not allowed in compiled programs    
+        """ <AUTO> ::= AUTO <int_expression>[,<int_expression>] """   
         self._advance()
-        self._raise_error(21)
-        return AST.Command(name="AUTO")
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args.append(AST.Integer(value=cast(int, num.value)))
+            self._match(TokenType.COMMA)
+            if self._current_is(TokenType.INT):
+                num = self._advance()
+                args.append(AST.Integer(value=cast(int, num.value)))
+        return AST.Command(name="AUTO", args=args)
     
     @astnode
     def _parse_BINSS(self) -> AST.Function:
@@ -782,10 +786,19 @@ class LocBasParser:
 
     @astnode
     def _parse_GOSUB(self) -> AST.Command:
-        """ <GOSUB> ::= GOSUB INT """
-        self._advance()
-        num = self._expect(TokenType.INT)
-        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        """ <GOSUB> ::= GOSUB (INT | IDENT) """
+        # some compound commands call here so let's check that GOSUB
+        # is really the current keyword
+        self._expect(TokenType.KEYWORD, lex="GOSUB")
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args = [AST.Integer(value = cast(int, num.value))]
+        elif self._current_is(TokenType.IDENT):
+            label = self._advance()
+            args = [AST.Label(value = label.lexeme)]
+        else:
+            self._raise_error(2)
         return AST.Command(name="GOSUB", args=args)
 
     @astnode

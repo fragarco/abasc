@@ -120,6 +120,32 @@ class FWCALL:
     SCR_HORIZONTAL      = "&BC5F"
     SCR_VERTICAL        = "&BC62"
     
+    KL_CHOKE_OFF        = "&BCC8"
+    KL_ROM_WALK         = "&BCCB"
+    KL_INIT_BACK        = "&BCCE"
+    KL_LOG_EXT          = "&BCD1"
+    KL_FIND_COMMAND     = "&BCD4"
+    KL_NEW_FRAME_FLY    = "&BCD7"
+    KL_ADD_FRAME_FLY    = "&BCDA"
+    KL_DEL_FRAME_FLY    = "&BCDD"
+    KL_NEW_FAST_TICKER  = "&BCE0"
+    KL_ADD_FAST_TICKER  = "&BCE3"
+    KL_DEL_FAST_TICKER  = "&BCE6"
+    KL_ADD_TICKER       = "&BCE9"
+    KL_DEL_TICKER       = "&BCEC"
+    KL_INIT_EVENT       = "&BCEF"
+    KL_EVENT            = "&BCF2"
+    KL_SYNC_RESET       = "&BCF5"
+    KL_DEL_SYNCHRONOUS  = "&BCF8"
+    KL_NEXT_SYNC        = "&BCFB"
+    KL_DO_SYNC          = "&BCFE"
+    KL_DONE_SYNC        = "&BD01"
+    KL_EVENT_DISABLE    = "&BD04"
+    KL_EVENT_ENABLE     = "&BD07"
+    KL_DISARM_EVENT     = "&BD0A"
+    KL_TIME_PLEASE      = "&BD0D"
+    KL_TIME_SET         = "&BD10"
+
     MC_BOOT_PROGRAM     = "&BD13"
     MC_START_PROGRAM    = "&BD16"
     MC_WAIT_FLYBACK     = "&BD19"
@@ -875,6 +901,27 @@ RT = {
         "\trla		; sign to carry\n",
         "\tret\n",
     ],[]),
+    "rt_abs": ([   
+        "; RT_ABS\n", 
+        "; Strips sign from HL\n",
+        "; performing COMP+2 if it is negative\n",
+        "; Inputs:\n",
+        ";     HL\n",
+        "; Outputs:\n",
+        ";     HL is the number in possitive\n",
+        ";     AF is modified\n",
+        "rt_abs:\n",
+        "\tbit     7,h\n",
+        "\tret     z\n",
+        "\tld      a,h\n",
+        "\tcpl\n",
+        "\tld      h,a\n",
+        "\tld      a,l\n",
+        "\tcpl\n",
+        "\tld      l,a\n",
+        "\tinc     hl\n",
+        "\tret\n",
+    ],[]),
     "rt_sign_strip": ([   
         "; RT_SIGN_STRIP\n", 
         "; Strips signs from HL and DE\n",
@@ -1016,7 +1063,7 @@ RT = {
         "\tret\n",
     ],[]),
     "rt_udiv8": ([
-        " RT_UDIV8\n",
+        "; RT_UDIV8\n",
         "; 8/8 unsigned integer division,\n",
         ";Inputs:\n",
         ";     A  numerator, E denominator\n",
@@ -1035,4 +1082,27 @@ RT = {
         "__div8_end:\n",
         "\tret\n\n",
     ],[]),
+    #
+    # runtime for BASIC commands support
+    #
+    "rt_timer": ([
+        "; RT_TIMER_GET\n",
+        "; Retrieves a AFTER/EVERY data block (tick block). Each tick block has\n",
+        "; a size of 13 bytes. The las 7 bytes are the event block contained\n",
+        "; inside the tick block\n",
+        ";Inputs:\n",
+        ";     A  timer number (0-3)\n",
+        ";Outputs:\n",
+        ";     HL address to the timer block\n",
+        "rt_timer_blocks: defs 13*4 ; 4 tick blocks\n",
+        "rt_timer_get:\n",
+        "\tld      hl,rt_timer_blocks\n",
+        "\tld      de,13       ; Block size\n",
+        "__timerget_loop:\n",
+        "\tor      a\n",
+        "\tret     z\n",
+        "\tadd     hl,de\n",
+        "\tdec     a\n",
+        "\tjr      __timerget_loop\n",
+    ],[])
 }

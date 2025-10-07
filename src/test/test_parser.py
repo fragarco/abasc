@@ -172,8 +172,8 @@ class TestParser(unittest.TestCase):
     def test_auto_basic(self):
         codes = ['10 AUTO 10,20', '10 AUTO 10', '10 AUTO']
         for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
+            ast, _ = self.parse_code(code)
+            self.assertEqual(ast.lines[0].statements[0].name, "AUTO")
 
     def test_binss_basic(self):
         codes = ['10 a$=BIN$(2)', '10 a$=BIN$(2,4)']

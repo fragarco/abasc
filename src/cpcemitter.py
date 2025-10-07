@@ -213,11 +213,54 @@ class CPCEmitter:
 
     # ----------------- Commands and Functions -----------------
 
-    def _emit_ABS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ABS(self, node:AST.Function):
+        """
+        Returns the absolute value of the given expression which primarily means
+        that negative numbers are returned as positive. 
+        """
+        self._emit_import("rt_abs")
+        self._emit_code("; ABS(<numeric expression>)")
+        arg = node.args[0]
+        if arg.etype == AST.ExpType.Real:
+            # TODO: reals
+            self._raise_error(2, node, 'reals are not supported')
+        self._emit_expression(arg)
+        self._emit_code("call    rt_abs")
 
-    def _emit_AFTER(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_AFTER(self, node:AST.Command):
+        """
+        Invoke a subroutine after a given time period has elapsed. The first
+        <int expr>, indicates the period of the delay, in units of 1/50 second,
+        and the second <int expr>, (in range 0 to 3), indicates which of the
+        four available delay timers should be used. 
+        """
+        self._emit_import("rt_timer")
+        self._emit_code("; AFTER <int expr>[,<int expr>] GOSUB (INT | IDENT)")
+        args = node.args
+        self._emit_expression(args[0])
+        self._emit_code("push    hl", info="number of ticks to fire event")
+        if len(args) == 3:
+            self._emit_expression(args[1])
+            self._emit_code("ld      a,l")
+        else:
+            self._emit_code("xor     a", info="default timer ID is 0")
+        self._emit_code("call    rt_timer_get", info="HL address to event block")
+        self._emit_code("push    hl", info="Tick block address")
+        self._emit_code("ld      bc,6")
+        self._emit_code("add     hl,bc", info="HL = event block inside the tick")
+        # GOSUB address
+        label = args[-1].args[0]
+        if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+            sym = self.symtable.find(str(label.value), "")
+            if sym is not None:
+                self._emit_code(f"ld      de,{sym.label}")
+        self._emit_code("ld      b,&81", info="async near call")
+        self._emit_code(f"call    {FWCALL.KL_INIT_EVENT}", info="KL_INIT_EVENT")
+        self._emit_code("pop     hl", info="Tick block address")
+        self._emit_code("ld      bc,0", info="BC = 0 (don't repeat)")
+        self._emit_code("pop     de", info="timer ticks needed to fire the event")
+        self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
+        self._emit_code(";")
 
     def _emit_ASC(self, node:AST.Function):
         """
@@ -232,11 +275,20 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_ATN(self, node:AST.Statement):
+    def _emit_ATN(self, node:AST.Function):
+        # TODO: reals
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_AUTO(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_AUTO(self, node:AST.Command):
+        """
+        Generate line numbers automatically. The <line number>, sets the first
+        line to be generated, in case you want to add to the end of an existing
+        program. The value of the <increment> between line numbers, and the first
+        line number to be generated, both default to 10 if not specified.
+        """
+        self._emit_code("; AUTO [<line number>l[,<increment>]")
+        self._emit_code("; IGNORED")
+        self._raise_warning(0, 'AUTO is ignored and has not effect', node)
 
     def _emit_BINSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -442,12 +494,17 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_FOR(self, node:AST.ForLoop):
+        """
+        Execute a body of program a given number of times, stepping a control
+        variable between a start and an end value. If not specified, STEP
+        defaults to 1. 
+        """
         sym = self.symtable.find(node.var.name)
         start, end = self._get_for_labels()
         node.start_label = start
         node.end_label = end
         if sym is not None:
-            self._emit_code("; FOR initialization")
+            self._emit_code("; FOR <variable> = <start> TO <end> [STEP <size>]")
             self._emit_expression(node.start)
             self._emit_code(f"ld      ({sym.label}),hl")
             if node.step is not None:
@@ -495,17 +552,34 @@ class CPCEmitter:
     def _emit_FRE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_GOSUB(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_GOSUB(self, node:AST.Command):
+        """
+        Call a BASIC subroutine by branching to the specified line number or
+        label. 
+        """
+        label = node.args[0]
+        self._emit_code("; GOSUB <line number> | <label> ")
+        if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+            sym = self.symtable.find(str(label.value), "")
+            if sym is not None:
+                self._emit_code(f"call    {sym.label}")
+            else:
+                self._raise_error(38, label)
+        self._emit_code(";")
 
     def _emit_GOTO(self, node:AST.Command):
+        """
+        Branch to specified line number or label. 
+        """
         label = node.args[0]
+        self._emit_code("; GOTO <line number> | <label> ")
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), "")
             if sym is not None:
                 self._emit_code(f"jp      {sym.label}")
             else:
                 self._raise_error(38, label)
+        self._emit_code(";")
 
     def _emit_GRAPHICS_PAPER(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -538,10 +612,16 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_IF(self, node:AST.If):
+        """
+        It is used to conditionally determine branch points in a program. The
+        logical part is evaluated, and if true the THEN or GOTO part is executed,
+        if false, the program skips to the ELSE part, or merely passes onto the
+        next line.
+        """
         elselabel, endlabel = self._get_if_labels()
         node.else_label = elselabel
         node.end_label = endlabel
-        self._emit_code(";IF condition")
+        self._emit_code("; IF <logical expr> THEN <option part> [ELSE <option part>]")
         self._emit_expression(node.condition)
         # clear temporal memory if used by the condition expression before
         # jumping. Modifies DE
@@ -571,8 +651,9 @@ class CPCEmitter:
     def _emit_IFEND(self, node:AST.BlockEnd):
         if len(self.ifblocks) > 0:
             ifnode = self.ifblocks.pop()
-            self._emit_code("; IF end")
+            self._emit_code("; IFEND")
             self._emit_code(ifnode.end_label, 0)
+            self._emit_code(";")
         else:
             self._raise_error(36, node)
 
@@ -633,8 +714,15 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_INPUT(self, node:AST.Input):
+        """
+        Reads data from the stated stream. A semicolon after INPUT suppresses the
+        carriage return typed at the end of the line being entered. A semicolon
+        after the <quoted string> causes a question mark to be displayed.
+        A comma suppresses the question mark. All responses must be terminated
+        with an [ENTER].
+        """
         self._emit_import("rt_input")
-        self._emit_code("; INPUT")
+        self._emit_code("; INPUT [#<stream>][;][<quoted string>,]<list: [var]>")
         if node.stream is not None:
             self._emit_stream()
         if node.prompt != "":
@@ -731,8 +819,25 @@ class CPCEmitter:
     def _emit_LOAD(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_LOCATE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LOCATE(self, node:AST.Command):
+        """
+        Moves the text cursor at the stream indicated, to the position specified
+        by the x and y co-ordinates, which are relative to the origin of the
+        stream (WINDOW). Stream 0 is the default stream.
+        """
+        self._emit_code("; LOCATE [#<stream expression>,] <x coord>,<y coord>")
+        args = node.args
+        if len(args) == 3:
+            self._emit_expression(args[0])
+            self._emit_stream()
+            args = args[1:]
+        self._emit_expression(args[0])
+        self._emit_code("push    hl", info="X coord")
+        self._emit_expression(args[1])
+        self._emit_code("pop     de")
+        self._emit_code("ld      h,e")
+        self._emit_code(f"call    {FWCALL.TXT_SET_CURSOR}", info="TXT_SET_CURSOR")
+        self._emit_code(";")
 
     def _emit_LOG(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -762,7 +867,13 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_MODE(self, node:AST.Command):
-        self._emit_code("; MODE")
+        """
+        Change the screen mode (0,1 or 2), and clear the screen to INK 0, which
+        may not be the current PAPER ink. All text and graphics WINDOWS are reset
+        to the whole screen, and the text and graphics cursors homed to their
+        respective origins. 
+        """
+        self._emit_code("; MODE <integer expression>")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
         self._emit_code(f"call    {FWCALL.SCR_SET_MODE}", info="SCR_SET_MODE")
@@ -778,7 +889,7 @@ class CPCEmitter:
 
     def _emit_NEXT(self, node:AST.BlockEnd):
         fornode = self.forloops.pop()
-        self._emit_code("; FOR STEP")
+        self._emit_code("; NEXT - FOR STEP")
         if fornode.step is not None:
             self._emit_code("pop     bc")
             self._emit_code(f"ld      hl,({fornode.var_label})")
@@ -790,6 +901,7 @@ class CPCEmitter:
             self._emit_code(f"ld      ({fornode.var_label}),hl")
         self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(fornode.end_label, 0)
+        self._emit_code(";")
 
     def _emit_ON(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -815,14 +927,53 @@ class CPCEmitter:
     def _emit_OUT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_PAPER(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_PAPER(self, node:AST.Command):
+        """
+        Sets the background ink for characters. When characters are written to
+        the text screen, the character cell is filled with the PAPER ink before
+        the character is written, unless the transparent mode has been selected. 
+        """
+        self._emit_code("; PAPER [#<stream expression>,]<masked ink>")
+        args = node.args
+        if len(args) == 2:
+            self._emit_expression(args[0])
+            self._emit_stream()
+            args = args[1:]
+        self._emit_expression(args[0])
+        self._emit_code("ld      a,l", info="color")
+        self._emit_code(f"call    {FWCALL.TXT_SET_PAPER}", info="TXT_SET_PAPER")
+        self._emit_code(";")
 
-    def _emit_PEEK(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_PEN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_PEEK(self, node:AST.Function):
+        """
+        Examine the contents of a memory location specified in the <address>
+        which should be in the range &0000 to &FFFF (0 to 65535). In all cases
+        PEEK will return the value at the RAM address specified (not the ROM),
+        and will be in the range &00 to &FF (0 to 255).
+        """
+        self._emit_code("; PEEK(<address expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,(hl)")
+        self._emit_code("ld      h,0")
+        self._emit_code("ld      l,a")
+        self._emit_code(";")
+
+    def _emit_PEN(self, node:AST.Command):
+        """
+        PEN sets the ink to be used when drawing at the given screen stream,
+        defaulting to screen #0. 
+        """
+        self._emit_code("; PEN [#<stream expression>, ]<masked ink>")
+        args = node.args
+        if len(args) == 2:
+            self._emit_expression(args[0])
+            self._emit_stream()
+            args = args[1:]
+        self._emit_expression(args[0])
+        self._emit_code("ld      a,l     ; color")
+        self._emit_code(f"call    {FWCALL.TXT_SET_PEN}", info="TXT_SET_PEN")
+        self._emit_code(";")
 
     def _emit_PI(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -833,13 +984,37 @@ class CPCEmitter:
     def _emit_PLOTR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_POKE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_POKE(self, node:AST.Command):
+        """
+        Provides direct access to the machine memory. Writes the <int expr> in
+        the range 0 to 255 directly into the machine memory (RAM) at the
+        specified <address expression>. 
+        """
+        self._emit_code("; POKE <address expression>, <integer expression>")
+        self._emit_expression(node.args[1])
+        self._emit_code("push    hl", info="value to write")
+        self._emit_expression(node.args[0])
+        self._emit_code("pop     de")
+        self._emit_code("ld      (hl),e")
+        self._emit_code(";")
 
     def _emit_POS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_PRINT(self, node:AST.Print):
+        """
+        Prints the list of: <print items>s to the given stream (to stream #0 if
+        <stream expression> is not specified). Note that when a semicolon ; is
+        used to tell the computer to print the following <print item> next to
+        the preceding item, BASIC first checks to see if the following
+        <print item> can fit onto the same line. If not, it will be printed on a
+        new line regardless of the semicolon. Note that when a coma , is used to
+        tell the computer to print the following <print item> in the next print
+        zone, BASIC first checks to see that the preceding item has not exceeded
+        the lenght of the current zone. If it has, the following <print item>
+        is printed in a further zone. 
+        """
+        self._emit_code("; PRINT [#<stream expression>,][list of: <print item>]")
         if node.stream is not None:
             self._emit_expression(node.stream)
             self._emit_stream()
@@ -911,8 +1086,14 @@ class CPCEmitter:
     def _emit_RESUME(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_RETURN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RETURN(self, node:AST.Command):
+        """
+        Signals the end of a subroutine. BASIC returns to continue processing at
+        the point after the GOSUB which invoked it.
+        """
+        self._emit_code("; RETURN")
+        self._emit_code("ret")
+        self._emit_code(";")
 
     def _emit_RIGHTSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1021,14 +1202,21 @@ class CPCEmitter:
 
     def _emit_WEND(self, node:AST.Statement):
         wnode = self.wloops.pop()
+        self._emit_code("; WEND")
         self._emit_code(f"jp      {wnode.start_label}")
         self._emit_code(wnode.end_label, 0)
+        self._emit_code(";")
 
     def _emit_WHILE(self, node:AST.WhileLoop):
+        """
+        A WHILE loop repeatedly executes a body of program until a given
+        condition is true. The WHILE command defines the head of the loop, and
+        gives the condition. The WEND command terminates the WHILE loop. 
+        """
         start, end = self._get_while_labels()
         node.start_label = start
         node.end_label = end
-        self._emit_code("; WHILE condition")
+        self._emit_code("; WHILE <logical expression>")
         self._emit_code(start, 0)
         self._emit_expression(node.condition)
         # clear temporal memory if used by the condition before
@@ -1277,7 +1465,7 @@ class CPCEmitter:
         8   keyboard to printer
         9   channel to file
         """
-        self._emit_code("; SET STREAM")
+        self._emit_code("; SET #STREAM")
         self._emit_code("ld      a,l")
         self._emit_code("and     &0F", info="valid stream range 0-9")
         self._emit_code(f"call    {FWCALL.TXT_STR_SELECT} ; TXT_STR_SELECT")
