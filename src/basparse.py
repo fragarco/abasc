@@ -261,22 +261,26 @@ class LocBasParser:
     @astnode
     def _parse_CHAIN(self) -> AST.Command:
         """ <CHAIN> ::= CHAIN <str_expression>[,<int_expression>] """
-        # This command appends a new Basic program form a loaded
-        # file, so it doesn't make sense for a compiler
-        # INCBAS additional command suplies this at compile time
         self._advance()
-        self._raise_error(2, info="Command not supported, use INCBAS instead")
-        return AST.Command(name="CHAIN")
+        args: list[AST.Statement] = [self._parse_str_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        return AST.Command(name="CHAIN", args=args)
 
     @astnode
     def _parse_CHAIN_MERGE(self) -> AST.Command:
-        """ <CHAIN_MERGE> ::= CHAIN MERGE <str_expression>[,<int_expression>][,DELETE <int_expression>] """
-        # This command appends a new Basic program form a loaded
-        # file, so it doesn't make sense for a compiler
-        # INCBAS additional command suplies this at compile time
+        """ <CHAIN_MERGE> ::= CHAIN MERGE <str_expression>[,<int_expression>][,DELETE <range>] """
         self._advance()
-        self._raise_error(2, info="Command not supported, use INCBAS instead")
-        return AST.Command(name="CHAIN_MERGE")
+        args: list[AST.Statement] = [self._parse_str_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+                self._expect(TokenType.KEYWORD, "DELETE")
+                args.append(self._parse_range())
+        return AST.Command(name="CHAIN_MERGE", args=args)
 
     @astnode
     def _parse_CHRSS(self) -> AST.Function:
@@ -2316,7 +2320,7 @@ class LocBasParser:
 
     @astnode
     def _parse_range(self) -> AST.Statement:
-        """ <range> ::= CHAR[-CHAR] | INT[-INT]"""
+        """ <range> ::= CHAR[-CHAR] | INT[-INT]"""
         if self._current_is(TokenType.IDENT):
             low = self._expect(TokenType.IDENT).lexeme.upper()
             high = low

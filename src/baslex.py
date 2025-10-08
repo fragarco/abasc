@@ -168,6 +168,14 @@ class LocBasLexer:
             return True
         return False
 
+    def _match_nocase(self, s: str) -> bool:
+        text = self.text[self.pos:self.pos + len(s)].upper()
+        if text == s:
+            for _ in s:
+                self._advance()
+            return True
+        return False
+
     def _skip_spaces(self):
         while self._peek() in (" ", "\t"):
             self._advance()
@@ -341,7 +349,7 @@ class LocBasLexer:
                 if self._peek() != " ":
                     continue
                 self._skip_spaces()
-                if self._match(tail):
+                if self._match_nocase(tail):
                     lex = head_upper + " " + tail
                     return lex, True
                 # restore before test another tail

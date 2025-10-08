@@ -42,7 +42,6 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
-    parser.add_argument('--nopp', action='store_true', help="Do not preprocess the source file.")
     parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
@@ -63,8 +62,17 @@ def readsourcefile(source: str) -> str:
     with open(source, "r") as fd:
         return fd.read()
 
-def preprocess(infile: str, content: str, verbose: bool, nopp: bool) -> tuple[list[CodeLine], str]:
+def check_linenums(source: str) -> bool:
+    """ 
+    Check if the first character in the source code is a number which indicates
+    line numbers are in use.
+    """
+    code = source.strip()
+    return code[0].isdigit()
+
+def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine], str]:
     pp = LocBasPreprocessor()
+    nopp = False # check_linenums(content)
     if nopp:
         codelines, code = pp.ascodelines(infile, content)
     else:
@@ -113,7 +121,7 @@ def main() -> None:
     try:
         clear(infile)
         bascontent = readsourcefile(infile)
-        codelines, code = preprocess(infile, bascontent, args.verbose, args.nopp)
+        codelines, code = preprocess(infile, bascontent, args.verbose)
         tokens = lexpass(infile, code, args.verbose)
         ast, symtable = parser(infile, codelines, tokens, args.verbose)
         optimizer = BasOptimizer()

@@ -23,6 +23,7 @@ import argparse
 from typing import Any, Tuple
 from dataclasses import dataclass
 from baserror import BasError
+from baslex import LocBasLexer, TokenType
 
 @dataclass
 class CodeLine:
@@ -42,40 +43,42 @@ class LocBasPreprocessor:
         )
 
     def _insert_file(self, basedir, line: int, code: str, lines: list[CodeLine]) -> list[CodeLine]:
-        relpath = re.search(r'(?<=")(.*)(?=")', code)
-        if relpath is None:
-            self._raise_error(
-                5,
-                f"File must appear between double quotes",
-                os.path.basename(lines[line].source),
-                lines[line].line,
-                code
-            )
-        else:
-            if ":" in code.replace(relpath.group(0), ''):
-                # colon outside of quotes
-                self._raise_error(
-                    2,
-                    "INCBAS keyword doesn't support other commands in the same line",
-                    os.path.basename(lines[line].source),
-                    lines[line].line,
-                    code
-                )
-            infile = os.path.join(basedir, relpath.group(0))
-            try:
-                with open(infile, 'r') as f:
-                    filecontent = f.read()
-                    newlines, _ = self.ascodelines(infile, filecontent) 
-                    lines = lines[0:line] + newlines + lines[line+1:]
-            except IOError:
-                self._raise_error(
-                    25,
-                    f"cannot read included file {relpath.group(0)}",
-                    lines[line].source,
-                    lines[line].line,
-                    code
-                )
+        parser = LocBasLexer(code)
+        tokens = list(parser.tokens())
+        pos = 0
+        for i,t in enumerate(tokens):
+            if t.type == TokenType.KEYWORD and t.lexeme=="CHAIN MERGE":
+                if tokens[i+1].type != TokenType.STRING:
+                    self._raise_error(
+                        5,
+                        f"CHAIN MERGE file must appear between double quotes",
+                        os.path.basename(lines[line].source),
+                        lines[line].line,
+                        lines[line].code
+                    )
+                infile = os.path.join(basedir, tokens[i+1].value)
+                try:
+                    with open(infile, 'r') as f:
+                        filecontent = f.read()
+                        newlines, _ = self.ascodelines(infile, filecontent)
+                        lines = lines[0:line+1] + newlines + lines[line+1:]
+                except IOError:
+                    self._raise_error(
+                        25,
+                        f"cannot access {infile}",
+                        lines[line].source,
+                        lines[line].line,
+                        lines[line].code
+                    )
         return lines
+        
+
+    def extract_linenum(self, line: str) -> int | None:
+        numend = 0
+        while line[numend].isdigit(): numend += 1
+        if numend != 0:
+            return int(line[0:numend])
+        return None
 
     def preprocess(self, inputfile: str, code: str, increment: int = 10) -> tuple[list[CodeLine],str]:
         print("Preprocessing source files...")
@@ -86,15 +89,28 @@ class LocBasPreprocessor:
         while srcline < len(srclines):
             codeline = srclines[srcline]
             line = codeline.code.strip()
-            if "INCBAS " == line[0:7].upper():
+            compactstr = line.replace(' ', "").upper()
+            if "CHAINMERGE" in compactstr:
                 # insert content from another BAS file
                 basedir = os.path.dirname(inputfile)
                 srclines = self._insert_file(basedir, srcline, line, srclines)
-                srcline -= 1
+                print(srclines)
             elif line != "":
-                line = str(autonum) + ' ' + line
+                num = self.extract_linenum(line)
+                if num is None:
+                    line = str(autonum) + ' ' + line
+                    autonum = autonum + increment
+                else:
+                    if num < autonum:
+                        self._raise_error(
+                            ecode=2,
+                            info=f"explicit line number {num} is under current auto value {autonum}",
+                            line=srcline+1,
+                            file=inputfile)
+                    autonum = num + increment
+                    
                 outlines.append(CodeLine(codeline.source, codeline.line, line))
-                autonum = autonum + increment
+                
             srcline = srcline + 1
         finalcode = "\n".join([c.code for c in outlines]) + '\n'
         return outlines, finalcode

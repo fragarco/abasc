@@ -144,7 +144,7 @@ _ERRORCODES = {
     "022": "Operand missing",
     "023": "Line too long",
     "024": "EOF met",
-    "025": "File type error",
+    "025": "File error",
     "026": "NEXT missing",
     "027": "File already open",
     "028": "Unknown command",
