@@ -32,7 +32,7 @@ END
         self.assertEqual(expected, code)
 
     def test_fail_insertfile(self):
-        program='''INCBAS "ANOTHERFILE.BAS"'''
+        program='''CHAIN MERGE "ANOTHERFILE.BAS"'''
         with self.assertRaises(BasError):
             self._preprocess(program)
 

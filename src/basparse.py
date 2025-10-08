@@ -2229,6 +2229,11 @@ class LocBasParser:
             self._advance()
             return AST.String(value=tok.lexeme.strip('"'))
         if tok.type == TokenType.IDENT:
+            if self._current().lexeme[:2].upper() == "FN":
+                # this is a user function defined by DEF FN as FN are reserved
+                # and cannot be used in Locomotive Basic as the starting chars
+                # for variables
+                return self._parse_user_fun()
             return self._parse_primary_ident()
         if tok.type == TokenType.KEYWORD:   
             return self._parse_keyword()
@@ -2241,12 +2246,7 @@ class LocBasParser:
     
     @astnode
     def _parse_primary_ident(self) -> AST.Statement:
-        """ <primary_ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) | <user_fun> """
-        if self._current().lexeme[:2].upper() == "FN":
-            # this is a user function defined by DEF FN as FN are reserved
-            # and cannot be used in Locomotive Basic as the starting chars
-            # for variables
-            return self._parse_user_fun()
+        """ <primary_ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) """
         # This is the first pass and some variables can be defined later
         # in the code so we cannot fail if an undefined variable arrives here
         # emiter will do

@@ -212,8 +212,9 @@ class TestParser(unittest.TestCase):
     def test_chain_basic(self):
         codes = ['10 CHAIN "myfile.bas"', '10 CHAIN MERGE "myfile.bas"']
         for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
+            ast, _ = self.parse_code(code)
+            self.assertEqual(len(ast.lines[0].statements), 1)
+            self.assertIsInstance(ast.lines[0].statements[0].args[0], AST.String)
 
     def test_chrss_basic(self):
         codes = ['10 CHR$(34)', '10 CHR$(&F0)', '10 CHR$(10+&HA0)']

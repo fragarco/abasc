@@ -565,7 +565,7 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
         self._emit_code(";")
 
-    def _emit_CURSOR(self, node:AST.Statement):
+    def _emit_CURSOR(self, node:AST.Command):
         """
         Only available with BASIC 1.1
         Sets the system switch or the user switch to the cursor, ON or OFF. The
