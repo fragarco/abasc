@@ -1554,14 +1554,13 @@ class LocBasParser:
         self._advance()
         vars: list[AST.Statement] = []
         while True:
-            varname = self._expect(TokenType.IDENT).lexeme
-            vartype = AST.exptype_fromname(varname)
-            vars.append(AST.Variable(name=varname, etype=vartype))
+            var: AST.Variable = self._parse_primary_ident()
+            vars.append(var)
             # READ can declare new variables so we need to add any new ones to the symtable
-            if self.symtable.find(ident=varname, context=self.context) is None:
+            if self.symtable.find(ident=var.name, context=self.context) is None:
                 self.symtable.add(
-                    ident=varname,
-                    info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
+                    ident=var.name,
+                    info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
                     context=self.context
                 )
             if not self._current_is(TokenType.COMMA):
