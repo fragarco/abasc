@@ -85,6 +85,7 @@ class LocBasPreprocessor:
         srclines, _ = self.ascodelines(inputfile, code)
         srcline = 0
         autonum = increment
+        lastnum = increment
         outlines: list[CodeLine] = []
         while srcline < len(srclines):
             codeline = srclines[srcline]
@@ -99,14 +100,16 @@ class LocBasPreprocessor:
                 num = self.extract_linenum(line)
                 if num is None:
                     line = str(autonum) + ' ' + line
+                    lastnum = autonum
                     autonum = autonum + increment
                 else:
-                    if num < autonum:
+                    if num < lastnum:
                         self._raise_error(
                             ecode=2,
                             info=f"explicit line number {num} is under current auto value {autonum}",
                             line=srcline+1,
                             file=inputfile)
+                    lastnum = num
                     autonum = num + increment
                     
                 outlines.append(CodeLine(codeline.source, codeline.line, line))
