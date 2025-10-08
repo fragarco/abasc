@@ -49,8 +49,6 @@ class FWCALL:
     KM_ARM_BREAK        = "&BB45"
     KM_DISARM_BREAK     = "&BB48"
     KM_BREAK_EVENT      = "&BB4B"
-    KM_TEST_BREAK       = "&BDEE"
-    KM_SCAN_KEYS        = "&BDF4"
 
     TXT_INITIALISE      = "&BB4E"
     TXT_RESET           = "&BB51"
@@ -88,6 +86,30 @@ class FWCALL:
     TXT_GET_CONTROLS    = "&BBB1"
     TXT_STR_SELECT      = "&BBB4"
     TXT_SWAP_STREAMS    = "&BBB7"
+
+    GRA_INITIALISE      = "&BBBA"
+    GRA_RESET           = "&BBBD"
+    GRA_MOVE_ABSOLUTE   = "&BBC0"
+    GRA_MOVE_RELATIVE   = "&BBC3"
+    GRA_ASK_CURSOR      = "&BBC6"
+    GRA_SET_ORIGIN      = "&BBC9"
+    GRA_GET_ORIGIN      = "&BBCC"
+    GRA_WIN_WIDTH       = "&BBCF"
+    GRA_WIN_HEIGHT      = "&BBD2"
+    GRA_GET_W_WIDTH     = "&BBD5"
+    GRA_GET_W_HEIGHT    = "&BBD8"
+    GRA_CLEAR_WINDOW    = "&BBDB"
+    GRA_SET_PEN         = "&BBDE"
+    GRA_GET_PEN         = "&BBE1"
+    GRA_SET_PAPER       = "&BBE4"
+    GRA_GET_PAPER       = "&BBE7"
+    GRA_PLOT_ABSOLUTE   = "&BBEA"
+    GRA_PLOT_RELATIVE   = "&BBED"
+    GRA_TEST_ABSOLUTE   = "&BBF0"
+    GRA_TEST_RELATIVE   = "&BBF3"
+    GRA_LINE_ABSOLUTE   = "&BBF6"
+    GRA_LINE_RELATIVE   = "&BBF9"
+    GRA_WR_CHAR         = "&BBFC"
 
     SCR_INITIALISE      = "&BBFF"
     SCR_RESET           = "&BC02"
@@ -215,6 +237,8 @@ class FWCALL:
     MATH_REAL_TANGENT   = "&BD8E"
     MATH_REAL_ARCTANGENT= "&BD91"
 
+    KM_TEST_BREAK       = "&BDEE"
+    KM_SCAN_KEYS        = "&BDF4"
 
 #
 # RUNTIME rutines
@@ -656,6 +680,33 @@ RT = {
         "\tld      (hl),&31\n",
         "\tinc     hl\n",
         "\tdjnz    __a2bin_loop\n",
+        "\tret\n\n",
+    ],[]),
+    "rt_copychrs": ([
+        "; RT_COPYCHRS\n",
+        "; Returns the character in the current cursor position for the\n"
+        "; stream given in A.\n",
+        "; Inputs:\n",
+        ";      A souce stream (0-9)\n",
+        ";     HL destination string\n",
+        "; Outputs:\n",
+        ";     HL  points to the resulting string (may be 0 len)\n",
+        ";     DE, AF and B are modified\n",
+        "rt_copychrs:\n",
+        "\tld      (hl),0\n",
+        "\tex      de,hl\n",
+        f"\tcall    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT\n",
+		"\tld      c,a     ; save current selected stream\n",
+		f"\tcall    {FWCALL.TXT_RD_CHAR}  ; TXT_RD_CHAR\n",
+        "\tret     nc      ; NC means error\n",
+		"\tld      b,a\n",
+        "\tld      a,c\n",
+		f"\tcall    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT\n",
+        "\tex      de,hl\n",
+        "\tld      (hl),1\n",
+        "\tinc     hl\n",
+        "\tld      (hl),b\n",
+        "\tdec     hl\n",
         "\tret\n\n",
     ],[]),
     #

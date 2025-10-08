@@ -296,8 +296,14 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_ATN(self, node:AST.Function):
+        """
+        Calculates the arc-tangent (forcing the numeric expression) to a real
+        number ranging from -PI/2 to +PI/2 of the value specified.
+        """
         # TODO: reals
+        self._emit_code("; ATN(<numeric expression>)")
         self._raise_error(2, node, 'not implemented yet')
+        self._emit_code(";")
 
     def _emit_AUTO(self, node:AST.Command):
         """
@@ -380,7 +386,7 @@ class CPCEmitter:
                 self._emit_code("pop     de")
         self._emit_code(";")
 
-    def _emit_CAT(self, node:AST.Statement):
+    def _emit_CAT(self, node:AST.Command):
         """
         Causes BASIC to start reading the directory of the current drive
         (cassette or disc) and to display the names of all files found.
@@ -396,11 +402,33 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.CAS_CATALOG}")
         self._emit_code(";")
 
-    def _emit_CHAIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CHAIN(self, node:AST.Command):
+        """
+        CHAIN loads a program from disc or cassette into the memory; replacing the
+        existing program. The new program then commences running, either from the
+        beginning, or from the line specified in the optional <line number expr>.
+        Protected files (saved with the ',P' type) can be loaded and run by chaining.
+        """
+        self._emit_code("; CHAIN <file name>[,<line number>]")
+        self._raise_warning(0, 'CHAIN is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
+        self._emit_code(";")
 
-    def _emit_CHAIN_MERGE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CHAIN_MERGE(self, node:AST.Command):
+        """
+        CHAIN MERGE merges a program from disc or cassette into the current program
+        memory. The <line number expression>, indicates the line number from which
+        execution is to begin once the new program is chain merged. In the absence
+        of <line number expression>, BASIC will default to the lowest line number
+        available. 
+        """
+        # CHAIN MERGE is processed by the preprocessor and it is used to
+        # append additional BAS files, so here we don't have to do anything
+        # here.
+        self._emit_code("; CHAIN MERGE <file name>[,<line number>][, DELETE <range>]")
+        self._raise_warning(0, 'CHAIN MERGE is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
+        self._emit_code(";")
 
     def _emit_CHRSS(self, node:AST.Function):
         """
@@ -417,23 +445,66 @@ class CPCEmitter:
         self._emit_code("dec     hl")
         self._emit_code(";")
 
-    def _emit_CINT(self, node:AST.Statement):
+    def _emit_CINT(self, node:AST.Function):
+        """
+        Converts the given value to a rounded integer in the range -32768..32767. 
+        """
+        # TODO: reals
+        self._emit_code("; INT(<numeric expression>)")
         self._raise_error(2, node, 'not implemented yet')
+        self._emit_code(";")
 
-    def _emit_CLEAR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CLEAR(self, node:AST.Command):
+        """
+        Clears all variables to zero or null. All open files are abandoned, all
+        arrays and user functions are erased, and BASIC is set to radians mode
+        of calculation. 
+        """
+        self._emit_code("; CLEAR")
+        self._raise_warning(0, 'CLEAR is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
+        self._emit_code(";")
+        
+    def _emit_CLEAR_INPUT(self, node:AST.Command):
+        """
+        Only available with BASIC 1.1
+        Discards all previously typed input from the keyboard, still in the
+        keyboard buffer.
+        """
+        # There is an specific Firmware routine in the 6128 (KM FLUSH)
+        # but to make it compatible with the 464 we use KM RESET instead
+        self._emit_code("; CLEAR INPUT")
+        self._emit_code(f"call    {FWCALL.KM_RESET}", info="KM_RESET")
+        self._emit_code(";")
 
-    def _emit_CLEAR_INPUT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CLG(self, node:AST.Command):
+        """
+        Clears the graphics screen to the graphics paper colour. If the <ink>
+        is specified, the graphics paper is set to that value. 
+        """
+        self._emit_code("; CLG [<masked ink>]")
+        if len(node.args) > 0:
+            self._emit_expression(node.args[0])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PAPER}", info="GRA_SET_PAPER")
+        self._emit_code(f"call    {FWCALL.GRA_CLEAR_WINDOW}", info="GRA_CLEAR_WINDOW")
+        self._emit_code(";")
+    
+    def _emit_CLOSEIN(self, node:AST.Command):
+        """
+        Close any input file from disc or cassette.
+        """
+        self._emit_code("; CLOSEIN")
+        self._emit_code(f"call    {FWCALL.CAS_IN_CLOSE}", info="CAS_IN_CLOSE")
+        self._emit_code(";")
 
-    def _emit_CLG(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
-    def _emit_CLOSEIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
-    def _emit_CLOSEOUT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CLOSEOUT(self, node:AST.Command):
+        """
+        Close any output file from disc or cassette.
+        """
+        self._emit_code("; CLOSEOUT")
+        self._emit_code(f"call    {FWCALL.CAS_OUT_CLOSE}", info="CAS_OUT_CLOSE")
+        self._emit_code(";")
 
     def _emit_CLS(self, node:AST.Command):
         """
@@ -449,21 +520,75 @@ class CPCEmitter:
             self._emit_code(f"call    {FWCALL.TXT_STR_SELECT}", info="TXT_STR_SELECT")
         self._emit_code(f"call    {FWCALL.TXT_CLEAR_WINDOW}", info="TXT_CLEAR_WINDOW")
 
-    def _emit_CONT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_CONT(self, node:AST.Command):
+        """
+        Continue program execution after a *Break*, STOP or END, as long as the
+        program has not been altered. Direct commands may be entered. 
+        """
+        self._emit_code("; CONT")
+        self._raise_warning(0, 'CONT is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
+        self._emit_code(";")
+    
+    def _emit_COPYCHRSS(self, node:AST.Function):
+        """
+        BASIC 1.1 only
+        COPies ChaRacter from the current position in the stream (which MUST be
+        specified). If the character read is not recognized, a null string is
+        returned. 
+        """
+        self._emit_import("rt_copychrs")
+        self._emit_code("; COPYCHR$(#<stream expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl")
+        self._reserve_memory(2)
+        self._emit_code("ld      a,e")
+        self._emit_code("call    rt_copychrs")
+        self._emit_code(";")
 
-    def _emit_COPYCHRSS(self, node:AST.Statement):
+    def _emit_COS(self, node:AST.Function):
+        """
+        Calculates the COSINE of a given value. The function defaults to radian
+        measure unless specifically instructed otherwise by the DEG command. 
+        """
+        # TODO: reals
+        self._emit_code("; COS(<numeric expression>)")
         self._raise_error(2, node, 'not implemented yet')
+        self._emit_code(";")
 
-    def _emit_COS(self, node:AST.Statement):
+    def _emit_CREAL(self, node:AST.Function):
+        """
+        Converts a value to a real number (As opposed to integer).
+        """
+        # TODO: reals
+        self._emit_code("; CREAL(<numeric expression>)")
         self._raise_error(2, node, 'not implemented yet')
-
-    def _emit_CREAL(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        self._emit_code(";")
 
     def _emit_CURSOR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
+        """
+        Only available with BASIC 1.1
+        Sets the system switch or the user switch to the cursor, ON or OFF. The
+        <system switch> and <user switch> parameters must be either 0 (OFF) or 1 (ON).
+        The cursor is displayed whenever both the <system switch> and <user switch>
+        are ON (1). The <system switch> is automatically turned OFF when printing
+        text to screen. Either swtich parameter may be omitted, but not both. If
+        a switch parameter is omitted, that particular switch state is not changed.
+        """
+        self._emit_code("; CURSOR [<system switch>][,<user switch>]")
+        calls_on = [FWCALL.TXT_CUR_ON, FWCALL.TXT_CUR_ENABLE]
+        calls_off = [FWCALL.TXT_CUR_OFF, FWCALL.TXT_CUR_DISABLE]
+        for i,a in enumerate(node.args):
+            self._emit_code("; system cursor" if i == 0 else "; user cursor")
+            self._emit_expression(a)
+            self._emit_code("ld      a,l", info="valid values are 0 or <>0")
+            self._emit_code("or      a")
+            self._emit_code("jr      z,$+7")
+            self._emit_code(f"call    {calls_on[i]}", info="TXT_CURSOR_ON/TXT_CURSOR_ENABLE")
+            self._emit_code("jr      $+5")
+            self._emit_code(f"call    {calls_off[i]}", info="TXT_CURSOR_OFF/TXT_CURSOR_DISABLE")
+        self._emit_code(";")
+   
     def _emit_DATA(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
