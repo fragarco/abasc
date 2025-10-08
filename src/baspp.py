@@ -20,7 +20,7 @@ import sys
 import os
 import re
 import argparse
-from typing import Any, Tuple
+from typing import cast
 from dataclasses import dataclass
 from baserror import BasError
 from baslex import LocBasLexer, TokenType
@@ -56,7 +56,7 @@ class LocBasPreprocessor:
                         lines[line].line,
                         lines[line].code
                     )
-                infile = os.path.join(basedir, tokens[i+1].value)
+                infile = os.path.join(basedir, tokens[i+1].value) # type: ignore [arg-type]
                 try:
                     with open(infile, 'r') as f:
                         filecontent = f.read()

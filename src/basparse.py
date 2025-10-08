@@ -2312,9 +2312,7 @@ class LocBasParser:
     def _parse_pointer(self) -> AST.Pointer:
         """ <pointer> ::= @IDENT """
         self._advance()
-        tk = self._expect(TokenType.IDENT)
-        vartype = AST.exptype_fromname(tk.lexeme)
-        var = AST.Variable(name=tk.lexeme, etype=vartype)
+        var = self._parse_primary_ident()
         return AST.Pointer(var=var)
 
     @astnode
