@@ -95,7 +95,6 @@ class LocBasPreprocessor:
                 # insert content from another BAS file
                 basedir = os.path.dirname(inputfile)
                 srclines = self._insert_file(basedir, srcline, line, srclines)
-                print(srclines)
             elif line != "":
                 num = self.extract_linenum(line)
                 if num is None:

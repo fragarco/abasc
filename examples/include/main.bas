@@ -1,7 +1,7 @@
 ' Simple example of incbas usage
 
 MODE 1
-INCBAS "simple.bas"
+CHAIN MERGE "simple.bas"
 y=10
 LABEL main
 FOR x=2 TO 25
