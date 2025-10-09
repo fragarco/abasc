@@ -934,7 +934,6 @@ RT = {
         "\tinc     bc\n",
         "\tjr      __input_enterchar\n",
         "__input_end:\n",
-        "\tinc     hl\n",
         "\tld      (hl),0\n",
         "\tcall    rt_print_nl\n",
         f"\tcall    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
