@@ -159,7 +159,7 @@ class CPCEmitter:
             self.symbolafter = 240
         self._emit_data()
         self._emit_data("; Table for symbols defined with SYMBOL keyword")
-        self._emit_data(f"_symbols_table: defs {256 - self.symbolafter}")
+        self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}")
 
     def _real(self, n: float) -> bytearray:
         """
