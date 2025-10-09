@@ -1504,7 +1504,7 @@ class LocBasParser:
             self._advance()
             stream = self._parse_int_expression()
             self._expect(TokenType.COMMA)
-        while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 sym = self._advance()
                 sep = AST.Separator(symbol=sym.lexeme)
@@ -1518,7 +1518,7 @@ class LocBasParser:
                 args.append(self._parse_expression())
                 etype = args[-1].etype
                 while self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
-                    if self._next_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+                    if self._next_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
                         break
                     self._advance()
                     args.append(self._parse_expression())
@@ -1548,7 +1548,7 @@ class LocBasParser:
         """ <RANDOMIZE> ::= RANDOMIZE [<num_expression>] """
         self._advance()
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             args = [self._parse_num_expression()]
         return AST.Command(name="RANDOMIZE", args=args)
 
@@ -1603,7 +1603,7 @@ class LocBasParser:
         """ <RESTORE> ::= RESTORE [<int_expression>] """
         self._advance()
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             args = [self._parse_int_expression()]
         return AST.Command(name="RESTORE", args=args)
 
@@ -1614,7 +1614,7 @@ class LocBasParser:
         # Probably this doesn't make sense in a compiled program
         # but leave the emiter to fail if needed
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             if self._current_is(TokenType.KEYWORD, "NEXT"):
                 self._advance()
                 return AST.Command(name="RESUME", args=[AST.Command(name="NEXT")])
@@ -1666,7 +1666,7 @@ class LocBasParser:
         """ <RUN> ::= RUN <str_expression> """
         self._advance()
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             args = [self._parse_str_expression()]  
         return AST.Command(name="RUN", args=args)
 
@@ -1676,13 +1676,13 @@ class LocBasParser:
         self._advance()
         lex = self._expect(TokenType.STRING).lexeme
         args: list[AST.Statement] = [AST.String(value=lex)]
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             self._expect(TokenType.COMMA)
             lex = self._expect(TokenType.IDENT).lexeme.upper()
             if lex not in ('A','B','P'):
                 self._raise_error(5)
             args.append(AST.String(value=lex))
-            while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
+            while not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
                 self._expect(TokenType.COMMA)
                 args.append(self._parse_int_expression())
         return AST.Command(name="SAVE", args=args)
@@ -2371,7 +2371,7 @@ class LocBasParser:
     def _parse_RSX(self) -> AST.RSX:
         name = self._advance().lexeme[1:]   # remove '|' symbol
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOF, TokenType.EOL, TokenType.COLON)):
+        if not self._current_in((TokenType.EOF, TokenType.EOL, TokenType.COLON, TokenType.COMMENT)):
             args = [self._parse_expression()]
             while self._current_is(TokenType.COMMA):
                 self._advance()
@@ -2416,7 +2416,8 @@ class LocBasParser:
     def _parse_statement_list(self) -> list[AST.Statement]:
         """<statement_list> ::= <statements> [:<statement>]"""
         stmts = [self._parse_statement()]
-        while self._match(TokenType.COLON):
+        while self._current_in((TokenType.COLON, TokenType.COMMENT)):
+            self._match(TokenType.COLON)
             # it's possible to end a line with just : and EOL
             if self._current_is(TokenType.EOL):
                 break

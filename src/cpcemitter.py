@@ -1285,14 +1285,16 @@ class CPCEmitter:
             self._emit_expression(node.stream)
             self._emit_stream()
         for i,item in enumerate(node.items):
-            if item.etype == AST.ExpType.String:
+            if isinstance(item, AST.Separator):
+                self._print_separator(item)
+            elif isinstance(item, AST.Pointer):
+                self._print_pointer(item)
+            elif item.etype == AST.ExpType.String:
                 self._print_str(item)
             elif item.etype == AST.ExpType.Integer:
                 self._print_int(item)
             elif item.etype == AST.ExpType.Real:
                 self._print_real(item)
-            elif isinstance(item, AST.Separator):
-                self._print_separator(item)
             else:
                 self._raise_error(2, item, 'print item not supported yet')
         if node.newline:
@@ -1315,6 +1317,18 @@ class CPCEmitter:
         self._emit_code("ld      a,32")
         self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
     
+    def _print_pointer(self, item:AST.Pointer):
+        # Pointer are always an address (int 16 bits)
+        self._emit_import("rt_int2str")
+        self._emit_code("; PRINT pointer item")
+        self._emit_code("ld      a,32")
+        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
+        self._emit_pointer(item)
+        self._emit_code("call    rt_int2str")
+        self._emit_code("call    rt_print_str")
+        self._emit_code("ld      a,32")
+        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
+
     def _print_real(self, item:AST.Statement):
         self._raise_error(2, item, "printing reals is not supported")
 
@@ -1609,6 +1623,8 @@ class CPCEmitter:
             self._emit_unaryop(node)
         elif isinstance(node, AST.Function):
             self._emit_function(node)
+        elif isinstance(node, AST.Pointer):
+            self._emit_pointer(node)
         else:
             self._raise_error(2, node, 'expression not supported yet')
 
@@ -1642,32 +1658,44 @@ class CPCEmitter:
             self._raise_error(38, node)
     
     def _emit_arrayitem(self, node: AST.ArrayItem):
+            self._emit_arrayitem_ptr(node)
+            if node.etype == AST.Integer:
+                self._emit_code("ld      de,(hl)")
+                self._emit_code("ex      de,hl")
+
+    def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
         var = self.symtable.find(node.name)
         if var is not None:
             if var.exptype != node.etype:
                 self._raise_error(13, node)
             self._emit_expression(node.args[0])  # index
             if node.etype == AST.ExpType.Integer:
-                self._emit_code("add     hl,hl", info="index * 2 bytes")
-                self._emit_code(f"ld      de,({var.label})")
-                self._emit_code("add     hl,de")
+                self._emit_code("add     hl,hl", info="index * 2 bytes")                
             elif node.etype == AST.ExpType.String:
                 self._emit_import("rt_mul16_255")
                 self._emit_code("call    rt_mul16_255")
-                self._emit_code(f"ld      de,{var.label}")
-                self._emit_code("add     hl,de")
             elif node.etype == AST.ExpType.Real:
                 self._emit_code("ld      d,h")
                 self._emit_code("ld      e,l")
                 self._emit_code("add     hl,hl", info="index * 5 bytes")
                 self._emit_code("add     hl,hl")
                 self._emit_code("add     hl,de")
-                self._emit_code(f"ld      de,({var.label})")
-                self._emit_code("add     hl,de")
             else:
-                self._raise_error(2, node, 'array type not implemented yet')
+                self._emit_code("ld      hl,0")
+            self._emit_code(f"ld      de,{var.label}")
+            self._emit_code("add     hl,de")
         else:
             self._raise_error(38, node)
+
+    def _emit_pointer(self, node: AST.Pointer):
+        var = self.symtable.find(node.var.name)
+        if var is not None:
+            if var.symtype == SymType.Variable:
+                self._emit_code(f"ld      hl,{var.label}")
+            elif var.symtype == SymType.Array:
+                self._emit_arrayitem_ptr(node.args[0])
+        else:
+            self._raise_error(2, node)
 
     def _emit_binaryop(self, node: AST.BinaryOp):
         """ 
