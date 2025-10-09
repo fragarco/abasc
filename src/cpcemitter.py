@@ -1513,8 +1513,15 @@ class CPCEmitter:
     def _emit_THEN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_TIME(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_TIME(self, node:AST.Function):
+        """
+        Holds the elapsed time since switch-on, excluding periods when reading or writing
+        the cassette (interrupts off). The units of time are 1/300th of a second.
+        The firmware call returns the result in DEHL. The call eneables interrups.
+        """
+        self._emit_code("; TIME")
+        self._emit_code(f"call     {FWCALL.KL_TIME_PLEASE}", info="KL_TIME_PLEASE")
+        self._emit_code(";")
 
     def _emit_TROFF(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')

@@ -165,7 +165,10 @@ extras/
 
 # basc intermediate files
 *.bpp
+*.ast
 *.irc
+*.lex
+*.sym
 *.asm
 *.bin
 *.lst
