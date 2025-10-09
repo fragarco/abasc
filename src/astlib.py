@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Sequence
 from enum import Enum
 import json
 
@@ -289,7 +289,7 @@ class ArrayItem(Statement):
         return d
 
 class Pointer(Statement):
-    var: Variable
+    var: Variable | ArrayItem
 
     def __init__(self, var: Variable):
         super().__init__(etype=ExpType.Integer, id="Pointer")
@@ -297,7 +297,7 @@ class Pointer(Statement):
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["variable"] = self.var.to_json()
+        d["ident"] = self.var.to_json()
         return d
 
 class Stream(Statement):
@@ -502,29 +502,28 @@ class UserFun(Statement):
 class Print(Statement):
     stream: Optional[Statement]
     items: list[Statement]
-    has_spaces: bool    # used during code generation
+    newline: bool
 
     def __init__(self, stream: Optional[Statement], items: list[Statement]):
         super().__init__(etype=ExpType.Void, id="Print")
         self.stream = stream
         self.items = items
-        self.has_spaces = False
-        for i in items:
-            if isinstance(i, Separator) and i.sym == ',':
-                self.has_spaces = True
-                break
+        self.newline = True
+        if len(items) > 0 and isinstance(items[-1], Separator):
+            self.newline = items[-1].sym != ';'
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["stream"] = self.stream.to_json() if self.stream is not None else None
         d["items"] = [a.to_json() for a in self.items]
+        d["newline"] = self.newline
         return d
 
 class Input(Statement):
     stream: Optional[Statement]
     prompt: str
     question: bool
-    vars: list[Variable]
+    vars: Sequence[Variable | ArrayItem]
 
     def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable]):
         super().__init__(etype=ExpType.Void, id="Input")
@@ -545,7 +544,7 @@ class LineInput(Statement):
     stream: Optional[Statement]
     prompt: str
     carriage: bool
-    var: Variable
+    var: Variable | ArrayItem
 
     def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, var: Variable):
         super().__init__(etype=ExpType.Void, id="LineInput")

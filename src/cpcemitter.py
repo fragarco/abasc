@@ -21,10 +21,9 @@ and are not covered by the above license statement.
 """
 
 from __future__ import annotations
-from typing import List, Optional, cast, Any
 from baspp import CodeLine
 from baserror import BasError
-from symbols import SymTable, SymEntry, SymType
+from symbols import SymTable, SymEntry, SymType, symsto_json
 import astlib as AST
 from cpcrt import FWCALL, RT
 
@@ -125,17 +124,32 @@ class CPCEmitter:
         for sym in self.symtable.syms:
             entry = self.symtable.syms[sym]
             if entry.symtype == SymType.Variable:
-                if entry.exptype == AST.ExpType.Integer:
-                    self._emit_data(f"{entry.label}: dw   0")
-                if entry.exptype == AST.ExpType.String:
-                    self._emit_data(f"{entry.label}: defs 255")
-                if entry.exptype == AST.ExpType.Real:
-                    self._emit_data(f"{entry.label}: defs 5")
+                self._emit_vardecl(entry)
+            elif entry.symtype == SymType.Array:
+                self._emit_arraydecl(entry)
             elif entry.symtype == SymType.RSX:
                 # last char must have bit 7 set
                 lastchar = ord(sym[-1]) + 128
                 self._emit_data(f'{entry.label}: db "{sym[0:-1]}",{lastchar}')
-     
+
+    def _emit_vardecl(self, entry: SymEntry):
+        if entry.exptype == AST.ExpType.Integer:
+            self._emit_data(f"{entry.label}: dw   0")
+        elif entry.exptype == AST.ExpType.String:
+            self._emit_data(f"{entry.label}: defs 255")
+        elif entry.exptype == AST.ExpType.Real:
+            self._emit_data(f"{entry.label}: defs 5")
+
+    def _emit_arraydecl(self, entry: SymEntry):
+        items = 1
+        for index in entry.indexes: items = items * index
+        if entry.exptype == AST.ExpType.Integer:
+            self._emit_data(f"{entry.label}: dw   {2*items}")
+        elif entry.exptype == AST.ExpType.String:
+            self._emit_data(f"{entry.label}: defs {255*items}")
+        elif entry.exptype == AST.ExpType.Real:
+            self._emit_data(f"{entry.label}: defs {5*items}")
+    
     def _emit_runtime(self) -> str:
         return "_runtime_:\n\n" + ''.join(self.rtcode) + '\n'
     
@@ -622,8 +636,33 @@ class CPCEmitter:
     def _emit_DI(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_DIM(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_DIM(self, node:AST.Command):
+        """
+        Allocate space for arrays and specify maximum subscript values. Basic must be
+        advised of the space to be reserved for an array, or it will default to 10.
+        Once set either implicitly or explicitly, the size of the array may not be changed,
+        or an error will result.
+       """
+        self._emit_code("; DIM <list of: subscripted variable>")
+        # We don't really emit code here but check that we don't consume 
+        # more than 28K of central memory leaving 4K max for code.
+        for var in node.args:
+            if isinstance(var, AST.Array):
+                entry = self.symtable.find(var.name, context="")
+                if entry is not None:
+                    mem = 1
+                    for index in entry.indexes: mem = mem * index
+                    if var.etype == AST.ExpType.String: mem = mem * 255
+                    elif var.etype == AST.ExpType.Integer: mem = mem * 2
+                    elif var.etype == AST.ExpType.Real: mem = mem * 5
+                    self._emit_code(f"; Array variable {entry.label} with {mem} bytes")
+                    if mem > 28*1024:
+                        self._raise_error(7, node)
+                else:
+                    self._raise_error(2, node)
+            else:
+                self._raise_error(2, node)
+        self._emit_code(";")
 
     def _emit_DRAW(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -960,36 +999,49 @@ class CPCEmitter:
         self._emit_code("ld      hl,rt_input_buf")
         for v in node.vars:
             self._emit_code("call    rt_extract_substrz")
-            var = self.symtable.find(v.name)
-            if var is not None:
-                self._emit_code("push    hl", info="current position in input buffer")
-                if v.etype == AST.ExpType.String:
-                    self._emit_input_str(v, var)
-                elif v.etype == AST.ExpType.Integer:
-                    self._emit_input_int(v, var)
-                elif v.etype == AST.ExpType.Real:
-                    self._emit_input_real(v, var)
-                self._emit_code("pop     hl", info="ready for next substring")
+            self._emit_code("push    hl", info="current position in input buffer")
+            entry = self.symtable.find(v.name)
+            if entry is not None:
+                if isinstance(v, AST.Variable):
+                    self._emit_code(f"; integer variable {v.name}")
+                    if v.etype == AST.ExpType.String:
+                        self._emit_code(f"ld      hl,{entry.label}")
+                        self._emit_input_str(v, entry)
+                    elif v.etype == AST.ExpType.Integer:
+                        self._emit_input_int(v, entry)
+                        self._emit_code(f"ld      ({entry.label}),hl")
+                    elif v.etype == AST.ExpType.Real:
+                        self._emit_input_real(v, entry)
+                elif isinstance(v, AST.ArrayItem):
+                    self._emit_code(f"; array item {v.name}")
+                    self._emit_arrayitem(v)
+                    if v.etype == AST.ExpType.String:
+                        self._emit_input_str(v, entry)
+                    elif v.etype == AST.ExpType.Integer:
+                        self._emit_code("push    hl")
+                        self._emit_input_int(v, entry)
+                        self._emit_code("ex      de,hl")
+                        self._emit_code("pop     hl")
+                        self._emit_code("ld      (hl),de")
+                    elif v.etype == AST.ExpType.Real:
+                        self._emit_input_real(v, entry)
+            self._emit_code("pop     hl", info="ready for next substring")
     
-    def _emit_input_str(self, v:AST.Variable, var: SymEntry):
-        self._emit_code(f"; string variable {v.name}")
+    def _emit_input_str(self, v:AST.Variable | AST.ArrayItem, var: SymEntry): 
         self._emit_code("ld      de,rt_substrz_buf")
-        self._emit_code(f"ld      hl,{var.label}")
         self._emit_code("ld      (hl),c", info="string len")
         self._emit_code("inc     hl")
         self._emit_code("ex      de,hl")
         self._emit_code("ld      b,0")
         self._emit_code("ldir")
 
-    def _emit_input_int(self, v:AST.Variable, var: SymEntry):
+    def _emit_input_int(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._emit_import("rt_strz2num")
-        self._emit_code(f"; integer variable {v.name}")
         self._emit_code("ld      de,rt_substrz_buf")
         self._emit_code("call    rt_strz2num")
-        self._emit_code(f"ld      ({var.label}),hl")
 
-    def _emit_input_real(self, v:AST.Variable, var: SymEntry):
-        self._emit_code(f"; real variable {v.name}")
+
+    def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._raise_error(2, v, 'float numbers in INPUT are not supported yet')
 
     def _emit_INSTR(self, node:AST.Statement):
@@ -1227,11 +1279,12 @@ class CPCEmitter:
         the lenght of the current zone. If it has, the following <print item>
         is printed in a further zone. 
         """
+        self._emit_import("rt_print")
         self._emit_code("; PRINT [#<stream expression>,][list of: <print item>]")
         if node.stream is not None:
             self._emit_expression(node.stream)
             self._emit_stream()
-        for item in node.items:
+        for i,item in enumerate(node.items):
             if item.etype == AST.ExpType.String:
                 self._print_str(item)
             elif item.etype == AST.ExpType.Integer:
@@ -1242,17 +1295,21 @@ class CPCEmitter:
                 self._print_separator(item)
             else:
                 self._raise_error(2, item, 'print item not supported yet')
-        if node.line:
+            # two items that are not separated by a ',' or ';' must use
+            # an empty space
+            if i < len(node.items)-1:
+                if not isinstance(item, AST.Separator) and not isinstance(node.items[i+1], AST.Separator):
+                    self._emit_code("ld      l,1")
+                    self._emit_code("call    rt_print_spc")
+        if node.newline:
             self._print_newline()
 
     def _print_str(self, item:AST.Statement):
-        self._emit_import("rt_print")
         self._emit_code("; PRINT string item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_str")
 
     def _print_int(self, item:AST.Statement):
-        self._emit_import("rt_print")
         self._emit_import("rt_int2str")
         self._emit_code("; PRINT int item")
         self._emit_expression(item)
@@ -1538,6 +1595,8 @@ class CPCEmitter:
             self._emit_const_real(node)
         elif isinstance(node, AST.Variable):
             self._emit_variable(node)
+        elif isinstance(node, AST.ArrayItem):
+            self._emit_arrayitem(node)
         elif isinstance(node, AST.BinaryOp):
             self._emit_binaryop(node)
         elif isinstance(node, AST.UnaryOp):
@@ -1576,6 +1635,34 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
+    def _emit_arrayitem(self, node: AST.ArrayItem):
+        var = self.symtable.find(node.name)
+        if var is not None:
+            if var.exptype != node.etype:
+                self._raise_error(13, node)
+            self._emit_expression(node.args[0])  # index
+            if node.etype == AST.ExpType.Integer:
+                self._emit_code("add     hl,hl", info="index * 2 bytes")
+                self._emit_code(f"ld      de,({var.label})")
+                self._emit_code("add     hl,de")
+            elif node.etype == AST.ExpType.String:
+                self._emit_import("rt_mul16_255")
+                self._emit_code("call    rt_mul16_255")
+                self._emit_code(f"ld      de,{var.label}")
+                self._emit_code("add     hl,de")
+            elif node.etype == AST.ExpType.Real:
+                self._emit_code("ld      d,h")
+                self._emit_code("ld      e,l")
+                self._emit_code("add     hl,hl", info="index * 5 bytes")
+                self._emit_code("add     hl,hl")
+                self._emit_code("add     hl,de")
+                self._emit_code(f"ld      de,({var.label})")
+                self._emit_code("add     hl,de")
+            else:
+                self._raise_error(2, node, 'array type not implemented yet')
+        else:
+            self._raise_error(38, node)
+
     def _emit_binaryop(self, node: AST.BinaryOp):
         """ 
         Develops right side and pushes the result, develops left 

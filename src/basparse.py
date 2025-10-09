@@ -446,6 +446,7 @@ class LocBasParser:
         if self.symtable.add(ident=fname, info=info, context="") is None:
             self._raise_error(2)
         if self._match(TokenType.LPAREN):
+            # No ArrayItems are supported here so we don't call _parse_ident()
             tk = self._expect(TokenType.IDENT)
             vartype = AST.exptype_fromname(tk.lexeme)
             fargs.append(AST.Variable(name=tk.lexeme, etype=vartype))
@@ -528,7 +529,7 @@ class LocBasParser:
         # El numero dado como "size" es el maximo indice que se puede
         # usar, de esta forma es valido 10 DIM I(0): I(0) = 5
         self._advance()
-        args = [self._parse_array_declaration()]
+        args: list[AST.Statement] = [self._parse_array_declaration()]
         while self._current_is(TokenType.COMMA):
             self._advance()
             args.append(self._parse_array_declaration())
@@ -537,14 +538,15 @@ class LocBasParser:
                 symtype=SymType.Array,
                 exptype=var.etype,
                 locals=SymTable(),
-                nargs=len(var.sizes)    #type: ignore[attr-defined]
+                nargs=len(var.sizes),   # type: ignore [attr-defined]
+                indexes=var.sizes       # type: ignore [attr-defined]
             )
             if not self.symtable.add(ident=var.name, info=info, context=self.context): #type: ignore[attr-defined]
-                self._raise_error(2)
+                self._raise_error(10)
         return AST.Command(name="DIM", args=args)
 
     @astnode
-    def _parse_array_declaration(self) -> AST.Statement:
+    def _parse_array_declaration(self) -> AST.Array:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
         var = self._expect(TokenType.IDENT).lexeme
         vartype = AST.exptype_fromname(var)
@@ -743,6 +745,7 @@ class LocBasParser:
     def _parse_FOR(self) -> AST.ForLoop:
         """ <FOR> ::= FOR IDENT = <int_expression> TO <int_expression> [STEP <int_expression>] """
         self._advance()
+        # ArrayItems are not suported here so we don't call _parse_ident()
         var = self._expect(TokenType.IDENT).lexeme.upper()
         vartype = AST.exptype_fromname(var)
         if not AST.exptype_isint(vartype):
@@ -955,7 +958,7 @@ class LocBasParser:
 
     @astnode
     def _parse_INPUT(self) -> AST.Input:
-        """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] IDENT [,IDENT] """
+        """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] <ident> [,<ident>] """
         self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
@@ -972,21 +975,20 @@ class LocBasParser:
         question: bool = True if self._match(TokenType.SEMICOLON) else False
         self._match(TokenType.COMMA)
         while True:
-            var = self._expect(TokenType.IDENT)
-            vartype = AST.exptype_fromname(var.lexeme)
-            vars.append(AST.Variable(name=var.lexeme, etype=vartype))
-            vars[-1].line = var.line
-            vars[-1].col = var.col
+            var = self._parse_ident()
+            vars.append(var)
             if not self._match(TokenType.COMMA):
                 break
         # Input can declare variables so we need to add any new ones to the symtable
+        # but only if they are not ArrayItems, which must be declared with DIM
         for v in vars:
-            if self.symtable.find(ident=v.name, context=self.context) is None:
-                self.symtable.add(
-                    ident=v.name,
-                    info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
-                    context=self.context
-                )
+            if isinstance(v, AST.Variable):
+                if self.symtable.find(ident=v.name, context=self.context) is None:
+                    self.symtable.add(
+                        ident=v.name,
+                        info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
+                        context=self.context
+                    )
         return AST.Input(stream=stream, prompt=prompt, question=question, vars=vars)
 
     @astnode
@@ -1087,7 +1089,7 @@ class LocBasParser:
 
     @astnode
     def _parse_LINE_INPUT(self) -> AST.LineInput:
-        """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][STRING(;|,)]<IDENT> """
+        """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][STRING(;|,)]<ident> """
         self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
@@ -1102,16 +1104,18 @@ class LocBasParser:
                 self._raise_error(2)
         carriage: bool = False if self._match(TokenType.SEMICOLON) else True
         self._match(TokenType.COMMA)
-        varname = self._expect(TokenType.IDENT).lexeme
-        vartype = AST.exptype_fromname(varname)
-        var = AST.Variable(name=varname, etype=vartype)
+        if not self._current_is(TokenType.IDENT):
+            self._raise_error(2)
+        var = self._parse_ident()
         # LINE INPUT can declare a new variable so we need to add it
-        if self.symtable.find(ident=varname, context=self.context) is None:
-            self.symtable.add(
-                ident=varname,
-                info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
-                context=self.context
-            )
+        # but only if it is not an ArrayItem
+        if isinstance(var, AST.Variable):
+            if self.symtable.find(ident=var.name, context=self.context) is None:
+                self.symtable.add(
+                    ident=var.name,
+                    info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
+                    context=self.context
+                )
         return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, var=var)
  
     @astnode
@@ -1282,20 +1286,20 @@ class LocBasParser:
 
     @astnode
     def _parse_NEXT(self) -> AST.BlockEnd:
-        """ <NEXT> ::= NEXT [IDENT]"""
+        """ <NEXT> ::= NEXT [<ident>]"""
         self._advance()
         if len(self.codeblocks) == 0 or "NEXT" not in self.codeblocks[-1].until_keywords:
             self._raise_error(1)
         next_var = ""
         if self._current_is(TokenType.IDENT):
-            next_var = self._advance().lexeme
-            vartype = AST.exptype_fromname(next_var)
-            if not AST.exptype_isint(vartype):
+            var: AST.Variable | AST.ArrayItem = self._parse_ident()
+            if not isinstance(var, AST.Variable) or not AST.exptype_isint(var.etype):
                 self._raise_error(13)
             node = self.codeblocks[-1].start_node
+            next_var = var.name.upper()
             if isinstance(node, AST.ForLoop):
                 orgvar = node.var.name.upper()
-                if orgvar != next_var.upper():
+                if orgvar != next_var:
                     self._raise_error(1)
             else:
                 self._raise_error(2)
@@ -1550,19 +1554,21 @@ class LocBasParser:
 
     @astnode
     def _parse_READ(self) -> AST.Command:
-        """ <READ> ::= READ IDENT[,IDENT]* """
+        """ <READ> ::= READ <ident>[,<ident>]* """
         self._advance()
         vars: list[AST.Statement] = []
         while True:
-            var: AST.Variable = self._parse_primary_ident()
+            var = self._parse_ident()
             vars.append(var)
             # READ can declare new variables so we need to add any new ones to the symtable
-            if self.symtable.find(ident=var.name, context=self.context) is None:
-                self.symtable.add(
-                    ident=var.name,
-                    info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
-                    context=self.context
-                )
+            # but not if they are Array items
+            if isinstance(var, AST.Variable):
+                if self.symtable.find(ident=var.name, context=self.context) is None:
+                    self.symtable.add(
+                        ident=var.name,
+                        info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
+                        context=self.context
+                    )
             if not self._current_is(TokenType.COMMA):
                 break
             self._advance()
@@ -2213,7 +2219,7 @@ class LocBasParser:
     def _parse_primary(self) -> AST.Statement:
         """
         <primary> ::= POINTER | INT | REAL | STRING | (<expression>)
-        <primary> ::= IDENT | IDENT(INT[,INT]) | <fun_keyword> | <fun_user>
+        <primary> ::= <ident> | <fun_keyword> | <fun_user>
         """
         tok = self._current()
         if tok.type == TokenType.AT:
@@ -2233,7 +2239,7 @@ class LocBasParser:
                 # and cannot be used in Locomotive Basic as the starting chars
                 # for variables
                 return self._parse_user_fun()
-            return self._parse_primary_ident()
+            return self._parse_ident()
         if tok.type == TokenType.KEYWORD:   
             return self._parse_keyword()
         if self._match(TokenType.LPAREN):
@@ -2244,8 +2250,8 @@ class LocBasParser:
         return AST.Nop()
     
     @astnode
-    def _parse_primary_ident(self) -> AST.Statement:
-        """ <primary_ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) """
+    def _parse_ident(self) -> AST.Variable | AST.ArrayItem:
+        """ <ident> ::= IDENT | IDENT(<int_expression>[,<int_expression>]) """
         # This is the first pass and some variables can be defined later
         # in the code so we cannot fail if an undefined variable arrives here
         # emiter will do
@@ -2310,9 +2316,9 @@ class LocBasParser:
 
     @astnode
     def _parse_pointer(self) -> AST.Pointer:
-        """ <pointer> ::= @IDENT """
+        """ <pointer> ::= @<ident> """
         self._advance()
-        var = self._parse_primary_ident()
+        var = self._parse_ident()
         return AST.Pointer(var=var)
 
     @astnode
@@ -2340,16 +2346,18 @@ class LocBasParser:
     # ----------------- AST Generation -----------------
     
     def _parse_assignment(self) -> AST.Assignment:
-        """ <assignment> ::= <primary_ident> = <expression>"""
+        """ <assignment> ::= <ident> = <expression>"""
         # The asignement is the way to declare variables so
         # we do not check in the sym table for left variable
-        target = self._parse_primary_ident()
+        target = self._parse_ident()
         self._expect(TokenType.COMP, "=")
         source = self._parse_expression()
         etype = AST.exptype_derive(target, source)
         if not AST.exptype_isvalid(etype):
             self._raise_error(13)
         # assignament type is always the one from the target variable
+        # an assignement is the way to declare new variables except in 
+        # the case of Arrays, which must be declared with DIM
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
             # have to add them to the symtable now

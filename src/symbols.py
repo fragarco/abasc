@@ -17,7 +17,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field
 from typing import Optional, Any
 from enum import Enum
 import copy
@@ -35,10 +35,11 @@ class SymEntry:
     symtype: SymType
     exptype: AST.ExpType
     locals: "SymTable"
+    label: str = ""
     writes: int = 1
     reads: int = 0
-    nargs: int = 0
-    label: str = ""
+    nargs: int = 0                                   # Used by DEF FN and Arrays
+    indexes: list[int] = field(default_factory=list) # Used by Arrays
 
 class SymTable:
     syms: dict[str, SymEntry]
@@ -118,6 +119,7 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
             "writes":  data.writes,
             "reads": data.reads,
             "nargs": data.nargs,
+            "indexes": data.indexes,
             "locals": symsto_json(data.locals.syms)
         }
         jsontable[s] = info
