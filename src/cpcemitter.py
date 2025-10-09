@@ -1014,7 +1014,9 @@ class CPCEmitter:
                         self._emit_input_real(v, entry)
                 elif isinstance(v, AST.ArrayItem):
                     self._emit_code(f"; array item {v.name}")
+                    self._emit_code("push    bc", info="keep substr length")
                     self._emit_arrayitem(v)
+                    self._emit_code("pop     bc")
                     if v.etype == AST.ExpType.String:
                         self._emit_input_str(v, entry)
                     elif v.etype == AST.ExpType.Integer:
