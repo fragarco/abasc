@@ -2,34 +2,33 @@
 
 REM *
 REM * This file is just an example of how BASC and DSK/CDT utilities can be called to compile programs
-REM * and generate files that can be used in emulators or new hardware for the Amstrad CPC
+REM * and generate files that can be used directly in Amstrad CPC emulators like WinAPE or RetroVirtualMachine
 REM *
-REM * USAGE: make [clear]
+REM * USAGE: make [clear][dsk]
 
 @setlocal
-
-set BAS=python3 ../../src/basc.py
-set DSK=python3 ../../src/dsk.py
-set CDT=python3 ../../src/cdt.py
 
 set SOURCE=main
 set TARGET=real
 
-set RUNBAS=%BAS% %SOURCE%.bas --verbose
-set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin
-set RUNCDT=%CDT% %TARGET%.cdt --new --name %TARGET% --put-bin %SOURCE%.bin
+set RUNBAS=python3 ../../src/basc.py %SOURCE%.bas
+set RUNDSK=python3 ../../src/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin
 
 IF "%1"=="clear" (
-    del %SOURCE%.bpp
-    del %SOURCE%.irc
-    del %SOURCE%.asm
-    del %SOURCE%.bin
-    del %SOURCE%.lst
-    del %SOURCE%.map
-    del %TARGET%.dsk
-    del %TARGET%.cdt
+    IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
+    IF EXIST "%SOURCE%.lex" del "%SOURCE%.lex"
+    IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
+    IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
+    IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
+    IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
+    IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
+    IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"
+    IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
+    IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
+) ELSE IF "%1"=="dsk" (
+    call %RUNBAS% %2 %3 && call %RUNDSK% 
 ) ELSE (
-    call %RUNBAS% && call %RUNDSK% && call %RUNCDT% 
+    call %RUNBAS% %*
 )
 
 @endlocal
