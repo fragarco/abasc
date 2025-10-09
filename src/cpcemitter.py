@@ -1727,6 +1727,27 @@ class CPCEmitter:
             self._emit_import("rt_udiv16")
             self._emit_code("call    rt_udiv16")
             self._emit_code("ex      de,hl", info="HL = HL MOD DE")
+        elif op == 'AND':
+            self._emit_code("ld      a,h")
+            self._emit_code("and     d")
+            self._emit_code("ld      h,a")
+            self._emit_code("ld      a,l")
+            self._emit_code("and     e")
+            self._emit_code("ld      l,a")
+        elif op == 'OR':
+            self._emit_code("ld      a,h")
+            self._emit_code("or      d")
+            self._emit_code("ld      h,a")
+            self._emit_code("ld      a,l")
+            self._emit_code("or      e")
+            self._emit_code("ld      l,a")
+        elif op == 'XOR':
+            self._emit_code("ld      a,h")
+            self._emit_code("xor     d")
+            self._emit_code("ld      h,a")
+            self._emit_code("ld      a,l")
+            self._emit_code("xor     e")
+            self._emit_code("ld      l,a")
         elif op == '/':
             self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
