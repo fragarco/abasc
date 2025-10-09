@@ -50,7 +50,7 @@ def process_args() -> argparse.Namespace:
 def clear(sourcefile: str):
     basefile = sourcefile.upper() 
     files: list[str] = [
-        basefile.replace('.BAS', '.PP'),
+        basefile.replace('.BAS', '.BPP'),
         basefile.replace('.BAS', '.LEX'),
         basefile.replace('.BAS', '.AST'),
     ]
@@ -78,7 +78,7 @@ def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine]
     else:
         codelines, code = pp.preprocess(infile, content, 10)
     if verbose:
-        ppfile = infile.upper().replace('BAS', 'PP')
+        ppfile = infile.upper().replace('BAS', 'BPP')
         pp.save_output(ppfile, code)
     return (codelines, code)
 
