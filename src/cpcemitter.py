@@ -1297,12 +1297,6 @@ class CPCEmitter:
                 self._print_separator(item)
             else:
                 self._raise_error(2, item, 'print item not supported yet')
-            # two items that are not separated by a ',' or ';' must use
-            # an empty space
-            if i < len(node.items)-1:
-                if not isinstance(item, AST.Separator) and not isinstance(node.items[i+1], AST.Separator):
-                    self._emit_code("ld      l,1")
-                    self._emit_code("call    rt_print_spc")
         if node.newline:
             self._print_newline()
 
@@ -1312,11 +1306,16 @@ class CPCEmitter:
         self._emit_code("call    rt_print_str")
 
     def _print_int(self, item:AST.Statement):
+        # Integers always print one space before and after
         self._emit_import("rt_int2str")
         self._emit_code("; PRINT int item")
+        self._emit_code("ld      a,32")
+        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
         self._emit_expression(item)
         self._emit_code("call    rt_int2str")
         self._emit_code("call    rt_print_str")
+        self._emit_code("ld      a,32")
+        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
     
     def _print_real(self, item:AST.Statement):
         self._raise_error(2, item, "printing reals is not supported")
