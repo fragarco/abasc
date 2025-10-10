@@ -19,10 +19,44 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 # Addresses for CPC Firmware Rutines
 #
 class FWCALL:
-    # LOW jump block
-    KL_FAR_PCHL         = "&001B"
+    LOW_LIMIT           = "&170"
+    HIGH_LIMIT          = "&B899"
 
-    # HI jump block
+    # LOW jumpblock
+    
+    RESET_ENTRY         = "&0000"
+    LOW_JUMP            = "&0008"
+    KL_LOW_PCHL         = "&000B"
+    PCBC_INSTRUCTION    = "&000E"
+    SIDE_CALL           = "&0010"
+    KL_SIDE_PCHL        = "&0013"
+    PCDE_INSTRUCTION    = "&0016"
+    FAR_CALL            = "&0018"
+    KL_FAR_PCHL         = "&001B"
+    PCHL_INSTRUCTION    = "&001E"
+    RAM_LAM             = "&0020"
+    KL_FAR_CALL         = "&0023"
+    FIRM_JUMP           = "&0028"
+    USER_RESTART        = "&0030"
+    INTERRUPT_ENTRY     = "&0038"
+    EXT_INTERRUPT       = "&003B"
+
+    # HI jumpblock
+
+    KL_U_ROM_ENABLE     = "&B900" 
+    KL_U_ROM_DISABLE    = "&B903" 
+    KL_L_ROM_ENABLE     = "&B906"
+    KL_L_ROM_DISABLE    = "&B909"
+    KL_ROM_RESTORE      = "&B90C"
+    KL_ROM_SELECT       = "&B90F"
+    KL_CURR_SELECTION   = "&B912"
+    KL_PROBE_ROM        = "&B915"
+    KL_ROM_DESELECT     = "&B918"
+    KL_LDIR             = "&B91B"
+    KL_LDDR             = "&B91E"
+    KL_POLL_SYNCHRONOUS = "&B921"
+    KL_SCAN_NEEDED      = "&B92A"
+
     KM_INITIALISE       = "&BB00"
     KM_RESET            = "&BB03"
     KM_WAIT_CHAR        = "&BB06"
@@ -210,6 +244,7 @@ class FWCALL:
     MC_SOUND_REGISTER   = "&BD34"
 
     # WATCH OUT: this are 464 addresses
+    # 6128 are the same plus 36 bytes
     MATH_MOVE_REAL      = "&BD3D"
     MATH_INT_TO_REAL    = "&BD40"
     MATH_BIN_TO_REAL    = "&BD43"
@@ -276,6 +311,27 @@ RT = {
         "; Outputs:\n",
         ";     Depends on the callee\n",
         "rt_call:\n",
+        "\tjp      (hl)\n\n",
+    ],[]),
+    "rt_math_call": ([
+        "; RT_MATH_CALL\n",
+        "; Jumps to the address passed in DE but it adjusts the address\n",
+        "; so in 664 and 6128 machines it adds 36 bytes which is the shift\n",
+        "; in the math jumpblock between these machines and the 464.\n",
+        "; Inputs:\n",
+        ";     DE call address as per 464 firmware jumpblock\n",
+        "; Outputs:\n",
+        ";     Depends on the callee\n",
+        ";     AF, BC, DE and HL are directly modified\n",
+        "rt_math_call:\n",
+        "\tld      c,0    ; ROM select address\n",
+        f"\tcall    {FWCALL.KL_PROBE_ROM}  ; KL_PROBE_ROM\n",
+        "\tld      a,h    ; 0 = CPC464, 1 = CPC664, 2 = CPC6128, 4 = Plus)\n",
+        "\tex      de,hl\n",
+        "\tor      a\n",
+        "\tjr      z,$+7\n",
+        "\tld      de,36  ; adjutst for non 464 machines\n"
+        "\tadc     hl,de\n",
         "\tjp      (hl)\n\n",
     ],[]),
     #

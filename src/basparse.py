@@ -477,7 +477,6 @@ class LocBasParser:
     @astnode
     def _parse_DEFINT(self) -> AST.Command:
         """ <DEFINT> ::= DEFINT <str_range> """
-        self._raise_warning(level=3, msg="DEFINT is ignored")
         self._advance()
         args = [self._parse_range()]
         return AST.Command(name="DEFINT", args=args)
@@ -485,7 +484,6 @@ class LocBasParser:
     @astnode
     def _parse_DEFREAL(self) -> AST.Command:
         """ <DEFREAL> ::= DEFREAL <str_range> """
-        self._raise_warning(level=3, msg="DEFREAL is ignored")
         self._advance()
         args = [self._parse_range()]
         return AST.Command(name="DEFREAL", args=args)
@@ -493,7 +491,6 @@ class LocBasParser:
     @astnode
     def _parse_DEFSTR(self) -> AST.Command:
         """ <DEFSTR> ::= DEFSTR <str_range> """
-        self._raise_warning(level=3, msg="DEFSTR is ignored")
         self._advance()
         args = [self._parse_range()]
         return AST.Command(name="DEFSTR", args=args)
@@ -506,10 +503,9 @@ class LocBasParser:
 
     def _parse_DELETE(self) -> AST.Command:
         """ <DELETE> ::= DELETE <int_range> """
-        # A direct command that is not allowed in compiled programs    
         self._advance()
-        self._raise_error(21)
-        return AST.Command(name="DELETE")
+        args = [self._parse_range()]
+        return AST.Command(name="DELETE", args=args)
 
     @astnode
     def _parse_DERR(self) -> AST.Function:
@@ -591,8 +587,9 @@ class LocBasParser:
         """ <EDIT> ::= EDIT INT """
         # A direct command that is not allowed in compiled programs    
         self._advance()
-        self._raise_error(21)
-        return AST.Command(name="EDIT")
+        num = self._expect(TokenType.INT)
+        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        return AST.Command(name="EDIT", args=args)
 
     @astnode
     def _parse_EI(self) -> AST.Command:
@@ -835,10 +832,13 @@ class LocBasParser:
  
     @astnode   
     def _parse_GRAPHICS_PEN(self) -> AST.Command:
-        """ <GRAPHICS_PEN> ::= GRAPHICS PEN <int_expression> """
+        """ <GRAPHICS_PEN> ::= GRAPHICS PEN <int_expression>[,<int_expression>] """
         # BASIC 1.1
         self._advance()
         args = [self._parse_int_expression()]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
         return AST.Command(name="GRAPHICS PEN", args=args)
 
     @astnode
@@ -1511,6 +1511,8 @@ class LocBasParser:
                 sep.line = sym.line
                 sep.col = sym.col
                 items.append(sep)
+            elif self._current_in((TokenType.KEYWORD,), ("SPC", "TAB")):
+                items.append(self._parse_keyword())
             elif self._current_in((TokenType.KEYWORD,), ("USING",)):
                 self._advance()
                 args = [self._parse_str_expression()]
@@ -1524,7 +1526,7 @@ class LocBasParser:
                     args.append(self._parse_expression())
                     if not AST.exptype_compatible(etype, args[-1].etype):
                         self._raise_error(13)
-                items.append(AST.Function(name="USING", etype=AST.ExpType.String, args=args))
+                items.append(AST.Command(name="USING", args=args))
                 if self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
                     sym = self._advance()
                     sep = AST.Separator(symbol=sym.lexeme)
@@ -1731,13 +1733,13 @@ class LocBasParser:
         return AST.Function(name="SPACE$", etype=AST.ExpType.String, args=args)
 
     @astnode
-    def _parse_SPC(self) -> AST.Function:
+    def _parse_SPC(self) -> AST.Command:
         """ <SPC> ::= SPC(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
         args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
-        return AST.Function(name="SPC", etype=AST.ExpType.String, args=args)
+        return AST.Command(name="SPC", args=args)
 
     @astnode
     def _parse_SPEED_INK(self) -> AST.Command:
@@ -1829,13 +1831,13 @@ class LocBasParser:
         return AST.Command(name="SYMBOL_AFTER", args=args)
 
     @astnode
-    def _parse_TAB(self) -> AST.Function:
+    def _parse_TAB(self) -> AST.Command:
         """ <TAB> ::= TAB(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
         args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
-        return AST.Function(name="TAB", etype=AST.ExpType.String, args=args)
+        return AST.Command(name="TAB", args=args)
 
     @astnode
     def _parse_TAG(self) -> AST.Command:

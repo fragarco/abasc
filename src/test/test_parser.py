@@ -391,9 +391,9 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[0].name, "DEG")
 
     def test_delete_basic(self):
-        code = "10 DELETE 100-200"
-        with self.assertRaises(BasError):
-            self.parse_code(code)
+        code = "10 DELETE &100-&200"
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "DELETE")
 
     def test_di_basic(self):
         code = "10 DI: END"
@@ -436,8 +436,8 @@ class TestParser(unittest.TestCase):
 
     def test_edit_basic(self):
         code = "10 EDIT 100"
-        with self.assertRaises(BasError):
-            self.parse_code(code)
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "EDIT")
 
     def test_ei_basic(self):
         code = "10 EI: END"
