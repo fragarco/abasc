@@ -331,7 +331,7 @@ RT = {
         "\tor      a\n",
         "\tjr      z,$+7\n",
         "\tld      de,36  ; adjutst for non 464 machines\n"
-        "\tadc     hl,de\n",
+        "\tadd     hl,de\n",
         "\tjp      (hl)\n\n",
     ],[]),
     #

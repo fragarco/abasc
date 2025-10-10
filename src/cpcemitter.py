@@ -1731,8 +1731,8 @@ class CPCEmitter:
         self._emit_import("rt_print")
         self._emit_code("; PRINT TAB(<integer expression>)]")
         self._emit_expression(node.args[0])
-        self._emit_code("adc     hl,hl")
-        self._emit_code("adc     hl,hl", info="HL = HL * 4")
+        self._emit_code("add     hl,hl")
+        self._emit_code("add     hl,hl", info="HL = HL * 4")
         self._emit_code("call    rt_print_spc")
         self._emit_code(";")
 
@@ -1985,8 +1985,10 @@ class CPCEmitter:
     
     def _emit_arrayitem(self, node: AST.ArrayItem):
             self._emit_arrayitem_ptr(node)
-            if node.etype == AST.Integer:
-                self._emit_code("ld      de,(hl)")
+            if node.etype == AST.ExpType.Integer:
+                self._emit_code("ld      e,(hl)")
+                self._emit_code("inc     hl")
+                self._emit_code("ld      d,(hl)")
                 self._emit_code("ex      de,hl")
 
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
@@ -2070,7 +2072,7 @@ class CPCEmitter:
             self._emit_code("sbc     hl,de", info="HL = right - left")
         elif op == '*':
             self._emit_import("rt_mul16")
-            self._emit_code("call   rt_mul16", info="HL = HL * DE")
+            self._emit_code("call    rt_mul16", info="HL = HL * DE")
         elif op == '\\':
             self._emit_import("rt_div16")
             self._emit_code("call    rt_div16", info="HL = HL \\ DE ")
@@ -2224,17 +2226,37 @@ class CPCEmitter:
         if var is not None:
             self._emit_expression(node.source)
             if var.exptype == AST.ExpType.Integer:
-                self._emit_code(f"ld      ({var.label}),hl")
+                if isinstance(node.target, AST.ArrayItem):
+                    self._emit_code("push    hl")
+                    self._emit_arrayitem_ptr(node.target)
+                    self._emit_code("pop     de")
+                    self._emit_code(f"ld      (hl),e")
+                    self._emit_code(f"inc     hl")
+                    self._emit_code(f"ld      (hl),d")
+                else:
+                    self._emit_code(f"ld      ({var.label}),hl")    
             elif var.exptype == AST.ExpType.Real:
+                if isinstance(node.target, AST.ArrayItem):
+                    self._emit_code("push    hl")
+                    self._emit_arrayitem_ptr(node.target)
+                    self._emit_code("ex      de,hl")
+                    self._emit_code("pop     hl")
+                else:
+                    self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ld      b,0")
                 self._emit_code("ld      c,5")
-                self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ldir")
             elif var.exptype == AST.ExpType.String:
+                if isinstance(node.target, AST.ArrayItem):
+                    self._emit_code("push    hl")
+                    self._emit_arrayitem_ptr(node.target)
+                    self._emit_code("ex      de,hl")
+                    self._emit_code("pop     hl")
+                else:
+                    self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ld      b,0")
                 self._emit_code("ld      c,(hl)")
                 self._emit_code("inc     c")
-                self._emit_code(f"ld      de,{var.label}")
                 self._emit_code("ldir")
             else:
                 self._raise_error(2, node, f'variable type not implemented yet')

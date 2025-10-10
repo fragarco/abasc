@@ -1,0 +1,19 @@
+10 CLS:PRINT "Enter 5 names....":PRINT
+20 DIM B$(5)
+30 FOR N=1 TO 5
+40 PRINT "Name"N"please";
+50 INPUT B$(N)
+60 NEXT
+65 T=TIME
+70 FOR N=1 TO 5
+80 PRINT "How wise of you ";B$(N);" to buy a CPC464"  
+90 NEXT
+100 DIM A(5)
+110 FOR N=0 TO 5
+120 A(N)=N*N
+130 NEXT
+140 FOR N=0 TO 5
+150 PRINT N"*"N"="A(N)
+160 NEXT
+170 PRINT TIME-T
+180 END
