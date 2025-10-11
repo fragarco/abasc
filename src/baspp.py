@@ -84,8 +84,8 @@ class LocBasPreprocessor:
         print("Preprocessing source files...")
         srclines, _ = self.ascodelines(inputfile, code)
         srcline = 0
-        autonum = increment
-        lastnum = increment
+        autonum = 0
+        lastnum = 0
         outlines: list[CodeLine] = []
         while srcline < len(srclines):
             codeline = srclines[srcline]
@@ -98,9 +98,9 @@ class LocBasPreprocessor:
             elif line != "":
                 num = self.extract_linenum(line)
                 if num is None:
+                    autonum = autonum + increment
                     line = str(autonum) + ' ' + line
                     lastnum = autonum
-                    autonum = autonum + increment
                 else:
                     if num < lastnum:
                         self._raise_error(
