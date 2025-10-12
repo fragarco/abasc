@@ -168,7 +168,7 @@ class LocBasParser:
         self._expect(TokenType.LPAREN)
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
-        return AST.Function(name="ABS", etype=AST.ExpType.Integer, args=args)
+        return AST.Function(name="ABS", etype=args[0].etype, args=args)
 
     @astnode
     def _parse_AFTER(self) -> AST.Command:

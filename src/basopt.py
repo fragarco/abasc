@@ -21,6 +21,9 @@ from typing import List, Optional, cast, Any
 import astlib as AST
 import symbols as SYM
 
+# NOTE: list of possible optimizations
+# - UnaryOp MINUS with Real or Integer literal, store just the resulting number
+
 class BasOptimizer:
     def __init__(self) -> None:
         self.modified = False

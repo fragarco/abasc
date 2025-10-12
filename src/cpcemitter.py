@@ -294,11 +294,19 @@ class CPCEmitter:
         self._emit_import("rt_abs")
         self._emit_code("; ABS(<numeric expression>)")
         arg = node.args[0]
+        self._emit_expression(node.args[0])
         if arg.etype == AST.ExpType.Real:
-            # TODO: reals
-            self._raise_error(2, node, 'reals are not supported')
-        self._emit_expression(arg)
-        self._emit_code("call    rt_abs")
+            self._emit_import("rt_math_call")      
+            self._moveflo_accum1()
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SIGNUM}", info="MATH_REAL_SIGNUM")
+            self._emit_code("call    rt_math_call")
+            self._emit_code("jr      nc,$+8")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
+            self._emit_code("call    rt_math_call")
+            self._moveflo_temp()
+        else:
+            self._emit_code("call    rt_abs")
+        self._emit_code(";")
 
     def _emit_AFTER(self, node:AST.Command):
         """
