@@ -631,9 +631,13 @@ class CPCEmitter:
         Calculates the COSINE of a given value. The function defaults to radian
         measure unless specifically instructed otherwise by the DEG command. 
         """
-        # TODO: reals
+        self._emit_import("rt_math_call")
         self._emit_code("; COS(<numeric expression>)")
-        self._raise_error(2, node, 'not implemented yet')
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_COSINE}", info="MATH_REAL_COSINE")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
         self._emit_code(";")
 
     def _emit_CREAL(self, node:AST.Function):
@@ -1679,7 +1683,18 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_SIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Calculates the SINE of a given value. The function defaults to radian
+        measure unless specifically instructed otherwise by the DEG command. 
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; SIN(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SINE}", info="MATH_REAL_SINE")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
 
     def _emit_SOUND(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
