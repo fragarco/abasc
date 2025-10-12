@@ -333,7 +333,7 @@ class LocBasParser:
         self._expect(TokenType.LPAREN)
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.RPAREN)
-        return AST.Function(name="CINT", etype=AST.ExpType.Long, args=args)
+        return AST.Function(name="CLONG", etype=AST.ExpType.Long, args=args)
 
     @astnode
     def _parse_CLOSEIN(self) -> AST.Command:
