@@ -201,6 +201,9 @@ class CPCEmitter:
         self._emit_data("; Table for symbols defined with SYMBOL keyword")
         self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}")
 
+    def _long(self, n: int) -> bytearray:
+        return bytearray([0,0,0,0])
+
     def _real(self, n: float) -> bytearray:
         """
         In Amstrad BASIC, a floating point number is stored in base-2 in a normalized form 1 x 2 ** <exp>
@@ -242,7 +245,11 @@ class CPCEmitter:
     def _get_conststr_label(self) -> str:
         self.constants +=1
         return f"__const_str_{self.constants}"
-        
+    
+    def _get_constlong_label(self) -> str:
+        self.constants +=1
+        return f"__const_long_{self.constants}"
+
     def _get_constreal_label(self) -> str:
         self.constants +=1
         return f"__const_real_{self.constants}"
@@ -529,6 +536,10 @@ class CPCEmitter:
             self._emit_code("xor     a")
             self._emit_code("ex      hl,de")
             self._emit_code("sbc     hl,de")
+        elif node.args[0].etype == AST.ExpType.Long:
+            self._raise_error(2, node, 'Long to Int not implemented yet')
+        else:
+            self._emit_code("; already Int so no action taken")
         self._emit_code(";")
 
     def _emit_CLEAR(self, node:AST.Command):
@@ -568,6 +579,21 @@ class CPCEmitter:
             self._emit_code("ld      a,l")
             self._emit_code(f"call    {FWCALL.GRA_SET_PAPER}", info="GRA_SET_PAPER")
         self._emit_code(f"call    {FWCALL.GRA_CLEAR_WINDOW}", info="GRA_CLEAR_WINDOW")
+        self._emit_code(";")
+    
+    def _emit_CLONG(self, node:AST.Function):
+        """
+        Converts the given value to a rounded long (int32) integer. 
+        """
+        self._emit_code("; CLONG(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        if node.args[0].etype == AST.ExpType.Real:
+            self._emit_import("rt_math_call")
+            self._raise_error(2, node, 'Real to Long not implemented yet')
+        elif node.args[0].etype == AST.ExpType.Integer:
+            self._raise_error(2, node, 'Int to Long not implemented yet')
+        else:
+            self._emit_code("; already Long so no action taken")
         self._emit_code(";")
     
     def _emit_CLOSEIN(self, node:AST.Command):
@@ -646,7 +672,18 @@ class CPCEmitter:
         """
         # TODO: reals
         self._emit_code("; CREAL(<numeric expression>)")
-        self._raise_error(2, node, 'not implemented yet')
+        self._emit_import("rt_math_call")
+        self._emit_expression(node.args[0])
+        if node.args[0].etype == AST.ExpType.Long:
+            #AAA
+            self._moveflo_accum1()
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_ARCTANGENT}", info="MATH_REAL_ARCTANGENT")
+            self._emit_code("call    rt_math_call")
+            self._moveflo_temp()
+        elif node.args[0].etype == AST.ExpType.Integer:
+            self._raise_error(2, node, 'Int to Long not implemented yet')
+        else:
+            self._emit_code("; already Real so no action taken")
         self._emit_code(";")
 
     def _emit_CURSOR(self, node:AST.Command):
@@ -1545,6 +1582,8 @@ class CPCEmitter:
                 self._print_int(item)
             elif item.etype == AST.ExpType.Real:
                 self._print_real(item)
+            elif item.etype == AST.ExpType.Long:
+                self._print_long(item)
             else:
                 self._raise_error(2, item, 'print item not supported yet')
         if node.newline:
@@ -1590,6 +1629,9 @@ class CPCEmitter:
 
     def _print_real(self, item:AST.Statement):
         self._raise_error(2, item, "printing reals is not supported")
+
+    def _print_long(self, item:AST.Statement):
+        self._raise_error(2, item, "printing longs is not supported")
 
     def _print_separator(self, item:AST.Separator):
         self._emit_code(f"; PRINT separator [{item.sym}]")
@@ -1682,7 +1724,7 @@ class CPCEmitter:
     def _emit_SGN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_SIN(self, node:AST.Statement):
+    def _emit_SIN(self, node:AST.Function):
         """
         Calculates the SINE of a given value. The function defaults to radian
         measure unless specifically instructed otherwise by the DEG command. 
@@ -2014,6 +2056,8 @@ class CPCEmitter:
             self._emit_code(f"ld      hl,{node.value & 0xFFFF}")
         elif isinstance(node, AST.String):
             self._emit_const_str(node)
+        elif isinstance(node, AST.Long):
+            self._emit_const_long(node)
         elif isinstance(node, AST.Real):
             self._emit_const_real(node)
         elif isinstance(node, AST.Variable):
@@ -2036,6 +2080,16 @@ class CPCEmitter:
         self._emit_code(f"ld      hl,{label}")
         self._emit_data(f'{label}: db {len(node.value)},"{node.value}"')
 
+    def _emit_const_long(self, node: AST.Long):
+        label = self._get_constlong_label()
+        self._emit_code(f"ld      hl,{label}")
+        cpclong = self._long(node.value)
+        values = ""
+        for b in cpclong:
+            values = values + f'&{b:02X},'
+        # send code without last ','
+        self._emit_data(f'{label}: db {values[:-1]}')
+
     def _emit_const_real(self, node: AST.Real):
         label = self._get_constreal_label()
         self._emit_code(f"ld      hl,{label}")
@@ -2051,6 +2105,8 @@ class CPCEmitter:
         if var is not None:
             if node.etype == AST.ExpType.Integer:  
                 self._emit_code(f"ld      hl,({var.label})")
+            elif node.etype == AST.ExpType.Long:
+                self._emit_code(f"ld      hl,{var.label}")
             elif node.etype == AST.ExpType.String:
                 self._emit_code(f"ld      hl,{var.label}")
             elif node.etype == AST.ExpType.Real:

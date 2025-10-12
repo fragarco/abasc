@@ -45,6 +45,7 @@ from __future__ import annotations
 from typing import Any, Callable, Optional, cast
 from dataclasses import dataclass
 from enum import Enum, auto
+from math import log
 from functools import wraps
 from baserror import BasError
 from baspp import CodeLine
@@ -293,7 +294,7 @@ class LocBasParser:
 
     @astnode
     def _parse_CINT(self) -> AST.Function:
-        """ <CINT> ::= CINT(<real_expression>)"""
+        """ <CINT> ::= CINT(<num_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
         args: list[AST.Statement] = [self._parse_num_expression()]
@@ -324,6 +325,15 @@ class LocBasParser:
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
             args = [self._parse_int_expression()]
         return AST.Command(name="CLG", args=args)
+
+    @astnode
+    def _parse_CLONG(self) -> AST.Function:
+        """ <CLONG> ::= CLONG(<num_expression>)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_num_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="CINT", etype=AST.ExpType.Long, args=args)
 
     @astnode
     def _parse_CLOSEIN(self) -> AST.Command:
@@ -1899,7 +1909,7 @@ class LocBasParser:
     def _parse_TIME(self) -> AST.Function:
         """ <TIME> ::= TIME """
         self._advance()
-        return AST.Function(name="TIME", etype=AST.ExpType.Integer)
+        return AST.Function(name="TIME", etype=AST.ExpType.Long)
 
     @astnode
     def _parse_TRON(self) -> AST.Command:
@@ -2073,6 +2083,30 @@ class LocBasParser:
         XOR
     """
 
+    def _cast_numtype(self, node: AST.Statement, etype: AST.ExpType) -> AST.Statement:
+        """ 
+        Issue a warning if we cast to a less representation range format:
+        Real > Long > Integer
+        """
+        if etype == AST.ExpType.Integer and node.etype != AST.ExpType.Integer:
+            self._raise_warning(1, "implicit type cast to INT")
+            node = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
+        elif etype == AST.ExpType.Long and node.etype != AST.ExpType.Long:
+            if node.etype == AST.ExpType.Real:
+                self._raise_warning(1, "implicit REAL cast to LONG")
+            node = AST.Function(name="CLONG", etype=AST.ExpType.Long, args=[node])
+        elif etype == AST.ExpType.Real and node.etype != AST.ExpType.Real:
+            node = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
+        return node
+
+    def _cast_numtypes(self, left: AST.Statement, right: AST.Statment, etype: AST.ExpType) -> tuple[AST.Steatment, AST.Statement]:
+        dtype = AST.exptype_derive(left, right)
+        if not AST.exptype_isvalid(dtype) or not AST.exptype_isnum(dtype):
+            self._raise_error(13, line=left.line, col=left.col)
+        right = self._cast_numtype(right, etype)
+        left  = self._cast_numtype(left, etype)
+        return left, right
+
     def _parse_int_expression(self) -> AST.Statement:
         """ <int_expression> ::= <expression>.type=INT """
         stat = self._parse_logic_xor()
@@ -2101,126 +2135,146 @@ class LocBasParser:
     @astnode
     def _parse_logic_xor(self) -> AST.Statement:
         """ <logic_xor> ::= <logic_or> [OR <logic_or>] """
-        node = self._parse_logic_or()
+        left = self._parse_logic_or()
         while self._current_is(TokenType.OP, "XOR"):
-            op = self._advance()
+            self._advance()
             right = self._parse_logic_and()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
-                self._raise_error(13, line=op.line, col=op.col)
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
-            node = AST.BinaryOp(op="XOR", left=node, right=right, etype=AST.ExpType.Integer)
-        return node
+            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer)
+            left = AST.BinaryOp(op="XOR", left=left, right=right, etype=AST.ExpType.Integer)
+        return left
 
     @astnode
     def _parse_logic_or(self) -> AST.Statement:
         """ <logic_or> ::= <logic_and> [OR <logic_and>] """
-        node = self._parse_logic_and()
+        left = self._parse_logic_and()
         while self._current_is(TokenType.OP, "OR"):
-            op = self._advance()
+            self._advance()
             right = self._parse_logic_and()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
-                self._raise_error(13, line=op.line, col=op.col)
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
-            node = AST.BinaryOp(op="OR", left=node, right=right, etype=AST.ExpType.Integer)
-        return node
+            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer)
+            left = AST.BinaryOp(op="OR", left=left, right=right, etype=AST.ExpType.Integer)
+        return left
 
     @astnode
     def _parse_logic_and(self) -> AST.Statement:
         """ <logic_and> ::= <comparison> [AND <comparison>] """
-        node = self._parse_comparison()
+        left = self._parse_comparison()
         while self._current_is(TokenType.OP, "AND"):
-            op = self._advance()
+            self._advance()
             right = self._parse_comparison()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
-                self._raise_error(13, line=op.line, col=op.col)
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
-            node = AST.BinaryOp(op="AND", left=node, right=right, etype=AST.ExpType.Integer)
-        return node
+            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer)
+            left = AST.BinaryOp(op="AND", left=left, right=right, etype=AST.ExpType.Integer)
+        return left
 
     @astnode
     def _parse_comparison(self) -> AST.Statement:
         """ <comparison> ::= <mod> [(= | < | > | <= | =< | >= | => | <>) <mod>] """
-        node = self._parse_mod()
+        left = self._parse_mod()
         while self._current_is(TokenType.COMP):
             op = self._advance()
             right = self._parse_mod()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype):
+            dtype = AST.exptype_derive(left, right)
+            if not AST.exptype_isvalid(dtype):
                 self._raise_error(13, line=op.line, col=op.col)
             # Logic OP always produces an integer result (0=FALSE, -1=TRUE)
-            # but can operate with strings, for example "STRING1" >= "STRING"
-            # which returns -1 (TRUE)
+            # but can operate with all types including String, for example, 
+            # "STRING1" >= "STRING" which returns -1 (TRUE)
+            if left.etype != AST.ExpType.String:
+                left = self._cast_numtype(left, dtype)
+            if right.etype != AST.ExpType.String:
+                right = self._cast_numtype(right, dtype)
             opname = op.lexeme.replace('=>','>=').replace('=<','<=') # one operation one symbol
-            node = AST.BinaryOp(op=opname, left=node, right=right, etype=AST.ExpType.Integer)
-        return node
+            left = AST.BinaryOp(op=opname, left=left, right=right, etype=AST.ExpType.Integer)
+        return left
 
     @astnode
     def _parse_mod(self) -> AST.Statement:
         """ <MOD> ::= <term> [MOD <term>] """
-        node = self._parse_term()
+        left = self._parse_term()
         while self._current_is(TokenType.OP, "MOD"):
-            op = self._advance()
+            self._advance()
             right = self._parse_term()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype) or not AST.exptype_isnum(etype):
-                self._raise_error(13, line=op.line, col=op.col)
-            # MOD always produces an integer result
-            node = AST.BinaryOp(op="MOD", left=node, right=right, etype=AST.ExpType.Integer)
-        return node
+            # MOD always produces an integer result and needs integer operators
+            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer)
+            left = AST.BinaryOp(op="MOD", left=left, right=right, etype=AST.ExpType.Integer)
+        return left
 
     @astnode
     def _parse_term(self) -> AST.Statement:
         """ <term> ::= <factor> [( + | - ) <factor>] """
-        node = self._parse_factor()
+        left = self._parse_factor()
         while self._current_in((TokenType.OP,),  ('+', '-')):
             op = self._advance()
             right = self._parse_factor()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isvalid(etype):
+            dtype = AST.exptype_derive(left, right)
+            if not AST.exptype_isvalid(dtype):
                 self._raise_error(13, line=op.line, col=op.col)
-            if etype == AST.ExpType.String and op.lexeme == "-":
-                """ Strings only work with + (concatenate) """
-                self._raise_error(13, line=op.line, col=op.col)
-            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
-        return node
+            if dtype == AST.ExpType.String:
+                if op.lexeme == "-":
+                    """ Strings only work with + (concatenate) """
+                    self._raise_error(13, line=op.line, col=op.col)
+            else:
+                left, right = self._cast_numtypes(left, right, dtype)
+            left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+        return left
 
     @astnode
     def _parse_factor(self) -> AST.Statement:
         r""" <factor> ::= <unary> [( * | / | \ ) <unary>] """
-        node = self._parse_unary()
+        left = self._parse_unary()
         while self._current_in((TokenType.OP,), ('*', '/', '\\')):
             op = self._advance()
             right = self._parse_unary()
-            etype = AST.exptype_derive(node, right)
-            if not AST.exptype_isnum(etype):
-                self._raise_error(13, line=op.line, col=op.col)
-            elif op.lexeme == '\\':
-                etype = AST.ExpType.Integer
-            node = AST.BinaryOp(op=op.lexeme, left=node, right=right, etype=etype)
-        return node
+            if op.lexeme == '\\':
+                dtype = AST.ExpType.Integer
+            else:
+                dtype = AST.exptype_derive(left, right)
+            left, right = self._cast_numtypes(left, right, dtype)
+            left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+        return left
 
     @astnode
     def _parse_unary(self) -> AST.Statement:
         """ <unary> ::= ( - | NOT ) <primary> | <primary> """
         if self._current_in((TokenType.OP,), ('-', 'NOT')):
             op = self._advance()
-            operand = self._parse_primary()
-            if not AST.exptype_isnum(operand.etype):
-                # NOT and - only work with INT and REAL
+            right = self._parse_primary()
+            # NOT only work with INT while - works with INT, LONG, and REAL
+            if not AST.exptype_isnum(right.etype):
                 self._raise_error(13, line=op.line, col=op.col) 
-            return AST.UnaryOp(op=op.lexeme, operand=operand, etype=operand.etype)
+            else:
+                if op.lexeme == 'NOT':
+                    right = self._cast_numtype(right, AST.ExpType.Integer)
+            return AST.UnaryOp(op=op.lexeme, operand=right, etype=right.etype)
         return self._parse_primary()
+
+    def _int_to_bytes(self, lex: str, n: int) -> int:
+        """
+        Returns the bytes needed to represent the number n.
+        Options are integers of 16 bits or integers of 32 bits.
+        Hex/binary numbers are unsigned while regular numbers are
+        signed. In the last case, we multiply by 2 to add the sign bit.
+        """
+        if n == 0:
+            return 2
+        if '&' not in lex:
+            n = abs(n) * 2
+        minbytes = int(log(n, 256)) + 1
+        if minbytes > 4:
+            return 0  # Overflow
+        if minbytes > 2:
+            return 4
+        return 2
 
     @astnode
     def _parse_primary(self) -> AST.Statement:
         """
-        <primary> ::= POINTER | INT | REAL | STRING | (<expression>)
+        <primary> ::= POINTER | INT | LONG | REAL | STRING | (<expression>)
         <primary> ::= <ident> | <fun_keyword> | <fun_user>
         """
         tok = self._current()
@@ -2228,7 +2282,13 @@ class LocBasParser:
             return self._parse_pointer()
         if tok.type == TokenType.INT:
             self._advance()
-            return AST.Integer(value=cast(int, tok.value))
+            value = cast(int, tok.value)
+            nbytes = self._int_to_bytes(tok.lexeme, value)
+            if nbytes == 0:
+                self._raise_error(6)
+            if nbytes == 4:
+                return AST.Long(value=value)
+            return AST.Integer(value=value)
         if tok.type == TokenType.REAL:
             self._advance()
             return AST.Real(value=cast(float, tok.value))
@@ -2297,10 +2357,16 @@ class LocBasParser:
 
     @astnode
     def _parse_constant(self) -> AST.Statement:
-        """ <constant> ::= INT | REAL | "STRING" | STRING """
+        """ <constant> ::= INT | LONG | REAL | "STRING" | STRING """
         tok = self._current()
         if tok.type == TokenType.INT:
+            value = cast(int, tok.value)
+            nbytes = self._int_to_bytes(tok.lexeme, value)
+            if nbytes == 0:
+                self._raise_error(6)
             self._advance()
+            if nbytes == 4:
+                return AST.Long(value=value)
             return AST.Integer(value=cast(int, tok.value))
         if tok.type == TokenType.REAL:
             self._advance()
@@ -2354,12 +2420,14 @@ class LocBasParser:
         target = self._parse_ident()
         self._expect(TokenType.COMP, "=")
         source = self._parse_expression()
-        etype = AST.exptype_derive(target, source)
-        if not AST.exptype_isvalid(etype):
-            self._raise_error(13)
         # assignament type is always the one from the target variable
         # an assignement is the way to declare new variables except in 
         # the case of Arrays, which must be declared with DIM
+        dtype = AST.exptype_derive(target, source)
+        if not AST.exptype_isvalid(dtype):
+            self._raise_error(13, line=source.line, col=source.col)
+        if dtype != AST.ExpType.String:
+            target, source = self._cast_numtypes(target, source, target.etype)
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
             # have to add them to the symtable now

@@ -96,10 +96,10 @@ class TokenEncoder(json.JSONEncoder):
 _KEYWORDS = {
     # Commands
     "AFTER","AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR","CLEAR INPUT",
-    "CLG", "CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA","DEF","DEF FN",
-    "DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI","DIM","DRAW","DRAWR",
-    "EDIT","EI","ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL","FN",
-    "FOR","FRAME","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF",
+    "CLG", "CLONG","CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA","DEF",
+    "DEF FN","DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI","DIM","DRAW",
+    "DRAWR","EDIT","EI","ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL",
+    "FN","FOR","FRAME","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF",
     "IFEND","INK","INPUT","KEY","KEY DEF","LABEL","LET","LINE","LINE INPUT","LIST",
     "LOAD","LOCATE","MASK","MEMORY","MERGE","MID$","MODE","MOVE","MOVER","NEW",
     "NEXT","ON","ON BREAK","ON ERROR GOTO", "ON SQ","OPENIN","OPENOUT","ORIGIN",
@@ -241,7 +241,7 @@ class LocBasLexer:
             else:
                 break
         # Optional sufixes
-        if self._peek() in "%!$":
+        if self._peek() in "%!$&":
             out += self._advance()
         return out
 
@@ -425,7 +425,7 @@ class LocBasLexer:
                 return Token(TokenType.KEYWORD, uident, start_line, start_col)
 
             # User Identifier (variable, FN..., etc.)
-            if self.enforce_varlen and len(ident.rstrip("%!$")) > 40:
+            if self.enforce_varlen and len(ident.rstrip("%!$&")) > 40:
                 ident = ident[:40]
             return Token(TokenType.IDENT, ident, start_line, start_col, ident.upper())
 
