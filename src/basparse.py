@@ -101,9 +101,9 @@ class LocBasParser:
             info
         ) 
 
-    def _raise_warning(self, level: int, msg: str):
+    def _raise_warning(self, level: int, msg: str, node: Optional[AST.ASTNode] = None):
         if self.warning_level<0 or self.warning_level>=level:
-            current = self._current()
+            current: AST.ASTNode | Token = node if node is not None else self._current()
             # tokens start line counting in 1
             codeline = self.lines[current.line - 1]
             print(f"[WARNING] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
@@ -2089,17 +2089,17 @@ class LocBasParser:
         Real > Long > Integer
         """
         if etype == AST.ExpType.Integer and node.etype != AST.ExpType.Integer:
-            self._raise_warning(1, "implicit type cast to INT")
+            self._raise_warning(1, f"implicit type cast of to INT", node)
             node = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
         elif etype == AST.ExpType.Long and node.etype != AST.ExpType.Long:
             if node.etype == AST.ExpType.Real:
-                self._raise_warning(1, "implicit REAL cast to LONG")
+                self._raise_warning(1, f"implicit REAL cast of to LONG", node)
             node = AST.Function(name="CLONG", etype=AST.ExpType.Long, args=[node])
         elif etype == AST.ExpType.Real and node.etype != AST.ExpType.Real:
             node = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
         return node
 
-    def _cast_numtypes(self, left: AST.Statement, right: AST.Statment, etype: AST.ExpType) -> tuple[AST.Steatment, AST.Statement]:
+    def _cast_numtypes(self, left: AST.Statement, right: AST.Statement, etype: AST.ExpType) -> tuple[AST.Statement, AST.Statement]:
         dtype = AST.exptype_derive(left, right)
         if not AST.exptype_isvalid(dtype) or not AST.exptype_isnum(dtype):
             self._raise_error(13, line=left.line, col=left.col)
