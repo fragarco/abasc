@@ -1845,9 +1845,13 @@ class CPCEmitter:
         must be in the range -200,000….+200,000, defaulting to radian measure
         unless declared otherwise by a DEG command. 
         """
-        # TODO: Reals
+        self._emit_import("rt_math_call")
         self._emit_code("; TAN(<numeric expression>)")
-        self._raise_error(2, node, 'not implemented yet')
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TANGENT}", info="MATH_REAL_TANGENT")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
         self._emit_code(";")
 
     def _emit_TEST(self, node:AST.Function):
