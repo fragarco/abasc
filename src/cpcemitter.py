@@ -209,7 +209,7 @@ class CPCEmitter:
         The exponent is 8-bit an uses a bias of 128 (128-255 possitive, 0-127 negative)
         """
         if n == 0:
-            return bytes([0,0,0,0x28,0])
+            return bytearray([0,0,0,0x28,0])
         sign = '1' if n < 0 else '0'
         exp = 0
         prec = abs(n)
@@ -509,13 +509,18 @@ class CPCEmitter:
         """
         Converts the given value to a rounded integer in the range -32768..32767. 
         """
-        self._emit_code("; INT(<numeric expression>)")
+        self._emit_code("; CINT(<numeric expression>)")
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Real:
             self._emit_import("rt_math_call")
             self._moveflo_accum1()
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TO_INT}", info="MATH_REAL_TO_INT")
             self._emit_code("call    rt_math_call")
+            self._emit_code("jp      p,$+10")
+            self._emit_code("ld      de,0")
+            self._emit_code("xor     a")
+            self._emit_code("ex      hl,de")
+            self._emit_code("sbc     hl,de")
         self._emit_code(";")
 
     def _emit_CLEAR(self, node:AST.Command):
@@ -1548,12 +1553,15 @@ class CPCEmitter:
         # Integers always print one space before and after
         self._emit_import("rt_int2str")
         self._emit_code("; PRINT int item")
-        self._emit_code("ld      a,32")
-        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
         self._emit_expression(item)
         self._emit_code("call    rt_int2str")
-        self._emit_code("call    rt_print_str")
+        self._emit_code("xor     a", info="leave the '-' space in positive numbers")
+        self._emit_code("or      c")
+        self._emit_code("jr      nz,$+7")
         self._emit_code("ld      a,32")
+        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
+        self._emit_code("call    rt_print_str")
+        self._emit_code("ld      a,32", info="trailing space")
         self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
     
     def _print_pointer(self, item:AST.Pointer):
@@ -2102,6 +2110,13 @@ class CPCEmitter:
                 self._emit_code("sbc     hl,de")
             else:
                 self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
+        elif node.etype == AST.ExpType.Real:
+            if node.op == '-':
+                self._emit_import("rt_math_call")
+                self._moveflo_accum1()
+                self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
+                self._emit_code("call    rt_math_call")
+                self._moveflo_temp()
         else:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
 
