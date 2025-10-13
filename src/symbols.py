@@ -51,7 +51,6 @@ class SymTable:
         name = name.replace("!","_R")
         name = name.replace("$","_S")
         name = name.replace("%","_I")
-        name = name.replace("&","_L")
         name = name.replace(".","_")
         if entry.symtype == SymType.Variable:
             return f"VAR_{name.upper()}"

@@ -42,7 +42,7 @@ for line in ast.lines:
 """
 
 from __future__ import annotations
-from typing import Any, Callable, Optional, cast
+from typing import Callable, Optional, cast
 from dataclasses import dataclass
 from enum import Enum, auto
 from math import log
@@ -325,15 +325,6 @@ class LocBasParser:
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON)):
             args = [self._parse_int_expression()]
         return AST.Command(name="CLG", args=args)
-
-    @astnode
-    def _parse_CLONG(self) -> AST.Function:
-        """ <CLONG> ::= CLONG(<num_expression>)"""
-        self._advance()
-        self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
-        self._expect(TokenType.RPAREN)
-        return AST.Function(name="CLONG", etype=AST.ExpType.Long, args=args)
 
     @astnode
     def _parse_CLOSEIN(self) -> AST.Command:
@@ -1909,7 +1900,7 @@ class LocBasParser:
     def _parse_TIME(self) -> AST.Function:
         """ <TIME> ::= TIME """
         self._advance()
-        return AST.Function(name="TIME", etype=AST.ExpType.Long)
+        return AST.Function(name="TIME", etype=AST.ExpType.Integer)
 
     @astnode
     def _parse_TRON(self) -> AST.Command:
@@ -2086,15 +2077,11 @@ class LocBasParser:
     def _cast_numtype(self, node: AST.Statement, etype: AST.ExpType) -> AST.Statement:
         """ 
         Issue a warning if we cast to a less representation range format:
-        Real > Long > Integer
+        Real > Integer
         """
         if etype == AST.ExpType.Integer and node.etype != AST.ExpType.Integer:
-            self._raise_warning(1, f"implicit type cast of to INT", node)
+            self._raise_warning(1, f"implicit cast of REAL to INT", node)
             node = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
-        elif etype == AST.ExpType.Long and node.etype != AST.ExpType.Long:
-            if node.etype == AST.ExpType.Real:
-                self._raise_warning(1, f"implicit REAL cast of to LONG", node)
-            node = AST.Function(name="CLONG", etype=AST.ExpType.Long, args=[node])
         elif etype == AST.ExpType.Real and node.etype != AST.ExpType.Real:
             node = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
         return node
@@ -2244,7 +2231,7 @@ class LocBasParser:
         if self._current_in((TokenType.OP,), ('-', 'NOT')):
             op = self._advance()
             right = self._parse_primary()
-            # NOT only work with INT while - works with INT, LONG, and REAL
+            # NOT only work with INT while '-' works with INT and REAL
             if not AST.exptype_isnum(right.etype):
                 self._raise_error(13, line=op.line, col=op.col) 
             else:
@@ -2274,7 +2261,7 @@ class LocBasParser:
     @astnode
     def _parse_primary(self) -> AST.Statement:
         """
-        <primary> ::= POINTER | INT | LONG | REAL | STRING | (<expression>)
+        <primary> ::= POINTER | INT | REAL | STRING | (<expression>)
         <primary> ::= <ident> | <fun_keyword> | <fun_user>
         """
         tok = self._current()
@@ -2287,7 +2274,7 @@ class LocBasParser:
             if nbytes == 0:
                 self._raise_error(6)
             if nbytes == 4:
-                return AST.Long(value=value)
+                return AST.Real(value=value)
             return AST.Integer(value=value)
         if tok.type == TokenType.REAL:
             self._advance()
@@ -2357,7 +2344,7 @@ class LocBasParser:
 
     @astnode
     def _parse_constant(self) -> AST.Statement:
-        """ <constant> ::= INT | LONG | REAL | "STRING" | STRING """
+        """ <constant> ::= INT | REAL | "STRING" | STRING """
         tok = self._current()
         if tok.type == TokenType.INT:
             value = cast(int, tok.value)
@@ -2366,7 +2353,7 @@ class LocBasParser:
                 self._raise_error(6)
             self._advance()
             if nbytes == 4:
-                return AST.Long(value=value)
+                return AST.Real(value=value)
             return AST.Integer(value=cast(int, tok.value))
         if tok.type == TokenType.REAL:
             self._advance()

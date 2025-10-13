@@ -24,7 +24,6 @@ class ExpType(str, Enum):
     """ Nodes related to expressions have a result type """
     Void = "Void",
     Integer = "Integer",
-    Long = "Long"
     Real = "Real",
     String = "String",
     Mismatch = "Mismatch",
@@ -33,7 +32,7 @@ def exptype_derive(op1: "Statement", op2: "Statement") -> ExpType:
     """
     Strings are restrictive and only can be conbined with other string.
     For all other types we convert to the most representation range
-    Real > Long > Integer
+    Real > Integer
     """
     if ExpType.String in (op1.etype, op2.etype):
         """ String literals can be mixed only with other strings """
@@ -42,8 +41,6 @@ def exptype_derive(op1: "Statement", op2: "Statement") -> ExpType:
         return ExpType.String
     elif ExpType.Real in (op1.etype, op2.etype):
         return ExpType.Real
-    elif ExpType.Long in (op1.etype, op2.etype):
-        return ExpType.Long
     else:
         return ExpType.Integer
 
@@ -53,19 +50,14 @@ def exptype_fromname(ident: str) -> ExpType:
         return ExpType.Real
     elif sufix == "$":
         return ExpType.String
-    elif sufix == "&":
-        return ExpType.Long
     else:
         return ExpType.Integer
 
 def exptype_isnum(etype: ExpType) -> bool:
-    return etype in (ExpType.Integer, ExpType.Long, ExpType.Real)
+    return etype in (ExpType.Integer, ExpType.Real)
 
 def exptype_isint(etype: ExpType) -> bool:
     return etype == ExpType.Integer
-
-def exptype_islong(etype: ExpType) -> bool:
-    return etype == ExpType.Long
 
 def exptype_isreal(etype: ExpType) -> bool:
     return etype == ExpType.Real
@@ -74,7 +66,7 @@ def exptype_isstr(etype: ExpType) -> bool:
     return etype == ExpType.String
 
 def exptype_isvalid(etype: ExpType) -> bool:
-    return etype in (ExpType.Integer, ExpType.Long, ExpType.Real, ExpType.String)
+    return etype in (ExpType.Integer, ExpType.Real, ExpType.String)
 
 def exptype_compatible(etype1: ExpType, etype2: ExpType) -> bool:
     if ExpType.Mismatch in (etype1, etype2) or ExpType.Void in (etype1, etype2):
@@ -230,18 +222,6 @@ class Integer(Statement):
 
     def __init__(self, value: int):
         super().__init__(etype=ExpType.Integer, id="Integer")
-        self.value = value
-
-    def to_json(self) -> dict:
-        d = super().to_json()
-        d["value"] = self.value
-        return d
-
-class Long(Statement):
-    value: int
-
-    def __init__(self, value: int):
-        super().__init__(etype=ExpType.Long, id="Long")
         self.value = value
 
     def to_json(self) -> dict:

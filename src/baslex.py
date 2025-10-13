@@ -96,7 +96,7 @@ class TokenEncoder(json.JSONEncoder):
 _KEYWORDS = {
     # Commands
     "AFTER","AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR","CLEAR INPUT",
-    "CLG", "CLONG","CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA","DEF",
+    "CLG","CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA","DEF",
     "DEF FN","DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI","DIM","DRAW",
     "DRAWR","EDIT","EI","ELSE","END","ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL",
     "FN","FOR","FRAME","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF",
@@ -241,7 +241,7 @@ class LocBasLexer:
             else:
                 break
         # Optional sufixes
-        if self._peek() in "%!$&":
+        if self._peek() in "%!$":
             out += self._advance()
         return out
 

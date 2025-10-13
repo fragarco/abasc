@@ -73,7 +73,7 @@ class TestParser(unittest.TestCase):
 40 E! = (1 MOD 2.2) * 2
 50 E% = 5.2 \\ 2.2
 60 E = "STRING1" >= "STRING"
-70 E& = (1 AND 1.2) OR 1.5        
+70 E = (1 AND 1.2) OR 1.5        
 """
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[1].statements[0].source.etype, AST.ExpType.Integer)
@@ -81,7 +81,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[3].statements[0].source.etype, AST.ExpType.Real)
         self.assertEqual(ast.lines[4].statements[0].source.etype, AST.ExpType.Integer)
         self.assertEqual(ast.lines[5].statements[0].source.etype, AST.ExpType.Integer)
-        self.assertEqual(ast.lines[6].statements[0].source.etype, AST.ExpType.Long)
+        self.assertEqual(ast.lines[6].statements[0].source.etype, AST.ExpType.Integer)
 
     def test_expression_type_mismatch(self):
         codes = [
@@ -1195,9 +1195,9 @@ class TestParser(unittest.TestCase):
         code = """
 10 x!=0.123456789 
 20 FOR r=9 TO 0 STEP -1:PRINT r,ROUND(x!,r):NEXT   
-25 x&=123456789 
+25 x!=123456789 
 30 FOR r=0 TO -9 STEP -1
-40 PRINT r,ROUND (x&,r)  
+40 PRINT r,ROUND (x!,r)  
 50 NEXT 
 """
         ast, _ = self.parse_code(code)
@@ -1345,8 +1345,8 @@ class TestParser(unittest.TestCase):
     def test_time_example(self):
         code="""
 10 DATUM = INT(TIME/300)  
-20 TICKER&=((TIME/300)-DATUM) 
-30 PRINT TICKER&; 
+20 TICKER=((TIME/300)-DATUM) 
+30 PRINT TICKER; 
 40 GOTO 20
 """
         ast, _ = self.parse_code(code)
