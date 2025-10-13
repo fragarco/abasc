@@ -22,11 +22,19 @@ and are not covered by the above license statement.
 
 from __future__ import annotations
 from typing import cast
+from enum import Enum
 from baspp import CodeLine
 from baserror import BasError
 from symbols import SymTable, SymEntry, SymType, symsto_json
 import astlib as AST
 from cpcrt import FWCALL, RT
+
+class DataSec(str, Enum):
+    """ Nodes related to sections of data """
+    GEN = "General",
+    VARS = "Variables",
+    DATA = "DataBlock",
+    CONST = "Constants"
 
 class CPCEmitter:
     def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1, verbose=False):
@@ -37,7 +45,12 @@ class CPCEmitter:
         self.verbose=verbose
         self.head = ""
         self.code = ""
-        self.data = ""
+        self.data: dict[DataSec,str] = {
+            DataSec.GEN: "",
+            DataSec.VARS: "",
+            DataSec.DATA: "",
+            DataSec.CONST: ""
+        }
         self.rtcode: list[str] = []
         self.runtime: list[str] = []
         self.constants: int = 0
@@ -66,9 +79,9 @@ class CPCEmitter:
         line = self._emit_prepare_line(line, indent, info)
         self.code = self.code + line + "\n"
 
-    def _emit_data(self, line: str="", indent: int=4, info: str=""):
+    def _emit_data(self, line: str="", indent: int=4, info: str="", section: DataSec=DataSec.GEN):
         line = self._emit_prepare_line(line,indent, info)
-        self.data = self.data + line +"\n"
+        self.data[section] = self.data[section] + line +"\n"
 
     def _emit_line_label(self, line: AST.Line):
         sym = self.symtable.find(str(line.number), "")
@@ -150,9 +163,6 @@ class CPCEmitter:
         self._emit_head()
         self._emit_head("; PROGRAM MAIN", 0)
         self._emit_head(f"org     &{hex(self.org)[2:]}", 0)
-        self._emit_head()
-        self._emit_head("_code_:", 0)
-        self._emit_data("_data_:", 0)
 
     def _emit_code_end(self):
         self._emit_code()
@@ -172,11 +182,11 @@ class CPCEmitter:
 
     def _emit_vardecl(self, entry: SymEntry):
         if entry.exptype == AST.ExpType.Integer:
-            self._emit_data(f"{entry.label}: dw   0")
+            self._emit_data(f"{entry.label}: dw   0", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.String:
-            self._emit_data(f"{entry.label}: defs 255")
+            self._emit_data(f"{entry.label}: defs 255", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.Real:
-            self._emit_data(f"{entry.label}: defs 5")
+            self._emit_data(f"{entry.label}: defs 5", section=DataSec.VARS)
 
     def _emit_arraydecl(self, entry: SymEntry):
         items = 1
@@ -184,11 +194,11 @@ class CPCEmitter:
         # so number of items = max index + 1
         for index in entry.indexes: items = items * (index + 1)
         if entry.exptype == AST.ExpType.Integer:
-            self._emit_data(f"{entry.label}: db   {2*items}")
+            self._emit_data(f"{entry.label}: db   {2*items}", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.String:
-            self._emit_data(f"{entry.label}: defs {255*items}")
+            self._emit_data(f"{entry.label}: defs {255*items}", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.Real:
-            self._emit_data(f"{entry.label}: defs {5*items}")
+            self._emit_data(f"{entry.label}: defs {5*items}", section=DataSec.VARS)
     
     def _emit_runtime(self) -> str:
         return "_runtime_:\n\n" + ''.join(self.rtcode) + '\n'
@@ -687,8 +697,34 @@ class CPCEmitter:
             self._emit_code(f"call    {calls_off[i]}", info="TXT_CURSOR_OFF/TXT_CURSOR_DISABLE")
         self._emit_code(";")
    
-    def _emit_DATA(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_DATA(self, node:AST.Command):
+        """
+        Compatibility
+        With BASIC 1.0, DATA statements have to be at the end of the line.
+        With BASIC 1.1, DATA statements can appear anywhere within a line.
+        Declares constant data for use within a program. One of the most widely
+        used features of BASIC that lumps constant data in DATA statements for
+        retrieval as required. The data type must be consistent with the variable
+        invoking it. A DATA statement may appear anywhere in a program. 
+        """
+        self._emit_code("; DATA <list of constant>")
+        dataline = "db "
+        for a in node.args:
+            if isinstance(a, AST.String):
+                dataline = dataline + f'{len(a.value)},"{a.value}",'
+            elif isinstance(a, AST.Integer):
+                cpcint = (a.value).to_bytes(2,'little')
+                for b in cpcint:
+                    dataline = dataline + f'&{b:02X},'
+            elif isinstance(a, AST.Real):
+                cpcreal = self._real(a.value)
+                for b in cpcreal:
+                    dataline = dataline + f'&{b:02X},'
+            else:
+                self._raise_error(2, node, 'DATA constant type not supported yet')
+        # we have to remove last ','
+        self._emit_data(dataline[:-1], section=DataSec.DATA)
+        self._emit_code(";")
 
     def _emit_DECSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1401,7 +1437,14 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_NEW(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Delete current program and variables. KEY definitions are not lost,
+        and the display is not cleared.
+        """
+        # In our case this just resets the computer
+        self._emit_code("; NEW")
+        self._emit_code("call    0", info="MACHINE RESET")
+        self._emit_code(";")
 
     def _emit_NEXT(self, node:AST.BlockEnd):
         fornode = self.forloops.pop()
@@ -1503,8 +1546,18 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_PI(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
+        """
+        The value of the ratio between the circumference and the diameter of a circle.
+        It is used extensively in graphics routines such as the one listed above. 
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; PI")
+        self._emit_code("ld      hl,rt_math_accum1")
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_PI}", info="MATH_REAL_PI")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
+    
     def _emit_PLOT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
@@ -1635,8 +1688,26 @@ class CPCEmitter:
     def _emit_RANDOMIZE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_READ(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_READ(self, node:AST.Command):
+        """
+        READ fetches data from the list of constants supplied in the corresponding
+        DATA statements and assigns it to variables, automatically stepping to the
+        next item in the data statement. RESTORE will return the pointer to the
+        beginning of the DATA statement. See the DATA keyword.
+        """
+        self._emit_code("; READ list of:<variable>")
+        for a in node.args:
+            self._emit_expression(a)
+            if a.etype == AST.ExpType.Integer:
+                self._emit_import("rt_read_int")
+                self._emit_code("call    rt_read_int")
+            if a.etype == AST.ExpType.String:
+                self._emit_import("rt_read_str")
+                self._emit_code("call    rt_read_str")
+            if a.etype == AST.ExpType.Real:
+                self._emit_import("rt_read_real")
+                self._emit_code("call    rt_read_real")
+        self._emit_data(";")
 
     def _emit_RELEASE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1664,10 +1735,32 @@ class CPCEmitter:
         self._emit_code(";") 
 
     def _emit_RENUM(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Renumber program lines from the line specified, using the increment specified.
+        The <new line number> gives the first number for the new sequence, defaulting to 10.
+        The <old line number> identifies where RENUM is to commence, and assumes the first
+        program line if omitted.
+        The <increment> sets the increment to use between the line numbers, again
+        defaulting to 10. RENUM takes care of all GOSUB, GOTO and other line calls.
+        If all the specifiers are omitted from the command, the program is renumbered as
+        if RENUM 10,,10 were issued. Line numbers are valid in the range 1 to 65535. 
+        """
+        self._emit_code("; RENUM [<new line number>][ ,[<old line number>][,< increment>]")
+        self._raise_warning(0, "RENUM is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
-    def _emit_RESTORE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RESTORE(self, node:AST.Command):
+        """
+        Restores the position of the reading pointer back to the beginning of the
+        DATA statement specified in the optional <line number> or <label>. Omitting
+        the parameter restores the position of the pointer back to the beginning
+        of the first DATA statement. 
+        """
+        self._emit_code("; RESTORE [<line number> | <label>]")
+        self._emit_import("rt_datablock")
+        self._emit_code("ld      hl,_data_datablock_")
+        self._emit_code("ld      (rt_data_ptr),hl")
+        self._emit_code(";")
 
     def _emit_RESUME(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -2051,7 +2144,7 @@ class CPCEmitter:
     def _emit_const_str(self, node: AST.String):
         label = self._get_conststr_label()
         self._emit_code(f"ld      hl,{label}")
-        self._emit_data(f'{label}: db {len(node.value)},"{node.value}"')
+        self._emit_data(f'{label}: db {len(node.value)},"{node.value}"', section=DataSec.CONST)
 
     def _emit_const_real(self, node: AST.Real):
         label = self._get_constreal_label()
@@ -2061,7 +2154,7 @@ class CPCEmitter:
         for b in cpcreal:
             values = values + f'&{b:02X},'
         # send code without last ','
-        self._emit_data(f'{label}: db {values[:-1]}')
+        self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
 
     def _emit_variable(self, node: AST.Variable):
         var = self.symtable.find(node.name)
@@ -2156,7 +2249,7 @@ class CPCEmitter:
                 self._emit_code("xor     a")
                 self._emit_code("sbc     hl,de")
             else:
-                self._raise_error(2, node, f"integer '{node.op}' unary op is not supported yet")
+                self._raise_error(2, node, f"INT '{node.op}' unary op is not supported yet")
         elif node.etype == AST.ExpType.Real:
             if node.op == '-':
                 self._emit_import("rt_math_call")
@@ -2168,6 +2261,7 @@ class CPCEmitter:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
 
     def _emit_int_op(self, node: AST.BinaryOp):
+        """ HL = left value, DE = right value """
         op = node.op.upper()
         if op == '+':
             self._emit_code("add     hl,de")
@@ -2205,14 +2299,13 @@ class CPCEmitter:
             self._emit_code("ld      a,l")
             self._emit_code("xor     e")
             self._emit_code("ld      l,a")
-        elif op == '/':
-            self._raise_error(2, node, 'real div is not supported yet')
         elif op in ('=', '<>', '<', '<=', '>', '>='):
-            self._emit_int_compare(node)
+            self._emit_comparation(node)
         else:
-            self._raise_error(2, node, f'unknown "{op}" int op')
+            self._raise_error(2, node, f'unknown "{op}" INT op')
     
     def _emit_str_op(self, node: AST.BinaryOp):
+        """ HL = left value, DE = right value """
         op = node.op.upper()
         if op == '+':
             self._emit_import("rt_strcopy")
@@ -2227,12 +2320,41 @@ class CPCEmitter:
             self._raise_error(2, node, f'unknown "{op}" string op')
 
     def _emit_real_op(self, node: AST.BinaryOp):
-        self._raise_error(2, node, 'real operations are not supported yet')
+        """
+        HL = left value, DE = right value
+        WARNING: move to accum destroys DE and BC
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("push    hl", info="keep left value")
+        self._emit_code("ex      hl,de", info="move right to accum2")
+        self._moveflo_accum2()
+        self._emit_code("pop     hl", info="restore left and move to accum1")
+        self._moveflo_accum1()
+        self._emit_code("ld      de,rt_math_accum2", info="restore right ptr")
+        op = node.op.upper()
+        if op == '+':
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_ADD}", info="MATH_REAL_ADD")
+            self._emit_code("call    rt_math_call")
+        elif op == '-':
+            self._emit_code("ex      hl,de")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_REV_SUBS}", info="MATH_REAL_REV_SUBS")
+            self._emit_code("call    rt_math_call")
+        elif op == '*':
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_MULT}", info="MATH_REAL_MULT")
+            self._emit_code("call    rt_math_call")
+        elif op == '/':
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_DIV}", info="MATH_REAL_DIV")
+            self._emit_code("call    rt_math_call")
+        else:
+            self._raise_error(2, node, f'unknown "{op}" REAL op')
+        self._moveflo_temp()
 
-    def _emit_int_compare(self, node: AST.BinaryOp):
+    def _emit_comparation(self, node: AST.BinaryOp):
         if node.left.etype == AST.ExpType.String:
-            self._emit_str_compare(node)
+            self._emit_str_comparation(node)
             return
+        if node.left.etype == AST.ExpType.Real:
+            self._emit_real_comparation(node)
         if node.op == '=':
             self._emit_code("xor     a")
             self._emit_code("sbc     hl,de")
@@ -2272,9 +2394,9 @@ class CPCEmitter:
             self._emit_code("jr      c,$+3")
             self._emit_code("dec     hl", info="HL =-1 TRUE")
         else:
-            self._raise_error(2, node, f'int "{node.op}" op not implemented yet')
+            self._raise_error(2, node, f'INT "{node.op}" op not implemented yet')
 
-    def _emit_str_compare(self, node: AST.BinaryOp):
+    def _emit_str_comparation(self, node: AST.BinaryOp):
         self._emit_import("rt_strcmp")
         if node.op == '=':
             self._emit_code("call    rt_strcmp")
@@ -2309,8 +2431,56 @@ class CPCEmitter:
             self._emit_code("jr      c,$+3")
             self._emit_code("dec     hl", info="HL =-1 TRUE")
         else:
-            self._raise_error(2, node, f'string "{node.op}" op not implemented yet')
+            self._raise_error(2, node, f'STRING "{node.op}" op not implemented yet')
 
+    def _emit_real_comparation(self, node: AST.BinaryOp):
+        """
+        HL = left value, DE = right value
+        WARNING: move to accum destroys DE and BC
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("push    hl", info="keep left value")
+        self._emit_code("ex      hl,de", info="move right to accum2")
+        self._moveflo_accum2()
+        self._emit_code("pop     hl", info="restore left and move to accum1")
+        self._moveflo_accum1()
+        self._emit_code("ld      de,rt_math_accum2", info="restore right ptr")
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_COMP}", info="MATH_REAL_COMP")
+        self._emit_code("call    rt_math_call", info="comp result is stored in A")
+        # if the first real number is greater than the second real number, then A holds &01.
+        # if the first real number is the same as the second real number, then A holds &00.
+        # if the second real number is greater than the first real number, then A holds &FF.
+        if node.op == '=':
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
+        elif node.op == '<>':
+            self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
+            self._emit_code("jr      nz,$+3")
+            self._emit_code("inc     hl", info ="HL = 0 FALSE")
+        elif node.op == '<':
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
+            self._emit_code("inc     a")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
+        elif node.op == '>':
+            self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
+            self._emit_code("inc     a")
+            self._emit_code("jr      nz,$+3")
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
+        elif node.op == '<=':
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
+            self._emit_code("dec     a")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
+        elif node.op == '>=':
+            self._emit_code("inc     hl", info="HL = 0 FALSE")
+            self._emit_code("inc     a")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("dec     hl", info="HL =-1 TRUE")
+        else:
+            self._raise_error(2, node, f'REAL "{node.op}" op not implemented yet')
+        
     def _emit_stream(self) -> None:
         """
         0-7 keyboard to screen
@@ -2472,8 +2642,11 @@ class CPCEmitter:
         else:
             code = self.head.replace("$LIMIT$", "")
         
-        code = code + self.code + "\n"
-        code = code + self.data + "\n"
+        code = code + "_code_:\n" + self.code + "\n"
+        code = code + "_data_:\n" + self.data[DataSec.GEN] + "\n"
+        code = code + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
+        code = code + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
+        code = code + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
         code = code + self._emit_runtime()
         return code + "_program_end_:\n"
 
