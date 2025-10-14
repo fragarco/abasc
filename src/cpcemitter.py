@@ -1018,8 +1018,17 @@ class CPCEmitter:
     def _emit_ENV(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_EOF(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_EOF(self, node:AST.Function):
+        """
+        Tests to see if the cassette input is at the end of the file. Returns -1
+        (true) at the end, otherwise 0 (false).
+        """
+        self._emit_code("; EOF")
+        self._emit_code("ld      hl,&FFFF", info="EOF")
+        self._emit_code(f"call    {FWCALL.CAS_TEST_EOF}", info="CAS_TEST_EOF")
+        self._emit_code("jr      nc,$+3")
+        self._emit_code("inc     hl", info="NOT EOF")
+        self._emit_code(";")
 
     def _emit_ERASE(self, node:AST.Command):
         """
@@ -1031,10 +1040,20 @@ class CPCEmitter:
         self._emit_code("; IGNORED")
 
     def _emit_ERL(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Reports the Line number of the last ERror encountered.
+        """
+        self._emit_code("; ERL")
+        self._raise_warning(0, "ERL is ignored and has no effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_ERR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Reports the number of the last ERRor encountered.
+        """
+        self._emit_code("; ERR")
+        self._raise_warning(0, "ERR is ignored and has no effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_ERROR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
