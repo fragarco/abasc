@@ -1,0 +1,20 @@
+10 REM Perspective drawing
+15 T=TIME
+20 MODE 2
+30 RAD
+40 INK 1,0
+50 INK 0,12
+60 BORDER 9
+70 FOR N= 1 TO 200
+80 ORIGIN 420,0
+90 DRAW 0,200
+100 REM draw angles from vanishing point
+110 DRAW 30*N*SIN(N*PI/4),(SIN(PI/2))*N*SIN(N)
+120 NEXT
+130 MOVE 0,200
+140 DRAWR 0,50
+150 DRAWR 40,0
+160 WINDOW 1,40,1,10
+170 REM PRINT"Now you can finish the the Hangman program!"
+180 PRINT TIME-T
+190 END

@@ -505,6 +505,23 @@ class UserFun(Statement):
         d["args"] = [a.to_json() for a in self.args]
         return d
 
+class Data(Statement):
+    args: list[Statement]
+    linelabel: str
+    userlabel: str
+
+    def __init__(self, args: list[Statement], linelabel: str, userlabel: str):
+        super().__init__(etype=ExpType.Void, id="Data")
+        self.args = args
+        self.linelabel = f"_data_{linelabel}_label"
+        self.userlabel = "" if userlabel == "" else f"_data_{userlabel}_label"
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["args"] = [a.to_json() for a in self.args]
+        d["linelabel"] = self.linelabel
+        d["userlabel"] = self.userlabel
+        return d
 
 class Print(Statement):
     stream: Optional[Statement]

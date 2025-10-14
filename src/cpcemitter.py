@@ -43,6 +43,7 @@ class CPCEmitter:
         self.symtable = symtable
         self.warning_level = warning_level
         self.verbose=verbose
+        self.context = ""
         self.head = ""
         self.code = ""
         self.data: dict[DataSec,str] = {
@@ -168,17 +169,21 @@ class CPCEmitter:
         self._emit_code()
         self._emit_code("_end_: jr _end_", info="infinite end loop", indent=0)
 
-    def _emit_global_symbols(self):
-        for sym in self.symtable.syms:
-            entry = self.symtable.syms[sym]
+    def _emit_symbols(self, syms: dict[str, SymEntry]):
+        for sym in syms:
+            entry = syms[sym]
             if entry.symtype == SymType.Variable:
                 self._emit_vardecl(entry)
             elif entry.symtype == SymType.Array:
                 self._emit_arraydecl(entry)
+            elif entry.symtype == SymType.Param:
+                self._emit_paramdecl(entry)
             elif entry.symtype == SymType.RSX:
                 # last char must have bit 7 set
                 lastchar = ord(sym[-1]) + 128
                 self._emit_data(f'{entry.label}: db "{sym[0:-1]}",{lastchar}')
+            elif entry.symtype == SymType.Function:
+                self._emit_symbols(entry.locals.syms)
 
     def _emit_vardecl(self, entry: SymEntry):
         if entry.exptype == AST.ExpType.Integer:
@@ -200,6 +205,13 @@ class CPCEmitter:
         elif entry.exptype == AST.ExpType.Real:
             self._emit_data(f"{entry.label}: defs {5*items}", section=DataSec.VARS)
     
+    def _emit_paramdecl(self, entry: SymEntry):
+        """
+        Currently all parameters are pointers to the real data or 16 bits
+        integers
+        """
+        self._emit_data(f"{entry.label}: dw   0", section=DataSec.VARS)
+
     def _emit_runtime(self) -> str:
         return "_runtime_:\n\n" + ''.join(self.rtcode) + '\n'
     
@@ -277,6 +289,10 @@ class CPCEmitter:
     def _get_symbol_label(self) -> str:
         self.constants +=1
         return f"__symbol_{self.constants}"
+
+    def _get_userfun_label(self, name) -> str:
+        symname = name.replace("$", "_S").replace("%", "_I").replace("!", "_R")
+        return f"_userfn_{symname}"
 
     # ----------------- Error management -----------------
 
@@ -545,7 +561,7 @@ class CPCEmitter:
             self._emit_code("ex      hl,de")
             self._emit_code("sbc     hl,de")
         else:
-            self._emit_code("; already Int so no action taken")
+            self._emit_code("; already INT so no action taken")
         self._emit_code(";")
 
     def _emit_CLEAR(self, node:AST.Command):
@@ -697,7 +713,7 @@ class CPCEmitter:
             self._emit_code(f"call    {calls_off[i]}", info="TXT_CURSOR_OFF/TXT_CURSOR_DISABLE")
         self._emit_code(";")
    
-    def _emit_DATA(self, node:AST.Command):
+    def _emit_DATA(self, node:AST.Data):
         """
         Compatibility
         With BASIC 1.0, DATA statements have to be at the end of the line.
@@ -722,14 +738,29 @@ class CPCEmitter:
                     dataline = dataline + f'&{b:02X},'
             else:
                 self._raise_error(2, node, 'DATA constant type not supported yet')
+        # emit the labels that RESTORE can use
+        if node.userlabel != "":
+            self._emit_data(f"{node.userlabel}:", section=DataSec.DATA)
+        inserted = self.symtable.add(ident = node.linelabel,
+                                     info = SymEntry(SymType.Label, AST.ExpType.Void, SymTable()),
+                                     context=""
+                                    )
+        if not inserted:                                     
+            self._raise_error(2, node, "only one DATA statement is allowed per line")
+        self._emit_data(f"{node.linelabel}:", section=DataSec.DATA)
         # we have to remove last ','
         self._emit_data(dataline[:-1], section=DataSec.DATA)
         self._emit_code(";")
 
-    def _emit_DECSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
-    def _emit_DEF(self, node:AST.Statement):
+    def _emit_DECSS(self, node:AST.Function):
+        """
+        Only available with BASIC 1.1
+        Return a DECimal string representation of the <numeric expression>, using
+        the specified <format template> to control the print format of the resulting string.
+        The format template may contain ONLY the characters: + - £ $ * # , . ^
+        """
+        # TODO: reals
+        self._emit_code("; DEC$(<numeric expression>,<format template>)")
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_DEFINT(self, node:AST.Command):
@@ -756,7 +787,7 @@ class CPCEmitter:
         self._raise_warning(0, "DEFREAL has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DEFSTR(self, node:AST.Statement):
+    def _emit_DEFSTR(self, node:AST.Command):
         """
         Define default variable types where <type> is integer, real or string.
         The variable will be set according to the first letter of the variable's
@@ -768,8 +799,37 @@ class CPCEmitter:
         self._raise_warning(0, "DEFSTR has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DEF_FN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_DEF_FN(self, node:AST.DefFN):
+        """
+        BASIC allows the program to define and use simple value returning functions.
+        DEF FuNction is the definition part of this mechanism and creates program-specific
+        function which works within the program in the same way as a function such as
+        COS operates as a built-in function of BASIC.
+        It may be invoked throughout the program. Variable types must be consistent and
+        the DEF FuNction command should be written in part of the program outside
+        the execution loop. 
+        """
+        self._emit_code("; DEF FN <name> [(<formal parameters>)]=<general expression>")
+        self.context=node.name
+        currentcode = self.code  # keep current generated code
+        self.code = ""           # capture only the code that will be generated now
+        self._emit_expression(node.body)
+        self._emit_code("ret")
+        fcode = self.code
+        self.code = currentcode  # restore previous generated code
+        self.context=""
+        self._emit_data(f"{self._get_userfun_label(node.name)}:")
+        offset = 0
+        # retrieve param in reversed order
+        for a in reversed(node.args):
+            self._emit_data(f"ld      l,(ix+{offset})")
+            self._emit_data(f"ld      h,(ix+{offset+1})")
+            entry = self.symtable.find(a.name, node.name)
+            if entry is not None:
+                self._emit_data(f"ld      ({entry.label}),hl")
+                offset += 2
+        self._emit_data(fcode, 0)
+        self._emit_code(";")
 
     def _emit_DEG(self, node:AST.Statement):
         """
@@ -808,7 +868,15 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_DERR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Only available with BASIC 1.1.
+        Report the last error code returned by the disc operating system. The
+        value of DERR may be used to ascertain the particular Disc ERRor that
+        occured. See the listing of error messages. 
+        """
+        self._emit_code("; DERR")
+        self._raise_warning(0, "DERR is ignored and has no effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_DI(self, node:AST.Command):
         """
@@ -848,11 +916,64 @@ class CPCEmitter:
                 self._raise_error(2, node)
         self._emit_code(";")
 
-    def _emit_DRAW(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_DRAW(self, node:AST.Command):
+        """
+        <ink mode> is only available with BASIC 1.1
+        Draws a line on the screen from the current graphics cursor position to
+        an absolute position. The co-ordinate positions remain unchanged between
+        the three different screen modes. The <ink> in which to draw the line may
+        be specified (in the range 0 to 15).
+        The optional <ink mode> determines how the ink being written interacts
+        with that already on the graphics screen. The four <ink mode>s are:
+        0: Fill (normal)
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; DRAW <x co-ordinate>,<y co-ordinate>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_LINE_ABSOLUTE}", info="GRA_LINE_ABSOLUTE")
+        self._emit_code(";")
+        
 
-    def _emit_DRAWR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_DRAWR(self, node:AST.Command):
+        """
+        <ink mode> is only available with BASIC 1.1
+        To draw a line on the screen from the current graphics cursor position to
+        a position relative to it. The <ink> in which to draw the line may be
+        specified (in the range 0 to 15).
+        The optional <ink mode> determines how the ink being written interacts with that already on the graphics screen. The four <ink mode>s are:
+        0: Normal
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; DRAWR <x offset>,<y offset>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_LINE_RELATIVE}", info="GRA_LINE_RELATIVE")
+        self._emit_code(";")
 
     def _emit_EDIT(self, node:AST.Statement):
         """
@@ -1430,11 +1551,66 @@ class CPCEmitter:
         self._emit_code("ld      a,l")
         self._emit_code(f"call    {FWCALL.SCR_SET_MODE}", info="SCR_SET_MODE")
 
-    def _emit_MOVE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_MOVE(self, node:AST.Command):
+        """
+        <ink> and <ink mode> are only available with BASIC 1.1
+        To move the graphics cursor to a position specified by the absolute co-ordinates.
+        YPOS and XPOS are the corresponding functions to establish the current
+        graphics cursor position.
+        The optionnal <ink> parameter can be used to specify the graphic pen
+        (in the range 0 to 15). The optional <ink mode> determines how the ink
+        being written interacts with that already on the graphics screen.
+        The four <ink mode>s are:
+        0: FILL (Normal)
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; MOVE <x co-ordinate>,<y co-ordinate>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_MOVE_ABSOLUTE}", info="GRA_MOVE_ABSOLUTE")
+        self._emit_code(";")
 
-    def _emit_MOVER(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_MOVER(self, node:AST.Command):
+        """
+        <ink> and <ink mode> are only available with BASIC 1.1
+        To move the graphics cursor to a position relative to the current co-ordinates.
+        YPOS and XPOS are the corresponding functions to establish the current graphics
+        cursor position. The optionnal <ink> parameter can be used to specify the
+        graphic pen (in the range 0 to 15). The optional <ink mode> determines how the
+        ink being written interacts with that already on the graphics screen.
+        The four <ink mode>s are:
+        0: FILL (Normal)
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; MOVER <x co-ordinate>,<y co-ordinate>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_MOVE_RELATIVE}", info="GRA_MOVE_RELATIVE")
+        self._emit_code(";")
 
     def _emit_NEW(self, node:AST.Statement):
         """
@@ -1480,8 +1656,23 @@ class CPCEmitter:
     def _emit_OPENOUT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_ORIGIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ORIGIN(self, node:AST.Command):
+        """
+        Determines the start point for the graphics cursor. The [optional part]
+        of the command contains the instructions to set a new graphics window,
+        which will be operational in all screen modes due the pixel addressing
+        technique employed. The ORIGIN is the point with co-ordinates 0,0
+        (co-ordinates grow up and right). If any of the window edges are specified
+        to a position that is off the screen, they are assumed to represent the
+        furthest visible position in the given direction. 
+        """
+        self._emit_code("; ORIGIN <x>,<y>[<left>,<right>,<top>,<bottom>]")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_SET_ORIGIN}", info="GRA_SET_ORIGIN")
+        self._emit_code(";")
 
     def _emit_OUT(self, node:AST.Command):
         """
@@ -1559,9 +1750,61 @@ class CPCEmitter:
         self._emit_code(";")
     
     def _emit_PLOT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        <ink mode> is only available with BASIC 1.1
+        Plots a point on the graphics screen at the absolute position specified
+        in the x,y co-ordinates. The <ink> in which to plot the point may be
+        specified (in the range 0 to 15).
+        The optional <ink mode> determines how the ink being written interacts
+        with that already on the graphics screen. The four <ink mode>s are:
+        0: FILL (Normal)
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; PLOT <x co-ordinate>,<y co-ordinate>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_PLOT_ABSOLUTE}", info="GRA_PLOT_ABSOLUTE")
+        self._emit_code(";")
 
     def _emit_PLOTR(self, node:AST.Statement):
+        """
+        <ink> and <ink mode> are only available with BASIC 1.1
+        Plots a point on the graphics screen at the specified position <x offset>
+        and <y offset>, relative to the current graphics cursor position. The <ink>
+        in which to plot the point may be specified (in the range 0 to 15).
+        The four <ink mode>s are:
+        0: FILL (Normal)
+        1: XOR (eXclusive OR)
+        2: AND
+        3: OR
+        """
+        self._emit_code("; PLOTR <x offset>,<y offset>[,<ink>][,<ink mode>]")
+        if len(node.args) > 2:
+            self._emit_expression(node.args[2])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
+        if len(node.args) > 3:
+            self._emit_expression(node.args[3])
+            self._emit_code("ld      a,l")
+            self._emit_code(f"call    {FWCALL.SCR_ACCESS}", info="SCR_ACCESS")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code(f"call    {FWCALL.GRA_PLOT_RELATIVE}", info="GRA_PLOT_RELATIVE")
+        self._emit_code(";")
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_POKE(self, node:AST.Command):
@@ -1630,36 +1873,26 @@ class CPCEmitter:
 
     def _print_int(self, item:AST.Statement):
         # Integers always print one space before and after
-        self._emit_import("rt_int2str")
+        self._emit_import("rt_print_int")
         self._emit_code("; PRINT int item")
         self._emit_expression(item)
-        self._emit_code("call    rt_int2str")
-        self._emit_code("xor     a", info="leave the '-' space in positive numbers")
-        self._emit_code("or      c")
-        self._emit_code("jr      nz,$+7")
-        self._emit_code("ld      a,32")
-        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
-        self._emit_code("call    rt_print_str")
-        self._emit_code("ld      a,32", info="trailing space")
-        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
+        self._emit_code("call    rt_print_int")
     
     def _print_pointer(self, item:AST.Pointer):
         # Pointer are always an address (int 16 bits)
-        self._emit_import("rt_int2str")
+        self._emit_import("rt_print_int")
         self._emit_code("; PRINT pointer item")
-        self._emit_code("ld      a,32")
-        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
         self._emit_pointer(item)
-        self._emit_code("call    rt_int2str")
-        self._emit_code("call    rt_print_str")
-        self._emit_code("ld      a,32")
-        self._emit_code(f"call    {FWCALL.TXT_OUTPUT}", info="TXT_OUTPUT")
+        self._emit_code("call    rt_print_int")
 
     def _print_real(self, item:AST.Statement):
-        self._raise_error(2, item, "printing reals is not supported")
-
-    def _print_long(self, item:AST.Statement):
-        self._raise_error(2, item, "printing longs is not supported")
+        # let's convert to integer until we have a propper rutine
+        # TODO: reals
+        self._emit_import("rt_print_real")
+        self._emit_import("rt_int2str")
+        self._emit_expression(item)
+        self._moveflo_accum1()
+        self._emit_code("call    rt_print_real")
 
     def _print_separator(self, item:AST.Separator):
         self._emit_code(f"; PRINT separator [{item.sym}]")
@@ -1758,7 +1991,18 @@ class CPCEmitter:
         """
         self._emit_code("; RESTORE [<line number> | <label>]")
         self._emit_import("rt_datablock")
-        self._emit_code("ld      hl,_data_datablock_")
+        if len(node.args) == 0:
+            self._emit_code("ld      hl,_data_datablock_")
+        else:
+            label = node.args[0]
+            if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+                sym = self.symtable.find(str(label.value), "")
+                if sym is not None:
+                    self._emit_code(f"ld      hl,_data_{str(label.value)}_label")
+                else:
+                    self._raise_error(38, label)
+            else:
+                self._raise_error(2, node, "invalid label")
         self._emit_code("ld      (rt_data_ptr),hl")
         self._emit_code(";")
 
@@ -2099,8 +2343,29 @@ class CPCEmitter:
     def _emit_WIDTH(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_WINDOW(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_WINDOW(self, node:AST.Command):
+        """
+        Sets a text window for a given screen stream. 
+        """
+        self._emit_code("; WINDOW [#<stream expression>,] <left>, <right>, <top>, <bottom>")
+        args = node.args
+        if len(args) == 5:
+            self._emit_expression(args[0])
+            self._emit_stream()
+            args = args[1:]
+        self._emit_expression(args[0])
+        for a in args[1:]:
+            self._emit_code("push    hl")
+            self._emit_expression(a)
+        self._emit_code("ld      e,l", info="bottom")
+        self._emit_code("pop     bc")
+        self._emit_code("ld      l,c", info="top")
+        self._emit_code("pop     bc")
+        self._emit_code("ld      d,c", info="right")
+        self._emit_code("pop     bc")
+        self._emit_code("ld      h,c", info="left")
+        self._emit_code(f"call    {FWCALL.TXT_WIN_ENABLE}", info="TXT_WIN_ENABLE")
+        self._emit_code(";")
 
     def _emit_WINDOW_SWAP(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -2138,6 +2403,8 @@ class CPCEmitter:
             self._emit_function(node)
         elif isinstance(node, AST.Pointer):
             self._emit_pointer(node)
+        elif isinstance(node, AST.UserFun):
+            self._emit_userfun(node)
         else:
             self._raise_error(2, node, 'expression not supported yet')
 
@@ -2157,14 +2424,19 @@ class CPCEmitter:
         self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
 
     def _emit_variable(self, node: AST.Variable):
-        var = self.symtable.find(node.name)
-        if var is not None:
-            if node.etype == AST.ExpType.Integer:  
-                self._emit_code(f"ld      hl,({var.label})")
+        # variables can be local to a DEF FN if they are declared as a parameter
+        entry = self.symtable.find(node.name, context = self.context)
+        if entry is not None:
+            # parameters always contain the address to the real data so 
+            # all behave in the same way
+            if entry.symtype == SymType.Param:
+                self._emit_code(f"ld      hl,({entry.label})")
+            elif node.etype == AST.ExpType.Integer:  
+                self._emit_code(f"ld      hl,({entry.label})")
             elif node.etype == AST.ExpType.String:
-                self._emit_code(f"ld      hl,{var.label}")
+                self._emit_code(f"ld      hl,{entry.label}")
             elif node.etype == AST.ExpType.Real:
-                self._emit_code(f"ld      hl,{var.label}")
+                self._emit_code(f"ld      hl,{entry.label}")
             else:
                 self._raise_error(2, node, 'var type not implemented yet')
         else:
@@ -2570,7 +2842,16 @@ class CPCEmitter:
             self._raise_error(2, node, "not implemented yet")
 
     def _emit_userfun(self, node: AST.UserFun):
-        self._raise_error(2, node, "not implemented yet")
+        self._emit_code(f"; Calling USER FUN {node.name}")
+        for a in node.args:
+            self._emit_expression(a)
+            self._emit_code("push    hl")
+        self._emit_code("ld      ix,0", info="last parameter position")
+        self._emit_code("add     ix,sp")
+        self._emit_code(f"call    {self._get_userfun_label(node.name)}")
+        for a in node.args:
+            self._emit_code("pop     de", info="clean the stack")
+        self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):
         """
@@ -2604,6 +2885,8 @@ class CPCEmitter:
             self._emit_WHILE(stmt)
         elif isinstance(stmt, AST.BlockEnd):
             self._emit_blockend(stmt)
+        elif isinstance(stmt, AST.Data):
+            self._emit_DATA(stmt)
         elif isinstance(stmt, AST.Print):
             self._emit_PRINT(stmt)
         elif isinstance(stmt, AST.Input):
@@ -2657,6 +2940,6 @@ class CPCEmitter:
         for line in self.program.lines:
             self._emit_line(line)
         self._emit_code_end()
-        self._emit_global_symbols()
+        self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
         return self._compose_program()

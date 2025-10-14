@@ -73,6 +73,8 @@ class LocBasParser:
         self.warning_level = warning_level
         self.symtable = SymTable()
         self.context = ""
+        self.current_usrlabel = ""
+        self.current_linelabel = ""
 
     @staticmethod
     def astnode(func: Callable[[LocBasParser], AST.ASTNode]):
@@ -198,7 +200,7 @@ class LocBasParser:
         """ <ATN> ::= ATN(<num_expression>)"""
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
+        args: list[AST.Statement] = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ATN", etype=AST.ExpType.Real, args=args)
 
@@ -372,7 +374,7 @@ class LocBasParser:
         """ <COS> ::= COS(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
+        args: list[AST.Statement] = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="COS", etype=AST.ExpType.Real, args=args)
    
@@ -397,14 +399,38 @@ class LocBasParser:
         return AST.Command(name="CURSOR", args=args)
 
     @astnode
-    def _parse_DATA(self) -> AST.Command:
+    def _parse_DATA(self) -> AST.Data:
         """ <DATA> ::= DATA <primary>[,<primary>]*"""
         self._advance()
-        args: list[AST.Statement] = [self._parse_constant()]
+        args: list[AST.Statement] = [self._parse_data_constant()]
         while self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_constant())
-        return AST.Command(name="DATA", args=args)
+            args.append(self._parse_data_constant())
+        node = AST.Data(args=args, linelabel=self.current_linelabel, userlabel = self.current_usrlabel)
+        self.current_usrlabel = ""
+        return node
+
+    @astnode
+    def _parse_data_constant(self) -> AST.Statement:
+        """ <constant> ::= INT | REAL | "STRING" | STRING """
+        tok = self._current()
+        if tok.type == TokenType.INT:
+            value = cast(int, tok.value)
+            nbytes = self._int_to_bytes(tok.lexeme, value)
+            if nbytes == 0:
+                self._raise_error(6)
+            self._advance()
+            if nbytes == 4:
+                return AST.Real(value=value)
+            return AST.Integer(value=cast(int, tok.value))
+        if tok.type == TokenType.REAL:
+            self._advance()
+            return AST.Real(value=cast(float, tok.value))
+        if tok.type == TokenType.STRING:
+            self._advance()
+            return AST.String(value=tok.lexeme.strip('"'))
+        name = self._advance().text # original case in the source code
+        return AST.String(value=name)
 
     @astnode
     def _parse_DECSS(self) -> AST.Function:
@@ -437,11 +463,9 @@ class LocBasParser:
         fname = "FN" + tk.lexeme
         fargs: list[AST.Variable] = []
         self.context = fname.upper()
-        # initial entry so we can create any local context entries
-        # it will be updated at the end
         info = SymEntry(
             symtype=SymType.Function,
-            exptype=AST.ExpType.Integer,
+            exptype=AST.exptype_fromname(tk.lexeme),
             locals=SymTable(),
             )
         if self.symtable.add(ident=fname, info=info, context="") is None:
@@ -452,7 +476,7 @@ class LocBasParser:
             vartype = AST.exptype_fromname(tk.lexeme)
             fargs.append(AST.Variable(name=tk.lexeme, etype=vartype))
             info.exptype = vartype
-            info.symtype = SymType.Variable
+            info.symtype = SymType.Param
             info.locals = SymTable()
             self.symtable.add(ident=tk.lexeme, info=info, context=self.context)
             while self._current_is(TokenType.COMMA):
@@ -464,14 +488,15 @@ class LocBasParser:
                 self.symtable.add(ident=tk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         self._expect(TokenType.COMP, "=")
-        fbody = self._parse_num_expression()
+        fbody = self._parse_expression()
         self.context = ""
         # Lets update our entry for the function with
         # the last calculated parameters
         info = self.symtable.find(ident=fname) # type: ignore[assignment]
         if info is None:
             self._raise_error(38)
-        info.exptype = fbody.etype
+        if info.exptype != fbody.etype:
+            self._raise_error(13)
         info.nargs = len(fargs)
         return AST.DefFN(name=fname, args=fargs, body=fbody)
 
@@ -561,7 +586,7 @@ class LocBasParser:
 
     @astnode
     def _parse_DRAW(self) -> AST.Command:
-        """ <DRAW> ::= DRAW <int_expression>,<int_expression>[,<int_expression>] """
+        """ <DRAW> ::= DRAW <int_expression>,<int_expression>[,<int_expression>[,<int_expression>]] """
         self._advance()
         args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
@@ -569,6 +594,9 @@ class LocBasParser:
         if self._current_is(TokenType.COMMA):
             self._advance()
             args.append(self._parse_int_expression())
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+                args.append(self._parse_int_expression())
         return AST.Command(name="DRAW", args=args)
 
     @astnode
@@ -803,7 +831,7 @@ class LocBasParser:
             label = self._advance()
             args = [AST.Label(value = label.lexeme)]
         else:
-            self._raise_error(2)
+            self._raise_error(2, "invalid label")
         return AST.Command(name="GOSUB", args=args)
 
     @astnode
@@ -820,7 +848,7 @@ class LocBasParser:
             label = self._advance()
             args = [AST.Label(value = label.lexeme)]
         else:
-            self._raise_error(2)
+            self._raise_error(2, "invalid label")
         return AST.Command(name="GOTO", args=args)
 
     @astnode
@@ -1060,6 +1088,8 @@ class LocBasParser:
         )
         if not inserted:
             self._raise_error(39)
+        # last user defined label is used by DATA statements
+        self.current_usrlabel = label.lexeme
         return AST.Label(value=label.lexeme)
 
     @astnode  
@@ -1262,8 +1292,12 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
         args.append(self._parse_int_expression())
-        while self._current_is(TokenType.COMMA):
+        if self._current_is(TokenType.COMMA):
+            self._advance()
             args.append(self._parse_int_expression())
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+                args.append(self._parse_int_expression())
         return AST.Command(name="MOVE", args=args)
 
     @astnode
@@ -1273,8 +1307,12 @@ class LocBasParser:
         args = [self._parse_int_expression()]
         self._expect(TokenType.COMMA)
         args.append(self._parse_int_expression())
-        while self._current_is(TokenType.COMMA):
+        if self._current_is(TokenType.COMMA):
+            self._advance()
             args.append(self._parse_int_expression())
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+                args.append(self._parse_int_expression())
         return AST.Command(name="MOVER", args=args)
  
     @astnode   
@@ -1603,11 +1641,15 @@ class LocBasParser:
 
     @astnode
     def _parse_RESTORE(self) -> AST.Command:
-        """ <RESTORE> ::= RESTORE [<int_expression>] """
+        """ <RESTORE> ::= RESTORE [INT | IDENT] """
         self._advance()
         args: list[AST.Statement] = []
-        if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
-            args = [self._parse_int_expression()]
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args = [AST.Integer(value = cast(int, num.value))]
+        elif self._current_is(TokenType.IDENT):
+            label = self._advance()
+            args = [AST.Label(value = label.lexeme)]
         return AST.Command(name="RESTORE", args=args)
 
     @astnode
@@ -1704,7 +1746,7 @@ class LocBasParser:
         """ <SIN> ::= SIN(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
+        args: list[AST.Statement] = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SIN", etype=AST.ExpType.Real, args=args)
 
@@ -1865,7 +1907,7 @@ class LocBasParser:
         """ <TAN> ::= TAN(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
+        args: list[AST.Statement] = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="TAN", etype=AST.ExpType.Real, args=args)
 
@@ -2096,10 +2138,13 @@ class LocBasParser:
 
     def _parse_int_expression(self) -> AST.Statement:
         """ <int_expression> ::= <expression>.type=INT """
-        stat = self._parse_logic_xor()
-        if not AST.exptype_isint(stat.etype):
-            self._raise_error(13)
-        return stat
+        stat = self._parse_num_expression()
+        return self._cast_numtype(stat, AST.ExpType.Integer)
+
+    def _parse_real_expression(self) -> AST.Statement:
+        """ <real_expression> ::= <expression>.type=REAL """
+        stat = self._parse_num_expression()
+        return self._cast_numtype(stat, AST.ExpType.Real)
 
     def _parse_num_expression(self) -> AST.Statement:
         """ <int_expression> ::= <expression>.type=(INT|REAL) """
@@ -2343,33 +2388,6 @@ class LocBasParser:
         return AST.UserFun(name=tk.lexeme, etype=entry.exptype, args=args) # type: ignore[union-attr]
 
     @astnode
-    def _parse_constant(self) -> AST.Statement:
-        """ <constant> ::= INT | REAL | "STRING" | STRING """
-        tok = self._current()
-        if tok.type == TokenType.INT:
-            value = cast(int, tok.value)
-            nbytes = self._int_to_bytes(tok.lexeme, value)
-            if nbytes == 0:
-                self._raise_error(6)
-            self._advance()
-            if nbytes == 4:
-                return AST.Real(value=value)
-            return AST.Integer(value=cast(int, tok.value))
-        if tok.type == TokenType.REAL:
-            self._advance()
-            return AST.Real(value=cast(float, tok.value))
-        if tok.type == TokenType.STRING:
-            self._advance()
-            return AST.String(value=tok.lexeme.strip('"'))
-        if tok.type == TokenType.IDENT:
-            # It only allows single words without spaces
-            # which is different from what is supported in Locomotive Basic
-            name = self._advance().lexeme
-            return AST.String(value=name)
-        self._raise_error(2)
-        return AST.Nop()
-
-    @astnode
     def _parse_pointer(self) -> AST.Pointer:
         """ <pointer> ::= @<ident> """
         self._advance()
@@ -2493,6 +2511,7 @@ class LocBasParser:
         )
         if not inserted:
             self._raise_error(34)
+        self.current_linelabel = str(line_number)
         statements = self._parse_statement_list()
         self._expect(TokenType.EOL)
         return AST.Line(number=line_number, statements=statements)

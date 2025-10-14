@@ -75,6 +75,7 @@ class Token:
     line: int
     col: int
     value: Optional[int | float | str] = None
+    text: str = "" # how lexeme really appeared in the text (original case)
 
 class TokenEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
@@ -84,7 +85,8 @@ class TokenEncoder(json.JSONEncoder):
                 "lexeme": o.lexeme,
                 "line": o.line,
                 "col": o.col,
-                "value": o.value
+                "value": o.value,
+                "text": o.text
             }
         return super().default(o)
 
@@ -369,24 +371,24 @@ class LocBasLexer:
 
         if ch == "\n":
             self._advance()
-            return Token(TokenType.EOL, "\\n", start_line, start_col)
+            return Token(TokenType.EOL, "\\n", start_line, start_col, text="\\n")
 
         if ch in _SINGLE_CHARS:
             self._advance()
             t = _SINGLE_CHARS[ch]
-            return Token(t, ch, start_line, start_col)
+            return Token(t, ch, start_line, start_col, text=ch)
 
         if ch == "'":
             comment = self._consume_until_eol()
-            return Token(TokenType.COMMENT, comment[1:], start_line, start_col)
+            return Token(TokenType.COMMENT, comment[1:], start_line, start_col, text=comment)
 
         if ch == "|":
             rsx = self._consume_rsx()
-            return Token(TokenType.RSX, rsx, start_line, start_col, rsx[1:])
+            return Token(TokenType.RSX, rsx, start_line, start_col, rsx[1:], text=rsx)
 
         if ch == '"':
             s = self._consume_string()
-            return Token(TokenType.STRING, s, start_line, start_col, s.replace('"',''))
+            return Token(TokenType.STRING, s, start_line, start_col, s.replace('"',''), text=s)
 
         # Starting line number
         if start_col == 1 and ch.isdigit():
@@ -395,14 +397,14 @@ class LocBasLexer:
                 val = int(num, 10)
             except ValueError:
                 val = None
-            return Token(TokenType.LINE_NUMBER, num, start_line, start_col, val)
+            return Token(TokenType.LINE_NUMBER, num, start_line, start_col, val, text=num)
 
         # Numbers including &H / & / &X and reals, even reals starting by .
         # like .5
         if ch.isdigit() or ch in "&.":
             numtok = self._try_number() # (lex, val, type)
             if numtok:
-                return Token(numtok[2], numtok[0], start_line, start_col, numtok[1])
+                return Token(numtok[2], numtok[0], start_line, start_col, numtok[1], text=numtok[0])
 
         # Identifiers / reserved words including FN... and sufixes %,!,$
         if ch.isalpha():
@@ -415,34 +417,34 @@ class LocBasLexer:
                 uident = extended.upper()
 
             if uident in _OPERATORS:
-                return Token(TokenType.OP, uident, start_line, start_col)
+                return Token(TokenType.OP, uident, start_line, start_col, text=ident)
 
             if uident == "REM":
                 rest = self._consume_until_eol()
-                return Token(TokenType.COMMENT, rest, start_line, start_col)
+                return Token(TokenType.COMMENT, rest, start_line, start_col, text=rest)
 
             if uident in _KEYWORDS:
-                return Token(TokenType.KEYWORD, uident, start_line, start_col)
+                return Token(TokenType.KEYWORD, uident, start_line, start_col, text=ident)
 
             # User Identifier (variable, FN..., etc.)
             if self.enforce_varlen and len(ident.rstrip("%!$&")) > 40:
                 ident = ident[:40]
-            return Token(TokenType.IDENT, ident, start_line, start_col, ident.upper())
+            return Token(TokenType.IDENT, ident, start_line, start_col, ident.upper(), text=ident)
 
         # Pure one-character arithmetic operators
         if ch in "+-*/^\\":
             self._advance()
-            return Token(TokenType.OP, ch, start_line, start_col)
+            return Token(TokenType.OP, ch, start_line, start_col, text=ch)
 
         # Comparative operators < y >
         if ch in "=<>":
             # =, <=, =<, >=, =>, <>...
             lex = self._consume_cmp_sequence()
-            return Token(TokenType.COMP, lex, start_line, start_col)
+            return Token(TokenType.COMP, lex, start_line, start_col, text=lex)
 
         # Uknown character, lets add it as a one-char ident
         self._advance()
-        return Token(TokenType.IDENT, ch, start_line, start_col)
+        return Token(TokenType.IDENT, ch, start_line, start_col, text=ch)
 
     def tokens(self) -> Iterator[Token]:
         while True:

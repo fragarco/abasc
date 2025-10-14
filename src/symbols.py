@@ -26,6 +26,7 @@ import astlib as AST
 class SymType(str, Enum):
     Variable = "Variable"
     Array = "Array"
+    Param = "Parameter"
     Label = "Label"
     Function = "Function"
     RSX = "RSX"
@@ -47,13 +48,14 @@ class SymTable:
     def __init__(self):
         self.syms = {}
 
-    def _gen_label(self, name: str, entry: SymEntry) -> str:
-        name = name.replace("!","_R")
-        name = name.replace("$","_S")
-        name = name.replace("%","_I")
-        name = name.replace(".","_")
+    def _gen_label(self, name: str, entry: SymEntry, prefix: str) -> str:
+        name = name.replace("!","_R").replace("$","_S").replace("%","_I").replace(".","_")
+        prefix = prefix.replace("!","_R").replace("$","_S").replace("%","_I").replace(".","_")
+        prefix = "G_" if prefix == "" else (prefix.upper() + "_")
         if entry.symtype == SymType.Variable:
-            return f"VAR_{name.upper()}"
+            return f"{prefix}VAR_{name.upper()}"
+        if entry.symtype == SymType.Param:
+            return f"{prefix}ARG_{name.upper()}"
         elif entry.symtype == SymType.Array:
             return f"ARRAY_{name.upper()}"
         elif entry.symtype == SymType.Label:
@@ -64,7 +66,7 @@ class SymTable:
             return f"RSX_{name.upper()}"
         return ""
 
-    def add(self, ident: str, info: SymEntry, context: str = "") -> bool:
+    def add(self, ident: str, info: SymEntry, context: str = "", prefix: str = "") -> bool:
         """ 
         Returns FALSE if the symbol exists and is not a VARIABLE or ARRAY which
         can be added multiple times (extra writes)
@@ -75,13 +77,13 @@ class SymTable:
             # Global context
             if ident not in self.syms:
                 self.syms[ident] = copy.deepcopy(info)
-                self.syms[ident].label = self._gen_label(ident, self.syms[ident])
+                self.syms[ident].label = self._gen_label(ident, self.syms[ident], prefix)
                 return True
             else:
-                # If the sym exists and it is a variable or array that keeps
+                # If the sym exists and it is a variable, param or array that keeps
                 # being of the same type, that is allowed and writes
                 # must be incremented
-                if not self.syms[ident].symtype in (SymType.Variable, SymType.Array):
+                if not self.syms[ident].symtype in (SymType.Variable, SymType.Array, SymType.Param):
                     return False
                 if info.symtype == self.syms[ident].symtype and info.exptype == self.syms[ident].exptype:
                     self.syms[ident].writes += 1
@@ -89,7 +91,7 @@ class SymTable:
         else:
             # Local context
             if context in self.syms:
-                return self.syms[context].locals.add(ident, info)
+                return self.syms[context].locals.add(ident, info, prefix=context)
         return False
         
     def find(self, ident: str, context: str = "") -> Optional[SymEntry]:

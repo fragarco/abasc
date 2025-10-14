@@ -353,7 +353,7 @@ class TestParser(unittest.TestCase):
     def test_data_basic(self):
         code = '10 DATA 1,2,3,HELLO,"HELLO",&HFF,1.5'
         ast, _ = self.parse_code(code)
-        self.assertEqual(ast.lines[0].statements[0].name, "DATA")
+        self.assertIsInstance(ast.lines[0].statements[0], AST.Data)
         self.assertEqual(len(ast.lines[0].statements[0].args), 7)
         self.assertTrue(AST.exptype_isstr(ast.lines[0].statements[0].args[3].etype))
         codes = ['10 DATA CREAL(5)', '10 DATA 1+1', '10 DATA #0', '10 DATA @I$']
