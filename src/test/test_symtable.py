@@ -19,7 +19,7 @@ class TestSymTable(unittest.TestCase):
         )
         inserted = symt.add(ident="I", info=info, context="")
         self.assertTrue(inserted)
-        entry = symt.find("I")
+        entry = symt.find("I", SymType.Variable)
         self.assertTrue(entry is not None)
 
     def test_writes_basic(self):
@@ -33,7 +33,7 @@ class TestSymTable(unittest.TestCase):
         self.assertTrue(inserted)
         inserted = symt.add(ident="I", info=info)
         self.assertTrue(inserted)
-        entry = symt.find("I")
+        entry = symt.find("I", SymType.Variable)
         self.assertEqual(entry.writes, 2)
 
     def test_writes_symtype_error(self):
@@ -72,15 +72,15 @@ class TestSymTable(unittest.TestCase):
         info.symtype = SymType.Variable
         symt.add("I", info, context="FNpow")
         # I is not available in the global context
-        sym = symt.find(ident="I", context="")
+        sym = symt.find(ident="I", stype=SymType.Variable, context="")
         self.assertTrue(sym is None)
         # I is available in the local context
-        sym = symt.find(ident="I", context="FNpow")
+        sym = symt.find(ident="I", stype=SymType.Variable, context="FNpow")
         self.assertTrue(sym is not None)
         # Global A is avaiable in the local context
         symt.add(ident="A", info=info, context="")
-        sym1 = symt.find(ident="A", context="FNpow")
-        sym2 = symt.find(ident="A", context="")
+        sym1 = symt.find(ident="A", stype=SymType.Variable, context="FNpow")
+        sym2 = symt.find(ident="A", stype=SymType.Variable, context="")
         self.assertEqual(sym1, sym2)
 
     def test_local_precedence(self):
@@ -99,9 +99,9 @@ class TestSymTable(unittest.TestCase):
         info.exptype = AST.ExpType.Real
         symt.add("I", info, context="")
 
-        sym = symt.find(ident="I", context="")
+        sym = symt.find(ident="I", stype=SymType.Variable, context="")
         self.assertEqual(sym.exptype, AST.ExpType.Real)
-        sym = symt.find(ident="I", context="FNpow")
+        sym = symt.find(ident="I", stype=SymType.Variable, context="FNpow")
         self.assertEqual(sym.exptype, AST.ExpType.Integer)
 
 if __name__ == "__main__":

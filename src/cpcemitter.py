@@ -85,7 +85,7 @@ class CPCEmitter:
         self.data[section] = self.data[section] + line +"\n"
 
     def _emit_line_label(self, line: AST.Line):
-        sym = self.symtable.find(str(line.number), "")
+        sym = self.symtable.find(str(line.number), SymType.Label, "")
         if sym is not None:
             codeline = self.source[line.line-1]
             self._emit_code(f"{sym.label}:", info=codeline.code)
@@ -105,10 +105,7 @@ class CPCEmitter:
 
     def _emit_free_mem(self) -> None:
         if self.free_tmp_memory:
-            self._emit_code(f"; Free all used temporal memory ({self.reserved_tmp_memory} bytes)")
-            self._emit_code("ld      de,_memory_start")
-            self._emit_code("ld      (_memory_next),de")
-            self._emit_code(";")
+            self._emit_code("call    rt_free_all", info=f"free ({self.reserved_tmp_memory} bytes of tmp mem")
             self.free_tmp_memory = False
             self.reserved_tmp_memory = 0
 
@@ -158,16 +155,15 @@ class CPCEmitter:
         self._emit_head(f"org     {FWCALL.LOW_LIMIT}", 0)
         self._emit_head("jp      _code_", 0)
         self._emit_head()
-        self._emit_head("; DYNAMIC MEMORY AREA, USED TO STORE TEMPORAL VALUES",0)
-        self._emit_head("_memory_next: dw _memory_start", 0)
-        self._emit_head("_memory_start:", 0)
+        self._emit_head("; DYNAMIC MEMORY AREA, USED USED BY MALLOC AND FREE",0)
+        self._emit_head(''.join(RT["rt_tmp_memory"][0]), 0)
         self._emit_head()
         self._emit_head("; PROGRAM MAIN", 0)
         self._emit_head(f"org     &{hex(self.org)[2:]}", 0)
 
     def _emit_code_end(self):
         self._emit_code()
-        self._emit_code("_end_: jr _end_", info="infinite end loop", indent=0)
+        self._emit_code("_code_end_: jr _code_end_", info="infinite end loop", indent=0)
 
     def _emit_symbols(self, syms: dict[str, SymEntry]):
         for sym in syms:
@@ -199,7 +195,7 @@ class CPCEmitter:
         # so number of items = max index + 1
         for index in entry.indexes: items = items * (index + 1)
         if entry.exptype == AST.ExpType.Integer:
-            self._emit_data(f"{entry.label}: db   {2*items}", section=DataSec.VARS)
+            self._emit_data(f"{entry.label}: defs {2*items}", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.String:
             self._emit_data(f"{entry.label}: defs {255*items}", section=DataSec.VARS)
         elif entry.exptype == AST.ExpType.Real:
@@ -221,6 +217,7 @@ class CPCEmitter:
             self.symbolafter = 240
         self._emit_data()
         self._emit_data("; Table for symbols defined with SYMBOL keyword")
+        self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes")
         self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}")
 
 
@@ -369,7 +366,7 @@ class CPCEmitter:
         # GOSUB address
         label = args[-1].args[0] # type: ignore [attr-defined]
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
-            sym = self.symtable.find(str(label.value), "")
+            sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"ld      de,{sym.label}")
         self._emit_code("ld      b,&81", info="async near call")
@@ -570,12 +567,13 @@ class CPCEmitter:
         arrays and user functions are erased, and BASIC is set to radians mode
         of calculation. 
         """
-        # Only the action to set RAD is performed here
+        # Only set RAD and file closing actions are performed here
         self._emit_import("rt_math_call")
         self._emit_code("; CLEAR")
         self._emit_code("xor      a")
         self._emit_code(f"ld      ix,{FWCALL.MATH_SET_ANGLE_MODE}", info="SET_ANGLE_MODE")
-        self._emit_code("call    rt_math_call")      
+        self._emit_code("call    rt_math_call")
+        self._emit_code(f"call    {FWCALL.CAS_INITIALISE}", info="CAS_INITIALISE")  
         self._emit_code(";")
         
     def _emit_CLEAR_INPUT(self, node:AST.Command):
@@ -641,7 +639,6 @@ class CPCEmitter:
         self._emit_code("; CONT")
         self._raise_warning(0, 'CONT is ignored and has not effect', node)
         self._emit_code("; IGNORED")
-        self._emit_code(";")
     
     def _emit_COPYCHRSS(self, node:AST.Function):
         """
@@ -824,7 +821,7 @@ class CPCEmitter:
         for a in reversed(node.args):
             self._emit_data(f"ld      l,(ix+{offset})")
             self._emit_data(f"ld      h,(ix+{offset+1})")
-            entry = self.symtable.find(a.name, node.name)
+            entry = self.symtable.find(a.name, SymType.Param, node.name)
             if entry is not None:
                 self._emit_data(f"ld      ({entry.label}),hl")
                 offset += 2
@@ -900,7 +897,7 @@ class CPCEmitter:
         # more than 28K of central memory leaving 4K max for code.
         for var in node.args:
             if isinstance(var, AST.Array):
-                entry = self.symtable.find(var.name, context="")
+                entry = self.symtable.find(var.name, SymType.Array, context="")
                 if entry is not None:
                     mem = 1
                     for index in entry.indexes: mem = mem * (index + 1)
@@ -1051,12 +1048,30 @@ class CPCEmitter:
         """
         Reports the number of the last ERRor encountered.
         """
+        # in our case, we retrieve the error number set by ERROR
+        self._emit_import("rt_error")
         self._emit_code("; ERR")
-        self._raise_warning(0, "ERR is ignored and has no effect", node)
-        self._emit_code("; IGNORED")
+        self._emit_code("ld      h, 0")
+        self._emit_code("ld      a,(rt_error)")
+        self._emit_code("ld      l,a")
+        self._emit_code(";")
 
-    def _emit_ERROR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ERROR(self, node:AST.Command):
+        """
+        Invokes the error specified in the <integer expression>. The error may
+        be one already used and recognised by BASIC, in which case the action taken
+        is the same as would be taken if such an error had been detected by BASIC.
+        Error numbers beyond those recognised by BASIC may be used by the program
+        to signal its own errors.
+        """
+        # In our case, this sets the runtime variable RT_ERROR that can be
+        # retrieve with ERR
+        self._emit_import("rt_error")
+        self._emit_code("; ERROR <integer expression>")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_error),a")
+        self._emit_code(";")
 
     def _emit_EVERY(self, node:AST.Command):
         """
@@ -1073,17 +1088,60 @@ class CPCEmitter:
         self._emit_code(";")
 
 
-    def _emit_EXP(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_EXP(self, node:AST.Function):
+        """
+        Calculates E to the power given in numeric expression, where E is approximately
+        2.7182818 - the number whose natural logarithm is 1. 
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; EXP(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_EXP}", info="MATH_REAL_EXP")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
 
-    def _emit_FILL(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_FILL(self, node:AST.Command):
+        """
+        Only available with BASIC 1.1
+        Fills an area of the screen starting from the current graphics position
+        and extending until it reaches either the edge of the window or a pixel
+        set to the <ink>. 
+        """
+        self._emit_import("rt_fill")
+        self._emit_code("; FILL <ink>")
+        self._raise_warning(1,"FILL is supported only by 664 and 6128 machines", node)
+        self._emit_expression(node.args[0])
+        self._emit_code("call    rt_fill")
+        self._emit_code(";")
 
-    def _emit_FIX(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
-
-    def _emit_FN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_FIX(self, node:AST.Function):
+        """
+        Unlike CINT, FIX merely removes the part of the numeric expression, to
+        the right of the decimal point, and leaves an integer result, rounding
+        towards zero.
+        """
+        self._emit_code("; FIX(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        if node.args[0].etype == AST.ExpType.Real:
+            self._emit_import("rt_math_call")
+            self._moveflo_accum1()
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_FIX}", info="MATH_REAL_FIX")
+            self._emit_code("call    rt_math_call")
+            self._emit_code("ld      a,b", info="sign (bit 7)")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_BIN_TO_REAL}", info="MATH_BIN_TO_REAL")
+            self._emit_code("call    rt_math_call")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TO_INT}", info="MATH_REAL_TO_INT")
+            self._emit_code("call    rt_math_call")          
+            self._emit_code("jp      p,$+10")
+            self._emit_code("ld      de,0")
+            self._emit_code("xor     a")
+            self._emit_code("ex      hl,de")
+            self._emit_code("sbc     hl,de")
+        else:
+            self._emit_code("; already INT so no action taken")
+        self._emit_code(";")
 
     def _emit_FOR(self, node:AST.ForLoop):
         """
@@ -1091,7 +1149,7 @@ class CPCEmitter:
         variable between a start and an end value. If not specified, STEP
         defaults to 1. 
         """
-        sym = self.symtable.find(node.var.name)
+        sym = self.symtable.find(node.var.name, SymType.Variable)
         start, end = self._get_for_labels()
         node.start_label = start
         node.end_label = end
@@ -1154,15 +1212,19 @@ class CPCEmitter:
         self._emit_code("; FRE(<num expression>|<str expression>)")
         arg = node.args[0]
         if arg.etype == AST.ExpType.String:
+            # Free memory between the high limit and our program binary end
+            # Free temporal memory too
             self.free_tmp_memory = True
             self._emit_free_mem()
             self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
             self._emit_code("ld      de,_program_end_")
         if isinstance(arg, AST.Integer):
             if arg.value == 1:
+                # Free temporal memory
                 self._emit_code("ld      hl,&4000")
                 self._emit_code("ld      de,(_memory_next)")
             else:
+                # Free memory between the high limit and our program binary end
                 self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
                 self._emit_code("ld      de,_program_end_")
         self._emit_code("or      a")
@@ -1177,7 +1239,7 @@ class CPCEmitter:
         label = node.args[0]
         self._emit_code("; GOSUB <line number> | <label> ")
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
-            sym = self.symtable.find(str(label.value), "")
+            sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"call    {sym.label}")
             else:
@@ -1191,7 +1253,7 @@ class CPCEmitter:
         label = node.args[0]
         self._emit_code("; GOTO <line number> | <label> ")
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
-            sym = self.symtable.find(str(label.value), "")
+            sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"jp      {sym.label}")
             else:
@@ -1260,7 +1322,7 @@ class CPCEmitter:
         Gives the address of the highest byte of memory used by BASIC, and can
         be used in numeric expressions in the usual way.
         """
-        # In our case we use this to return address where the compiled program
+        # In our case we use this to return the address where the compiled program
         # ends, which could be useful to issue Load commands
         self._emit_code("; HIMEM")
         self._emit_code("ld      hl,_program_end_")
@@ -1341,8 +1403,25 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SCR_SET_INK}", info="SCR_SET_INK")
         self._emit_code(";")
 
-    def _emit_INKEY(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_INKEY(self, node:AST.Function):
+        """
+        This function interrogates the keyboard to report which keys are being
+        pressed. The keyboard is scanned at 1/50 sec. The function is particularly
+        useful for spotting Y/N responses, since the state of shift is not required
+        according to one of the interpretation options.
+        [SHIFT] and [CTRL] are identified as follow:
+        Value returned	[SHIFT]	[CTRL]	Specified key
+        -1 	    ignored     ignored 	    UP
+        0 	    UP 	        UP 	            DOWN
+        32 	    DOWN 	    UP 	            DOWN
+        128 	UP 	        DOWN 	        DOWN
+        160 	DOWN 	    DOWN 	        DOWN 
+        """
+        self._emit_import("rt_inkey")
+        self._emit_code("; INKEY(<integer expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("call    rt_inkey")
+        self._emit_code(";")
 
     def _emit_INKEYSS(self, node:AST.Function):
         """
@@ -1413,9 +1492,9 @@ class CPCEmitter:
         for v in node.vars:
             self._emit_code("call    rt_extract_substrz")
             self._emit_code("push    hl", info="current position in input buffer")
-            entry = self.symtable.find(v.name)
-            if entry is not None:
-                if isinstance(v, AST.Variable):
+            if isinstance(v, AST.Variable):
+                entry = self.symtable.find(v.name, SymType.Variable)
+                if entry is not None:
                     self._emit_code(f"; integer variable {v.name}")
                     if v.etype == AST.ExpType.String:
                         self._emit_code(f"ld      hl,{entry.label}")
@@ -1425,7 +1504,9 @@ class CPCEmitter:
                         self._emit_code(f"ld      ({entry.label}),hl")
                     elif v.etype == AST.ExpType.Real:
                         self._emit_input_real(v, entry)
-                elif isinstance(v, AST.ArrayItem):
+            elif isinstance(v, AST.ArrayItem):
+                entry = self.symtable.find(v.name, SymType.Array)
+                if entry is not None:
                     self._emit_code(f"; array item {v.name}")
                     self._emit_arrayitem(v)
                     if v.etype == AST.ExpType.String:
@@ -1438,6 +1519,8 @@ class CPCEmitter:
                         self._emit_code("ld      (hl),de")
                     elif v.etype == AST.ExpType.Real:
                         self._emit_input_real(v, entry)
+            else:
+                self._raise_error(2, "unsupported identifier")
             self._emit_code("pop     hl", info="ready for next substring")
     
     def _emit_input_str(self, v:AST.Variable | AST.ArrayItem, var: SymEntry): 
@@ -1457,14 +1540,65 @@ class CPCEmitter:
     def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._raise_error(2, v, 'float numbers in INPUT are not supported yet')
 
-    def _emit_INSTR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_INSTR(self, node:AST.Function):
+        """
+        Searches the first string expression, for the first occurance of the second
+        string expression), where the optional number at the start indicates where
+        to start the search - otherwise the search begins at the first character of
+        the first string expression). 
+        """
+        self._emit_code("; INSTR(<integer expression>,<string expression>,<string expression>)")
+        self._emit_code(";")
 
-    def _emit_INT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_INT(self, node:AST.Function):
+        """
+        Rounds the number to the nearest lower integer, removing any fractional
+        part. The same as FIX for positive numbers, but returns one less than FIX
+        for negative numbers not already integers.
+        """
+        self._emit_code("; INT(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        if node.args[0].etype == AST.ExpType.Real:
+            self._emit_import("rt_math_call")
+            self._moveflo_accum1()
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_INT}", info="MATH_REAL_INT")
+            self._emit_code("call    rt_math_call")
+            self._emit_code("ld      a,b", info="sign (bit 7)")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_BIN_TO_REAL}", info="MATH_BIN_TO_REAL")
+            self._emit_code("call    rt_math_call")
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TO_INT}", info="MATH_REAL_TO_INT")
+            self._emit_code("call    rt_math_call")          
+            self._emit_code("jp      p,$+10")
+            self._emit_code("ld      de,0")
+            self._emit_code("xor     a")
+            self._emit_code("ex      hl,de")
+            self._emit_code("sbc     hl,de")
+        else:
+            self._emit_code("; already INT so no action taken")
+        self._emit_code(";")
 
-    def _emit_JOY(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_JOY(self, node:AST.Function):
+        """
+        The JOY function reads a bit-significant result from the joystick specified
+        in the <integer expression> (either 0 or 1).
+        Bit	Decimal 	Joystick
+        0 	    1 	    Up
+        1 	    2 	    Down
+        2 	    4 	    Left
+        3 	    8 	    Right
+        4 	    16 	    Fire 2
+        5 	    32 	    Fire 1 
+        """
+        self._emit_code("; JOY(<integer expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl", info="keep joystick number in DE")
+        self._emit_code(f"call    {FWCALL.KM_GET_JOYSTICK}", info="KM_GET_JOYSTICK")
+        self._emit_code("ld      a,e")
+        self._emit_code("or      a")
+        self._emit_code("jr      nz,$+3")
+        self._emit_code("ld      l,h")
+        self._emit_code("ld      h,0")
+        self._emit_code(";")
 
     def _emit_KEY(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1473,7 +1607,7 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_LABEL(self, node:AST.Label):
-        sym = self.symtable.find(node.value, "")
+        sym = self.symtable.find(node.value, SymType.Label, "")
         if sym is not None:
             self._emit_code(f"{sym.label}", info="USER DEFINED LABEL")
         else:
@@ -1768,7 +1902,7 @@ class CPCEmitter:
         self._moveflo_temp()
         self._emit_code(";")
     
-    def _emit_PLOT(self, node:AST.Statement):
+    def _emit_PLOT(self, node:AST.Command):
         """
         <ink mode> is only available with BASIC 1.1
         Plots a point on the graphics screen at the absolute position specified
@@ -1797,7 +1931,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_PLOT_ABSOLUTE}", info="GRA_PLOT_ABSOLUTE")
         self._emit_code(";")
 
-    def _emit_PLOTR(self, node:AST.Statement):
+    def _emit_PLOTR(self, node:AST.Command):
         """
         <ink> and <ink mode> are only available with BASIC 1.1
         Plots a point on the graphics screen at the specified position <x offset>
@@ -2015,7 +2149,7 @@ class CPCEmitter:
         else:
             label = node.args[0]
             if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
-                sym = self.symtable.find(str(label.value), "")
+                sym = self.symtable.find(str(label.value), SymType.Label, "")
                 if sym is not None:
                     self._emit_code(f"ld      hl,_data_{str(label.value)}_label")
                 else:
@@ -2235,7 +2369,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
-        self._emit_code("pop     hl")
+        self._emit_code("pop     de")
         self._emit_code(f"call    {FWCALL.GRA_TEST_ABSOLUTE}", info="GRA_TEST_ABSOLUTE")
         self._emit_code("ld      h,0")
         self._emit_code("ld      l,a")
@@ -2250,7 +2384,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
-        self._emit_code("pop     hl")
+        self._emit_code("pop     de")
         self._emit_code(f"call    {FWCALL.GRA_TEST_RELATIVE}", info="GRA_TEST_RELATIVE")
         self._emit_code("ld      h,0")
         self._emit_code("ld      l,a")
@@ -2265,9 +2399,12 @@ class CPCEmitter:
         Holds the elapsed time since switch-on, excluding periods when reading or writing
         the cassette (interrupts off). The units of time are 1/300th of a second.
         The firmware call returns the result in DEHL. The call eneables interrups.
+        As this is a long number, the result is coded into a Real.
         """
+        self._emit_import("rt_gettime")
         self._emit_code("; TIME")
-        self._emit_code(f"call     {FWCALL.KL_TIME_PLEASE}", info="KL_TIME_PLEASE")
+        self._emit_code("call    rt_gettime")
+        self._moveflo_temp()
         self._emit_code(";")
 
     def _emit_TROFF(self, node:AST.Statement):
@@ -2444,7 +2581,9 @@ class CPCEmitter:
 
     def _emit_variable(self, node: AST.Variable):
         # variables can be local to a DEF FN if they are declared as a parameter
-        entry = self.symtable.find(node.name, context = self.context)
+        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
+        if entry is None:
+            entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
         if entry is not None:
             # parameters always contain the address to the real data so 
             # all behave in the same way
@@ -2470,7 +2609,7 @@ class CPCEmitter:
                 self._emit_code("ex      de,hl")
 
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
-        var = self.symtable.find(node.name)
+        var = self.symtable.find(node.name, SymType.Array)
         if var is not None:
             if var.exptype != node.etype:
                 self._raise_error(13, node)
@@ -2497,12 +2636,14 @@ class CPCEmitter:
             self._raise_error(38, node)
 
     def _emit_pointer(self, node: AST.Pointer):
-        var = self.symtable.find(node.var.name)
-        if var is not None:
-            if var.symtype == SymType.Variable:
-                self._emit_code(f"ld      hl,{var.label}")
-            elif var.symtype == SymType.Array:
+        if isinstance(node.var, AST.ArrayItem):
+            var = self.symtable.find(node.var.name, SymType.Array)
+            if var is not None:
                 self._emit_arrayitem_ptr(node.var)  # type: ignore [arg-type]
+        elif isinstance(node.var, AST.Variable):
+            var = self.symtable.find(node.var.name, SymType.Variable)
+            if var is not None:
+                self._emit_code(f"ld      hl,{var.label}")
         else:
             self._raise_error(2, node)
 
@@ -2558,7 +2699,7 @@ class CPCEmitter:
             self._emit_code("add     hl,de")
         elif op == '-':
             self._emit_code("or      a", info="clear carry")
-            self._emit_code("sbc     hl,de", info="HL = right - left")
+            self._emit_code("sbc     hl,de", info="HL = HL - DE")
         elif op == '*':
             self._emit_import("rt_mul16")
             self._emit_code("call    rt_mul16", info="HL = HL * DE")
@@ -2787,50 +2928,55 @@ class CPCEmitter:
         pass
 
     def _emit_assigment(self, node: AST.Assignment):
-        var = self.symtable.find(node.target.name) # type: ignore[attr-defined]
-        if var is not None:
-            self._emit_expression(node.source)
-            if var.exptype == AST.ExpType.Integer:
-                if isinstance(node.target, AST.ArrayItem):
+        self._emit_expression(node.source)
+        if isinstance(node.target, AST.ArrayItem):
+            var = self.symtable.find(node.target.name, SymType.Array)
+            if var is not None:
+                if var.exptype == AST.ExpType.Integer:
                     self._emit_code("push    hl")
                     self._emit_arrayitem_ptr(node.target)
                     self._emit_code("pop     de")
                     self._emit_code(f"ld      (hl),e")
                     self._emit_code(f"inc     hl")
                     self._emit_code(f"ld      (hl),d")
-                else:
+                elif var.exptype == AST.ExpType.Real:
+                    self._emit_code("push    hl")
+                    self._emit_arrayitem_ptr(node.target)
+                    self._emit_code("ex      de,hl")
+                    self._emit_code("pop     hl")
+                    self._emit_code("ld      bc,5")
+                    self._emit_code("ldir")
+                elif var.exptype == AST.ExpType.String:
+                    self._emit_code("push    hl")
+                    self._emit_arrayitem_ptr(node.target)
+                    self._emit_code("ex      de,hl")
+                    self._emit_code("pop     hl")
+                    self._emit_code("ld      b,0")
+                    self._emit_code("ld      c,(hl)")
+                    self._emit_code("inc     c")
+                    self._emit_code("ldir")
+        elif isinstance(node.target, AST.Variable):
+            var = self.symtable.find(node.target.name, SymType.Variable)
+            if var is not None:
+                if var.exptype == AST.ExpType.Integer:
                     self._emit_code(f"ld      ({var.label}),hl")
-            elif var.exptype == AST.ExpType.Real:
-                if isinstance(node.target, AST.ArrayItem):
-                    self._emit_code("push    hl")
-                    self._emit_arrayitem_ptr(node.target)
-                    self._emit_code("ex      de,hl")
-                    self._emit_code("pop     hl")
-                else:
+                elif var.exptype == AST.ExpType.Real:
                     self._emit_code(f"ld      de,{var.label}")
-                self._emit_code("ld      bc,5")
-                self._emit_code("ldir")
-            elif var.exptype == AST.ExpType.String:
-                if isinstance(node.target, AST.ArrayItem):
-                    self._emit_code("push    hl")
-                    self._emit_arrayitem_ptr(node.target)
-                    self._emit_code("ex      de,hl")
-                    self._emit_code("pop     hl")
-                else:
+                    self._emit_code("ld      bc,5")
+                    self._emit_code("ldir")
+                elif var.exptype == AST.ExpType.String:
                     self._emit_code(f"ld      de,{var.label}")
-                self._emit_code("ld      b,0")
-                self._emit_code("ld      c,(hl)")
-                self._emit_code("inc     c")
-                self._emit_code("ldir")
-            else:
-                self._raise_error(2, node, f'variable type not implemented yet')
+                    self._emit_code("ld      b,0")
+                    self._emit_code("ld      c,(hl)")
+                    self._emit_code("inc     c")
+                    self._emit_code("ldir")
         else:
             self._raise_error(38, node)
 
     def _emit_RSX(self, node: AST.RSX):
         self._emit_code(f"; RSX call to {node.command}")
         label = node.command
-        sym = self.symtable.find(label, "")
+        sym = self.symtable.find(label, SymType.RSX, "")
         if sym is not None:
             params = len(node.args)
             if params > 0:

@@ -144,6 +144,7 @@ class FWCALL:
     GRA_LINE_ABSOLUTE   = "&BBF6"
     GRA_LINE_RELATIVE   = "&BBF9"
     GRA_WR_CHAR         = "&BBFC"
+    GRA_FILL            = "&BD52"
 
     SCR_INITIALISE      = "&BBFF"
     SCR_RESET           = "&BC02"
@@ -281,6 +282,18 @@ class FWCALL:
 # 
 RT = {
     #
+    # RUNTIME VARIABLES
+    #
+    "rt_tmp_memory": ([
+        "rt_memory_next: dw rt_memory_start\n",
+        "rt_memory_start:\n",
+    ], []),
+    "rt_error": ([
+        "; RT_ERROR\n",
+        "; Variable, can be set by ERROR and read by ERR\n",
+        "rt_error: db 0\n",
+    ], []),
+    #
     # MEM AND CALLS
     # 
     "rt_malloc": ([
@@ -293,13 +306,13 @@ RT = {
         ";     HL address to the new reserved memory\n",
         ";     HL and Flags are modified\n",
         "rt_malloc:\n",
-        "\tld      hl,(_memory_next)\n",
+        "\tld      hl,(rt_memory_next)\n",
         "\tpush    hl\n",
         "\tadd     hl,bc\n",
-        "\tld      (_memory_next),hl\n",
+        "\tld      (rt_memory_next),hl\n",
         "\tpop     hl\n",
         "\tret\n\n",
-    ],[]),
+    ],["rt_free_all"]),
     "rt_malloc_de": ([
         "; RT_MALLOC_DE\n",
         "; Returns in DE the address to a temporal free memory block\n",
@@ -310,15 +323,29 @@ RT = {
         ";     DE address to the new reserved memory\n",
         ";     DE and Flags are modified\n",
         "rt_malloc_de:\n",
-        "\tld      de,(_memory_next)\n",
+        "\tld      de,(rt_memory_next)\n",
         "\tpush    de\n",
         "\tex      de,hl\n",
         "\tadd     hl,bc\n",
         "\tex      de,hl\n",
-        "\tld      (_memory_next),de\n",
+        "\tld      (rt_memory_next),de\n",
         "\tpop     de\n",
         "\tret\n\n",
-    ],[]),
+    ],["rt_free_all"]),
+    "rt_free_all": ([
+        "; RT_FREE_ALL\n",
+        "; Resets the position of the next available temporal memory block\n",
+        "; to its initial position\n",
+        "; Inputs:\n",
+        ";     None\n",
+        "; Outputs:\n",
+        ";     None\n",
+        ";     DE gets modified\n",
+        "rt_free_all:\n",
+        "\tld      de,rt_memory_start\n",
+        "\tld      (rt_memory_next),de\n",
+        "\tret\n\n",
+    ], []),
     "rt_call": ([
         "; RT_CALL\n",
         "; Jumps to the address passed in HL and uses the RET from the\n",
@@ -1464,5 +1491,60 @@ RT = {
         "\tadd     hl,de\n",
         "\tdec     a\n",
         "\tjr      __timerget_loop\n",
-    ],[])
+    ],[]),
+    "rt_fill": ([
+        "; RT_FILL\n",
+        "; Wrapper for the GRA FILL firmware call in the 664 and 6128\n",
+        ";Inputs:\n",
+        ";      L  INK index\n",
+        ";Outputs:\n",
+        ";     None\n",
+        ";     AF, BC, DE and HL are modified\n",
+        "rt_timer_blocks: defs 13*4 ; 4 tick blocks\n",
+        "rt_fill_buffer: defs 70\n",
+        "rt_fill:\n",
+        "\tld      a,l\n",
+        "\tld      hl,rt_fill_buffer\n",
+        "\tld      de,70\n",
+        f"\tjp      {FWCALL.GRA_FILL}  ; GRA_FILL\n\n",
+    ],[]),
+    "rt_inkey": ([
+        "; RT_INKEY\n",
+        "; Wrapper for the KEY TEST firmware call\n",
+        ";Inputs:\n",
+        ";      HL  Key numeric value to test\n",
+        ";Outputs:\n",
+        ";     HL  -1 no pressed, 0, 32, 128 and 160 as per INKEY doc\n",
+        ";     AF, C, and HL are modified\n",
+        "rt_inkey:\n",
+        "\tld      a,l\n",
+        f"\tcall    {FWCALL.KM_TEST_KEY}  ; KM_TEST_KEY\n",
+        "\tld      hl,&FFFF  ; -1 (the key is not pressed)\n",
+        "\tjr      z,$+4\n",
+        "\tinc     h\n",
+        "\tld      l,c\n",
+        "\tret\n\n",
+    ],[]),
+    "rt_gettime": ([
+        "; RT_GETTIME\n",
+        "; Wrapper for the KL TIME PLEASE firmware call\n",
+        "; It captures the bin number and casts it to real\n",
+        "; Leaving the result in rt_math_accum1\n",
+        ";Inputs:\n",
+        ";     None\n",
+        ";Outputs:\n",
+        ";     HL points to rt_math_accum1\n",
+        ";     AF, HL, BC, DE and IX are modified\n",
+        "rt_gettime:\n",
+        f"\tcall     {FWCALL.KL_TIME_PLEASE}  ; KL_TIME_PLEASE\n",
+        "\tld      ix,rt_math_accum1\n",
+        "\tld      (ix+0),l\n",
+        "\tld      (ix+1),h\n",
+        "\tld      (ix+2),e\n",
+        "\tld      (ix+3),d\n",
+        "\txor     a\n",
+        "\tld      hl,rt_math_accum1\n"
+        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n\n",
+        "\tjp      rt_math_call\n\n",
+    ],["rt_math_call"]),
 }

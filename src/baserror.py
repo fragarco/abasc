@@ -160,6 +160,7 @@ _ERRORCODES = {
     "037": "Unexpected ELSE",
     "038": "Undefined identifier",
     "039": "Label already defined",
+    "040": "Variable already defined",
 }
 
 class BasError(Exception):

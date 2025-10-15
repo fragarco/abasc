@@ -9,6 +9,7 @@ from baserror import BasError
 from basparse import LocBasParser
 from baslex import LocBasLexer
 from baspp import CodeLine
+from symbols import SymType
 import astlib as AST
 import json
 
@@ -141,7 +142,7 @@ class TestParser(unittest.TestCase):
         code = "10 AFTER 12,1+1+1 GOSUB 200"
         ast, _ = self.parse_code(code)
         self.assertIsInstance(ast.lines[0].statements[0].args[1], AST.BinaryOp)
-        codes = ["10 AFTER 2.5 GOSUB 200", "10 AFTER 2,3.4 GOSUB 200", "10 AFTER 2, GOSUB 200"]
+        codes = ['10 AFTER "A" GOSUB 200', '10 AFTER 2,"B" GOSUB 200', "10 AFTER 2, GOSUB 200"]
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -194,7 +195,7 @@ class TestParser(unittest.TestCase):
             self.assertEqual(ast.lines[0].statements[0].name, "BORDER")
             self.assertEqual(ast.lines[0].statements[0].etype, AST.ExpType.Void)
             self.assertEqual(ast.lines[0].statements[0].args[0].value, 2)
-        codes = ['10 BORDER "2"', '10 BORDER 2,3,4', '10 BORDER 2/2.5,1']
+        codes = ['10 BORDER "2"', '10 BORDER 2,3,4']
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -262,7 +263,7 @@ class TestParser(unittest.TestCase):
             cmd = ast.lines[0].statements[0]
             self.assertIsInstance(cmd, AST.Command)
             self.assertEqual(cmd.name, "CLG")
-        codes = ["10 CLG $I", "10 CLG #10","10 CLG 2.5"]
+        codes = ["10 CLG $I", "10 CLG #10"]
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -419,7 +420,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[1].name, "DRAW")
         self.assertEqual(ast.lines[0].statements[2].args[0].value, 100)
         self.assertEqual(ast.lines[0].statements[2].args[1].value, 200)
-        codes = ['10 DRAW 100', '10 DRAW 2.5,2.5', '10 DRAW 100,100,"A"']
+        codes = ['10 DRAW 100', '10 DRAW 100,100,"A"']
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -430,7 +431,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[1].name, "DRAWR")
         self.assertEqual(ast.lines[0].statements[2].args[0].value, 100)
         self.assertEqual(ast.lines[0].statements[2].args[1].value, 200)
-        codes = ['10 DRAWR 100', '10 DRAWR 2.5,2.5', '10 DRAWR 100,100,"A"']
+        codes = ['10 DRAWR 100', '10 DRAWR 100,100,"A"']
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)
@@ -759,7 +760,7 @@ class TestParser(unittest.TestCase):
         ast,symt = self.parse_code(code)
         cmd = ast.lines[0].statements[0]
         self.assertIsInstance(cmd, AST.Input)
-        self.assertTrue(symt.find(ident="n$", context="") is not None)
+        self.assertTrue(symt.find(ident="n$", stype=SymType.Variable, context="") is not None)
 
     def test_input_if_example(self):
         code = """

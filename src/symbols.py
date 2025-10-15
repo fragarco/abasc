@@ -57,7 +57,7 @@ class SymTable:
         if entry.symtype == SymType.Param:
             return f"{prefix}ARG_{name.upper()}"
         elif entry.symtype == SymType.Array:
-            return f"ARRAY_{name.upper()}"
+            return f"{prefix}ARRAY_{name.upper()}"
         elif entry.symtype == SymType.Label:
             return f"__label_{name.upper()}"
         elif entry.symtype == SymType.Function:
@@ -66,48 +66,67 @@ class SymTable:
             return f"RSX_{name.upper()}"
         return ""
 
+    def _code_symtype(slef, ident: str, stype: SymType):
+        if stype == SymType.Variable:
+            return f"VAR_{ident}"
+        if stype == SymType.Param:
+            return f"ARG_{ident}"
+        elif stype == SymType.Array:
+            return f"ARRAY_{ident}"
+        elif stype == SymType.Label:
+            return f"LABEL_{ident}"
+        elif stype == SymType.Function:
+            return f"FN_{ident}"
+        elif stype == SymType.RSX:
+            return f"RSX_{ident}"
+        return ident
+
     def add(self, ident: str, info: SymEntry, context: str = "", prefix: str = "") -> bool:
         """ 
         Returns FALSE if the symbol exists and is not a VARIABLE or ARRAY which
         can be added multiple times (extra writes)
         """
         ident = ident.upper()
+        keyident = self._code_symtype(ident, info.symtype)
         context = context.upper()
         if context == "":
             # Global context
-            if ident not in self.syms:
-                self.syms[ident] = copy.deepcopy(info)
-                self.syms[ident].label = self._gen_label(ident, self.syms[ident], prefix)
+            if keyident not in self.syms:
+                self.syms[keyident] = copy.deepcopy(info)
+                self.syms[keyident].label = self._gen_label(ident, info, prefix)
                 return True
             else:
                 # If the sym exists and it is a variable, param or array that keeps
                 # being of the same type, that is allowed and writes
                 # must be incremented
-                if not self.syms[ident].symtype in (SymType.Variable, SymType.Array, SymType.Param):
+                if not self.syms[keyident].symtype in (SymType.Variable, SymType.Array, SymType.Param):
                     return False
-                if info.symtype == self.syms[ident].symtype and info.exptype == self.syms[ident].exptype:
-                    self.syms[ident].writes += 1
+                if self.syms[keyident].exptype == info.exptype:
+                    self.syms[keyident].writes += 1
                     return True
         else:
             # Local context
-            if context in self.syms:
-                return self.syms[context].locals.add(ident, info, prefix=context)
+            keyfun = self._code_symtype(context, SymType.Function)
+            if keyfun in self.syms:
+                return self.syms[keyfun].locals.add(ident, info, prefix=context)
         return False
         
-    def find(self, ident: str, context: str = "") -> Optional[SymEntry]:
+    def find(self, ident: str, stype: SymType, context: str = "") -> Optional[SymEntry]:
         ident = ident.upper()
+        keyident = self._code_symtype(ident, stype)
         context = context.upper()
         if context == "":
             # Global context
-            if ident in self.syms:
-                return self.syms[ident]
+            if keyident in self.syms:
+                return self.syms[keyident]
         else:
             # Local context
-            if context in self.syms:
-                s = self.syms[context].locals.find(ident)
+            keyfun = self._code_symtype(context, SymType.Function)
+            if keyfun in self.syms:
+                s = self.syms[keyfun].locals.find(ident, stype)
                 if s is None:
                     # Search in the global context
-                    return self.find(ident)
+                    return self.find(ident, stype)
                 return s
         return None
 

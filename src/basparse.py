@@ -468,7 +468,7 @@ class LocBasParser:
             exptype=AST.exptype_fromname(tk.lexeme),
             locals=SymTable(),
             )
-        if self.symtable.add(ident=fname, info=info, context="") is None:
+        if not self.symtable.add(ident=fname, info=info, context=""):
             self._raise_error(2)
         if self._match(TokenType.LPAREN):
             # No ArrayItems are supported here so we don't call _parse_ident()
@@ -492,7 +492,7 @@ class LocBasParser:
         self.context = ""
         # Lets update our entry for the function with
         # the last calculated parameters
-        info = self.symtable.find(ident=fname) # type: ignore[assignment]
+        info = self.symtable.find(ident=fname, stype=SymType.Function) # type: ignore[assignment]
         if info is None:
             self._raise_error(38)
         if info.exptype != fbody.etype:
@@ -685,16 +685,16 @@ class LocBasParser:
         self._advance()
         args: list[AST.Statement] = []
         tk = self._expect(TokenType.IDENT)
-        entry = self.symtable.find(tk.lexeme, context=self.context)
-        if entry is None or entry.symtype != SymType.Array:
+        entry = self.symtable.find(tk.lexeme, SymType.Array, context=self.context)
+        if entry is None:
             self._raise_error(2)
         else:
             args.append(AST.Variable(name=tk.lexeme, etype=entry.exptype))
         while self._current_is(TokenType.COMMA):
             self._advance()
             tk = self._expect(TokenType.IDENT)
-            entry = self.symtable.find(tk.lexeme, context=self.context)
-            if entry is None or entry.symtype != SymType.Array:
+            entry = self.symtable.find(tk.lexeme, SymType.Array, context=self.context)
+            if entry is None:
                 self._raise_error(2)
             else:
                 args.append(AST.Variable(name=tk.lexeme, etype=entry.exptype))
@@ -739,7 +739,7 @@ class LocBasParser:
         """ <EXP> ::= EXP(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_num_expression()]
+        args = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="EXP", etype=AST.ExpType.Real, args=args)
 
@@ -777,7 +777,7 @@ class LocBasParser:
         if not AST.exptype_isint(vartype):
             self._raise_error(13)
         self._expect(TokenType.COMP, "=")
-        info = self.symtable.find(ident=var, context=self.context)
+        info = self.symtable.find(ident=var, stype=SymType.Variable, context=self.context)
         if info is None:
             # Lets add the FOR variable to the symtable as it persists
             # in Locomotive BASIC after the loop ends
@@ -1012,7 +1012,7 @@ class LocBasParser:
         # but only if they are not ArrayItems, which must be declared with DIM
         for v in vars:
             if isinstance(v, AST.Variable):
-                if self.symtable.find(ident=v.name, context=self.context) is None:
+                if self.symtable.find(ident=v.name, stype=SymType.Variable, context=self.context) is None:
                     self.symtable.add(
                         ident=v.name,
                         info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
@@ -1141,7 +1141,7 @@ class LocBasParser:
         # LINE INPUT can declare a new variable so we need to add it
         # but only if it is not an ArrayItem
         if isinstance(var, AST.Variable):
-            if self.symtable.find(ident=var.name, context=self.context) is None:
+            if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
                 self.symtable.add(
                     ident=var.name,
                     info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
@@ -1604,7 +1604,7 @@ class LocBasParser:
             # READ can declare new variables so we need to add any new ones to the symtable
             # but not if they are Array items
             if isinstance(var, AST.Variable):
-                if self.symtable.find(ident=var.name, context=self.context) is None:
+                if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
                     self.symtable.add(
                         ident=var.name,
                         info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
@@ -1942,7 +1942,7 @@ class LocBasParser:
     def _parse_TIME(self) -> AST.Function:
         """ <TIME> ::= TIME """
         self._advance()
-        return AST.Function(name="TIME", etype=AST.ExpType.Integer)
+        return AST.Function(name="TIME", etype=AST.ExpType.Real)
 
     @astnode
     def _parse_TRON(self) -> AST.Command:
@@ -2372,7 +2372,7 @@ class LocBasParser:
         """ <user_fun> ::= FNIDENT([<expression>[,<expression>]])"""
         tk = self._expect(TokenType.IDENT)
         # functions are always declared in the global context
-        entry = self.symtable.find(ident=tk.lexeme, context="")
+        entry = self.symtable.find(ident=tk.lexeme, stype=SymType.Function, context="")
         if entry is None:
             self._raise_error(18, col=tk.col)
         args: list[AST.Statement] = []
