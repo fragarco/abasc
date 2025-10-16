@@ -1545,9 +1545,22 @@ class CPCEmitter:
         Searches the first string expression, for the first occurance of the second
         string expression), where the optional number at the start indicates where
         to start the search - otherwise the search begins at the first character of
-        the first string expression). 
+        the first string expression (default for start is 1, 0 produces error). 
         """
+        self._emit_import("rt_findstr")
         self._emit_code("; INSTR(<integer expression>,<string expression>,<string expression>)")
+        self._emit_expression(node.args[-1])
+        self._emit_code("push    hl", info="substring to find")
+        self._emit_expression(node.args[-2])
+        if len(node.args) == 3:
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[0])
+            self._emit_code("ld      b,l")
+            self._emit_code("pop     hl")
+        else:
+            self._emit_code("ld      b,1")
+        self._emit_code("pop     de")
+        self._emit_code("call    rt_findstr")
         self._emit_code(";")
 
     def _emit_INT(self, node:AST.Function):
@@ -1600,33 +1613,90 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_KEY(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_KEY(self, node:AST.Command):
+        """
+        Fixes a new function key definition. There are thirty two keyboard expansion
+        characters in the range 128-159. When one of these characters is read it is
+        expanded into the string associated with it, although the total number of
+        expansion characters cannot exceed 100. The KEY command associates a string
+        with a given expansion character. 
+        """
+        self._emit_code("; KEY <integer expression>,<string expression>")
+        self._raise_warning(0, "KEY is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
-    def _emit_KEY_DEF(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_KEY_DEF(self, node:AST.Command):
+        """
+        DEFines the KEY values to be returned by the specified <key number> in the
+        range 0 to 79. The <normal>, <shifted> and <control> parameters should contain
+        the values required to be returned when the key is pressed, alone, together
+        with [SHIFT], and together with [CTRL], respectively. Each of these parameters
+        is optional. The <repeat> parameter enables you to set the key auto-repeat
+        function ON or OFF (1 or 0), the rate of auto-repeat being adjustable by use
+        of the SPEED KEY command. 
+        """
+        self._emit_code("; KEY DEF <key number>,<repeat>[,<normal>[,<shifted>[,<control>]]]")
+        self._raise_warning(0, "KEY DEF is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_LABEL(self, node:AST.Label):
+        """
+        Only available on BASIC 2.0
+        """
         sym = self.symtable.find(node.value, SymType.Label, "")
         if sym is not None:
             self._emit_code(f"{sym.label}", info="USER DEFINED LABEL")
         else:
             self._raise_error(38, node)
 
-    def _emit_LEFTSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LEFTSS(self, node:AST.Function):
+        """
+        Extracts characters to the left of, and including the position specified
+        in the <integer expression> from the the given <string expression>. If the
+        <str expr> is shorter than the required length, the whole <str expr> is
+        re-turned. 
+        """
+        self._emit_import("rt_strleft")
+        self._emit_code("; LEFT$(<string expression>,<integer expression>)")
+        self._emit_expression(node.args[-1])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("pop     bc")
+        self._emit_code("call    rt_strleft")
+        self._emit_code(";")
 
-    def _emit_LEN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LEN(self, node:AST.Function):
+        """
+        Returns a number corresponding to the number of all types of characters,
+        including spaces, in the <string expression>. 
+        """
+        self._emit_code("; LEN(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,(hl)")
+        self._emit_code("ld      l,a")
+        self._emit_code("ld      h,0")
+        self._emit_code(";")
 
-    def _emit_LET(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LET(self, node:AST.Command):
+        """
+        A remnant from early BASICS where variable assignments had to be seen coming.
+        No use apart from providing compatibility with the programs supplied in
+        early BASIC training manuals. 
+        """
+        self._emit_code("; LET - NOTHING TO DO")
 
     def _emit_LINE_INPUT(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_LIST(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LIST(self, node:AST.Command):
+        """
+        List program lines to the given stream. 0 is the default screen, 8 is
+        the printer.
+        """
+        self._emit_code("; LIST [<line number range>][,#<strea m expression>]")
+        self._raise_warning(0, "LIST is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_LOAD(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1651,11 +1721,31 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_SET_CURSOR}", info="TXT_SET_CURSOR")
         self._emit_code(";")
 
-    def _emit_LOG(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LOG(self, node:AST.Function):
+        """
+        Calculates the natural logarithm of numeric expression. 
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; LOG(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG}", info="MATH_REAL_LOG")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
 
-    def _emit_LOG10(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LOG10(self, node:AST.Function):
+        """
+        Calculates the base 10 logarithm of numeric expression. 
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; LOG10(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG_10}", info="MATH_REAL_LOG_10")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
 
     def _emit_LOWERSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1686,8 +1776,30 @@ class CPCEmitter:
     def _emit_MERGE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_MIDSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_MIDSS(self, node:AST.Function):
+        """
+        MID$ specifies part of a string (a sub-string) which can be used either as
+        the destination of an assignment (MID$ as a command) or as an argument in
+        a string expression (MID$ as a Function). The first <integer expression>
+        specifies the position of the first character of the sub-string.
+        The second <integer expression> specifies the length of the sub-string
+        to be returned. If omitted, this extends to the end of the original string. 
+        """
+        # In our case this cannot be used as a Command only as a Function
+        self._emit_import("rt_substr")
+        self._emit_code("; MID$(<string>, <integer expression> [, <integer expression>]))")
+        self._emit_expression(node.args[1])
+        self._emit_code("push    hl")
+        if len(node.args) == 3:
+            self._emit_expression(node.args[2])
+            self._emit_code("pop     bc")
+            self._emit_code("ld      b,l")
+            self._emit_code("push    bc")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("pop     bc")
+        self._emit_code("call    rt_substr")
+        self._emit_code(";")
 
     def _emit_MIN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -2171,8 +2283,21 @@ class CPCEmitter:
         self._emit_code("ret")
         self._emit_code(";")
 
-    def _emit_RIGHTSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RIGHTSS(self, node:AST.Function):
+        """
+        Extracts the number of characters specified by the <int expression> from
+        the right of the str expression. If the str expression is shorter than
+        the required length, the whole <str expression> is returned. 
+        """
+        self._emit_import("rt_strright")
+        self._emit_code("; RIGHT$(<string expression>,<integer expression>)")
+        self._emit_expression(node.args[-1])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("pop     bc")
+        self._emit_code("call    rt_strright")
+        self._emit_code(";")
 
     def _emit_RND(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -2206,8 +2331,17 @@ class CPCEmitter:
     def _emit_SOUND(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_SPACESS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SPACESS(self, node:AST.Function):
+        """
+        Creates a string of spaces of the given length.
+        """
+        self._emit_import("rt_strfill")
+        self._emit_code("; SPACE$(<integer expression>)")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("ld      c,32")
+        self._emit_code("call    rt_strfill")
+        self._emit_code(";")
 
     def _emit_SPC(self, node:AST.Command):
         """
@@ -2240,11 +2374,43 @@ class CPCEmitter:
     def _emit_STOP(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_STRINGSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_STRINGSS(self, node:AST.Function):
+        """
+        Delivers a <string expression> consisting of the specified character
+        repeated a number of times. 
+        """
+        self._emit_import("rt_strfill")
+        self._emit_code("; STRING$(<integer expression>,<character expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._reserve_memory_de(255)
+        self._emit_code("inc     hl")
+        self._emit_code("ld      c,(hl)")
+        self._emit_code("pop     hl")
+        self._emit_code("call    rt_strfill")
+        self._emit_code(";")
 
-    def _emit_STRSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_STRSS(self, node:AST.Function):
+        """
+        Converts the numeric expression) to a decimal string representation in the
+        same form as used in the PRINT command.
+        """
+        # TODO: reals
+        self._emit_import("rt_print_real")
+        self._emit_import("rt_int2str")
+        self._emit_code("; STR$(<numeric expression>)")
+        arg = node.args[0]
+        self._emit_expression(arg)
+        if arg.etype == AST.ExpType.Integer:
+            self._emit_code("call    rt_int2str")
+            self._reserve_memory_de(8)
+            self._emit_code("push    de")
+            self._emit_code("ldir")
+            self._emit_code("pop     hl")
+        else:
+            self._emit_error(2, "REAL numbers not yet supported")
+        self._emit_code(";")
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
@@ -2390,10 +2556,6 @@ class CPCEmitter:
         self._emit_code("ld      l,a")
         self._emit_code(";")
 
-    def _emit_THEN(self, node:AST.Statement):
-        # THEN is processed in _emit_IF so we shouldn't arrive here
-        self._raise_error(2, node, 'unexpected THEN')
-
     def _emit_TIME(self, node:AST.Function):
         """
         Holds the elapsed time since switch-on, excluding periods when reading or writing
@@ -2427,8 +2589,14 @@ class CPCEmitter:
         self._raise_warning(0, "TRON is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_UNT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_UNT(self, node:AST.Function):
+        """
+        Converts an unsigned 16-bit integer in the range 0 to 65535. Returns an
+        integer value in the range -32768 to +32767.
+        """
+        self._emit_code("; UNT(<address expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code(";")
 
     def _emit_UPPERSS(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')

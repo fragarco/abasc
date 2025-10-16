@@ -401,7 +401,7 @@ class LocBasLexer:
 
         # Numbers including &H / & / &X and reals, even reals starting by .
         # like .5
-        if ch.isdigit() or ch in "&.":
+        if ch.isdigit() or ch in "&." or ch == '-':
             numtok = self._try_number() # (lex, val, type)
             if numtok:
                 return Token(numtok[2], numtok[0], start_line, start_col, numtok[1], text=numtok[0])

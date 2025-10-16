@@ -1346,8 +1346,8 @@ class TestParser(unittest.TestCase):
     def test_time_example(self):
         code="""
 10 DATUM = INT(TIME/300)  
-20 TICKER=((TIME/300)-DATUM) 
-30 PRINT TICKER; 
+20 TICKER!=((TIME/300)-DATUM) 
+30 PRINT TICKER!; 
 40 GOTO 20
 """
         ast, _ = self.parse_code(code)

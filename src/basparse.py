@@ -75,6 +75,7 @@ class LocBasParser:
         self.context = ""
         self.current_usrlabel = ""
         self.current_linelabel = ""
+        self.unsignedmode = False
 
     @staticmethod
     def astnode(func: Callable[[LocBasParser], AST.ASTNode]):
@@ -1151,11 +1152,18 @@ class LocBasParser:
  
     @astnode
     def _parse_LIST(self) -> AST.Command:
-        """ <LIST> ::= LIST """
+        """ <LIST> ::= LIST <range>[,#<stream>]"""
         # This command doesn't make sense in a compiled program but
         # leave the emiter fail
         self._advance()
-        return AST.Command(name="LIST")
+        args: list[AST.Statement] = []
+        if not self._current_in((TokenType.COLON, TokenType.EOF, TokenType.EOL, TokenType.COMMENT)):
+            args = [self._parse_range()]
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+                self._match(TokenType.HASH)
+                args.append(self._parse_int_expression())
+        return AST.Command(name="LIST", args=args)
 
     @astnode
     def _parse_LOAD(self) -> AST.Command:
@@ -1186,7 +1194,7 @@ class LocBasParser:
         """ <LOG> ::= LOG(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_num_expression()]
+        args = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LOG", etype=AST.ExpType.Real, args=args)
 
@@ -1195,7 +1203,7 @@ class LocBasParser:
         """ <LOG10> ::= LOG10(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_num_expression()]
+        args = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="LOG10", etype=AST.ExpType.Real, args=args)
 
@@ -1961,7 +1969,7 @@ class LocBasParser:
         """ <UNT> ::= UNT(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_int_expression()]
+        args: list[AST.Statement] = [self._parse_uint_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="UNT", etype=AST.ExpType.Integer, args=args)
 
@@ -2136,15 +2144,34 @@ class LocBasParser:
         left  = self._cast_numtype(left, etype)
         return left, right
 
-    def _parse_int_expression(self) -> AST.Statement:
+    def _parse_uint_expression(self) -> AST.Statement:
+        """ <int_expression> ::= <expression>.type=INT """
+        self.unsignedmode = True
+        stat = self._parse_num_expression()
+        self.unsignedmode = False
+        if stat.etype != AST.ExpType.Integer:
+            self._raise_error(13)
+        return stat
+
+    def _parse_int_expression(self, allowcast = True) -> AST.Statement:
         """ <int_expression> ::= <expression>.type=INT """
         stat = self._parse_num_expression()
-        return self._cast_numtype(stat, AST.ExpType.Integer)
+        if allowcast:
+            return self._cast_numtype(stat, AST.ExpType.Integer)
+        else:
+            if stat.etype != AST.ExpType.Integer:
+                self._raise_error(13)
+            return stat
 
-    def _parse_real_expression(self) -> AST.Statement:
+    def _parse_real_expression(self, allowcast = True) -> AST.Statement:
         """ <real_expression> ::= <expression>.type=REAL """
         stat = self._parse_num_expression()
-        return self._cast_numtype(stat, AST.ExpType.Real)
+        if allowcast:
+            return self._cast_numtype(stat, AST.ExpType.Real)
+        else:
+            if stat.etype != AST.ExpType.Real:
+                self._raise_error(13)
+            return stat
 
     def _parse_num_expression(self) -> AST.Statement:
         """ <int_expression> ::= <expression>.type=(INT|REAL) """
@@ -2273,15 +2300,30 @@ class LocBasParser:
     @astnode
     def _parse_unary(self) -> AST.Statement:
         """ <unary> ::= ( - | NOT ) <primary> | <primary> """
-        if self._current_in((TokenType.OP,), ('-', 'NOT')):
+        # NOT only work with INT while '-' works with INT and REAL
+        if self._current_in((TokenType.OP,), ('NOT','-')):
             op = self._advance()
             right = self._parse_primary()
-            # NOT only work with INT while '-' works with INT and REAL
             if not AST.exptype_isnum(right.etype):
-                self._raise_error(13, line=op.line, col=op.col) 
+                self._raise_error(13, line=op.line, col=op.col)
+            if op.lexeme == 'NOT':    
+                right = self._cast_numtype(right, AST.ExpType.Integer)
             else:
-                if op.lexeme == 'NOT':
-                    right = self._cast_numtype(right, AST.ExpType.Integer)
+                # We may have the case of negative numbers that must be <primary>
+                # instead of (OP(-),NUM)
+                if isinstance(right, AST.Integer):
+                    right.value = -right.value
+                    # we need to check again the needed bytes as negative numbers
+                    # need more and may jump into REAL
+                    nbytes = self._int_to_bytes('', right.value)
+                    if nbytes == 0:
+                        self._raise_error(6)
+                    if nbytes > 2:
+                        return AST.Real(value=right.value)
+                    return right
+                elif isinstance(right, AST.Real):
+                    right.value = -right.value
+                    return right
             return AST.UnaryOp(op=op.lexeme, operand=right, etype=right.etype)
         return self._parse_primary()
 
@@ -2294,10 +2336,12 @@ class LocBasParser:
         """
         if n == 0:
             return 2
-        if '&' not in lex:
+        if self.unsignedmode and n < 0:
+            return 0  # Overflow
+        if '&' not in lex and not self.unsignedmode:
             n = abs(n) * 2
         minbytes = int(log(n, 256)) + 1
-        if minbytes > 4:
+        if minbytes > 4 or (minbytes > 2 and self.unsignedmode):
             return 0  # Overflow
         if minbytes > 2:
             return 4
