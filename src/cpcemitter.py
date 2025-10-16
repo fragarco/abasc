@@ -2697,11 +2697,22 @@ class CPCEmitter:
     def _emit_WRITE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_XPOS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_XPOS(self, node:AST.Function):
+        """
+        Establishes the horizontal position of the graphics cursor.
+        """
+        self._emit_code("; XPOS")
+        self._emit_code(f"call    {FWCALL.GRA_ASK_CURSOR}", info="GRA_ASK_CURSOR")
+        self._emit_code("ex      de,hl")
+        self._emit_code(";")
 
-    def _emit_YPOS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_YPOS(self, node:AST.Function):
+        """
+        Establishes the vertical position of the graphics cursor.
+        """
+        self._emit_code("; YPOS")
+        self._emit_code(f"call    {FWCALL.GRA_ASK_CURSOR}", info="GRA_ASK_CURSOR")
+        self._emit_code(";")
 
     def _emit_ZONE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
