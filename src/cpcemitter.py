@@ -2126,8 +2126,24 @@ class CPCEmitter:
         self._emit_code("ld      (hl),e")
         self._emit_code(";")
 
-    def _emit_POS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_POS(self, node:AST.Function):
+        """
+        Reports the current horizontal POSition of the text cursor relative to
+        the leftedge of the text window. The <stream expression> MUST be specified,
+        and does NOT default to #0. 
+        """
+        self._emit_code("; POS")
+        self._emit_expression(node.args[0])
+        self._emit_stream()
+        self._emit_code("ld      b,a", info="keep previous stream")
+        self._emit_code(f"call    {FWCALL.TXT_GET_CURSOR}", info="TXT_GET_CURSOR")
+        self._emit_code("ld      l,h")
+        self._emit_code("ld      h,0")
+        self._emit_code("push    hl")
+        self._emit_code("ld      l,a")
+        self._emit_stream()
+        self._emit_code("pop     hl")
+        self._emit_code(";")
 
     def _emit_PRINT(self, node:AST.Print):
         """
@@ -2645,7 +2661,22 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_VPOS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Reports the current vertical POSition of the text cursor relative to
+        the leftedge of the text window. The <stream expression> MUST be specified,
+        and does NOT default to #0. 
+        """
+        self._emit_code("; VPOS")
+        self._emit_expression(node.args[0])
+        self._emit_stream()
+        self._emit_code("ld      b,a", info="keep previous stream")
+        self._emit_code(f"call    {FWCALL.TXT_GET_CURSOR}", info="TXT_GET_CURSOR")
+        self._emit_code("ld      h,0")
+        self._emit_code("push    hl")
+        self._emit_code("ld      l,a")
+        self._emit_stream()
+        self._emit_code("pop     hl")
+        self._emit_code(";")
 
     def _emit_WAIT(self, node:AST.Command):
         """
