@@ -1912,14 +1912,54 @@ class CPCEmitter:
     def _emit_ON_ERROR_GOTO(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_ON_SQ(self, node:AST.Statement):
+    def _emit_ON_SQ(self, node:AST.Command):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_OPENIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_OPENIN(self, node:AST.Command):
+        """
+        Opens an input file from disc or cassette which contains information for
+        use in the current program in the computer's memory.
+        If tape deck is selected and the first character in the <file name> is !
+        then the displayed cassette processing messages are suppressed. The program
+        reads in the first block from the cassette, ready for processing.
+        The input file to open myst be an ASCII file. 
+        """
+        self._emit_import("rt_error")
+        self._emit_code("; OPENIN <filename>")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      b,(hl)")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      de,&0000", info="2K buffer to contain the data")
+        self._emit_code(f"call    {FWCALL.CAS_IN_OPEN}", info="CAS_IN_OPEN")
+        self._emit_code("ex      de,hl")
+        self._emit_code("xor     a")
+        self._emit_code("ld      (rt_error),a")
+        self._emit_code("jr      c,$+7", info="if CF the file was open")
+        self._emit_code("ld      a,31")
+        self._emit_code("ld      (rt_error),a", info="lets set ERR to 'File not open'")
+        self._emit_code(";")
 
-    def _emit_OPENOUT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_OPENOUT(self, node:AST.Command):
+        """
+        Opens an output file onto disc or cassette. If the tape dekc is selected
+        and the first character in the <file name> is ! then the displayed cassette
+        processing messages are suppressed. The program creates the first block of data,
+        in the file with the given name. Each block consists of up to 2048 bytes of data. 
+        """
+        self._emit_import("rt_error")
+        self._emit_code("; OPENOUT <filename>")
+                self._emit_expression(node.args[0])
+        self._emit_code("ld      b,(hl)")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      de,&0000", info="2K buffer to contain the data")
+        self._emit_code(f"call    {FWCALL.CAS_OUT_OPEN}", info="CAS_OUT_OPEN")
+        self._emit_code("ex      de,hl")
+        self._emit_code("xor     a")
+        self._emit_code("ld      (rt_error),a")
+        self._emit_code("jr      c,$+7", info="if CF the file was open")
+        self._emit_code("ld      a,31")
+        self._emit_code("ld      (rt_error),a", info="lets set ERR to 'File not open'")
+        self._emit_code(";")
 
     def _emit_ORIGIN(self, node:AST.Command):
         """
