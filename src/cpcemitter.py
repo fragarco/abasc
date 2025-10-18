@@ -1036,7 +1036,7 @@ class CPCEmitter:
         self._emit_code("; ERASE list of: <variable name>")
         self._emit_code("; IGNORED")
 
-    def _emit_ERL(self, node:AST.Statement):
+    def _emit_ERL(self, node:AST.Function):
         """
         Reports the Line number of the last ERror encountered.
         """
@@ -1044,11 +1044,12 @@ class CPCEmitter:
         self._raise_warning(0, "ERL is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_ERR(self, node:AST.Statement):
+    def _emit_ERR(self, node:AST.Function):
         """
         Reports the number of the last ERRor encountered.
         """
         # in our case, we retrieve the error number set by ERROR
+        # error generated using OPENIN or OPENOUT
         self._emit_import("rt_error")
         self._emit_code("; ERR")
         self._emit_code("ld      h, 0")
@@ -1924,12 +1925,12 @@ class CPCEmitter:
         reads in the first block from the cassette, ready for processing.
         The input file to open myst be an ASCII file. 
         """
-        self._emit_import("rt_error")
+        self._emit_import("rt_fileinbuf")
         self._emit_code("; OPENIN <filename>")
         self._emit_expression(node.args[0])
         self._emit_code("ld      b,(hl)")
         self._emit_code("inc     hl")
-        self._emit_code("ld      de,&0000", info="2K buffer to contain the data")
+        self._emit_code("ld      de,rt_fileinbuf", info="2K buffer to contain the data")
         self._emit_code(f"call    {FWCALL.CAS_IN_OPEN}", info="CAS_IN_OPEN")
         self._emit_code("ex      de,hl")
         self._emit_code("xor     a")
@@ -1946,12 +1947,12 @@ class CPCEmitter:
         processing messages are suppressed. The program creates the first block of data,
         in the file with the given name. Each block consists of up to 2048 bytes of data. 
         """
-        self._emit_import("rt_error")
+        self._emit_import("rt_fileoutbuf")
         self._emit_code("; OPENOUT <filename>")
-                self._emit_expression(node.args[0])
+        self._emit_expression(node.args[0])
         self._emit_code("ld      b,(hl)")
         self._emit_code("inc     hl")
-        self._emit_code("ld      de,&0000", info="2K buffer to contain the data")
+        self._emit_code("ld      de,rt_fileoutbuf", info="2K buffer to contain the data")
         self._emit_code(f"call    {FWCALL.CAS_OUT_OPEN}", info="CAS_OUT_OPEN")
         self._emit_code("ex      de,hl")
         self._emit_code("xor     a")
@@ -2158,12 +2159,11 @@ class CPCEmitter:
         the lenght of the current zone. If it has, the following <print item>
         is printed in a further zone. 
         """
-        self._emit_import("rt_print")
         self._emit_code("; PRINT [#<stream expression>,][list of: <print item>]")
         if node.stream is not None:
             self._emit_expression(node.stream)
             self._emit_stream()
-        for i,item in enumerate(node.items):
+        for item in node.items:
             if isinstance(item, AST.Separator):
                 self._print_separator(item)
             elif isinstance(item, AST.Pointer):
@@ -2188,6 +2188,7 @@ class CPCEmitter:
             self._raise_error(2, item, "unexpected command")
     
     def _print_str(self, item:AST.Statement):
+        self._emit_import("rt_print_str")
         self._emit_code("; PRINT string item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_str")
@@ -2210,7 +2211,6 @@ class CPCEmitter:
         # let's convert to integer until we have a propper rutine
         # TODO: reals
         self._emit_import("rt_print_real")
-        self._emit_import("rt_int2str")
         self._emit_expression(item)
         self._moveflo_accum1()
         self._emit_code("call    rt_print_real")
@@ -2219,12 +2219,12 @@ class CPCEmitter:
         self._emit_code(f"; PRINT separator [{item.sym}]")
         if item.sym == ',':
             # TODO: do not use fix spaces
-            self._emit_import("rt_print")
+            self._emit_import("rt_print_spc")
             self._emit_code("ld      l,4")
             self._emit_code("call    rt_print_spc")
 
     def _print_newline(self) -> None:
-        self._emit_import("rt_print")
+        self._emit_import("rt_print_nl")
         self._emit_code("; new line")
         self._emit_code("call    rt_print_nl")
 
@@ -2765,8 +2765,34 @@ class CPCEmitter:
     def _emit_WINDOW_SWAP(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_WRITE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_WRITE(self, node:AST.Write):
+        """
+        Prints the values of a number of expressions to the given stream, separating them
+        by commas and enclosing strings in double quotes. Used mainly for outputting data
+        to files (on tape or disc).
+        """
+        # In our case WRITE always writes to dist/tape so stream is just ignored and
+        # always considered to be 9. That saves a couple of bytes and cicles.
+        self._emit_code("; WRITE [#<stream expression >, ][<write list>]")
+        for item in node.items:
+            if isinstance(item, AST.Pointer):
+                self._print_pointer(item)
+            elif item.etype == AST.ExpType.String:
+                self._emit_code("ld      a,&22")
+                self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
+                self._print_str(item)
+                self._emit_code("ld      a,&22")
+                self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
+            elif item.etype == AST.ExpType.Integer:
+                self._print_int(item)
+            elif item.etype == AST.ExpType.Real:
+                self._print_real(item)
+            else:
+                self._raise_error(2, item, 'WRITE item not supported yet')
+            self._emit_code('ld      a,&2c')
+            self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
+        self._print_newline()
+        self._emit_code(";")
 
     def _emit_XPOS(self, node:AST.Function):
         """

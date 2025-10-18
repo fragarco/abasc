@@ -2080,7 +2080,7 @@ class LocBasParser:
             stream = self._parse_int_expression()
             self._expect(TokenType.COMMA)
         items: list[AST.Statement] = [self._parse_expression()]
-        while self._current_is(TokenType.COMMA):
+        while self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
             self._advance()
             items.append(self._parse_expression())
         return AST.Write(stream=stream, items=items)
