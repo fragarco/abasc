@@ -2289,12 +2289,19 @@ class CPCEmitter:
             elif isinstance(v, AST.ArrayItem):
                 entry = self.symtable.find(v.name, SymType.Array)
                 if entry is not None:
-                    self._emit_code(f"; array item {v.name}")
-                    self._emit_arrayitem(v)
+                    self._emit_arrayitem_ptr(v)
                     if v.etype == AST.ExpType.String:
-                        pass
+                        self._emit_import("rt_readstr")
+                        self._emit_code("call    rt_readstr")
                     elif v.etype == AST.ExpType.Integer:
-                        pass
+                        self._emit_import("rt_readint")
+                        self._emit_code("push    hl")
+                        self._emit_code("call    rt_readint")
+                        self._emit_code("pop     de")
+                        self._emit_code("ex      de,hl")
+                        self._emit_code("ld      (hl),e")
+                        self._emit_code("inc     hl")
+                        self._emit_code("ld      (hl),d")
                     elif v.etype == AST.ExpType.Real:
                         self._raise_error(13, node, 'item not supported')
             else:
@@ -2932,10 +2939,7 @@ class CPCEmitter:
                 self._raise_error(13, node)
             self._emit_expression(node.args[0])  # index
             if node.etype == AST.ExpType.Integer:
-                self._emit_code("add     hl,hl", info="index * 2 bytes")
-            elif node.etype == AST.ExpType.Integer:
-                self._emit_code("add     hl,hl")
-                self._emit_code("add     hl,hl", info="index * 4 bytes")                 
+                self._emit_code("add     hl,hl", info="index * 2 bytes")                
             elif node.etype == AST.ExpType.String:
                 self._emit_import("rt_mul16_255")
                 self._emit_code("call    rt_mul16_255")
@@ -3249,23 +3253,19 @@ class CPCEmitter:
         if isinstance(node.target, AST.ArrayItem):
             var = self.symtable.find(node.target.name, SymType.Array)
             if var is not None:
-                if var.exptype == AST.ExpType.Integer:
-                    self._emit_code("push    hl")
-                    self._emit_arrayitem_ptr(node.target)
+                self._emit_code("push    hl")
+                self._emit_arrayitem_ptr(node.target)
+                if var.exptype == AST.ExpType.Integer:    
                     self._emit_code("pop     de")
                     self._emit_code(f"ld      (hl),e")
                     self._emit_code(f"inc     hl")
                     self._emit_code(f"ld      (hl),d")
                 elif var.exptype == AST.ExpType.Real:
-                    self._emit_code("push    hl")
-                    self._emit_arrayitem_ptr(node.target)
                     self._emit_code("ex      de,hl")
                     self._emit_code("pop     hl")
                     self._emit_code("ld      bc,5")
                     self._emit_code("ldir")
                 elif var.exptype == AST.ExpType.String:
-                    self._emit_code("push    hl")
-                    self._emit_arrayitem_ptr(node.target)
                     self._emit_code("ex      de,hl")
                     self._emit_code("pop     hl")
                     self._emit_code("ld      b,0")
