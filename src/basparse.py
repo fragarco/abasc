@@ -987,7 +987,7 @@ class LocBasParser:
         return AST.Function(name="INP", etype=AST.ExpType.Integer, args=args)
 
     @astnode
-    def _parse_INPUT(self) -> AST.Input:
+    def _parse_INPUT(self) -> AST.Input | AST.ReadIn:
         """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] <ident> [,<ident>] """
         self._advance()
         stream: Optional[AST.Statement] = None; 

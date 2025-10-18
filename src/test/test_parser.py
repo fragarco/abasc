@@ -732,7 +732,7 @@ class TestParser(unittest.TestCase):
             '10 INPUT "QUESTION";n$,a$,b$',
             "10 INPUT a",
             "10 INPUT ;b$,c$",
-            "10 INPUT #1;num",
+            "10 INPUT #1,num",
             '10 INPUT "",a,b'
             ""
         ]
@@ -873,7 +873,9 @@ class TestParser(unittest.TestCase):
         codes = ['10 LOG(9999)', '10 LOG10(9999)']
         for code in codes:
             ast, _ = self.parse_code(code)
-            self.assertEqual(ast.lines[0].statements[0].args[0].value, 9999)
+            # as the parameters are integers, the real argument will the CREAL function
+            # that converts from INT to REAL
+            self.assertIsInstance(ast.lines[0].statements[0].args[0], AST.Function)
 
     def test_lowerss_basic(self):
         code = '10 A$="AMSTRAD":PRINT LOWER$(A$)'

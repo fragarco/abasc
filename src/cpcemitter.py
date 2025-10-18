@@ -2263,7 +2263,7 @@ class CPCEmitter:
                 self._emit_code("call    rt_read_real")
         self._emit_data(";")
 
-    def _emit_READIN(self, node:AST.Command):
+    def _emit_READIN(self, node:AST.ReadIn):
         """
         READIN is an alias of an INPUT #9,<list of vars> command. Used
         to read from a file open using OPENIN keyword.
@@ -2303,9 +2303,9 @@ class CPCEmitter:
                         self._emit_code("inc     hl")
                         self._emit_code("ld      (hl),d")
                     elif v.etype == AST.ExpType.Real:
-                        self._raise_error(13, node, 'item not supported')
+                        self._raise_error(13, v, 'REAL items not supported')
             else:
-                self._raise_error(2, "unsupported identifier")
+                self._raise_error(2, v, "unsupported identifier")
         self._emit_code("ei")
         self._emit_code(";")
 
@@ -2511,7 +2511,7 @@ class CPCEmitter:
             self._emit_code("ldir")
             self._emit_code("pop     hl")
         else:
-            self._emit_error(2, "REAL numbers not yet supported")
+            self._raise_error(2, arg, "REAL numbers not yet supported")
         self._emit_code(";")
 
     def _emit_SYMBOL(self, node:AST.Command):
@@ -2706,7 +2706,7 @@ class CPCEmitter:
     def _emit_VAL(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_VPOS(self, node:AST.Statement):
+    def _emit_VPOS(self, node:AST.Function):
         """
         Reports the current vertical POSition of the text cursor relative to
         the leftedge of the text window. The <stream expression> MUST be specified,
