@@ -2773,25 +2773,27 @@ class CPCEmitter:
         """
         # In our case WRITE always writes to dist/tape so stream is just ignored and
         # always considered to be 9. That saves a couple of bytes and cicles.
+        # TODO: reals
         self._emit_code("; WRITE [#<stream expression >, ][<write list>]")
-        for item in node.items:
-            if isinstance(item, AST.Pointer):
-                self._print_pointer(item)
-            elif item.etype == AST.ExpType.String:
-                self._emit_code("ld      a,&22")
-                self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
-                self._print_str(item)
-                self._emit_code("ld      a,&22")
-                self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
+        self._emit_import("rt_writenl")
+        self._emit_code("di")
+        for i,item in enumerate(node.items):
+            self._emit_expression(item)
+            if item.etype == AST.ExpType.String:
+                self._emit_import("rt_writestr")
+                self._emit_code("call    rt_writestr")
             elif item.etype == AST.ExpType.Integer:
-                self._print_int(item)
+                self._emit_import("rt_writeint")
+                self._emit_code("call    rt_writeint")
             elif item.etype == AST.ExpType.Real:
-                self._print_real(item)
+                self._raise_error(2, item, 'item not supported yet')
             else:
-                self._raise_error(2, item, 'WRITE item not supported yet')
-            self._emit_code('ld      a,&2c')
-            self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
-        self._print_newline()
+                self._raise_error(13, item)
+            if i < (len(node.items) - 1):
+                self._emit_code('ld      a,&2c')
+                self._emit_code(f"call    {FWCALL.CAS_OUT_CHAR}", info="CAS_OUT_CHAR")
+        self._emit_code("call    rt_writenl")
+        self._emit_code("di")
         self._emit_code(";")
 
     def _emit_XPOS(self, node:AST.Function):

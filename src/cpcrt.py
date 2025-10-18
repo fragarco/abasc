@@ -311,7 +311,7 @@ RT = {
         "\tadd     hl,bc\n",
         "\tld      (rt_memory_next),hl\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_free_all"]),
     "rt_malloc_de": ([
         "; RT_MALLOC_DE\n",
@@ -330,7 +330,7 @@ RT = {
         "\tex      de,hl\n",
         "\tld      (rt_memory_next),de\n",
         "\tpop     de\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_free_all"]),
     "rt_free_all": ([
         "; RT_FREE_ALL\n",
@@ -344,7 +344,7 @@ RT = {
         "rt_free_all:\n",
         "\tld      de,rt_memory_start\n",
         "\tld      (rt_memory_next),de\n",
-        "\tret\n\n",
+        "\tret\n",
     ], []),
     "rt_call": ([
         "; RT_CALL\n",
@@ -357,7 +357,7 @@ RT = {
         "; Outputs:\n",
         ";     Depends on the callee\n",
         "rt_call:\n",
-        "\tjp      (hl)\n\n",
+        "\tjp      (hl)\n",
     ],[]),
     "rt_math_call": ([
         "; RT_MATH_CALL\n",
@@ -372,7 +372,7 @@ RT = {
         "rt_math_call:\n",
         "\tld      bc,(rt_math_offset)  ; adjutst for non 464 machines\n"
         "\tadd     ix,bc\n",
-        "\tjp      (ix)\n\n",
+        "\tjp      (ix)\n",
         "; RT_MATH_SETOFFSET\n",
         "; Checks the Amstrad CPC model and sets the value of rt_math_offset\n",
         "; so rt_math_call can find the right jumpblock addres.\n",
@@ -392,7 +392,7 @@ RT = {
         "\tret     z\n",
         "\tld      a,&24   ; offset for 664 and 6128\n",
         "\tld      (rt_math_offset),a\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     #
     # STRINGS
@@ -418,7 +418,7 @@ RT = {
         "\tret    c\n",
         "__addlen_crop:\n",
         "\tld     a,254\n         ; max allowed\n",
-        "\tret\n\n"
+        "\tret\n"
     ],[]),
     "rt_strcopy": ([
         "; RT_STRCOPY\n",
@@ -442,7 +442,7 @@ RT = {
         "\tld      (hl),a\n",
         "\tdjnz    __strcopy_loop\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_strcat": ([
         "; RT_STRCAT\n",
@@ -474,7 +474,7 @@ RT = {
         "\tld      (hl),a\n",
         "\tdjnz    __strcat_loop\n",
         "\tpop     hl\n",
-        "\tret\n\n"
+        "\tret\n"
     ],["rt_stradd_len"]),
     "rt_strcmp": ([
         "; RT_STRCMP\n",
@@ -510,7 +510,7 @@ RT = {
         "__strcmp_end:\n",
         "\tpop     de\n",
         "\tpop     hl\n",
-        "\tret\n\n"
+        "\tret\n"
     ],[]),
     "rt_int2str": ([
         "; RT_INT2STR\n",
@@ -565,7 +565,7 @@ RT = {
         "\tld      (de), a\n",
         "\tinc     de\n",
         "\tdjnz    __int2str_loop2\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_div16_by10"]),
     "rt_strz2num": ([
         "; RT_STRZ2NUM\n",
@@ -761,7 +761,7 @@ RT = {
         "\tld      a,c    ; restore number for next loop\n",
         "\tdjnz    __a2hex_conv\n",
         "\tpop     bc\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_int2bin": ([
         "; RT_INT2BIN"
@@ -801,7 +801,7 @@ RT = {
         "\tld      (hl),&31\n",
         "\tinc     hl\n",
         "\tdjnz    __a2bin_loop\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_copychrs": ([
         "; RT_COPYCHRS\n",
@@ -828,7 +828,7 @@ RT = {
         "\tinc     hl\n",
         "\tld      (hl),b\n",
         "\tdec     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_findstr": ([
         "; RT_FINDSTR\n",
@@ -888,7 +888,7 @@ RT = {
         "\tsbc     hl,bc   ; HL = current HL - (len DE - 1)\n",
         "\tpop     de\n",
         "\tsbc     hl,de   ; HL = HL - original HL\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_substr": ([
         "; RT_SUBSTR\n",
@@ -929,7 +929,7 @@ RT = {
         "\tld      b,0\n",
         "\tldir\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_strleft": ([
         "; RT_STRLEFT\n",
@@ -954,7 +954,7 @@ RT = {
         "\tld      b,0\n",
         "\tldir\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_strright": ([
         "; RT_STRRIGHT\n",
@@ -983,7 +983,7 @@ RT = {
         "\tdjnz    $-1\n",
         "\tldir\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_strfill": ([
         "; RT_STRFILL\n",
@@ -1006,13 +1006,13 @@ RT = {
         "\tld      (de),a\n",
         "\tdjnz    $-2\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     #
     # DATA BLOCKS
     # 
     "rt_datablock": ([
-        "\trt_data_ptr: dw  _data_datablock_\n\n",
+        "\trt_data_ptr: dw  _data_datablock_\n",
     ],[]),
     "rt_read_int": ([
         "; RT_READ_INT\n",
@@ -1027,7 +1027,7 @@ RT = {
         "\tld      hl,(de)\n",
         "\tinc     de\n",
         "\tld      (rt_data_ptr),de\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_datablock"]),
     "rt_read_real": ([
         "; RT_READ_REAL\n",
@@ -1046,7 +1046,7 @@ RT = {
         "\tinc     hl\n",
         "\tld      (rt_data_ptr),hl\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_datablock"]),
     "rt_read_str": ([
         "; RT_READ_STR\n",
@@ -1066,7 +1066,7 @@ RT = {
         "\tldir\n",
         "\tld      (rt_data_ptr),hl\n",
         "\tpop     hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ],["rt_datablock"]),
     #
     # INPUT/OUTPUT
@@ -1082,10 +1082,9 @@ RT = {
         ";     AF is modified\n",
         "rt_print_nl:\n",
         "\tld      a,13\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
+        f"\tcall    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
         "\tld      a,10\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
-        "\tret\n\n",
+        f"\tjp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
     ],[]),
     "rt_print_spc": ([
         "; RT_PRINT_SPC\n",
@@ -1106,7 +1105,7 @@ RT = {
         "__print_spc_loop:"
         f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tdjnz    __print_spc_loop\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_print_str": ([
         "; RT_PRINT_STR\n",
@@ -1128,7 +1127,7 @@ RT = {
         "\tld      a,(HL)\n",
         f"\tcall    {FWCALL.TXT_OUTPUT}\n",
         "\tdjnz    __print_str_loop\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_print_int": ([
         "; RT_PRINT_INT\n",
@@ -1148,7 +1147,7 @@ RT = {
         f"\tcall    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
         "\tcall    rt_print_str\n",
         "\tld      a,32   ; trailing space\n",
-        f"\tjp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n\n",
+        f"\tjp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
     ], ["rt_print_str", "rt_int2str"]),
     "rt_print_real": ([
         "; RT_PRINT_REAL\n",
@@ -1167,7 +1166,7 @@ RT = {
         "xor     a\n",
         "ex      hl,de\n",
         "sbc     hl,de\n",
-        "jp      rt_print_int\n\n",
+        "jp      rt_print_int\n",
     ], ["rt_math_call", "rt_int2str", "rt_print_int", "rt_print_str"]),
     "rt_count_substrz": ([
         "; RT_COUNT_SUBSTRZ\n",
@@ -1194,7 +1193,7 @@ RT = {
         "\tjr      __count_loop\n",
         "__count_quote:\n",
         "\tinc     c\n",
-        "\tjr      __count_loop\n\n",
+        "\tjr      __count_loop\n",
     ], []),
     "rt_extract_substrz": ([
         "; RT_EXTRACT_SUBSTRZ\n",
@@ -1246,7 +1245,7 @@ RT = {
         "\tinc     hl\n",
         "\tld      (hl),0\n",
         "\tex      de,hl\n",
-        "\tret\n\n",
+        "\tret\n",
     ], []),
     "rt_strz_lstrip": ([
         "; RT_STRZ_LSTRIP\n",
@@ -1263,7 +1262,7 @@ RT = {
         "\tcp      &20  ; espace\n",
         "\tret     nz\n",
         "\tinc     hl\n",
-        "\tjr      rt_strz_lstrip\n\n",
+        "\tjr      rt_strz_lstrip\n",
     ], []),
     "rt_strz_rstrip": ([
         "; RT_STRZ_RSTRIP\n",
@@ -1281,7 +1280,7 @@ RT = {
         "\tret     nz\n",
         "\tdec     hl\n",
         "\tdec     c\n",
-        "\tjr      rt_strz_rstrip\n\n",
+        "\tjr      rt_strz_rstrip\n",
     ], []),
     "rt_remove_quotes": ([
         "; RT_REMOVE_QUOTES\n",
@@ -1306,7 +1305,7 @@ RT = {
         "\tinc     hl\n",
         "\tinc     de\n",
         "\tinc     c\n",
-        "\tjr      __remove_quotes_loop\n\n",
+        "\tjr      __remove_quotes_loop\n",
     ], []),
     "rt_extract_num": ([
         "; RT_EXTRACT_NUM\n",
@@ -1321,7 +1320,7 @@ RT = {
         '\tcp      "&"\n',
         "\tjp      nz,rt_strz2int\n",
         "\tinc     de\n",
-        "\tjp      rt_strz2hex\n\n",
+        "\tjp      rt_strz2hex\n",
     ], []),
     "rt_input": ([
         "; RT_INPUT\n",
@@ -1374,8 +1373,57 @@ RT = {
         f"\tcall    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
         f"\tcall    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF\n",
         "\tld      hl,rt_input_buf\n",
-        "\tjp      rt_count_substrz\n\n",      
-    ],["rt_print_nl", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"]),
+        "\tjp      rt_count_substrz\n",      
+    ],["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"]),
+    "rt_writestr": ([
+        "; RT_WRITESTR\n",
+        "; Writes a quoted string to an already open file (with OPENIN)\n",
+        "; Inputs:\n",
+        ";     HL address to the input string\n",
+        "; Outputs:\n",
+        ";     A, B and HL are modified\n",
+        "rt_writestr:\n",
+        "\tld      a,&22\n",
+        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+        "\tld      b,(hl)\n",
+        "__writestr_loop:\n",
+        "\tinc     hl\n",
+        "\tld      a,(hl)\n",
+        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+        "\tdjnz    __writestr_loop\n",
+        "\tld      a,&22\n",
+        f"\tjp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+    ], []),
+    "rt_writeint": ([
+        "; RT_WRITEINT\n",
+        "; Writes the integer hold in HL to an already open file (with OPENIN)\n",
+        "; Inputs:\n",
+        ";     HL signed integer value\n",
+        "; Outputs:\n",
+        ";     A, B and HL are modified\n",
+        "rt_writeint:\n",
+        "\tcall    rt_int2str\n",
+        "\tld      b,(hl)\n",
+        "__writeint_loop:\n",
+        "\tinc     hl\n",
+        "\tld      a,(hl)\n",
+        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+        "\tdjnz    __writestr_loop\n",
+        "\tret     \n",
+    ], ["rt_int2str"]),
+    "rt_writenl": ([
+        "; RT_WRITENL\n",
+        "; Writes an EOL to an already open file (with OPENIN)\n",
+        "; Inputs:\n",
+        ";     None\n",
+        "; Outputs:\n",
+        ";     AF is modified\n",
+        "rt_writenl:\n",
+        "\tld      a,13\n",
+        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+        "\tld      a,10\n",
+        f"\tjp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
+    ], ["rt_int2str"]),
     #
     # MATH
     # 
@@ -1641,7 +1689,7 @@ RT = {
         "\tinc d            ; Increment quotient\n",
         "\tjr __div8_loop   ; Continue dividing\n",
         "__div8_end:\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_mul16_255": ([
         "; RT_MUL16_255\n",
@@ -1660,7 +1708,7 @@ RT = {
         "\tld      l,0\n",
         "\tor      a        ; clear CF\n",
         "\tsbc     hl,de    ; HL = (HL << 8) - DE\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_mul16_A": ([
         "; RT_MUL16_A\n",
@@ -1682,7 +1730,7 @@ RT = {
         "\tjr      nc,$+3\n",
         "\tadd     hl,de\n",
         "\tdjnz    __mult16_a_loop\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     #
     # runtime for BASIC commands support
@@ -1721,7 +1769,7 @@ RT = {
         "\tld      a,l\n",
         "\tld      hl,rt_fill_buffer\n",
         "\tld      de,70\n",
-        f"\tjp      {FWCALL.GRA_FILL}  ; GRA_FILL\n\n",
+        f"\tjp      {FWCALL.GRA_FILL}  ; GRA_FILL\n",
     ],[]),
     "rt_inkey": ([
         "; RT_INKEY\n",
@@ -1738,7 +1786,7 @@ RT = {
         "\tjr      z,$+4\n",
         "\tinc     h\n",
         "\tld      l,c\n",
-        "\tret\n\n",
+        "\tret\n",
     ],[]),
     "rt_gettime": ([
         "; RT_GETTIME\n",
@@ -1759,15 +1807,15 @@ RT = {
         "\tld      (ix+3),d\n",
         "\txor     a\n",
         "\tld      hl,rt_math_accum1\n"
-        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n\n",
-        "\tjp      rt_math_call\n\n",
+        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n",
+        "\tjp      rt_math_call\n",
     ],["rt_math_call"]),
     "rt_fileinbuf": ([
         "; Buffer for content read from files through OPENIN\n",
-        "rt_fileinbuf: defs 2048\n\n",
+        "rt_fileinbuf: defs 2048\n",
     ], ["rt_error"]),
     "rt_fileoutbuf": ([
         "; Buffer for content written to files through OPENOUT\n",
-        "rt_fileoutbuf: defs 2048\n\n",
+        "rt_fileoutbuf: defs 2048\n",
     ], ["rt_error"])
 }
