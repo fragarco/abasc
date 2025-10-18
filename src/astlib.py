@@ -564,6 +564,19 @@ class Input(Statement):
         d["vars"] = [v.to_json() for v in self.vars]
         return d
 
+class ReadIn(Statement):
+    prompt: str
+    vars: Sequence[Variable | ArrayItem]
+
+    def __init__(self, vars: list[Variable]):
+        super().__init__(etype=ExpType.Void, id="ReadIn")
+        self.vars = vars
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["vars"] = [v.to_json() for v in self.vars]
+        return d
+
 class LineInput(Statement):
     stream: Optional[Statement]
     prompt: str

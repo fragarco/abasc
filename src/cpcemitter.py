@@ -1496,7 +1496,7 @@ class CPCEmitter:
             if isinstance(v, AST.Variable):
                 entry = self.symtable.find(v.name, SymType.Variable)
                 if entry is not None:
-                    self._emit_code(f"; integer variable {v.name}")
+                    self._emit_code(f"; variable {v.name}")
                     if v.etype == AST.ExpType.String:
                         self._emit_code(f"ld      hl,{entry.label}")
                         self._emit_input_str(v, entry)
@@ -2262,6 +2262,45 @@ class CPCEmitter:
                 self._emit_import("rt_read_real")
                 self._emit_code("call    rt_read_real")
         self._emit_data(";")
+
+    def _emit_READIN(self, node:AST.Command):
+        """
+        READIN is an alias of an INPUT #9,<list of vars> command. Used
+        to read from a file open using OPENIN keyword.
+        """
+        self._emit_code("; READIN <list of vars> (alias of INPUT #9,<list of vars>)")
+        # TODO: reals
+        self._emit_code("di")
+        for v in node.vars:
+            if isinstance(v, AST.Variable):
+                entry = self.symtable.find(v.name, SymType.Variable)
+                if entry is not None:
+                    self._emit_code(f"; variable {v.name}")
+                    if v.etype == AST.ExpType.String:
+                        self._emit_import("rt_readstr")
+                        self._emit_code(f"ld      hl,{entry.label}")
+                        self._emit_code("call    rt_readstr")
+                    elif v.etype == AST.ExpType.Integer:
+                        self._emit_import("rt_readint")
+                        self._emit_code("call    rt_readint")
+                        self._emit_code(f"ld      ({entry.label}),hl")
+                    elif v.etype == AST.ExpType.Real:
+                        self._raise_error(13, node, 'item not supported')
+            elif isinstance(v, AST.ArrayItem):
+                entry = self.symtable.find(v.name, SymType.Array)
+                if entry is not None:
+                    self._emit_code(f"; array item {v.name}")
+                    self._emit_arrayitem(v)
+                    if v.etype == AST.ExpType.String:
+                        pass
+                    elif v.etype == AST.ExpType.Integer:
+                        pass
+                    elif v.etype == AST.ExpType.Real:
+                        self._raise_error(13, node, 'item not supported')
+            else:
+                self._raise_error(2, "unsupported identifier")
+        self._emit_code("ei")
+        self._emit_code(";")
 
     def _emit_RELEASE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -3336,6 +3375,8 @@ class CPCEmitter:
             self._emit_INPUT(stmt)
         elif isinstance(stmt, AST.LineInput):
             self._emit_LINE_INPUT(stmt)
+        elif isinstance(stmt, AST.ReadIn):
+            self._emit_READIN(stmt)
         elif isinstance(stmt, AST.Write):
             self._emit_WRITE(stmt)
         elif isinstance(stmt, AST.DefFN):

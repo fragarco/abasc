@@ -1018,6 +1018,9 @@ class LocBasParser:
                         info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
                         context=self.context
                     )
+        if stream is not None and isinstance(stream,AST.Integer) and stream.value == 9:
+            # Input used to read from a file
+            return AST.ReadIn(vars=vars)
         return AST.Input(stream=stream, prompt=prompt, question=question, vars=vars)
 
     @astnode
