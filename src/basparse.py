@@ -996,10 +996,9 @@ class LocBasParser:
         if self._current_is(TokenType.HASH):
             self._advance()
             stream = self._parse_int_expression()
-            self._match(TokenType.COMMA)
+            self._expect(TokenType.COMMA)
         if self._current_is(TokenType.STRING):
             prompt = self._advance().lexeme.strip('"')
-        if stream is not None or prompt != "":
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2)
         question: bool = True if self._match(TokenType.SEMICOLON) else False
