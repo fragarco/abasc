@@ -1600,7 +1600,7 @@ class LocBasParser:
         self._advance()
         args: list[AST.Statement] = []
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
-            args = [self._parse_num_expression()]
+            args = [self._parse_real_expression()]
         return AST.Command(name="RANDOMIZE", args=args)
 
     @astnode

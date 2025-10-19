@@ -2239,8 +2239,25 @@ class CPCEmitter:
         self._emit_code("call    rt_math_call")
         self._emit_code(";")
 
-    def _emit_RANDOMIZE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RANDOMIZE(self, node:AST.Command):
+        """
+        BASIC's random number generator produces a pseudo random sequence in which each
+        number depends on the previous number - starting from a given number, the sequence
+        is always the same. RANDOMIZE sets a new initial value for the random number generator,
+        either to a given value, or to a value entered by the operator. RANDOMIZE TIME will
+        produce a sequence that will be difficult to repeat. 
+        """
+        self._emit_import("rt_randomize")
+        self._emit_code("; RANDOMIZE [<numeric expression>]")
+        if len(node.args):
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_randomize")
+        else:
+            self._emit_code("ld      (rt_rnd_seed1),&6c", info="seed reset to default values")
+            self._emit_code("ld      (rt_rnd_seed1+1),&07")
+            self._emit_code("ld      (rt_rnd_seed2),&70")
+            self._emit_code("ld      (rt_rnd_seed2+1),&c6")
+        self._emit_code(";")
 
     def _emit_READ(self, node:AST.Command):
         """
@@ -2401,8 +2418,17 @@ class CPCEmitter:
         self._emit_code("call    rt_strright")
         self._emit_code(";")
 
-    def _emit_RND(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RND(self, node:AST.Function):
+        """
+        Fetches a random number, which may be the next in sequence, a repeat of
+        the last one, or the first in a new sequence. RND(0) returns a copy of
+        the last random number generated. Where <numeric expression> is negative,
+        the number sequence generated is predictable.
+        """
+        self._emit_import("rt_rnd")
+        self._emit_code(";  RND[(<numeric expression>)]")
+        self._emit_code("call    rt_rnd")
+        self._emit_code(";")
 
     def _emit_ROUND(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
