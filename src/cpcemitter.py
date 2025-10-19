@@ -1009,11 +1009,37 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
         self._emit_code("call    0")
 
-    def _emit_ENT(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ENT(self, node:AST.Command):
+        """
+        Sets the Tone ENvelope specified in the <envelope section> (in the
+        range 1 to 15), which is used in conjunction with the SOUND command.
+        If the <envelope number> is negative (in the range -1 to -15), the envelope
+        repeats until the end of the duration of the SOUND command.
+        Each of the <envelope section>s may contain either 2 ou 3 parameters:
+        Parameter 1: <number of step> The available range of <number of steps> is 0 to 239.
+        Parameter 2: <step size> in the range -128 to +127.
+        Parameter 3: <pause time>
+        OR
+        Parameter 1: <tone period> (See parameter 2 of the SOUND command).
+        Parameter 2: <pause time>
+        """
+        self._emit_code("; ENT <envelope number>[,<envelope section>[,<envelope section>,…]]")
+        self._emit_code(";")
 
-    def _emit_ENV(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ENV(self, node:AST.Command):
+        """
+        Sets the volume envelope specified in the <envelope number> (in the range 1 to 15),
+        which is used in conjunction with the SOUND command. Each of the <enveloppe section>s
+        may contain either 2 or 3 parameters:
+        Parameter 1: <number of step> range of <number of steps> is 0 to 127.
+        Parameter 2: <step size> can be between -128 and +127
+        Parameter 3: <pause time> the range of the <pause time> is 0 to 255.
+        OR
+        Parameter 1: <hardware envelope> the value to send to the envelope shape register.
+        Parameter 2: <envelope period> the value to send to the envelope period registers. 
+        """
+        self._emit_code("; ENV <envelope number>[,<envelope section>][,<envelope section>][,…]")
+        self._emit_code(";")
 
     def _emit_EOF(self, node:AST.Function):
         """
@@ -2466,8 +2492,13 @@ class CPCEmitter:
         self._moveflo_temp()
         self._emit_code(";")
 
-    def _emit_SOUND(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SOUND(self, node:AST.Command):
+        """
+        The SOUND command has the following shape:
+        SOUND Channel,Period,Duration,Volume,Volume-Envelope,Tone-Envelope,Noise
+        """
+        self._emit_code("; SOUND <channel status>, <tone period>[,<duration>[,<volume>[,<volume envelope>[,<tone envelope>[,<noise period>]]]]")
+        self._emit_code(";")
 
     def _emit_SPACESS(self, node:AST.Function):
         """
