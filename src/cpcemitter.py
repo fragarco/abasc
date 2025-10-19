@@ -2247,16 +2247,17 @@ class CPCEmitter:
         either to a given value, or to a value entered by the operator. RANDOMIZE TIME will
         produce a sequence that will be difficult to repeat. 
         """
+        # In our case, if RANDOMIZE is used without parameters, instead of ask for a value
+        # we do the same as puting RANDOMIZE TIME, but even more optimized as we don't copy
+        # the real number to a temporal memory after callin gettime
         self._emit_import("rt_randomize")
         self._emit_code("; RANDOMIZE [<numeric expression>]")
         if len(node.args):
             self._emit_expression(node.args[0])
-            self._emit_code("call    rt_randomize")
         else:
-            self._emit_code("ld      (rt_rnd_seed1),&6c", info="seed reset to default values")
-            self._emit_code("ld      (rt_rnd_seed1+1),&07")
-            self._emit_code("ld      (rt_rnd_seed2),&70")
-            self._emit_code("ld      (rt_rnd_seed2+1),&c6")
+            self._emit_import("rt_gettime")
+            self._emit_code("call    rt_gettime")
+        self._emit_code("call    rt_randomize")
         self._emit_code(";")
 
     def _emit_READ(self, node:AST.Command):
