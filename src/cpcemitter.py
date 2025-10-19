@@ -2438,8 +2438,13 @@ class CPCEmitter:
     def _emit_ROUND(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_RUN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RUN(self, node:AST.Command):
+        """
+        Loads a program (BASIC or binary) from disc or tape and start executing it.
+        """
+        self._emit_code("; RUN [<str_expression> | <int_expression>]")
+        self._raise_error(2, node, "RUN is not supported")
+        self._emit_code("; IGNORED")
 
     def _emit_SAVE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')

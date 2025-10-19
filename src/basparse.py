@@ -1718,11 +1718,13 @@ class LocBasParser:
 
     @astnode
     def _parse_RUN(self) -> AST.Command:
-        """ <RUN> ::= RUN <str_expression> """
+        """ <RUN> ::= RUN [<str_expression> | <int_expression> """
         self._advance()
         args: list[AST.Statement] = []
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
-            args = [self._parse_str_expression()]  
+            args = [self._parse_expression()]
+            if args[0].etype not in (AST.ExpType.String, AST.ExpType.Integer):
+                self._raise_error(13)  
         return AST.Command(name="RUN", args=args)
 
     @astnode
