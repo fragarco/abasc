@@ -2428,7 +2428,11 @@ class CPCEmitter:
         """
         self._emit_import("rt_rnd")
         self._emit_code(";  RND[(<numeric expression>)]")
-        self._emit_code("call    rt_rnd")
+        if len(node.args) == 0:
+            self._emit_code("call    rt_rnd")
+        else:
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_rnd0")
         self._emit_code(";")
 
     def _emit_ROUND(self, node:AST.Statement):

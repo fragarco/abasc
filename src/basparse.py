@@ -1700,7 +1700,7 @@ class LocBasParser:
         args: list[AST.Statement] = []
         if self._current_is(TokenType.LPAREN):
             self._advance()
-            args = [self._parse_num_expression()]
+            args = [self._parse_int_expression()]
             self._expect(TokenType.RPAREN)
         return AST.Function(name="RND", etype=AST.ExpType.Real, args=args)
 
