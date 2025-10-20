@@ -1237,7 +1237,7 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         cmd = ast.lines[1].statements[0]
         self.assertEqual(cmd.name, "SOUND")
-        self.assertEqual(len(cmd.args), 4)
+        self.assertEqual(len(cmd.args), 7)
 
     def test_spacess_basic(self):
         code = '10 PRINT SPACE$(8);"HELLO"'
