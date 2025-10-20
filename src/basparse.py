@@ -1768,14 +1768,23 @@ class LocBasParser:
         # the extra int parameters are:
         # duration, volume, volume envelope, tone envelope, noise period 
         self._advance()
-        args: list[AST.Statement] = [self._parse_int_expression()]
+        args: list[AST.Statement] = [self._parse_int_expression()] # channel
         self._expect(TokenType.COMMA)
-        args.append(self._parse_int_expression())
-        for _ in range(5):
+        args.append(self._parse_int_expression())                  # tone
+        # optative params
+        for i in range(5):              
             if not self._current_is(TokenType.COMMA):
-                break
-            self._advance()
-            args.append(self._parse_int_expression())
+                if i == 0:   args.append(AST.Integer(value=20)) # default duration
+                elif i == 1: args.append(AST.Integer(value=12)) # default volume
+                elif i == 2: args.append(AST.Integer(value=0))  # ENV
+                elif i == 3: args.append(AST.Integer(value=0))  # ENT
+                elif i == 4: args.append(AST.Integer(value=0))  # Noise
+            elif self._next_is(TokenType.COMMA):
+                # we do not support the option of leave a default value as ,,
+                self._raise_error(2)
+            else:
+                self._advance()
+                args.append(self._parse_int_expression())
         return AST.Command(name="SOUND", args=args)
 
     @astnode

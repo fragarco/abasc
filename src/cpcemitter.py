@@ -2494,10 +2494,34 @@ class CPCEmitter:
 
     def _emit_SOUND(self, node:AST.Command):
         """
-        The SOUND command has the following shape:
+        Each SOUND channel has a queue of SOUND s to play. There is space in this queue for five
+        separate SOUND commands: one active and four waiting. The operating system of the CPC464
+        can continue with other tasks while playing out the sound queue, only returning when
+        necessary to pick up more SOUND commands. The SOUND command has the following shape:
         SOUND Channel,Period,Duration,Volume,Volume-Envelope,Tone-Envelope,Noise
         """
+        self._emit_import("rt_sound")
         self._emit_code("; SOUND <channel status>, <tone period>[,<duration>[,<volume>[,<volume envelope>[,<tone envelope>[,<noise period>]]]]")
+        self._emit_expression(node.args[0]) 
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_sound_buf),a")    # channel
+        self._emit_expression(node.args[4])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_sound_buf+1),a")  # ENV
+        self._emit_expression(node.args[5])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_sound_buf+2),a")  # ENT
+        self._emit_expression(node.args[1])
+        self._emit_code("ld      (rt_sound_buf+3),hl") # tone
+        self._emit_expression(node.args[6])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_sound_buf+5),a")  # noise
+        self._emit_expression(node.args[3])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_sound_buf+6),a")  # volume
+        self._emit_expression(node.args[2])
+        self._emit_code("ld      (rt_sound_buf+7),hl") # duration
+        self._emit_code("call    rt_sound")
         self._emit_code(";")
 
     def _emit_SPACESS(self, node:AST.Function):

@@ -204,6 +204,18 @@ class FWCALL:
     CAS_READ            = "&BCA1"
     CAS_CHECK           = "&BCA4"
 
+    SOUND_RESET         = "&BCA7"
+    SOUND_QUEUE         = "&BCAA"
+    SOUND_CHECK         = "&BCAD"
+    SOUND_ARM_EVENT     = "&BCB0"
+    SOUND_RELEASE       = "&BCB3"
+    SOUND_HOLD          = "&BCB6"
+    SOUND_CONTINUE      = "&BCB9"
+    SOUND_AMPL_ENVELOPE = "&BCBC"
+    SOUND_TONE_ENVELOPE = "&BCBF"
+    SOUND_A_ADDRESS     = "&BCC2"
+    SOUND_T_ADDRESS     = "&BCC5"
+
     KL_CHOKE_OFF        = "&BCC8"
     KL_ROM_WALK         = "&BCCB"
     KL_INIT_BACK        = "&BCCE"
@@ -1985,5 +1997,19 @@ RT = {
     "rt_fileoutbuf": ([
         "; Buffer for content written to files through OPENOUT\n",
         "rt_fileoutbuf: defs 2048\n",
-    ], ["rt_error"])
+    ], ["rt_error"]),
+    "rt_sound": ([
+        "; Adds a new sound to one of the available Amstrad CPC\n",
+        "; sound queues. The data must be kept in a buffer placed\n",
+        "; somewhere in the 32k central memory area.\n",
+        ";Inputs:\n",
+        ";   HL address to the sound buffer with the data.\n",
+        ";Outputs:\n",
+        ";   CF if sound was added to the queue.\n",
+        ";   AF, BC, DE, IX and HL are modified.\n",
+        "rt_sound_buf: defs 9\n",
+        "rt_sound:\n",
+        "\tld      hl,rt_sound_buf\n",
+        f"\tjp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE\n",
+    ], ["rt_error"]),
 }
