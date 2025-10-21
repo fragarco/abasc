@@ -2671,8 +2671,25 @@ class CPCEmitter:
     def _emit_SPEED_WRITE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_SQ(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SQ(self, node:AST.Function):
+        """
+        The SQ function is used to check the number of free entries in the queue for
+        a given channel, where channel A is 1, B is 2, and C is 3. The function
+        determines whether the channel is active - and if not - why the entry at the
+        head of the queue (if any) is waiting.
+        The result is bit significant:
+        bits 0,1,2 indicate the number of free entries in the queue
+        bits 3,4,5 indicate the Rendezvous state at the head of the queue (if any)
+        bit 6 is set if the head of the queue is held
+        bit 7 is set if the channel is currently active
+        """
+        self._emit_code("; SQ(<channel>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code(f"call    {FWCALL.SOUND_CHECK}", info="SOUND_CHECK")
+        self._emit_code("ld      h,0\n")
+        self._emit_code("ld      l,a\n")
+        self._emit_code(";")
 
     def _emit_SQR(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
