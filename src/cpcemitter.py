@@ -1783,8 +1783,29 @@ class CPCEmitter:
         self._raise_warning(0, "LIST is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_LOAD(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_LOAD(self, node:AST.Command):
+        """
+        To read a BASIC program from disc or cassette into memory, replacing any
+        existing program. Specifying the optional <address expression> will cause
+        a binary file to be loaded at that address, rather than the address from
+        which it was saved.
+        A protected BASIC program can NOT be loaded using the LOAD command as it
+        will be immediately deleted from memory. Instead, use the RUN or CHAIN
+        commands.
+        """
+        self._emit_code("; LOAD <file name>[, <address expression>]")
+        if len(node.args) == 1:
+            self._emit_import("rt_load")
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_load")
+        else:
+            self._emit_import("rt_loadaddr")
+            self._emit_expression(node.args[1])
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[0])
+            self._emit_code("pop     de")
+            self._emit_code("call    rt_loadaddr")
+        self._emit_code(";")
 
     def _emit_LOCATE(self, node:AST.Command):
         """
@@ -1833,10 +1854,32 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_LOWERSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Returns a new string expression the same as the input string expression but
+        in which all upper case characters are converted to lower case. Useful for
+        processing input where the answers may come in mixed upper/lower case. 
+        """
+        self._emit_import("rt_lower")
+        self._emit_code("; LOWER$(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("call    rt_lower")
+        self._emit_code(";")
 
     def _emit_MASK(self, node:AST.Statement):
+        """
+        Only available with BASIC 1.1
+        Sets the mask or template to be used when drawing lines. The binary value
+        of the <int expr> in the range 0 to 255, sets the bits in each adjacent
+        group of 8 pixels to ON (1) or OFF (0).
+        The <first point setting> determines whether the first point of the line
+        is to be plotted (1) or not plotted (0).
+        Either of the parameters may be omitted, but not both. If a parameter is
+        omitted, that particular setting is not changed. 
+        """
+        self._emit_code("; MASK [<integer expression>l[,<first point setting>]")
         self._raise_error(2, node, 'not implemented yet')
+        self._emit_code(";")
 
     def _emit_MAX(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -2849,8 +2892,17 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code(";")
 
-    def _emit_UPPERSS(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_UPPERSS(self, node:AST.Function):
+        """
+        Returns a new string expression the same as the input string expression)
+        but in which all lower case characters are converted to upper case.
+        """
+        self._emit_import("rt_upper")
+        self._emit_code("; UPPER$(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._reserve_memory_de(255)
+        self._emit_code("call    rt_upper")
+        self._emit_code(";")
 
     def _emit_VAL(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
