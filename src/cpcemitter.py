@@ -290,6 +290,14 @@ class CPCEmitter:
     def _get_userfun_label(self, name) -> str:
         symname = name.replace("$", "_S").replace("%", "_I").replace("!", "_R")
         return f"_userfn_{symname}"
+    
+    def _get_env_label(self) -> str:
+        self.constants +=1
+        return f"__sound_env_{self.constants}"
+    
+    def _get_ent_label(self) -> str:
+        self.constants +=1
+        return f"__sound_ent_{self.constants}"
 
     # ----------------- Error management -----------------
 
@@ -1023,7 +1031,32 @@ class CPCEmitter:
         Parameter 1: <tone period> (See parameter 2 of the SOUND command).
         Parameter 2: <pause time>
         """
+        # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or 2-bytes, byte.
         self._emit_code("; ENT <envelope number>[,<envelope section>[,<envelope section>,…]]")
+        entlabel = self._get_ent_label()
+        values = ""
+        args = node.args[1:]
+        if len(args) % 3 == 0:
+            for a in args:
+                if isinstance(a, AST.Integer):
+                    values = values + f",{a.value}"
+                else:
+                    self._raise_error(2, a)
+            values = f"{len(args)//3}{values}"
+        else:
+            for i,a in enumerate(args):
+                if isinstance(a, AST.Integer):
+                    if i % 2 == 1:
+                        values = values + f",{a.value}"
+                    else:
+                        values = values + f",{a.value // 256},{a.value % 256}"
+                else:
+                    self._raise_error(2, a)
+            values = f"{len(args)//2}{values}"
+        self._emit_data(f"{entlabel}: db {values}", section=DataSec.CONST)
+        self._emit_code(f"ld      hl,{entlabel}")
+        self._emit_code(f"ld      a,{node.args[0].value}") # type: ignore [attr-defined]
+        self._emit_code(f"call    {FWCALL.SOUND_TONE_ENVELOPE}", info="SOUND_TONE_ENVELOPE")
         self._emit_code(";")
 
     def _emit_ENV(self, node:AST.Command):
@@ -1038,7 +1071,32 @@ class CPCEmitter:
         Parameter 1: <hardware envelope> the value to send to the envelope shape register.
         Parameter 2: <envelope period> the value to send to the envelope period registers. 
         """
+        # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or byte, 2-bytes.
         self._emit_code("; ENV <envelope number>[,<envelope section>][,<envelope section>][,…]")
+        envlabel = self._get_env_label()
+        values = ""
+        args = node.args[1:]
+        if len(args) % 3 == 0:
+            for a in args:
+                if isinstance(a, AST.Integer):
+                    values = values + f",{a.value}"
+                else:
+                    self._raise_error(2, a)
+            values = f"{len(args)//3}{values}"
+        else:
+            for i,a in enumerate(args):
+                if isinstance(a, AST.Integer):
+                    if i % 2 == 0:
+                        values = values + f",{a.value}"
+                    else:
+                        values = values + f",{a.value // 256},{a.value % 256}"
+                else:
+                    self._raise_error(2, a)
+            values = f"{len(args)//2}{values}"
+        self._emit_data(f"{envlabel}: db {values}", section=DataSec.CONST)
+        self._emit_code(f"ld      hl,{envlabel}")
+        self._emit_code(f"ld      a,{node.args[0].value}") # type: ignore [attr-defined]
+        self._emit_code(f"call    {FWCALL.SOUND_AMPL_ENVELOPE}", info="SOUND_AMPL_ENVELOPE")
         self._emit_code(";")
 
     def _emit_EOF(self, node:AST.Function):

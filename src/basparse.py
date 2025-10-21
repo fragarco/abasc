@@ -652,26 +652,30 @@ class LocBasParser:
         """ <ENT> ::= ENT <int_expression>[,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>][,<ent_section>] """
         """ <ent_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
         # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or 2-bytes, byte.
+        # All sections must be integers and be of one of the two variants.
         self._advance()
         args: list[AST.Statement] = [self._parse_int_expression()]
         while self._current_is(TokenType.COMMA):
             self._advance()
             args.append(self._parse_int_expression())
-        if len(args) > 5*3:
+        totalargs = len(args[1:])
+        if totalargs > 5*3 or (totalargs % 2 != 0 and totalargs % 3 != 0):
             self._raise_error(5)
         return AST.Command(name="ENT", args=args)
 
     @astnode
     def _parse_ENV(self) -> AST.Command:
         """ <ENV> ::= ENV <int_expression>[,<env_section>][,<env_section>][,<env_section>][,<env_section>][,<env_section>] """
-        """ <env_section> ::= <int_expression>,<int_expression>,<int_expression> | <int_expression>,<int_expression> """
+        """ <env_section> ::= <INT>,<INT>,<INT> | <INT>,<INT> """
         # NOTE: Sections will be integers of 3 bytes: byte, byte, byte or byte, 2-bytes.
+        # All sections must be integers and be of one of the two variants.
         self._advance()
         args: list[AST.Statement] = [self._parse_int_expression()]
         while self._current_is(TokenType.COMMA):
             self._advance()
             args.append(self._parse_int_expression())
-        if len(args) > 5*3:
+        totalargs = len(args[1:])
+        if totalargs > 5*3 or (totalargs % 2 != 0 and totalargs % 3 != 0):
             self._raise_error(5)
         return AST.Command(name="ENV", args=args)
 
