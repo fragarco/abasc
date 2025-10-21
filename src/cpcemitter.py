@@ -395,6 +395,18 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
+    def _emit_ASM(self, node:AST.Command):
+        """
+        Inserts direct ASM code.
+        """
+        self._emit_code("; ASM(<string>[<string>]*)")
+        for a in node.args:
+            if isinstance(a, AST.String):
+                self._emit_code(a.value)
+            else:
+                self._raise_error(2, a)
+        self._emit_code(";")
+
     def _emit_ATN(self, node:AST.Function):
         """
         Calculates the arc-tangent (forcing the numeric expression) to a real
@@ -1853,7 +1865,7 @@ class CPCEmitter:
         self._moveflo_temp()
         self._emit_code(";")
 
-    def _emit_LOWERSS(self, node:AST.Statement):
+    def _emit_LOWERSS(self, node:AST.Function):
         """
         Returns a new string expression the same as the input string expression but
         in which all upper case characters are converted to lower case. Useful for
@@ -3544,7 +3556,7 @@ class CPCEmitter:
         funcname = "_emit_" + keyword.replace('$','SS').replace(' ', '_')
         emit_keyword = getattr(self, funcname , None)
         if emit_keyword is None:
-            self._raise_error(2, node, f", unknown keyword {keyword}")
+            self._raise_error(2, node, f"unknown keyword {keyword}")
         return emit_keyword(node) # type: ignore[misc]
 
     def _emit_command(self, node: AST.Command):
@@ -3552,7 +3564,7 @@ class CPCEmitter:
         funcname = "_emit_" + keyword.replace('$','SS').replace(' ', '_')
         emit_keyword = getattr(self, funcname , None)
         if emit_keyword is None:
-            self._raise_error(2, node, f", unknown keyword {keyword}")
+            self._raise_error(2, node, f"unknown keyword {keyword}")
         return emit_keyword(node) # type: ignore[misc]
 
     def _emit_statement(self, stmt: AST.Statement):

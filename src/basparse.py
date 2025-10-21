@@ -197,6 +197,18 @@ class LocBasParser:
         return AST.Function(name="ASC", etype=AST.ExpType.Integer, args=args)
 
     @astnode
+    def _parse_ASM(self) -> AST.Command:
+        """ <ASM> ::= ASM(STR[,STR]*)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_str_expression()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_str_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Command(name="ASM", args=args)
+
+    @astnode
     def _parse_ATN(self) -> AST.Function:
         """ <ATN> ::= ATN(<num_expression>)"""
         self._advance()
@@ -2527,7 +2539,7 @@ class LocBasParser:
         funcname = "_parse_" + keyword.replace('$','SS').replace(' ', '_')
         parse_keyword = getattr(self, funcname , None)
         if parse_keyword is None:
-            self._raise_error(2, f", unknown keyword {keyword}")
+            self._raise_error(2, f"unknown keyword {keyword}")
         return parse_keyword() # type: ignore[misc]
 
     @astnode
