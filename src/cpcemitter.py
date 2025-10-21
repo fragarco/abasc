@@ -2662,8 +2662,22 @@ class CPCEmitter:
         self._emit_code("call    rt_print_spc")
         self._emit_code(";")
 
-    def _emit_SPEED_INK(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SPEED_INK(self, node:AST.Command):
+        """
+        The INK and BORDER commands allow two colours to be associated with each Ink,
+        in which case the INK alternates between the two colours. The first integer
+        expression) specifies the time for the first INK specified to be used, and
+        the second integer expression sets the time for the second INK.
+        Times between colour changes are measured in units of 1/50 second. (50 Hz) 
+        """
+        self._emit_code("; SPEED INK <integer expression>,<integer expression>")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code("ld      h,e")
+        self._emit_code(f"call   {FWCALL.SCR_SET_FLASHING}", info="SCR_SET_FLASHING")
+        self._emit_code(";")
 
     def _emit_SPEED_KEY(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
