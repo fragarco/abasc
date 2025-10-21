@@ -447,18 +447,18 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[0].name, "EI")
 
     def test_ent_basic(self):
-        code = "10 ENT -1,128,128,128,4000,128"
+        code = "10 ENT 1,10,-50,10,10,50,10"
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[0].name, "ENT")
-        self.assertEqual(len(ast.lines[0].statements[0].args), 6)
-        self.assertEqual(ast.lines[0].statements[0].args[5].value, 128)
+        self.assertEqual(len(ast.lines[0].statements[0].args), 7)
+        self.assertEqual(ast.lines[0].statements[0].args[5].value, 50)
         
     def test_env_basic(self):
-        code = "10 ENV 1,128,128,128,128,4000"
+        code = "10 ENV 1,100,2,20"
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[0].statements[0].name, "ENV")
-        self.assertEqual(len(ast.lines[0].statements[0].args), 6)
-        self.assertEqual(ast.lines[0].statements[0].args[5].value, 4000)
+        self.assertEqual(len(ast.lines[0].statements[0].args), 4)
+        self.assertEqual(ast.lines[0].statements[0].args[3].value, 20)
 
     def test_eof_basic(self):
         code = '10 WHILE NOT EOF: PRINT "PRINT READING": WEND'
