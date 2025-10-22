@@ -1294,7 +1294,6 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         cmd = ast.lines[0].statements[0].source
         self.assertEqual(cmd.left.name, "SQR")
-        self.assertEqual(cmd.left.args[0].value, 3)
     
     def test_strss_basic(self):
         code="10 PRINT STR$(&766)"

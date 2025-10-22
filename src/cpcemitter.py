@@ -2744,11 +2744,41 @@ class CPCEmitter:
         self._emit_code(f"call   {FWCALL.SCR_SET_FLASHING}", info="SCR_SET_FLASHING")
         self._emit_code(";")
 
-    def _emit_SPEED_KEY(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SPEED_KEY(self, node:AST.Command):
+        """
+        If held down continuously, the keys auto repeat at the <repeat period> after
+        the given <start delay> period. The setting is made in 1/50 sec units, in
+        the range 1 to 255. The default rate is set to 30,2.
+        Very small start delays will interact with keyboard de-bounce routines.
+        The actual speed at which the keyboard is read by the software is not affected
+        by this command.
+        Not all keys repeat, the KEY DEF commnd will allow the user to redefine the
+        particular attributes of a given key. 
+        """
+        self._emit_code("; SPEED KEY <start delay>, <repeat period>")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code("ld      h,e")
+        self._emit_code(f"call    {FWCALL.KM_SET_DELAY}")
+        self._emit_code(";")
 
-    def _emit_SPEED_WRITE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SPEED_WRITE(self, node:AST.Command):
+        """
+        The cassette can be witten at either 2000 baud (where <int expr> is 1),
+        or the default of 1000 baud (where the <integer expression> is 0). When
+        loading a file from tape, the CPC464 automatically establishes the correct
+        reading speed from information in the file software, thus it is not necessary
+        for the user to specify.
+        When using cassette tape of uncertain data recording ability, the 1000 baud
+        rate is recommended for maximum reliability. 
+        """
+        self._emit_import("rt_speedwrite")
+        self._emit_code("; SPEED WRITE <integer expression>")
+        self._emit_expression(node.args[0])
+        self._emit_code("call    rt_speedwrite")
+        self._emit_code(";")
 
     def _emit_SQ(self, node:AST.Function):
         """
@@ -2770,11 +2800,28 @@ class CPCEmitter:
         self._emit_code("ld      l,a\n")
         self._emit_code(";")
 
-    def _emit_SQR(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SQR(self, node:AST.Function):
+        """
+        Returns the square root of <numeric expression>.
+        """
+        self._emit_import("rt_math_call")
+        self._emit_code("; SQR(<numeric expression>)")
+        self._emit_expression(node.args[0])
+        self._moveflo_accum1()
+        self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SQR}", info="MATH_REAL_SQR")
+        self._emit_code("call    rt_math_call")
+        self._moveflo_temp()
+        self._emit_code(";")
 
     def _emit_STOP(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        To stop execution of a program, but leave BASIC in a state where the program
+        can be restarted after the STOP command by using the CONT command. This may
+        be used to interrupt the program at a particular point when debugging.
+        """
+        self._emit_code("; STOP")
+        self._raise_warning(0, 'STOP is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
 
     def _emit_STRINGSS(self, node:AST.Function):
         """

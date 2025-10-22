@@ -1865,7 +1865,7 @@ class LocBasParser:
         """ <SQR> ::= SQR(<num_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args: list[AST.Statement] = [self._parse_num_expression()]
+        args: list[AST.Statement] = [self._parse_real_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="SQR", etype=AST.ExpType.Real, args=args)
 
