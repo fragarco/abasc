@@ -1747,8 +1747,7 @@ class LocBasParser:
     def _parse_SAVE(self) -> AST.Command:
         """ <SAVE> ::= SAVE STRING[,CHAR][,<int_expression>[,<int_expression>[,<int_expression]]] """
         self._advance()
-        lex = self._expect(TokenType.STRING).lexeme
-        args: list[AST.Statement] = [AST.String(value=lex)]
+        args: list[AST.Statement] = [self._parse_str_expression()]
         if not self._current_in((TokenType.EOL, TokenType.EOF, TokenType.COLON, TokenType.COMMENT)):
             self._expect(TokenType.COMMA)
             lex = self._expect(TokenType.IDENT).lexeme.upper()

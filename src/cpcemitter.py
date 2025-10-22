@@ -2585,8 +2585,32 @@ class CPCEmitter:
         self._raise_error(2, node, "RUN is not supported")
         self._emit_code("; IGNORED")
 
-    def _emit_SAVE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SAVE(self, node:AST.Command):
+        """
+        Saves the current BASIC program or an area of memory to tape or disc.
+        """
+        # In our case, only saving memory as binary files makes sense. As a 
+        # result, we ignore the third parameter that we will always consider to
+        # be 'B'
+        self._emit_import("rt_save")
+        self._emit_code(";  SAVE <filename>[,<file type>][,<binary parameters>]")
+        if len(node.args) < 4:
+            self._raise_error(2, node, "only saving binaries is supported")
+        else:
+            self._emit_code("ld      ix,0")
+            self._emit_code("add     ix,sp")
+            self._emit_expression(node.args[2])
+            self._emit_code("push    hl")       # memory address
+            if len(node.args) > 4:
+                self._emit_expression(node.args[4])
+                self._emit_code("push    hl")   # entry point
+            else:
+                self._emit_code("push    hl")   # repeat memory address
+            self._emit_expression(node.args[3])
+            self._emit_code("push    hl")       # memory block length
+            self._emit_expression(node.args[0]) # filename
+            self._emit_code("call    rt_save")
+        self._emit_code(";")
 
     def _emit_SGN(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
