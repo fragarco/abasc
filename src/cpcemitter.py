@@ -2082,7 +2082,8 @@ class CPCEmitter:
             if sym is not None:
                 datastr = datastr + f"{sym.label},"
         self._emit_expression(node.args[0])
-        self._emit_code(f"ld      a,{len(node.args[1:])}")
+        self._emit_code("ld      a,l")
+        self._emit_code(f"ld      b,{len(node.args[1:])}")
         self._emit_code(f"ld      de,{addresses}")
         addresses = addresses + f": dw {datastr[:-1]}"
         self._emit_data(addresses, section=DataSec.CONST)
