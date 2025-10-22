@@ -2063,11 +2063,11 @@ RT = {
     "rt_fileinbuf": ([
         "; Buffer for content read from files through OPENIN\n",
         "rt_fileinbuf: defs 2048\n",
-    ], ["rt_error"]),
+    ], ["rt_error", "rt_initdos"]),
     "rt_fileoutbuf": ([
         "; Buffer for content written to files through OPENOUT\n",
         "rt_fileoutbuf: defs 2048\n",
-    ], ["rt_error"]),
+    ], ["rt_error", "rt_initdos"]),
     "rt_sound": ([
         "; Adds a new sound to one of the available Amstrad CPC\n",
         "; sound queues. The data must be kept in a buffer placed\n",
@@ -2100,7 +2100,7 @@ RT = {
         "\tex      de,hl\n",
         f"\tcall    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT\n",
         f"\tjp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE\n",
-    ], []),
+    ], ["rt_initdos"]),
     "rt_loadaddr": ([
         "; RT_LOADADDR\n",
         "; Reads an AMSDOS file (with header) and extracts its length.\n",
@@ -2121,7 +2121,7 @@ RT = {
         "\tpop     hl\n",
         f"\tcall    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT\n",
         f"\tjp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE\n",
-    ], []),
+    ], ["rt_initdos"]),
     "rt_save": ([
         "; RT_SAVE\n",
         "; Dumps a memory region as an AMSDOS binary file (with header)\n",
@@ -2149,7 +2149,7 @@ RT = {
         "\tld       a,2\n",
         f"\tcall    {FWCALL.CAS_OUT_DIRECT}  ; CAS_OUT_DIRECT\n",
         f"\tjp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE\n",
-    ], []),
+    ], ["rt_initdos"]),
     "rt_onjump": ([
         "; RT_ONJUMP\n",
         "; Given a number in A, this routine jumps to the corresponding\n",
@@ -2197,5 +2197,25 @@ RT = {
         "\tld      hl,107\n",
         "\tld      a,50\n",
         f"\tjp      {FWCALL.CAS_SET_SPEED}\n",
+    ], []),
+    "rt_initdos": ([
+        "; RT_INITDOS\n",
+        "; Based on http://cpctech.cpc-live.com/source/loader.html\n",
+        "; This rutine leaves again the AMSDOS rom enabled to be used\n",
+        "; will disc/tape rutines\n",
+        "rt_initdos:\n",
+        "\tld      hl,(&be7d)         ; current selected drive\n",
+        "\tld      a,(hl)\n",
+        "\tld      (__initdos_drive+1),a ; self modifying code\n",
+        "\tld      c,&ff              ; disable all roms\n",
+        "\tld      hl,__initdos_start ; execution address for program\n",
+        f"\tcall    {FWCALL.MC_START_PROGRAM}  ; MC_START_PROGRAM\n",
+        "__initdos_start:\n",
+        f"\tcall    {FWCALL.KL_ROM_WALK}  ; KL_ROM_WALK\n",
+        "__initdos_drive:\n",
+        "\tld      a, &00\n",
+        "\tld      hl,&be7d\n",
+        "\tld      (hl),a\n",     
+        "\tret\n",
     ], []),
 }

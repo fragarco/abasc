@@ -3759,6 +3759,8 @@ class CPCEmitter:
 
     def _compose_program(self) -> str:
         code = ""
+        if "rt_initdos" in self.runtime:
+            self._emit_head("call    rt_initdos")
         if "rt_math_call" in self.runtime:
             self._emit_head("call    rt_math_setoffset")
         if self.memlimit < 99999:
