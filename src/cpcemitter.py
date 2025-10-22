@@ -299,6 +299,10 @@ class CPCEmitter:
         self.constants +=1
         return f"__sound_ent_{self.constants}"
 
+    def _get_onjump_label(self) -> str:
+        self.constants +=1
+        return f"__on_jump_{self.constants}"
+
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
@@ -2043,8 +2047,45 @@ class CPCEmitter:
         self._emit_code(fornode.end_label, 0)
         self._emit_code(";")
 
-    def _emit_ON(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ON_GOSUB(self, node:AST.Command):
+        """
+        GOSUB to the subroutine as directed by the result of the <int expr>.
+        If the result is 1, then the first line number in the list is chosen,
+        if 2 then the second etc.
+        """
+        self._emit_code("; ON <integer expression> GOSUB <list of:<line number>")
+        self._emit_onjump(node)
+        self._emit_code("call    rt_onjump")
+        self._emit_code(";")
+
+    def _emit_ON_GOTO(self, node:AST.Command):
+        """
+        GOTO to the statement as directed by the result of the <int expr>.
+        If the result is 1, then the first line number in the list is chosen,
+        if 2 then the second etc.
+        """
+        self._emit_code("; ON <integer expression> GOTO <list of:<line number>")
+        self._emit_onjump(node)
+        self._emit_code("jp      rt_onjump")
+        self._emit_code(";")
+
+    def _emit_onjump(self, node:AST.Command):
+        self._emit_import("rt_onjump")
+        addresses = self._get_onjump_label()
+        datastr = ""
+        for a in node.args[1:]:
+            sym = None
+            if isinstance(a, AST.Integer):
+                sym = self.symtable.find(str(a.value), SymType.Label, "")
+            elif isinstance(a, AST.Label):
+                sym = self.symtable.find(a.value, SymType.Label, "")
+            if sym is not None:
+                datastr = datastr + f"{sym.label},"
+        self._emit_expression(node.args[0])
+        self._emit_code(f"ld      a,{len(node.args[1:])}")
+        self._emit_code(f"ld      de,{addresses}")
+        addresses = addresses + f": dw {datastr[:-1]}"
+        self._emit_data(addresses, section=DataSec.CONST)
 
     def _emit_ON_BREAK(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')

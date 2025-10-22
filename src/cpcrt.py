@@ -2156,4 +2156,25 @@ RT = {
         "\tei\n"
         f"\tjp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE\n",
     ], []),
+    "rt_onjump": ([
+        "; RT_ONJUMP\n",
+        "; Given a number in A, this routine jumps to the corresponding\n",
+        "; address stored in memory and pointed by HL\n",
+        ";Inputs:\n",
+        ";   DE address to the list of addresses in memory\n",
+        ";    L number to select one of the addresses, starting in 1\n",
+        ";    A number of options\n",
+        ";Outputs:\n",
+        ";   None\n",
+        ";   Flags and HL are modified\n",
+        "rt_onjump:\n",
+        "\tor      a\n",
+        "\tret     z      ; do nothing if index is 0\n",
+        "\tcp      l      ; number in range\n",
+        "\tret     c\n",
+        "\tdec     hl\n",
+        "\tadd     hl,hl\n",
+        "\tadd     hl,de\n",
+        "\tjp      (hl)\n"
+    ], []),
 }

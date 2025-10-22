@@ -1383,12 +1383,18 @@ class LocBasParser:
             self._raise_error(2)
         cmd = "ON " + self._advance().lexeme
         while True:
-            num = self._expect(TokenType.INT)
-            args.append(AST.Integer(value = cast(int, num.value)))
+            if self._current_is(TokenType.INT):
+                num = self._advance()
+                args.append(AST.Integer(value = cast(int, num.value)))
+            elif self._current_is(TokenType.IDENT):
+                label = self._advance()
+                args.append(AST.Label(value = label.lexeme))
+            else:
+                self._raise_error(2, "invalid label")
             if not self._current_is(TokenType.COMMA):
                 break
             self._advance()
-        return AST.Command(name=cmd, args=args)
+        return AST.Command(name=cmd, args=args)       
 
     @astnode
     def _parse_ON_BREAK(self) -> AST.Command:
