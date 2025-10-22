@@ -2172,9 +2172,10 @@ RT = {
         "\tld      h,0\n",
         "\tadd     hl,hl\n",
         "\tadd     hl,de\n",
+        "\tld      e,(hl)\n",
+        "\tinc     hl\n",
+        "\tld      d,(hl)\n",
         "\tex      de,hl\n",
-        "\tld      l,e\n",
-        "\tld      h,d\n",
         "\tjp      (hl)\n"
     ], []),
     "rt_speedwrite": ([
