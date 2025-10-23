@@ -204,7 +204,7 @@
 2030 FOR j%=1 TO 8 STEP 7
 2040 FOR i%=4 TO 8
 2050 IF c%(j%,i%)<>n% GOTO 2140
-2060 ic%=1%-1:IF c%(j%,ic%)=6 GOTO 2140
+2060 ic%=i%-1:IF c%(j%,ic%)=6 GOTO 2140
 2070 IF c%(j%,ic%)=q% GOTO 2080 ELSE 2090
 2080 ic%=ic%-l:GOTO 2070
 2090 IF c%(j%,ic%)=6 GOTO 2110
@@ -213,9 +213,9 @@
 2120 IF c%(j%,i%+1)=q% AND c%(j%,ic%-1)=6 GOTO 2140
 2130 p%(j%,ic%)=26
 2140 IF c%(i%,j%)<>n% GOTO 2230
-2150 ic%=1%-1:IF c%(ic%,j%)=6 GOTO 2230
+2150 ic%=i%-1:IF c%(ic%,j%)=6 GOTO 2230
 2160 IF c%(ic%,j%)=q% GOTO 2170 ELSE 2180
-2170 ic%=ic%-l:GOTO 2160
+2170 ic%=ic%-1:GOTO 2160
 2180 IF c%(ic%,j%)=6 GOTO 2200
 2190 GOTO 2230
 2200 IF ic%=0 GOTO 2230
@@ -252,8 +252,8 @@
 2510 FOR i%=3 TO 7:p%(i%,8)=20:p%(8,i%)=20:NEXT i%
 2520 IF c%(1,1)<>6 THEN p%(2,2)=5
 2530 IF c%(1,8)<>6 THEN p%(2,7)=5
-2540 IF c%(8,1).06 THEN p%(7,2)=5
-2550 IF c%(8,8)0,6 THEN p%(7,7)=5
+2540 IF c%(8,1)<>6 THEN p%(7,2)=5
+2550 IF c%(8,8)<>6 THEN p%(7,7)=5
 2560 p%(1,1)=30:p%(1,8)=30:p%(8,1)=30:p%(8,8)=30
 2570 FOR i%=3 TO 6
 2580 IF c%(1,i%)=n% THEN p%(2,i%)=4

@@ -1,16 +1,35 @@
 @echo off
 
+REM *
+REM * This file is just an example of how BASC and DSK/CDT utilities can be called to compile programs
+REM * and generate files that can be used directly in Amstrad CPC emulators like WinAPE or RetroVirtualMachine
+REM *
+REM * USAGE: make [clear][dsk]
+
+@setlocal
+
+set SOURCE=main
+set TARGET=rebotes
+
+set RUNBAS=python3 ../../src/basc.py %SOURCE%.bas
+set RUNDSK=python3 ../../src/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
+
 IF "%1"=="clear" (
-    del *.PP
-    del *.LEX
-    del *.AST
-    del *.SYM
-    del *.ASM
-    del *.lst
-    del *.map
-    del *.bin
+    IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
+    IF EXIST "%SOURCE%.lex" del "%SOURCE%.lex"
+    IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
+    IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
+    IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
+    IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
+    IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
+    IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"
+    IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
+    IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
+) ELSE IF "%1"=="dsk" (
+    call %RUNBAS% %2 %3 && call %RUNDSK% 
 ) ELSE (
-    call python3 ..\..\src\basc.py main.bas --verbose
-    call python3 ..\..\src\abasm.py MAIN.ASM
+    call %RUNBAS% %*
 )
+
+@endlocal
 @echo on
