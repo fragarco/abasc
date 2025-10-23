@@ -433,9 +433,9 @@ class CPCEmitter:
         line number to be generated, both default to 10 if not specified.
         """
         self._emit_code("; AUTO [<line number>l[,<increment>]")
-        self._emit_code("; IGNORED")
         self._raise_warning(0, 'AUTO is ignored and has not effect', node)
-
+        self._emit_code("; IGNORED")
+        
     def _emit_BINSS(self, node:AST.Function):
         """
         Produces a string of binary digits that represents the value of the
@@ -1787,7 +1787,13 @@ class CPCEmitter:
         """
         self._emit_code("; LET - NOTHING TO DO")
 
-    def _emit_LINE_INPUT(self, node:AST.Statement):
+    def _emit_LINE_INPUT(self, node:AST.LineInput):
+        """
+        Reads an entire line from the stream indicated. The first optional semicolon suppresses
+        the echo of carriage return / line feed. The default <stream expression> is, as always,
+        #0 :screen. 
+        """
+        self._emit_code("; LINE INPUT [<#stream expression>,][;][quoted string; ]<string variable>")
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_LIST(self, node:AST.Command):
@@ -1897,8 +1903,30 @@ class CPCEmitter:
         self._raise_error(2, node, 'not implemented yet')
         self._emit_code(";")
 
-    def _emit_MAX(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_MAX(self, node:AST.Function):
+        """
+        Extracts the largest value from the list of numeric expressions. 
+        """
+        self._emit_code("; MAX(<list of: numeric expression>))")
+        if node.etype == AST.ExpType.Integer:
+            self._emit_import("rt_max")
+            self._emit_expression(node.args[0])
+            for a in node.args[1:]:
+                self._emit_code("push    hl")
+                self._emit_expression(a)
+                self._emit_code("pop     de")
+                self._emit_code("call    rt_max")
+        else:
+            self._emit_import("rt_maxreal")
+            self._emit_expression(node.args[0])
+            self._moveflo_accum1()
+            for a in node.args[1:]:
+                self._emit_expression(a)
+                self._moveflo_accum2()
+                self._emit_code("call    rt_maxreal")
+            self._emit_code("ld      hl,rt_math_accum1")
+            self._moveflo_temp()
+        self._emit_code(";")
 
     def _emit_MEMORY(self, node:AST.Command):
         """
@@ -1915,7 +1943,6 @@ class CPCEmitter:
         else:
             self._raise_warning(0, "MEMORY can be evaluated only at compiling time", node)
         self._emit_code(";")
-
 
     def _emit_MERGE(self, node:AST.Statement):
         self._raise_error(2, node, 'not implemented yet')
@@ -1945,8 +1972,31 @@ class CPCEmitter:
         self._emit_code("call    rt_substr")
         self._emit_code(";")
 
-    def _emit_MIN(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_MIN(self, node:AST.Function):
+        """
+        Extracts the smallest value from the list of numeric expressions. 
+        """
+        self._emit_import("rt_max")
+        self._emit_code("; MIN(<list of: <numeric expression>))")
+        if node.etype == AST.ExpType.Integer:
+            self._emit_expression(node.args[0])
+            for a in node.args[1:]:
+                self._emit_code("push    hl")
+                self._emit_expression(a)
+                self._emit_code("pop     de")
+                self._emit_code("call    rt_max")
+                self._emit_code("ex      de,hl")
+        else:
+            self._emit_import("rt_maxreal")
+            self._emit_expression(node.args[0])
+            self._moveflo_accum2()
+            for a in node.args[1:]:
+                self._emit_expression(a)
+                self._moveflo_accum1()
+                self._emit_code("call    rt_maxreal")
+            self._emit_code("ld      hl,rt_math_accum2")
+            self._moveflo_temp()
+        self._emit_code(";")
 
     def _emit_MODE(self, node:AST.Command):
         """
@@ -2088,14 +2138,44 @@ class CPCEmitter:
         addresses = addresses + f": dw {datastr[:-1]}"
         self._emit_data(addresses, section=DataSec.CONST)
 
-    def _emit_ON_BREAK(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ON_BREAK(self, node:AST.Command):
+        """
+        Calls a subroutine on breaking from program execution by pressing [ESC]
+        twice.  ON BREAK STOP disables the trap, but has no other immediate effect.
+        """
+        self._emit_code("; ON BREAK GOSUB <line number> | STOP")
+        self._raise_warning(0, "ON BREAK is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
-    def _emit_ON_ERROR_GOTO(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ON_ERROR_GOTO(self, node:AST.Command):
+        """
+        Go to a specified line number in the program on detecting an error. 
+        """
+        self._emit_code("; ON ERROR GOTO <linenumber>")
+        self._raise_warning(0, "ON ERROR is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_ON_SQ(self, node:AST.Command):
-        self._raise_error(2, node, 'not implemented yet')
+        """
+        Enable an interrupt for when there is a free slot in the given sound queue.
+        The <channel> is an integer expression yielding one of the values:
+        1: for channel A
+        2: for channel B
+        4: for channel C
+        """
+        self._emit_import("rt_onsq")
+        self._emit_code("; ON SQ (<channel>) GOSUB <line number>")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        label = node.args[1]
+        if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+            sym = self.symtable.find(str(label.value), SymType.Label, "")
+            if sym is not None:
+                self._emit_code(f"ld      de,{sym.label}")
+            else:
+                self._raise_error(38, label)
+        self._emit_code("call    rt_onsq")
+        self._emit_code(";")
 
     def _emit_OPENIN(self, node:AST.Command):
         """
@@ -2508,8 +2588,20 @@ class CPCEmitter:
         self._emit_code("ei")
         self._emit_code(";")
 
-    def _emit_RELEASE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RELEASE(self, node:AST.Command):
+        """
+        When a sound is placed on a sound queue it may include a hold state. If
+        any of the channels specified in this channel are in hold state, then they
+        are released, the expression to identify the sound channel is bit significant:
+        A= bit 0
+        B= bit 1
+        C= bit 2
+        """
+        self._emit_code("; RELEASE <sound channels>")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code(f"call    {FWCALL.SOUND_RELEASE}", info="SOUND_RELEASE")
+        self._emit_code(";")
 
     def _emit_REMAIN(self, node:AST.Function):
         """
@@ -2572,8 +2664,16 @@ class CPCEmitter:
         self._emit_code("ld      (rt_data_ptr),hl")
         self._emit_code(";")
 
-    def _emit_RESUME(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_RESUME(self, node:AST.Command):
+        """
+        When an error has been trapped by an ON ERROR GOTO command, and has been
+        processed, RESUME allows normal program execution to continue, the resuming
+        line number being optionally specifiable. If not specified, the line in
+        which the error has occurred is returned to.
+        """
+        self._emit_code("; RESUME <linenumber> | NEXT")
+        self._raise_warning(0, "RESUME is ignored and has not effect", node)
+        self._emit_code("; IGNORED")
 
     def _emit_RETURN(self, node:AST.Command):
         """
@@ -2617,6 +2717,7 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_ROUND(self, node:AST.Statement):
+        # TODO: reals
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_RUN(self, node:AST.Command):
@@ -2655,6 +2756,7 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_SGN(self, node:AST.Statement):
+        # TODO: reals
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_SIN(self, node:AST.Function):
@@ -3061,6 +3163,7 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_VAL(self, node:AST.Statement):
+        # TODO: reals
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_VPOS(self, node:AST.Function):
@@ -3138,8 +3241,14 @@ class CPCEmitter:
         self._emit_code("; WHILE BODY")
         self.wloops.append(node)
     
-    def _emit_WIDTH(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_WIDTH(self, node:AST.Command):
+        """
+        Tells BASIC how wide the printer is in characters, this information allows
+        BASIC to insert carriage returns as required when printing. 
+        """
+        self._emit_code("; WIDTH <integer expression>")
+        self._raise_warning(0, 'WIDTH is ignored and has not effect', node)
+        self._emit_code("; IGNORED")
 
     def _emit_WINDOW(self, node:AST.Command):
         """
@@ -3165,8 +3274,21 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_WIN_ENABLE}", info="TXT_WIN_ENABLE")
         self._emit_code(";")
 
-    def _emit_WINDOW_SWAP(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_WINDOW_SWAP(self, node:AST.Command):
+        """
+        Exchanges the text windows. For example, BASIC messages sent to stream #0
+        may be swapped with another window to highlight aspects of program development
+        and operation.
+        """
+        self._emit_code("; WINDOW SWAP <stream expression>, <stream expression>")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code("ld      c,e")
+        self._emit_code("ld      b,l")
+        self._emit_code(f"call    {FWCALL.TXT_SWAP_STREAMS}", info="TXT_SWAP_STREAMS")
+        self._emit_code(";")
 
     def _emit_WRITE(self, node:AST.Write):
         """
@@ -3759,8 +3881,8 @@ class CPCEmitter:
 
     def _compose_program(self) -> str:
         code = ""
-        if "rt_initdos" in self.runtime:
-            self._emit_head("call    rt_initdos")
+        if "rt_restoredos" in self.runtime:
+            self._emit_head("call    rt_restoredos")
         if "rt_math_call" in self.runtime:
             self._emit_head("call    rt_math_setoffset")
         if self.memlimit < 99999:

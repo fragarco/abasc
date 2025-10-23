@@ -1258,7 +1258,10 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         if len(args) < 2:
             self._raise_error(2)
-        return AST.Function(name="MAX", etype=etype, args=args)
+        casted: list[AST.Statement] = []
+        for a in args:
+            casted.append(self._cast_numtype(a, etype))
+        return AST.Function(name="MAX", etype=etype, args=casted)
 
     @astnode
     def _parse_MEMORY(self) -> AST.Command:
@@ -1302,7 +1305,10 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         if len(args) < 2:
             self._raise_error(2)
-        return AST.Function(name="MIN", etype=etype, args=args)
+        casted: list[AST.Statement] = []
+        for a in args:
+            casted.append(self._cast_numtype(a, etype))
+        return AST.Function(name="MIN", etype=etype, args=casted)
 
     @astnode
     def _parse_MODE(self) -> AST.Command:
@@ -1434,9 +1440,11 @@ class LocBasParser:
         self._expect(TokenType.LPAREN)
         args = [self._parse_int_expression()]
         self._expect(TokenType.RPAREN)
-        self._expect(TokenType.KEYWORD, "GOSUB")
-        num = self._expect(TokenType.INT)
-        args.append(AST.Integer(value = cast(int, num.value)))
+        if self._current_is(TokenType.KEYWORD, "GOSUB"):
+            gosub = self._parse_GOSUB()
+            args.append(gosub.args[0])
+        else:
+            self._raise_error(2)
         return AST.Command(name="ON SQ", args=args)
 
     @astnode
