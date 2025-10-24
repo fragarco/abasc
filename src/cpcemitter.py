@@ -1625,7 +1625,7 @@ class CPCEmitter:
             self._emit_code("pop     hl", info="ready for next substring")
     
     def _emit_input_str(self, v:AST.Variable | AST.ArrayItem, var: SymEntry): 
-        self._emit_code("ld      de,rt_substrz_buf")
+        self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("ld      (hl),c", info="string len")
         self._emit_code("inc     hl")
         self._emit_code("ex      de,hl")
@@ -1634,7 +1634,7 @@ class CPCEmitter:
 
     def _emit_input_int(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._emit_import("rt_strz2num")
-        self._emit_code("ld      de,rt_substrz_buf")
+        self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("call    rt_strz2num")
 
 
@@ -2640,6 +2640,24 @@ class CPCEmitter:
         self._raise_warning(0, "RENUM is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
+    def _emit_REPLACESS(self, node:AST.Command):
+        """
+        BASC representation for the MID$() keyword as a command:
+        MID$(...) = <str expression>
+        """
+        self._emit_import("rt_strreplace")
+        self._emit_code("; REPLACE$(<substr>, <source str>, <insertion point>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl", info="string to insert")
+        self._emit_expression(node.args[1])
+        self._emit_code("push    hl", info="destination string")
+        self._emit_expression(node.args[2])
+        self._emit_code("ld      b,l")
+        self._emit_code("pop     hl")
+        self._emit_code("pop     de")
+        self._emit_code("call    rt_strreplace")
+        self._emit_code(";")
+
     def _emit_RESTORE(self, node:AST.Command):
         """
         Restores the position of the reading pointer back to the beginning of the
@@ -3168,13 +3186,13 @@ class CPCEmitter:
         The opposite of STR$. 
         """
         self._emit_import("rt_strz2num")
-        self._emit_import("rt_substrz_buf")
+        self._emit_import("rt_scratch_pad")
         self._emit_code("; VAL(<string expression>)")
         self._emit_expression(node.args[0])
         self._emit_code("ld      c,(hl)")
         self._emit_code("ld      b,0")
         self._emit_code("inc     hl")
-        self._emit_code("ld      de,rt_substrz_buf")
+        self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("push    de")
         self._emit_code("ldir")
         self._emit_code("ex      de,hl")

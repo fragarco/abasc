@@ -1307,6 +1307,11 @@ class LocBasParser:
             self._advance()
             args.append(self._parse_int_expression())
         self._expect(TokenType.RPAREN)
+        if self._current_is(TokenType.COMP, lexeme="="):
+            self._advance()
+            args = [self._parse_str_expression()] + args
+            # source substring, target string, insert point, [chars to replace]
+            return AST.Command(name="REPLACE$", args=args)
         return AST.Function(name="MID$", etype=AST.ExpType.String, args=args)
 
     @astnode
