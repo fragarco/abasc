@@ -420,7 +420,7 @@ class LocBasParser:
 
     @astnode
     def _parse_DATA(self) -> AST.Data:
-        """ <DATA> ::= DATA <primary>[,<primary>]*"""
+        """ <DATA> ::= DATA <constant>[,<constant>]*"""
         self._advance()
         args: list[AST.Statement] = [self._parse_data_constant()]
         while self._current_is(TokenType.COMMA):
@@ -432,10 +432,14 @@ class LocBasParser:
 
     @astnode
     def _parse_data_constant(self) -> AST.Statement:
-        """ <constant> ::= INT | REAL | "STRING" | STRING """
+        """ <constant> ::= [-]INT | [-]REAL | "STRING" | IDENT """
         tok = self._current()
+        sign: int = 1
+        if tok.lexeme == '-':
+            sign = -1
+            tok = self._advance()
         if tok.type == TokenType.INT:
-            value = cast(int, tok.value)
+            value = cast(int, tok.value * sign)
             nbytes = self._int_to_bytes(tok.lexeme, value)
             if nbytes == 0:
                 self._raise_error(6)
@@ -443,14 +447,15 @@ class LocBasParser:
             if nbytes == 4:
                 return AST.Real(value=value)
             return AST.Integer(value=cast(int, tok.value))
-        if tok.type == TokenType.REAL:
+        elif tok.type == TokenType.REAL:
             self._advance()
             return AST.Real(value=cast(float, tok.value))
-        if tok.type == TokenType.STRING:
+        elif tok.type == TokenType.STRING:
             self._advance()
             return AST.String(value=tok.lexeme.strip('"'))
-        name = self._advance().text # original case in the source code
-        return AST.String(value=name)
+        else:
+            name = self._advance().text
+            return AST.String(value=name)
 
     @astnode
     def _parse_DECSS(self) -> AST.Function:
@@ -1612,9 +1617,9 @@ class LocBasParser:
                 args.append(self._parse_expression())
                 etype = args[-1].etype
                 while self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
+                    self._advance()
                     if self._end_of_statement():
                         break
-                    self._advance()
                     args.append(self._parse_expression())
                     if not AST.exptype_compatible(etype, args[-1].etype):
                         self._raise_error(13)
