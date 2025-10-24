@@ -1194,7 +1194,33 @@ RT = {
     ],["rt_datablock"]),
     #
     # INPUT/OUTPUT
-    # 
+    #
+    "rt_print_zone": ([
+        "; RT_PRINT_ZONE\n",
+        "; Variable that stores the zone size (13 by default)\n",
+        "rt_print_zone: db 13\n",
+    ], []),
+    "rt_print_nextzone": ([
+        "; RT_PRINT_NEXTZONE\n",
+        "; Moves the text cursor to the start of the next zone\n",
+        "; considering that each zone has RT_PRINT_ZONE characters\n"
+        ";Inputs:\n",
+        ";     None\n",
+        ";Outputs:\n",
+        ";     None\n",
+        ";     AF, HL and B are modified\n",
+        "rt_print_nextzone:\n",
+        f"\tcall    {FWCALL.TXT_GET_CURSOR}  ; TXT_GET_CURSOR\n",
+        "\tld      a,(rt_print_zone)\n",
+        "__nextzone_shift:\n",
+        "\tcp      h\n",
+        "\tjr      nc,__nextzone_end\n",
+        "\tadd     a\n",
+        "\tjr      __nextzone_shift\n",
+        "__nextzone_end:\n",
+        "\tld      h,a\n",
+        f"\tjp      {FWCALL.TXT_SET_CURSOR}  ; TXT_SET_CURSOR\n",
+    ],["rt_print_zone"]),
     "rt_print_nl": ([
         "; RT_PRINT_NL\n",
         "; Prints an EOL which in Amstrad is composed\n",

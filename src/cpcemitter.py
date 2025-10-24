@@ -2410,11 +2410,11 @@ class CPCEmitter:
     def _emit_PRINT(self, node:AST.Print):
         """
         Prints the list of: <print items>s to the given stream (to stream #0 if
-        <stream expression> is not specified). Note that when a semicolon ; is
+        <stream expression> is not specified). Note that when a semicolon is
         used to tell the computer to print the following <print item> next to
         the preceding item, BASIC first checks to see if the following
         <print item> can fit onto the same line. If not, it will be printed on a
-        new line regardless of the semicolon. Note that when a coma , is used to
+        new line regardless of the semicolon. Note that when a coma is used to
         tell the computer to print the following <print item> in the next print
         zone, BASIC first checks to see that the preceding item has not exceeded
         the lenght of the current zone. If it has, the following <print item>
@@ -2479,10 +2479,8 @@ class CPCEmitter:
     def _print_separator(self, item:AST.Separator):
         self._emit_code(f"; PRINT separator [{item.sym}]")
         if item.sym == ',':
-            # TODO: do not use fix spaces
-            self._emit_import("rt_print_spc")
-            self._emit_code("ld      l,4")
-            self._emit_code("call    rt_print_spc")
+            self._emit_import("rt_print_nextzone")
+            self._emit_code("call    rt_print_nextzone")
 
     def _print_newline(self) -> None:
         self._emit_import("rt_print_nl")
@@ -3044,12 +3042,10 @@ class CPCEmitter:
         executed, followed by spaces to reach the required position on the next line.
         """
         # TODO: tab not always prints 4 spaces per index
-        self._emit_import("rt_print")
         self._emit_code("; PRINT TAB(<integer expression>)]")
         self._emit_expression(node.args[0])
-        self._emit_code("add     hl,hl")
-        self._emit_code("add     hl,hl", info="HL = HL * 4")
-        self._emit_code("call    rt_print_spc")
+        self._emit_code("ld      a,h")
+        self._emit_code(f"call    {FWCALL.TXT_SET_COLUMN}", info="TXT_SET_COLUMN")
         self._emit_code(";")
 
     def _emit_TAG(self, node:AST.Command):
@@ -3372,8 +3368,18 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_ASK_CURSOR}", info="GRA_ASK_CURSOR")
         self._emit_code(";")
 
-    def _emit_ZONE(self, node:AST.Statement):
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ZONE(self, node:AST.Command):
+        """
+        Changes the width of the Print Zone used in PRINT, from the default value
+        of 13 to a new value in the range 1 to 255. Reset by NEW, LOAD, CHAIN
+        and RUN"<file name>" commands.
+        """
+        self._emit_import("rt_print_zone")
+        self._emit_code("; ZONE <int expression>")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code("ld      (rt_print_zone),a")
+        self._emit_code(";")
 
     # ----------------- Expressions -----------------
 
