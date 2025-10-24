@@ -3162,9 +3162,25 @@ class CPCEmitter:
         self._emit_code("call    rt_upper")
         self._emit_code(";")
 
-    def _emit_VAL(self, node:AST.Statement):
-        # TODO: reals
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_VAL(self, node:AST.Function):
+        """
+        Extracts a <numeric expression> from the beginning of the string expression.
+        The opposite of STR$. 
+        """
+        self._emit_import("rt_strz2num")
+        self._emit_import("rt_substrz_buf")
+        self._emit_code("; VAL(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      c,(hl)")
+        self._emit_code("ld      b,0")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      de,rt_substrz_buf")
+        self._emit_code("push    de")
+        self._emit_code("ldir")
+        self._emit_code("ex      de,hl")
+        self._emit_code("ld      (hl),0")
+        self._emit_code("pop     de")
+        self._emit_code("call    rt_strz2num")
 
     def _emit_VPOS(self, node:AST.Function):
         """

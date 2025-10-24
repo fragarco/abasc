@@ -1277,6 +1277,11 @@ RT = {
         "\tinc     c\n",
         "\tjr      __count_loop\n",
     ], []),
+    "rt_substrz_buf": ([
+        "; Memory area to temporally store a null-terminated string entered with\n",
+        "; INPUT, LINE INPUT, VAL, etc.\n",
+        "rt_substrz_buf:  defs  255\n",
+    ], []),
     "rt_extract_substrz": ([
         "; RT_EXTRACT_SUBSTRZ\n",
         "; Returns the number of existing substrings separated\n",
@@ -1287,7 +1292,6 @@ RT = {
         ";      B number of identified substrings\n",
         ";      C total number of quote characters found\n",
         ";     AF, HL and BC are modified\n", 
-        "rt_substrz_buf:  defs  255     ; temporal memory to store substrings\n",
         "rt_extract_substrz:\n",
         "\tld      de,rt_substrz_buf\n",
         "\tld      c,0\n",
@@ -1328,7 +1332,7 @@ RT = {
         "\tld      (hl),0\n",
         "\tex      de,hl\n",
         "\tret\n",
-    ], []),
+    ], ["rt_substrz_buf"]),
     "rt_strz_lstrip": ([
         "; RT_STRZ_LSTRIP\n",
         "; Scans the zero-terminated string pointed by HL from the left\n",

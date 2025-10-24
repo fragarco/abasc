@@ -2049,7 +2049,7 @@ class LocBasParser:
         self._expect(TokenType.LPAREN)
         args: list[AST.Statement] = [self._parse_str_expression()]
         self._expect(TokenType.RPAREN)
-        return AST.Function(name="UNT", etype=AST.ExpType.Real, args=args)
+        return AST.Function(name="VAL", etype=AST.ExpType.Integer, args=args)
 
     @astnode
     def _parse_VPOS(self) -> AST.Function:
