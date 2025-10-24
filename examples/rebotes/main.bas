@@ -1,13 +1,17 @@
-10 'REBOTES, por Alexander Martin
-20 'copyright (c) AMSOFT 1984
-30 '
-40 MODE 1:BORDER 1:INK 0,1:INK 1,26:INK 2,24:INK 3,6
-50 SPEED KEY 15,2
-60 ENV 1,1,18,0,11,0,10
-70 ENT 1,10,2,2
-80 ENV 3,1,0,16,5,-3,2
-90 ENV 2,5,3,3,1,-21,22,9,-3,2
-100 ENT -2,10,2,2,5,-7,1,2,11,3,2,-4,8
+'REBOTES, por Alexander Martin
+'copyright (c) AMSOFT 1984
+'
+'version adaptada para el compilador BASC
+'por Javier "Dwaine Hicks" Garcia
+
+label SETUP
+    40 MODE 1:BORDER 1:INK 0,1:INK 1,26:INK 2,24:INK 3,6
+    50 SPEED KEY 15,2
+    60 ENV 1,1,18,0,11,0,10
+    70 ENT 1,10,2,2
+    80 ENV 3,1,0,16,5,-3,2
+    90 ENV 2,5,3,3,1,-21,22,9,-3,2
+    100 ENT -2,10,2,2,5,-7,1,2,11,3,2,-4,8
 110 '
 120 '
 130 MOVE 30,32:DRAWR 0,400,1:MOVE 610,32:DRAWR 0,400,1

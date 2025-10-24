@@ -2953,8 +2953,11 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
         self._reserve_memory_de(255)
-        self._emit_code("inc     hl")
-        self._emit_code("ld      c,(hl)")
+        if node.args[1].etype == AST.ExpType.String:
+            self._emit_code("inc     hl")
+            self._emit_code("ld      c,(hl)", info="first character")
+        else:
+            self._emit_code("ld      c,l")
         self._emit_code("pop     hl")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
