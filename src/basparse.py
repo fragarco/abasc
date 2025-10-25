@@ -1748,7 +1748,7 @@ class LocBasParser:
 
     @astnode
     def _parse_RND(self) -> AST.Function:
-        """ <RND> ::= RND [(<num_expression>)] """
+        """ <RND> ::= RND [(<int_expression>)] """
         self._advance()
         args: list[AST.Statement] = []
         if self._current_is(TokenType.LPAREN):

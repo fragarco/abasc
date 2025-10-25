@@ -1251,35 +1251,39 @@ class CPCEmitter:
         defaults to 1. 
         """
         sym = self.symtable.find(node.var.name, SymType.Variable)
-        start, end = self._get_for_labels()
-        node.start_label = start
-        node.end_label = end
+        startlab, endlab = self._get_for_labels()
+        node.start_label = startlab
+        node.end_label = endlab
         if sym is not None:
             self._emit_code("; FOR <variable> = <start> TO <end> [STEP <size>]")
+            self._emit_code("; START calculation")
             self._emit_expression(node.start)
             self._emit_code(f"ld      ({sym.label}),hl")
-            if node.step is not None:
-                self._emit_code("; STEP precalculation")
-                self._emit_expression(node.step)
-                self._emit_code("ld      c,l")
-                self._emit_code("ld      b,h")
-            self._emit_code("; FOR condition")
-            self._emit_code(start, 0)
+            self._emit_code("; END calculation")
             self._emit_expression(node.end)
-            # clear temporal memory if used by the condition expression before
-            # jumping. Modifies DE
+            self._emit_code("push    hl")
+            self._emit_code("; STEP calculation")
+            if node.step is not None:
+                self._emit_expression(node.step)
+            else:
+                self._emit_code("ld      hl,1")
+            self._emit_code("push    hl")
+            # clear temporal memory used by the expressions
             self._emit_free_mem()
-            self._emit_code(f"ld      de,({sym.label})")
+
+            self._emit_code("; FOR condition check")
+            self._emit_code(startlab, 0)
+            self._emit_code(f"ld      de,({sym.label})", info="current value")
             self._emit_code("or      a")
-            if node.step is not None:
-                self._emit_code("; check STEP sign")
-                self._emit_code("bit     7,b")
-                self._emit_code("jr      z,$+3")
-                self._emit_code("ex      de,hl")
+            self._emit_code("pop     bc", info="STEP value")
+            self._emit_code("pop     hl", info="END value")
+            self._emit_code("push    hl")
+            self._emit_code("push    bc")
+            self._emit_code("bit     7,b", info="STEP sign")
+            self._emit_code("jr      z,$+3")
+            self._emit_code("ex      de,hl")
             self._emit_code("sbc     hl,de")
-            self._emit_code(f"jp      m,{end}")
-            if node.step is not None:
-                self._emit_code("push    bc")
+            self._emit_code(f"jp      m,{endlab}")
             self._emit_code("; FOR body")
             node.var_label = sym.label
             self.forloops.append(node)
@@ -2083,18 +2087,16 @@ class CPCEmitter:
 
     def _emit_NEXT(self, node:AST.BlockEnd):
         fornode = self.forloops.pop()
-        self._emit_code("; NEXT - FOR STEP")
-        if fornode.step is not None:
-            self._emit_code("pop     bc")
-            self._emit_code(f"ld      hl,({fornode.var_label})")
-            self._emit_code("add     hl,bc")
-            self._emit_code(f"ld      ({fornode.var_label}),hl")
-        else:
-            self._emit_code(f"ld      hl,({fornode.var_label})")
-            self._emit_code("inc     hl")
-            self._emit_code(f"ld      ({fornode.var_label}),hl")
+        self._emit_code("; NEXT [<variable>]")
+        self._emit_code("pop     bc", info="STEP value")
+        self._emit_code(f"ld      hl,({fornode.var_label})")
+        self._emit_code("add     hl,bc")
+        self._emit_code(f"ld      ({fornode.var_label}),hl")
+        self._emit_code("push    bc")
         self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(fornode.end_label, 0)
+        self._emit_code("pop     bc")
+        self._emit_code("pop     hl")
         self._emit_code(";")
 
     def _emit_ON_GOSUB(self, node:AST.Command):
@@ -2724,12 +2726,13 @@ class CPCEmitter:
         the number sequence generated is predictable.
         """
         self._emit_import("rt_rnd")
-        self._emit_code(";  RND[(<numeric expression>)]")
+        self._emit_code(";  RND[(<int expression>)]")
         if len(node.args) == 0:
             self._emit_code("call    rt_rnd")
         else:
             self._emit_expression(node.args[0])
             self._emit_code("call    rt_rnd0")
+        self._moveflo_temp()
         self._emit_code(";")
 
     def _emit_ROUND(self, node:AST.Statement):
