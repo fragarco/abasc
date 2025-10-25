@@ -1307,11 +1307,6 @@ class LocBasParser:
             self._advance()
             args.append(self._parse_int_expression())
         self._expect(TokenType.RPAREN)
-        if self._current_is(TokenType.COMP, lexeme="="):
-            self._advance()
-            args = [self._parse_str_expression()] + args
-            # source substring, target string, insert point, [chars to replace]
-            return AST.Command(name="REPLACE$", args=args)
         return AST.Function(name="MID$", etype=AST.ExpType.String, args=args)
 
     @astnode
@@ -2527,10 +2522,17 @@ class LocBasParser:
 
     # ----------------- AST Generation -----------------
     
-    def _parse_assignment(self) -> AST.Assignment:
-        """ <assignment> ::= <ident> = <expression>"""
+    def _parse_assignment(self) -> AST.Assignment | AST.Statement:
+        """ <assignment> ::= <ident> = <expression> | <MIDSS> = <str_expression> """
+        if self._current_is(TokenType.KEYWORD, lexeme="MID$"):
+            # the only exception where a Command can be used on the left of an assignment
+            midss = self._parse_MIDSS()
+            self._expect(TokenType.COMP, lex="=")
+            args = [self._parse_str_expression()] + midss.args
+            # source substring, target string, insert point, [ignored]
+            return AST.Command(name="REPLACE$", args=args)
         # The asignement is the way to declare variables so
-        # we do not check in the sym table for left variable
+        # we do not check in the sym table if left variables exist
         target = self._parse_ident()
         self._expect(TokenType.COMP, "=")
         source = self._parse_expression()
@@ -2583,6 +2585,9 @@ class LocBasParser:
         """ <statement> ::= <keyword> | COMMENT | RSX | <assignement> """
         tok = self._current()
         if tok.type == TokenType.KEYWORD:
+            if tok.lexeme.upper() == "MID$":
+                # This is the only exception where a Command can be in the left of an asigment
+                return self._parse_assignment()
             return self._parse_keyword()     
         if tok.type == TokenType.COMMENT:
             return AST.Comment(text=self._advance().lexeme)
