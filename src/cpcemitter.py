@@ -703,6 +703,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Integer:
             self._emit_code("ld      de,rt_math_accum1")
+            self._emit_code("ld      a,h", info="bit 7 sets the sign")
             self._emit_code(f"ld      ix,{FWCALL.MATH_INT_TO_REAL}", info="MATH_INT_TO_REAL")
             self._emit_code("call    rt_math_call")
             self._moveflo_temp()
