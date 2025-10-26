@@ -3646,10 +3646,9 @@ class CPCEmitter:
     def _emit_comparation(self, node: AST.BinaryOp):
         if node.left.etype == AST.ExpType.String:
             self._emit_str_comparation(node)
-            return
-        if node.left.etype == AST.ExpType.Real:
+        elif node.left.etype == AST.ExpType.Real:
             self._emit_real_comparation(node)
-        if node.op == '=':
+        elif node.op == '=':
             self._emit_code("xor     a")
             self._emit_code("sbc     hl,de")
             self._emit_code("ld      hl,&FFFF", info="HL = -1 TRUE")
