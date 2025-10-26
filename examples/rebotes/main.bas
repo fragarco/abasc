@@ -1,17 +1,13 @@
-'REBOTES, por Alexander Martin
-'copyright (c) AMSOFT 1984
-'
-'version adaptada para el compilador BASC
-'por Javier "Dwaine Hicks" Garcia
-
-label SETUP
-    40 MODE 1:BORDER 1:INK 0,1:INK 1,26:INK 2,24:INK 3,6
-    50 SPEED KEY 15,2
-    60 ENV 1,1,18,0,11,0,10
-    70 ENT 1,10,2,2
-    80 ENV 3,1,0,16,5,-3,2
-    90 ENV 2,5,3,3,1,-21,22,9,-3,2
-    100 ENT -2,10,2,2,5,-7,1,2,11,3,2,-4,8
+10 'REBOTES, por Alexander Martin
+20 'copyright (c) AMSOFT 1984
+30 '
+40 MODE 1:BORDER 1:INK 0,1:INK 1,26:INK 2,24:INK 3,6
+50 SPEED KEY 15,2
+60 ENV 1,1,18,0,11,0,10
+70 ENT 1,10,2,2
+80 ENV 3,1,0,16,5,-3,2
+90 ENV 2,5,3,3,1,-21,22,9,-3,2
+100 ENT -2,10,2,2,5,-7,1,2,11,3,2,-4,8
 110 '
 120 '
 130 MOVE 30,32:DRAWR 0,400,1:MOVE 610,32:DRAWR 0,400,1
@@ -46,6 +42,7 @@ label SETUP
 420 IF t=3 THEN puntos=puntos+20:GOSUB 660
 430 IF t=1 THEN puntos=puntos+5:GOSUB 660
 440 IF y1=1 THEN ya=1
+445 FOR DELAY=1 to 1000: NEXT: FRAME
 450 LOCATE x,y:PRINT" ":LOCATE x1,y1:PRINT CHR$(231):x=x1:y=y1
 460 IF y=1 OR x=3 OR x=38 THEN SOUND 129,78,8,7,1,1
 470 GOTO 340

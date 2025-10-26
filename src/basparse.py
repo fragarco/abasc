@@ -681,8 +681,8 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_int_expression()]
         while self._current_is(TokenType.COMMA):
             self._advance()
-            # In some BASIC code tone values are preceed by = which seems
-            # to be ignored by the BASIC interpreter
+            # Tone values could be preceded by '=' symbols which denotes the start of a 2 values section
+            # we ignore that and use the total amount of arguments to decide the kind of section
             self._match(TokenType.COMP, lex="=")
             args.append(self._parse_int_expression())
         totalargs = len(args[1:])
