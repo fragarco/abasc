@@ -439,7 +439,7 @@ class LocBasParser:
             sign = -1
             tok = self._advance()
         if tok.type == TokenType.INT:
-            value = cast(int, tok.value * sign)
+            value = cast(int, tok.value) * sign
             nbytes = self._int_to_bytes(tok.lexeme, value)
             if nbytes == 0:
                 self._raise_error(6)
@@ -1150,7 +1150,7 @@ class LocBasParser:
         return AST.Function(name="LEN", etype=AST.ExpType.Integer, args=args)
 
     @astnode
-    def _parse_LET(self) -> AST.Assignment:
+    def _parse_LET(self) -> AST.Assignment | AST.Statement:
         """ <LET> ::= LET <assignment> """
         self._advance()
         return self._parse_assignment()

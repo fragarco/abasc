@@ -1255,6 +1255,7 @@ class CPCEmitter:
         startlab, endlab = self._get_for_labels()
         node.start_label = startlab
         node.end_label = endlab
+        hasstep = node.step is not None
         if sym is not None:
             self._emit_code("; FOR <variable> = <start> TO <end> [STEP <size>]")
             self._emit_code("; START calculation")
@@ -1263,26 +1264,26 @@ class CPCEmitter:
             self._emit_code("; END calculation")
             self._emit_expression(node.end)
             self._emit_code("push    hl")
-            self._emit_code("; STEP calculation")
-            if node.step is not None:
-                self._emit_expression(node.step)
-            else:
-                self._emit_code("ld      hl,1")
-            self._emit_code("push    hl")
+            if hasstep:
+                self._emit_code("; STEP calculation")
+                self._emit_expression(node.step) # type: ignore [arg-type]
+                self._emit_code("push    hl")           
             # clear temporal memory used by the expressions
             self._emit_free_mem()
 
             self._emit_code("; FOR condition check")
             self._emit_code(startlab, 0)
             self._emit_code(f"ld      de,({sym.label})", info="current value")
-            self._emit_code("or      a")
-            self._emit_code("pop     bc", info="STEP value")
+            if hasstep:
+                self._emit_code("pop     bc", info="STEP value")
             self._emit_code("pop     hl", info="END value")
             self._emit_code("push    hl")
-            self._emit_code("push    bc")
-            self._emit_code("bit     7,b", info="STEP sign")
-            self._emit_code("jr      z,$+3")
-            self._emit_code("ex      de,hl")
+            if hasstep:
+                self._emit_code("push    bc")
+                self._emit_code("bit     7,b", info="STEP sign")
+                self._emit_code("jr      z,$+3")
+                self._emit_code("ex      de,hl")
+            self._emit_code("or      a")
             self._emit_code("sbc     hl,de")
             self._emit_code(f"jp      m,{endlab}")
             self._emit_code("; FOR body")
@@ -2089,14 +2090,18 @@ class CPCEmitter:
     def _emit_NEXT(self, node:AST.BlockEnd):
         fornode = self.forloops.pop()
         self._emit_code("; NEXT [<variable>]")
-        self._emit_code("pop     bc", info="STEP value")
         self._emit_code(f"ld      hl,({fornode.var_label})")
-        self._emit_code("add     hl,bc")
+        if fornode.step is not None:
+            self._emit_code("pop     bc", info="STEP value")
+            self._emit_code("add     hl,bc")
+            self._emit_code("push    bc")
+        else:
+            self._emit_code("inc     hl")
         self._emit_code(f"ld      ({fornode.var_label}),hl")
-        self._emit_code("push    bc")
         self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(fornode.end_label, 0)
-        self._emit_code("pop     bc")
+        if fornode.step is not None:
+            self._emit_code("pop     bc")
         self._emit_code("pop     hl")
         self._emit_code(";")
 
