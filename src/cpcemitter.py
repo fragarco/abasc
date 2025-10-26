@@ -3055,11 +3055,19 @@ class CPCEmitter:
         position is greater than the required position, then a carriage return is
         executed, followed by spaces to reach the required position on the next line.
         """
-        # TODO: tab not always prints 4 spaces per index
+        self._emit_import("rt_print_nl")
         self._emit_code("; PRINT TAB(<integer expression>)]")
+        self._emit_code(f"call    {FWCALL.TXT_GET_CURSOR}", info="TXT_GET_CURSOR")
+        self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._emit_code("ld      a,h")
-        self._emit_code(f"call    {FWCALL.TXT_SET_COLUMN}", info="TXT_SET_COLUMN")
+        self._emit_code("ld      a,l")
+        self._emit_code("pop     de")
+        self._emit_code("ld      l,e")
+        self._emit_code("cp      d", info="current cursor far right than tab position?")
+        self._emit_code("jr      nc,$+3")
+        self._emit_code("inc     l")
+        self._emit_code("ld      h,a")
+        self._emit_code(f"call    {FWCALL.TXT_SET_CURSOR}", info="TXT_SET_CURSOR")
         self._emit_code(";")
 
     def _emit_TAG(self, node:AST.Command):
