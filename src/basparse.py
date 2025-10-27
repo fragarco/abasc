@@ -1611,25 +1611,21 @@ class LocBasParser:
             elif self._current_in((TokenType.KEYWORD,), ("SPC", "TAB")):
                 items.append(self._parse_keyword())
             elif self._current_in((TokenType.KEYWORD,), ("USING",)):
-                self._advance()
+                tk = self._advance()
                 args = [self._parse_str_expression()]
-                self._expect(TokenType.SEMICOLON)
+                if not self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
+                    self._raise_error(2)
+                self._advance()
                 args.append(self._parse_expression())
-                etype = args[-1].etype
-                while self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
-                    self._advance()
-                    if self._end_of_statement():
-                        break
-                    args.append(self._parse_expression())
-                    if not AST.exptype_compatible(etype, args[-1].etype):
-                        self._raise_error(13)
-                items.append(AST.Command(name="USING", args=args))
+                item = AST.Command(name="USING", args=args)
+                item.line = tk.line
+                item.col = tk.col
+                items.append(item)
                 if self._current_in((TokenType.COMMA,TokenType.SEMICOLON)):
                     sym = self._advance()
                     sep = AST.Separator(symbol=sym.lexeme)
                     sep.line = sym.line
                     sep.col = sym.col
-                    items.append(sep)
                     items.append(sep)
                 break
             else:

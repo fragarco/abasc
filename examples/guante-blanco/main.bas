@@ -5,6 +5,9 @@
 50 INK 4,14:INK 5,24,12:INK 6,0:INK 7,0:INK 8,0:PAPER #1, 7
 60 retardo=200
 70 DIM objx(5,20),objy(5,20),joyax(5,20),joyay(5,20)
+75 DIM minx(10),miny(10),maxx(10),maxy(10),dir(10,10)
+76 DIM puerta$(3),conm$(3),vent$(3),luces(10),obj(10)
+77 DIM joyas(10)
 80 GOSUB 380
 90 GOSUB 720
 100 pausa=200:GOSUB 340
@@ -63,7 +66,7 @@
 630 RESTORE 3020
 640 FOR i=1 TO 5
 650 READ minx(i),miny(i),maxx(i),maxy(i)
-660 READ dir(i,1),dir(1,2),dir(i,3),dir(1,4)
+660 READ dir(i,1),dir(i,2),dir(i,3),dir(i,4)
 670 NEXT
 680 WINDOW #1,minx(rm)-1,maxx(rm)+1,miny(rm)-1,maxy(rm)+1
 690 WINDOW #2,1,14,1,25

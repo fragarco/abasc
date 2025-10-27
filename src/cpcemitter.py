@@ -2467,8 +2467,9 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _print_cmd(self, item:AST.Command):
-        if item.name in ("SPC", "TAB"):
+        if item.name in ("SPC", "TAB", "USING"):
             self._emit_command(item)
+        
         else:
             self._raise_error(2, item, "unexpected command")
     
@@ -2481,7 +2482,7 @@ class CPCEmitter:
     def _print_int(self, item:AST.Statement):
         # Integers always print one space before and after
         self._emit_import("rt_print_int")
-        self._emit_code("; PRINT int item")
+        self._emit_code("; PRINT INT item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_int")
     
@@ -2496,6 +2497,7 @@ class CPCEmitter:
         # let's convert to integer until we have a propper rutine
         # TODO: reals
         self._emit_import("rt_print_real")
+        self._emit_code("; PRINT REAL item")
         self._emit_expression(item)
         self._moveflo_accum1()
         self._emit_code("call    rt_print_real")
@@ -2508,7 +2510,6 @@ class CPCEmitter:
 
     def _print_newline(self) -> None:
         self._emit_import("rt_print_nl")
-        self._emit_code("; new line")
         self._emit_code("call    rt_print_nl")
 
     def _emit_RAD(self, node:AST.Statement):
@@ -2766,8 +2767,17 @@ class CPCEmitter:
         Loads a program (BASIC or binary) from disc or tape and start executing it.
         """
         self._emit_code("; RUN [<str_expression> | <int_expression>]")
-        self._raise_error(2, node, "RUN is not supported")
-        self._emit_code("; IGNORED")
+        if len(node.args) == 0:
+            self._emit_code("jp      _code_")
+        elif isinstance(node.args[0], AST.Integer):
+            sym = self.symtable.find(str(node.args[0].value), SymType.Label, "")
+            if sym is not None:
+                self._emit_code(f"jp      {sym.label}")
+            else:
+                self._raise_error(38, node.args[0])
+        else:
+            self._raise_error(2, node, "RUN file is not supported")
+        self._emit_code(";")
 
     def _emit_SAVE(self, node:AST.Command):
         """
@@ -2796,9 +2806,23 @@ class CPCEmitter:
             self._emit_code("call    rt_save")
         self._emit_code(";")
 
-    def _emit_SGN(self, node:AST.Statement):
-        # TODO: reals
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_SGN(self, node:AST.Function):
+        """
+        Determines the sign of the <numeric expression>. Returns -1 if
+        <numeric expression> is less than 0. Returns 0 if <numeric expression>
+        equal 0. Returns 1 if <numeric expression> is greater than zero.
+        """
+        self._emit_code("; SGN(<numeric expression>)")
+        if node.args[0].etype == AST.ExpType.Integer:
+            self._emit_import("rt_intsgn")
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_intsgn")
+        else:
+            self._emit_import("rt_realsgn")
+            self._emit_expression(node.args[0])
+            self._moveflo_accum1()
+            self._emit_code("call    rt_realsgn")
+        self._emit_code(";")
 
     def _emit_SIN(self, node:AST.Function):
         """
@@ -2963,9 +2987,10 @@ class CPCEmitter:
         can be restarted after the STOP command by using the CONT command. This may
         be used to interrupt the program at a particular point when debugging.
         """
+        # in our case we just reboot
         self._emit_code("; STOP")
-        self._raise_warning(0, 'STOP is ignored and has not effect', node)
-        self._emit_code("; IGNORED")
+        self._emit_code("call    0")
+        self._emit_code(";")
 
     def _emit_STRINGSS(self, node:AST.Function):
         """
@@ -3214,6 +3239,27 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._reserve_memory_de(255)
         self._emit_code("call    rt_upper")
+        self._emit_code(";")
+
+    def _emit_USING(self, node:AST.Command):
+        """
+        PRINT USING enables you to specify the print format of the expression
+        returned by the PRINT command. This is achieved by specifying a
+        <format template> to which the printed result must correspond.
+        The <separator> is a comma or semicolon.
+        """
+        # TODO: apply format
+        self._emit_code("; USING <format template>][<separator><expression>]")
+        if len(node.args) > 1:
+            a = node.args[1]
+            if a.etype == AST.ExpType.Integer:
+                self._print_int(a)
+            elif a.etype == AST.ExpType.Real:
+                self._print_real(a)
+            elif a.etype == AST.ExpType.String:
+                self._print_str(a)
+            else:
+                self._raise_error(2, a, "type not supported by USING")
         self._emit_code(";")
 
     def _emit_VAL(self, node:AST.Function):
