@@ -47,7 +47,6 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from math import log
 from functools import wraps
-import copy
 from baserror import BasError
 from baspp import CodeLine
 from baslex import LocBasLexer, TokenType, Token
@@ -1613,22 +1612,16 @@ class LocBasParser:
                 items.append(self._parse_keyword())
             elif self._current_in((TokenType.KEYWORD,), ("USING",)):
                 tk = self._advance()
-                format = self._parse_str_expression()
+                args = [self._parse_str_expression()]
                 self._expect(TokenType.SEMICOLON)
-                value = self._parse_expression()
-                item = AST.Command(name="USING", args=[format, value])
+                args.append(self._parse_expression())
+                while self._current_is(TokenType.COMMA):
+                    self._advance()
+                    args.append(self._parse_expression())
+                item = AST.Command(name="USING", args=args)
                 item.line = tk.line
                 item.col = tk.col
                 items.append(item)
-                while self._current_is(TokenType.SEMICOLON):
-                    self._advance()
-                    items.append(AST.Separator(symbol=";"))
-                    if not self._end_of_statement():
-                        value = self._parse_expression()
-                        item = copy.deepcopy(item)
-                        item.args = [format, value]
-                        items.append(item)
-                break
             else:
                 items.append(self._parse_expression())
         return AST.Print(stream=stream, items=items)      
