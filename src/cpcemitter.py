@@ -153,6 +153,8 @@ class CPCEmitter:
         self._emit_head(";", 0)
         self._emit_head("$LIMIT$", 0)
         self._emit_head(f"org     {FWCALL.LOW_LIMIT}", 0)
+        self._emit_head("xor     a", 0, info="Set stream to its default value (#0)")
+        self._emit_head(f"call    {FWCALL.TXT_STR_SELECT}", 0, info="TXT_STR_SELECT")
         self._emit_head("jp      _code_", 0)
         self._emit_head()
         self._emit_head("; DYNAMIC MEMORY AREA, USED USED BY MALLOC AND FREE",0)
@@ -650,10 +652,10 @@ class CPCEmitter:
         if len(node.args):
             self._emit_expression(node.args[0])
             self._emit_stream()
-        else:
-            self._emit_code("xor     a")
-            self._emit_code(f"call    {FWCALL.TXT_STR_SELECT}", info="TXT_STR_SELECT")
         self._emit_code(f"call    {FWCALL.TXT_CLEAR_WINDOW}", info="TXT_CLEAR_WINDOW")
+        if len(node.args):
+            self._emit_stream_0()
+        self._emit_code(";")
 
     def _emit_CONT(self, node:AST.Command):
         """
@@ -1631,7 +1633,10 @@ class CPCEmitter:
             else:
                 self._raise_error(2, "unsupported identifier")
             self._emit_code("pop     hl", info="ready for next substring")
-    
+        if node.stream is not None:
+            self._emit_stream_0()
+        self._emit_code(";")
+
     def _emit_input_str(self, v:AST.Variable | AST.ArrayItem, var: SymEntry): 
         self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("ld      (hl),c", info="string len")
@@ -1855,6 +1860,8 @@ class CPCEmitter:
         self._emit_code("pop     de")
         self._emit_code("ld      h,e")
         self._emit_code(f"call    {FWCALL.TXT_SET_CURSOR}", info="TXT_SET_CURSOR")
+        if len(node.args) == 3:
+            self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_LOG(self, node:AST.Function):
@@ -2280,6 +2287,8 @@ class CPCEmitter:
         self._emit_expression(args[0])
         self._emit_code("ld      a,l", info="color")
         self._emit_code(f"call    {FWCALL.TXT_SET_PAPER}", info="TXT_SET_PAPER")
+        if len(node.args) == 2:
+            self._emit_stream_0()
         self._emit_code(";")
 
 
@@ -2311,6 +2320,8 @@ class CPCEmitter:
         self._emit_expression(args[0])
         self._emit_code("ld      a,l     ; color")
         self._emit_code(f"call    {FWCALL.TXT_SET_PEN}", info="TXT_SET_PEN")
+        if len(node.args) == 2:
+            self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_PI(self, node:AST.Statement):
@@ -2404,7 +2415,7 @@ class CPCEmitter:
         the leftedge of the text window. The <stream expression> MUST be specified,
         and does NOT default to #0. 
         """
-        self._emit_code("; POS")
+        self._emit_code("; POS(#<int_expression>)")
         self._emit_expression(node.args[0])
         self._emit_stream()
         self._emit_code("ld      b,a", info="keep previous stream")
@@ -2451,6 +2462,9 @@ class CPCEmitter:
                 self._raise_error(2, item, 'print item not supported yet')
         if node.newline:
             self._print_newline()
+        if node.stream is not None:
+            self._emit_stream_0()
+        self._emit_code(";")
 
     def _print_cmd(self, item:AST.Command):
         if item.name in ("SPC", "TAB"):
@@ -3085,6 +3099,8 @@ class CPCEmitter:
             self._emit_stream()
         self._emit_code("ld      a,&FF")
         self._emit_code(f"call    {FWCALL.TXT_SET_GRAPHIC}", info="TXT_SET_GRAPHIC")
+        if len(node.args) == 1:
+            self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_TAGOFF(self, node:AST.Command):
@@ -3098,6 +3114,8 @@ class CPCEmitter:
             self._emit_stream()
         self._emit_code("ld      a,0")
         self._emit_code(f"call    {FWCALL.TXT_SET_GRAPHIC}", info="TXT_SET_GRAPHIC")
+        if len(node.args) == 1:
+            self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_TAN(self, node:AST.Function):
@@ -3324,6 +3342,8 @@ class CPCEmitter:
         self._emit_code("pop     bc")
         self._emit_code("ld      h,c", info="left")
         self._emit_code(f"call    {FWCALL.TXT_WIN_ENABLE}", info="TXT_WIN_ENABLE")
+        if len(node.args) == 5:
+            self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_WINDOW_SWAP(self, node:AST.Command):
@@ -3781,6 +3801,13 @@ class CPCEmitter:
         9   channel to file
         """
         self._emit_code("ld      a,l")
+        self._emit_code(f"call    {FWCALL.TXT_STR_SELECT}", info="TXT_STR_SELECT")
+
+    def _emit_stream_0(self) -> None:
+        """
+        #0 is the default stream when it is not indicated
+        """
+        self._emit_code("xor     a", info="Set stream to its default value (#0)")
         self._emit_code(f"call    {FWCALL.TXT_STR_SELECT}", info="TXT_STR_SELECT")
 
     # ----------------- AST Trasversal functions -----------------
