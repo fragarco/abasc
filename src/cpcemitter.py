@@ -3246,10 +3246,10 @@ class CPCEmitter:
         PRINT USING enables you to specify the print format of the expression
         returned by the PRINT command. This is achieved by specifying a
         <format template> to which the printed result must correspond.
-        The <separator> is a comma or semicolon.
+        The <separator> is a semicolon.
         """
         # TODO: apply format
-        self._emit_code("; USING <format template>][<separator><expression>]")
+        self._emit_code("; USING <format template>;<expression>")
         if len(node.args) > 1:
             a = node.args[1]
             if a.etype == AST.ExpType.Integer:
