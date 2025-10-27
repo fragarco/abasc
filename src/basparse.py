@@ -862,9 +862,13 @@ class LocBasParser:
         if self._current_is(TokenType.INT):
             num = self._advance()
             args = [AST.Integer(value = cast(int, num.value))]
+            args[0].line = num.line
+            args[0].col = num.col
         elif self._current_is(TokenType.IDENT):
             label = self._advance()
             args = [AST.Label(value = label.lexeme)]
+            args[0].line = label.line
+            args[0].col = label.col
         else:
             self._raise_error(2, "invalid label")
         return AST.Command(name="GOSUB", args=args)
@@ -879,9 +883,13 @@ class LocBasParser:
         if self._current_is(TokenType.INT):
             num = self._advance()
             args = [AST.Integer(value = cast(int, num.value))]
+            args[0].line = num.line
+            args[0].col = num.col
         elif self._current_is(TokenType.IDENT):
             label = self._advance()
             args = [AST.Label(value = label.lexeme)]
+            args[0].line = label.line
+            args[0].col = label.col
         else:
             self._raise_error(2, "invalid label")
         return AST.Command(name="GOTO", args=args)
