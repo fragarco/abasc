@@ -550,7 +550,6 @@ class CPCEmitter:
         self._emit_code("; CHAIN MERGE <file name>[,<line number>][, DELETE <range>]")
         self._raise_warning(0, 'CHAIN MERGE is ignored and has not effect', node)
         self._emit_code("; IGNORED")
-        self._emit_code(";")
 
     def _emit_CHRSS(self, node:AST.Function):
         """
@@ -1309,6 +1308,7 @@ class CPCEmitter:
         """
         self._emit_code("; FRAME")
         self._emit_code(f"call    {FWCALL.MC_WAIT_FLYBACK}", info="MC_WAIT_FLYBACK")
+        self._emit_code(";")
 
     def _emit_FRE(self, node:AST.Command):
         """
@@ -1960,6 +1960,7 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_MERGE(self, node:AST.Statement):
+        # TODO: can we arrive here?
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_MIDSS(self, node:AST.Function):
