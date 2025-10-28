@@ -1455,7 +1455,7 @@ class CPCEmitter:
         # jumping. Modifies DE
         self._emit_free_mem()
         self._emit_code("ld      a,h")
-        self._emit_code("or      a")
+        self._emit_code("or      l")
         if node.has_else:
             self._emit_code(f"jp      z,{elselabel}")
         else:
@@ -3350,7 +3350,7 @@ class CPCEmitter:
         # jumping. Modifies DE
         self._emit_free_mem()
         self._emit_code("ld      a,h")
-        self._emit_code("or      a")
+        self._emit_code("or      l")
         self._emit_code(f"jp      z,{end}")
         self._emit_code("; WHILE BODY")
         self.wloops.append(node)
