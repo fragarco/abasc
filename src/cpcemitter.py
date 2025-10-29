@@ -380,7 +380,7 @@ class CPCEmitter:
             sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"ld      de,{sym.label}")
-        self._emit_code("ld      b,&81", info="async near call")
+        self._emit_code("ld      bc,&80fd", info="async far call / ROM select")
         self._emit_code(f"call    {FWCALL.KL_INIT_EVENT}", info="KL_INIT_EVENT")
         self._emit_code("pop     hl", info="tick block address")
         self._emit_code("pop     de", info="timer ticks needed to fire the event")
