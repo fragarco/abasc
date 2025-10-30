@@ -2718,9 +2718,27 @@ class CPCEmitter:
         self._moveflo_temp()
         self._emit_code(";")
 
-    def _emit_ROUND(self, node:AST.Statement):
-        # TODO: reals
-        self._raise_error(2, node, 'not implemented yet')
+    def _emit_ROUND(self, node:AST.Function):
+        """
+        Rounds <numeric expression> to a number of decimal places or power of ten
+        specified in <integer expression>. If the <integer expression> is less
+        than zero, then value is rounded to give an absolute integer followed by
+        a number of zeros determined by the <integer expression> before the
+        decimal point. 
+        """
+        self._emit_import("rt_real_round")
+        self._emit_code("; ROUND (<numeric expression>[,<integer expression>])")
+        if len(node.args) == 2:
+            self._emit_expression(node.args[-1])
+            self._emit_code("ld      a,l")
+        else:
+            self._emit_code("xor     a")
+        self._emit_code("push    af")
+        self._emit_expression(node.args[0])
+        self._emit_code("pop     af")
+        self._emit_code("call    rt_real_round")
+        self._moveflo_temp()   
+        self._emit_code(";")
 
     def _emit_RUN(self, node:AST.Command):
         """
