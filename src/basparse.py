@@ -1755,7 +1755,7 @@ class LocBasParser:
         """ <ROUND> ::= ROUND(<num_expression>[,<int_expression>]) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_num_expression()]
+        args = [self._parse_real_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
             args.append(self._parse_int_expression())
