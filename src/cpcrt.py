@@ -291,2505 +291,2798 @@ class FWCALL:
 
 #
 # RUNTIME rutines
-# "rutine id": (([rutine code],[]),([dependencies],[]))
+# "rutine id": (([], """rutine code],[]),([], """dependencies],[]))
 # 
 RT = {
-    #
-    # RUNTIME VARIABLES
-    #
-    "rt_tmp_memory": ([
-        "rt_memory_next: dw rt_memory_start\n",
-        "rt_memory_start:\n",
-    ], []),
-    "rt_error": ([
-        "; RT_ERROR\n",
-        "; Variable, can be set by ERROR and read by ERR\n",
-        "rt_error: db 0\n",
-    ], []),
-    #
-    # MEM AND CALLS
-    # 
-    "rt_malloc": ([
-        "; RT_MALLOC\n",
-        "; Returns in HL the address to a temporal free memory block\n",
-        "; reserving as many bytes as indicated by BC\n",
-        "; Inputs:\n",
-        ";     BC number of bytes to allocate\n",
-        "; Outputs:\n",
-        ";     HL address to the new reserved memory\n",
-        ";     HL and Flags are modified\n",
-        "rt_malloc:\n",
-        "\tld      hl,(rt_memory_next)\n",
-        "\tpush    hl\n",
-        "\tadd     hl,bc\n",
-        "\tld      (rt_memory_next),hl\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],["rt_free_all"]),
-    "rt_malloc_de": ([
-        "; RT_MALLOC_DE\n",
-        "; Returns in DE the address to a temporal free memory block\n",
-        "; reserving as many bytes as indicated by BC\n",
-        "; Inputs:\n",
-        ";     BC number of bytes to allocate\n",
-        "; Outputs:\n",
-        ";     DE address to the new reserved memory\n",
-        ";     DE and Flags are modified\n",
-        "rt_malloc_de:\n",
-        "\tld      de,(rt_memory_next)\n",
-        "\tpush    de\n",
-        "\tex      de,hl\n",
-        "\tadd     hl,bc\n",
-        "\tld      (rt_memory_next),hl\n",
-        "\tex      de,hl\n",
-        "\tpop     de\n",
-        "\tret\n",
-    ],["rt_free_all"]),
-    "rt_free_all": ([
-        "; RT_FREE_ALL\n",
-        "; Resets the position of the next available temporal memory block\n",
-        "; to its initial position\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     None\n",
-        ";     DE gets modified\n",
-        "rt_free_all:\n",
-        "\tld      de,rt_memory_start\n",
-        "\tld      (rt_memory_next),de\n",
-        "\tret\n",
-    ], []),
-    "rt_call": ([
-        "; RT_CALL\n",
-        "; Jumps to the address passed in HL and uses the RET from the\n",
-        "; callee to return to the original caller.\n",
-        "; Inputs:\n",
-        ";      A number of additional parameters in the stack\n",
-        ";     IX address to the last parameter in the stack\n",
-        ";     HL address to call to\n",
-        "; Outputs:\n",
-        ";     Depends on the callee\n",
-        "rt_call:\n",
-        "\tjp      (hl)\n",
-    ],[]),
-    "rt_math_call": ([
-        "; RT_MATH_CALL\n",
-        "; Jumps to the address passed in DE but it adjusts the address\n",
-        "; so in 664 and 6128 machines it adds 36 bytes which is the shift\n",
-        "; in the math jumpblock between these machines and the 464.\n",
-        "; Inputs:\n",
-        ";     IX call address as per 464 firmware jumpblock\n",
-        "; Outputs:\n",
-        ";     Depends on the callee\n",
-        ";     BC and IX are directly modified\n",
-        "rt_math_call:\n",
-        "\tld      bc,(rt_math_offset)  ; adjutst for non 464 machines\n"
-        "\tadd     ix,bc\n",
-        "\tjp      (ix)\n",
-        "; RT_MATH_SETOFFSET\n",
-        "; Checks the Amstrad CPC model and sets the value of rt_math_offset\n",
-        "; so rt_math_call can find the right jumpblock addres.\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     None\n",
-        ";     AF, BC and DE are directly modified\n",
-        "rt_math_accum1: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k\n",
-        "rt_math_accum2: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k\n",
-        "rt_math_offset: dw  0\n",
-        "rt_math_setoffset:\n",
-        "\tld      c,0     ; ROM select address\n",
-        f"\tcall    {FWCALL.KL_PROBE_ROM}   ; KL_PROBE_ROM\n",
-        "\tld      a,h     ; 0 = CPC464, 1 = CPC664, 2 = CPC6128, 4 = Plus)\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tld      a,&24   ; offset for 664 and 6128\n",
-        "\tld      (rt_math_offset),a\n",
-        "\tret\n",
-    ],[]),
-    "rt_move_real": ([
-        "; RT_MOVE_REAL\n",
-        "; Copies the real number 5 bytes pointed by HL into de\n",
-        "; memory pointed by DE\n",
-        "; so rt_math_call can find the right jumpblock addres.\n",
-        "; Inputs:\n",
-        ";     HL address to the real number to copy\n",
-        ";     DE address to the destination memory\n",
-        "; Outputs:\n",
-        ";     HL points to the destination memory\n",
-        ";     HL and DE are modified\n",
-        "rt_move_real:\n",
-        "\tpush    bc\n",
-        "\tpush    de\n",
-        "\tld      bc,5\n",
-        "\tldir\n",
-        "\tpop     hl\n",
-        "\tpop     bc\n",
-        "\tret\n",
-    ], []),
-    "rt_scratch_pad": ([
-        "; Free memory for temporal use\n",
-        "rt_scratch_pad:  defs  255\n",
-    ], []),
-    #
-    # STRINGS
-    #      
-    "rt_stradd_len": ([
-        "; RT_STRADD_LEN\n",
-        "; Returns the addition of two string lenghts.\n",
-        "; Final length is cropped to 254 if exceeds.\n",        
-        "; Inputs:\n",
-        ";    HL address to length1 in memory\n",
-        ";    DE address to length2 in memory\n",
-        "; Outputs:\n",
-        ";     A resulting length (HL) + (DE) truncated to 254 if needed\n",
-        ";     B is modified, HL, DE and C are preserved\n",
-        "rt_stradd_len:\n",
-        "\tld     b,(hl)\n",
-        "\tld     a,(de)\n",
-        "\tadd    a,b\n",
-        "\tjr     nc,__addlen_checkmax\n",
-        "\tjr     __addlen_crop\n",
-        "__addlen_checkmax:\n",
-        "\tcp     255\n",
-        "\tret    c\n",
-        "__addlen_crop:\n",
-        "\tld     a,254\n         ; max allowed\n",
-        "\tret\n"
-    ],[]),
-    "rt_strcopy": ([
-        "; RT_STRCOPY\n",
-        "; Strings length is limited to 254 characters\n",
-        "; First byte contains the string length\n",       
-        "; Inputs:\n",
-        ";     HL destination\n",
-        ";     DE origin\n",
-        "; Outputs:\n",
-        ";     HL address to the destination string\n",
-        ";     AF, B and DE are modified, C is preserved\n",
-        "rt_strcopy:\n",
-        "\tpush    hl\n",
-        "\tld      a,(de)     ; total characters to copy\n",
-        "\tld      (hl),a     ; number of copied characters\n",
-        "\tld      b,a\n"
-        "__strcopy_loop:\n",
-        "\tinc     hl         ; reserve first byte for length\n",
-        "\tinc     de         ; first character\n",
-        "\tld      a,(de)\n",
-        "\tld      (hl),a\n",
-        "\tdjnz    __strcopy_loop\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_strcat": ([
-        "; RT_STRCAT\n",
-        "; DE string gets append to the end of HL string\n",
-        "; First byte contains the string length\n",
-        "; Inputs:\n",
-        ";     HL and DE\n",
-        "; Outputs:\n",
-        ";     HL points to the resulting string (HL+DE)\n",
-        ";     AF, BC and DE are modified\n",
-        "rt_strcat:\n",
-        "\tcall    rt_stradd_len     ; lets get final length\n"
-        "\tld      b,(hl)            ; current length\n",
-        "\tld      c,(hl)            ; current length backup\n"
-        "\tld      (hl),a            ; store final length\n",
-        "\tsub     b\n",
-        "\tld      b,a               ; B has the number of bytes to copy\n",
-        "\tpush    hl\n",
-        "\tld      a,c               ; destination string current len\n",
-        "\tadd     a,l\n",
-        "\tld      l,a\n",
-        "\tadc     a,h\n",
-        "\tsub     l\n",
-        "\tld      h,a               ; HL points to the its string last byte\n",
-        "__strcat_loop:\n"
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tld      a,(de)\n",
-        "\tld      (hl),a\n",
-        "\tdjnz    __strcat_loop\n",
-        "\tpop     hl\n",
-        "\tret\n"
-    ],["rt_stradd_len"]),
-    "rt_strcmp": ([
-        "; RT_STRCMP\n",
-        "; Compares two strings pointed by HL and DE and sets ZF and CF:\n",
-        "; HL=DE ZF=1, HL<DE ZF=0 CF=0, HL>DE ZF=0 CF=1\n",
-        "; Inputs:\n",
-        ";     HL and DE\n",
-        "; Outputs:\n",
-        ";     Flags ZF and CF store the result of the comparation\n",
-        ";     AF and B are modified\n",
-        "rt_strcmp:\n",
-        "\tld      a,(de)\n",
-        "\tcp      (hl)\n",
-        "\tjr      nc,$+3\n",
-        "\tld      a,(hl)\n",
-        "\tor      a\n",
-        "\tret     z              ; empty strings\n",
-        "\tpush    hl\n",
-        "\tpush    de\n",
-        "\tld      b,a            ; longer string length\n",
-        "__strcmp_loop:\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tld      a,(de)\n",
-        "\tcp      (hl)\n",
-        "\tjr      nz,__strcmp_end\n",
-        "\tdjnz    __strcmp_loop\n",
-        "\tpop     de            ; seems equal\n",
-        "\tpop     hl            ; lets check again their lengths\n",
-        "\tld      a,(de)\n",
-        "\tcp      (hl)\n",
-        "\tret\n",
-        "__strcmp_end:\n",
-        "\tpop     de\n",
-        "\tpop     hl\n",
-        "\tret\n"
-    ],[]),
-    "rt_strreplace": ([
-        "; RT_STRREPLACE\n",
-        "; Replaces part of the string pointed by HL with the substring\n",
-        "; pointed by DE. BC indicates the insertion position and the number\n",
-        "; of original chars to drop.\n",
-        ";Inputs:\n",
-        ";   HL address to the target string\n",
-        ";   DE address to the substring to be inserted\n",
-        ";    B insertion point (1 to length)\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF, DE and BC are modified\n",
-        "rt_strreplace:\n",
-        "\tld      a,(hl)      ; max characters\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tpush    hl\n",
-        "__replace_insertpos:\n",
-        "\tinc     hl\n",
-        "\tdec     a\n",
-        "\tjr      c,___replace_end\n",
-        "\tdjnz    __replace_insertpos\n",
-        "\tld      c,a         ; remaining chars\n",
-        "\tld      a,(de)\n",
-        "\tld      b,a\n",
-        "\tinc     de\n",
-        "__replace__copy:\n",
-        "\tld      a,(de)\n",
-        "\tld      (hl),a\n",
-        "\tdec     c\n",
-        "\tjr      c,___replace_end\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tdjnz    __replace__copy\n",
-        "___replace_end:\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ], []),
-    "rt_int2str": ([
-        "; RT_INT2STR\n",
-        "; HL starts containing the number to convert to string\n",
-        "; HL ends storing the memory address to the buffer\n",
-        "; Subroutine taken from:\n",
-        "; https://wikiti.brandonw.net/index.php?title=Z80_Routines:Other:DispA\n",
-        "; Inputs:\n",
-        ";     HL number to convert to string\n",
-        "; Outputs:\n",
-        ";     HL points to the temporal address in memory with the string\n",
-        ";      C indicates if the number is negative (C=1) or positive (C=0)\n",
-        ";     HL, BC, DE, AF are modified\n",
-        "rt_int2str_buf: defs 8\n",
-        "rt_int2str:\n",
-        "\tld      de,rt_int2str_buf\n"
-        "\tinc     de     ; first byte stores string length\n",
-        "\tld      bc,0   ; B will count total numbers and C indicates negative\n",
-        "\t; Detect sign of HL\n",
-        "\tbit     7,h\n",
-        "\tjr      z,__int2str_loop1\n",
-        "\t; HL is negative so add '-' to string and negate HL\n"
-        '\tld      a,"-"\n',
-        "\tld      (de),a\n",
-        "\tinc     de\n",
-        "\tinc     c\n",
-        "\t; Negate HL \n",
-        "\txor     a\n",
-        "\tsub     l\n",
-        "\tld      l,a\n",
-        "\tld      a,0    ; Note that XOR A or SUB A would disturb CF\n",
-        "\tsbc     a,h\n",
-        "\tld      h,a\n",
-        "__int2str_loop1:\n",
-        "\tpush    bc\n",
-        "\tcall    rt_div16_by10 ; HL = HL / 10, A = remainder\n",
-        "\tpop     bc\n",
-        "\tpush    af     ; Store digit in stack in reversed order\n",
-        "\tinc     b\n",
-        "\tld      a,h\n",
-        "\tor      l      ; Stop if quotent is 0\n",
-        "\tjr      nz, __int2str_loop1\n",
-        "\t; Store string length\n",
-        "\tld      hl,rt_int2str_buf\n",
-        "\tld      a,b\n",
-        "\tadd     c\n",
-        "\tld      (hl),a\n",
-        "__int2str_loop2:\n",
-        "\t; Retrieve digits from stack\n",
-        "\tpop     af\n",
-        "\tor      &30    ; '0' + A\n",
-        "\tld      (de), a\n",
-        "\tinc     de\n",
-        "\tdjnz    __int2str_loop2\n",
-        "\tret\n",
-    ],["rt_div16_by10"]),
-    "rt_long2str": ([
-        "; RT_LONG2STR\n",
-        "; HL points to the number (32 bits) to convert to string\n",
-        "; HL ends containing the memory address to the string\n",
-        "; Inputs:\n",
-        ";     HL points to an area of 4 bytes with the number to convert to string\n",
-        "; Outputs:\n",
-        ";     HL points to the temporal address in memory with the string\n",
-        ";      C indicates if the number is negative (C=1) or positive (C=0)\n",
-        ";     HL, BC, DE, AF are modified\n",
-        "rt_long2str_buf: defs 10\n",
-        "rt_long2str:\n",
-        "\tpush    hl\n",
-        "\tpop     ix\n",
-        "\tld      l,(ix+0)\n",
-        "\tld      h,(ix+1)\n",
-        "\tld      e,(ix+2)\n",
-        "\tld      d,(ix+3)\n",
-        "\tld      bc,0\n",
-        "__long2str_loop1:\n",
-        "\tpush    bc\n",
-        "\tcall    rt_div32_by10 ; DEHL = DEHL / 10, A = remainder\n",
-        "\tpop     bc\n",
-        "\tpush    af            ; store digit in stack in reversed order\n",
-        "\tinc     b\n",
-        "\tld      a,l\n",
-        "\tor      h\n",
-        "\tor      e\n",
-        "\tor      d\n",
-        "\tjr      nz, __long2str_loop1\n",
-        "\tld      hl,rt_long2str_buf\n",
-        "\tld      de,rt_long2str_buf\n",
-        "\tld      a,b\n",
-        "\tld      (de),a\n",
-        "\tinc     de\n",
-        "__long2str_loop2:\n",
-        "\tpop     af            ; retrieve digits from stack\n",
-        "\tor      &30           ; '0' + A\n",
-        "\tld      (de),a\n",
-        "\tinc     de\n",
-        "\tdjnz    __long2str_loop2\n",
-        "\tret\n",
-    ],["rt_div32_by10"]),
-    "rt_real2strz": ([
-        "; RT_REAL2STRZ\n",
-        "; Converts a 5-bytes floating point number into a string\n",
-        "; Inputs:\n",
-        ";   HL pointer to the float acumulator where the float number is\n",
-        ";  Outputs\n",
-        ";   Leaves the converted string in the rt_real2strz_buf memory area\n",
-        ";   AF, BC, DE, HL and IX are modified\n",
-        "__r2str_conv_buf: defs 10\n",
-        "rt_real2strz_buf: defs 14\n",
-        "rt_real2strz:\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_PREPARE}  ; MATH_REAL_PREPARE\n",
-        "\tcall    rt_math_call\n",
-        "\tld      a,b\n",
-        "\tcp      0\n",
-        "\tjr      z, __real2str_0\n",
-        "\tcall    __r2str_calculate_digits\n",
-        "\tld      (hl),0\n",
-        "\tret\n",
-        "__real2str_0:\n",
-        "\tld      hl,rt_real2strz_buf\n",
-        '\tld      (hl),"0"\n',
-        "\tinc     hl\n",
-        "\tld      (hl),0\n",
-        "\tret\n\n",
-        "__r2str_calculate_digits\n",
-        "\tpush    de\n",
-        "\tld      l,(ix+0) ; Copy to DEHL the normed mantissa\n",
-        "\tld      H,(ix+1)\n",
-        "\tld      e,(ix+2)\n",
-        "\tld      d,(ix+3)\n",
-        "\tld      b,9      ; lets calculate the actual digits diving by 10 9 times\n",
-        "\tld      c,9      ; lets store in C the significant digits (no trailing 0s)\n",
-        "\tld      ix,__r2str_conv_buf+8 ; digits are stored here from back to front\n",
-        "__r2str_calculate_digits_loop:\n",
-        "\tpush    bc\n",
-        "\tcall    rt_div32_by10\n",
-        "\tpop     bc\n",
-        "\tbit     7,c      ; check MSb, are we still removing traling 0?\n",
-        "\tjr      nz,__r2str_calculate_digits_next\n",
-        "\tor      a        ; is this a 0?\n",
-        "\tjr      nz,__r2str_calculate_digits_not0\n",
-        "\tdec     c\n",
-        "\tjr      __r2str_calculate_digits_next\n",
-        "__r2str_calculate_digits_not0:\n",
-        "\tset     7,c      ; set MSb to 1 so we don't look for more trailing 0s\n",
-        "__r2str_calculate_digits_next:\n",
-        '\tadd     "0"\n',
-        "\tld      (ix+0),a\n",
-        "\tdec     ix\n",
-        "\tdjnz    __r2str_calculate_digits_loop\n",
-        "\tres     7,c    ; leave in C just the number of significant digits\n",
-        "\tpop     de\n",
-        "\tld      hl,rt_real2strz_buf  ; address of our text buffer\n",
-        "\tld      a,d      ; A is now the sign: 01 for + and FF for -\n",
-        "\tsub     1        ; A = 0 if possitive\n",
-        "\tjr      z,__float_check_exp\n",
-        '\tld      (hl),"-" ; Lets write the negative sign\n',
-        "\tinc     hl\n\n",
-        "__float_check_exp:\n",
-        "\tld      b,0      ; total number of written digits\n",
-        "\tld      ix,__r2str_conv_buf+5 ; position for E notation\n",
-        "\tld      a,e\n",
-        "\tadd     9        ; restore decimal position\n",
-        "\tcp      &80      ; EXP > 0? is a big number else small one\n",
-        "\tjr      c,__float_check_E_big\n",
-        "\tpush    af\n",
-        "\tsub     c        ; check if decimal position plus digits is too much\n",
-        "\tcp      &F8\n",
-        "\tjr      c,__float_write_E_small ; restores af\n",
-        "\tpop     af                       ; restores af if didn't jump\n",
-        "\tjr      __float_check_exp_end\n",
-        "__float_write_E_small:\n",
-        "\tpop     af\n",
-        '\tld      (ix+0),"E"\n',
-        '\tld      (ix+1),"-"\n',
-        "\tneg              ; make exponent positive (it was negative)\n",
-        "\tinc     a\n",
-        "\tjr      __float_write_exp\n",
-        "__float_check_E_big:\n",
-        "\tcp      10         ; EXP > 10? then we need E notation\n",
-        "\tjr      c,__float_check_exp_end\n",
-        '\tld      (ix+0),"E"\n',
-        '\tld      (ix+1),"+" ; continue directly into _float_write_exp\n',
-        "\tdec     a\n",
-        "__float_write_exp:\n",
-        "\t; At this point we have written E+ or E- in the buffer\n",
-        "\tld      e,10      ; divide by 10 to get first digit\n",
-        "\tcall    rt_udiv8\n",
-        '\tadd     "0"\n',
-        "\tld      (ix+3),a  ; store ones digit\n",
-        "\tld      a,d\n",
-        '\tadd     "0"\n',
-        "\tld      (ix+2),a  ; store tens digit\n",
-        "\tld      a,1       ; set decimal position to 1\n",
-        "\tld      c,1\n",
-        "\tjr      __float_copy_numbers ; ends doing a ret\n",
-        "__float_check_exp_end:\n",
-        "\tld      c,a      ; keep in C the decimal position + 9\n",
-        "\tcall    __float_write_numbers\n",
-        "\tjr      __float_remove_trailing_0s ; ends doing a ret\n",
-        "; A and C hold the decimal point position\n",
-        "; B number of current written digits\n",
-        "; HL text buffer\n",
-        "__float_write_numbers:\n",
-        "\tcp      1        ; only if A <=0 we need leading 0s\n",
-        "\tjp      p,__float_copy_numbers\n",
-        '\tld      (hl),"0"\n',
-        "\tinc     hl\n",
-        '\tld      (hl),"."\n', 
-        "\tinc     hl\n",
-        "__put_leading_0s_loop:\n",
-        "\tor      a\n",
-        "\tjr      z,__float_copy_numbers ; ends doing a ret\n",
-        '\tld      (hl),"0"\n',
-        "\tinc     hl\n",
-        "\tinc     a\n",
-        "\tinc     b\n",
-        "\tjr      __put_leading_0s_loop\n",
-        "; HL points to the text buffer next position\n",
-        "; In B we have the digits already written\n",
-        "; In C we have the decimal position\n",
-        "__float_copy_numbers:\n",
-        "\tld      de,__r2str_conv_buf\n",
-        "\tld      a,9\n",
-        "\tsub     b\n",   
-        "\tld      b,a      ; B = max number of digits that we can still print\n",
-        "__float_copy_numbers_loop:\n",
-        "\tld      a,(de)\n",
-        "\tld      (hl),a\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tdec     b\n",
-        "\tret     z\n",
-        "\tdec     c\n",
-        "\tjr      nz,__float_copy_numbers_loop\n",
-        '\tld      (hl),"."    ; add . in the correct position\n',
-        "\tinc     hl          ; if number is >0\n",
-        "\tjr      __float_copy_numbers_loop\n",
-        "; C contains again original decimal point position (biased -9)\n",
-        "; HL points to the end of text buffer\n",
-        "__float_remove_trailing_0s:\n",
-        "\tbit     7,c      ; if A is negative we remove trailing 0s\n",
-        "\tret     z        ; no traling 0s\n",
-        "\tdec     hl       ; point to the last digit\n",
-        "__float_remove_trailing_loop:\n",
-        "\tld      a,(hl)\n",
-        '\tcp      "0"\n',
-        "\tjr      z,__float_remove_trailing_char\n",
-        '\tcp      "."\n',
-        "\tjr      z,__float_remove_decimal_char\n",
-        "\tinc     hl\n",
-        "\tret\n",    
-        "__float_remove_trailing_char:\n",
-        "\tld      (hl),0\n",
-        "\tdec     hl\n",
-        "\tjr      __float_remove_trailing_loop\n",
-        "__float_remove_decimal_char:\n",
-        "\tld      (hl),0\n",
-        "\tret\n",
-    ],["rt_math_call", "rt_div32_by10", "rt_udiv8"]),
-    "rt_strz2num": ([
-        "; RT_STRZ2NUM\n",
-        "; Converts a string with an integer, hexadecimal or binary number to\n",
-        "; its numerical 16 bits long form\n",
-        "; Inputs:\n",
-        ";     DE address to the null-terminated string with the number\n",
-        "; Outputs:\n",
-        ";     HL resulting number\n",
-        ";     AF, HL, DE and BC are modified\n",
-        "rt_strz2num:\n",
-        "\tld      a,(de)\n",
-        '\tcp      "&"\n',
-        "\tjr      nz,rt_strz2int\n",
-        "\tinc     de\n",
-        "\tld      a,(de)\n",
-        '\tcp      "X"\n',
-        "\tjr      z,__strz2num_bin\n",
-        '\tcp      "x"\n',
-        "\tjr      z,__strz2num_bin\n",
-        "\tjp      rt_strz2hex\n",
-        "__strz2num_bin:\n",
-        "\tinc     de\n"
-        "\tjp      z,rt_strz2bin\n",
-        "\n",
-        "; RT_STRZ2INT\n",
-        "; DE address to the null-terminated string, ends pointing to first\n",
-        "; char not converted.\n",
-        "; Routine based in the library created by Zeda:\n",
-        "; https://github.com/Zeda/Z80-Optimized-Routines\n",
-        "; Inputs:\n",
-        ";     DE address to the source null-terminated string\n",
-        "; Outputs:\n",
-        ";     HL contains the converted number\n",
-        ";     HL, BC, DE, AF are modified\n",
-        "rt_strz2int:\n",
-        "\tld      hl,0\n",
-        "__strz2int_loop:\n",
-        "\tld      a,(de)\n",
-        "\tsub     &30    ; '0' character\n",
-        "\tcp      10\n",
-        "\tret     nc     ; some other character > 9\n",
-        "\tinc     de\n",
-        "\tld      b,h\n",
-        "\tld      c,l\n",
-        "\tadd     hl,hl  ; x2\n",
-        "\tadd     hl,hl  ; x4\n",
-        "\tadd     hl,bc  ; x5\n",
-        "\tadd     hl,hl  ; x10\n",
-        "\tadd     l\n",
-        "\tld      l,a\n",
-        "\tjr      nc,__strz2int_loop\n",
-        "\tinc     h\n",
-        "\tjp      __strz2int_loop\n",
-        "__strz2int_end:\n",
-        "\n",
-        "; RT_STRZ2HEX\n",
-        "; DE address to the null-terminated string with a hexadecimal number,\n",
-        "; ends pointing to first char not converted.\n",
-        "; Inputs:\n",
-        ";     DE address to the source null-terminated string\n",
-        "; Outputs:\n",
-        ";     HL contains the converted number\n",
-        ";     HL, BC, DE, AF are modified\n",
-        "rt_strz2hex:\n",
-        "\tld      hl,0\n",
-        "__str2hex_next:\n",
-        "\tld      a,(de)\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tinc     de\n",
-        '\tcp      "&"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "H"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "h"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "0"\n',
-        "\tret     c                 ; < 0 end of conversion\n",
-        '\tcp      "9"+1             ; < 10\n',
-        "\tjr      c,__str2hex_digit ; '0'..'9'\n",
-        '\tcp      "A"\n',
-        "\tret     c                 ; < A end of conversion\n",
-        '\tcp      "F"+1\n',
-        "\tjr      c,__str2hex_upper ; 'A'..'F'\n",
-        '\tcp      "a"\n',
-        "\tret     c                 ; < a end of conversion\n",
-        '\tcp      "f"+1\n',
-        "\tjr      c,__str2hex_lower\n",
-        "\tret                       ; > f end of conversion\n",
-        "__str2hex_digit:\n",
-        '\tsub     "0"\n',
-        "\tld      c,a\n",
-        "\tjr      __str2hex_shiftadd\n",
-        "__str2hex_upper:\n",
-        '\tsub     "A"-10\n',
-        "\tld      c,a\n",
-        "\tjr      __str2hex_shiftadd\n",
-        "__str2hex_lower:\n",
-        '\tsub     "a"-10\n',
-        "\tld      c,a\n",
-        "\tjr      __str2hex_shiftadd\n",
-        "__str2hex_shiftadd        ; HL = HL*16 + C\n",
-        "\tadd     hl,hl           ; *2\n",
-        "\tadd     hl,hl           ; *4\n",
-        "\tadd     hl,hl           ; *8\n",
-        "\tadd     hl,hl           ; *16\n",
-        "\tld      b,0\n",
-        "\tld      a,c\n",
-        "\tld      c,a\n",
-        "\tadd     hl,bc\n",
-        "\tjr      __str2hex_next\n",
-        "\n",
-        "; RT_STRZ2BIN\n",
-        "; DE address to the null-terminated string with a binary number,\n",
-        "; ends pointing to first char not converted.\n",
-        "; Inputs:\n",
-        ";     DE address to the source null-terminated string\n",
-        "; Outputs:\n",
-        ";     HL contains the converted number\n",
-        ";     HL, BC, DE, AF are modified\n",
-        "rt_strz2bin:\n",
-        "\tld      hl,0\n",
-        "__str2bin_next:\n",
-        "\tld      a,(de)\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tinc     de\n",
-        '\tcp      "&"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "X"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "x"\n',
-        "\tjr      z,__str2hex_next\n",
-        '\tcp      "0"\n',
-        "\tret     c                 ; < 0 end\n",
-        '\tcp      "2"\n',
-        "\tret     nc                ; > 1 end\n",
-        '\tsub     "0"\n',
-        "\tadd     hl,hl             ; hl = hl *2\n",
-        "\tor      l\n",
-        "\tld      l,a\n",
-        "\tjr      __str2bin_next\n",
-    ],[]),
-    "rt_int2hex": ([
-        "; RT_INT2HEX"
-        "; Converts a two-bytes integer in an string with its hexadecimal\n",
-        "; representation. Routine inspired by the one included in\n",
-        "; 'Ready Made Machine Language Routines' book\n",
-        "; Inputs:\n",
-        ";     A min number of characters: 2 or 4\n",
-        ";    HL string address\n",
-        ";    DE integer to convert\n",
-        "; Outputs:\n",
-        ";     HL address to the string with the conversion\n",
-        ";     BC, AF are modified\n",
-        "rt_int2hex:\n",
-        "\tpush    hl\n",
-        "\tinc     hl\n",
-        "\tld      c,2\n",
-        "\tcp      3\n",
-        "\tjr      c,__int2hex_low\n",
-        "__int2hex_high:\n",
-        "\tinc     c\n",
-        "\tinc     c\n",
-        "\tld      a,d\n",
-        "\tcall    __a2hex\n",
-        "__int2hex_low:\n",
-        "\tld      a,e\n",
-        "\tcall    __a2hex\n",
-        "\tpop     hl\n",
-        "\tld      (hl),c\n",
-        "\tret\n",
-        "__a2hex:\n",
-        "\tpush    bc\n",
-        "\tld      b,2    ; b=0 marks the end\n",
-        "\tld      c,a    ; keep number so we can restore it\n",
-        "\trr      a      ; move high order bits\n",
-        "\trr      a      ; into the low part\n",
-        "\trr      a\n",
-        "\trr      a\n",
-        "__a2hex_conv:\n",
-        "\tand     &0F\n",
-        "\tcp      &0A    ; check if is greater or equal\n",
-        "\tjr      nc,__a2hex_letter\n",
-        "\tadd     a,&30  ; get the number ASCII code\n",
-        "\tjr      __a2hex_store\n",
-        "__a2hex_letter:\n",
-        "\tadd     a,&37\n",
-        "__a2hex_store:\n",
-        "\tld      (hl),a\n",
-        "\tinc     hl\n",
-        "\tld      a,c    ; restore number for next loop\n",
-        "\tdjnz    __a2hex_conv\n",
-        "\tpop     bc\n",
-        "\tret\n",
-    ],[]),
-    "rt_int2bin": ([
-        "; RT_INT2BIN"
-        "; Converts a two-bytes integer in an string with its binary\n",
-        "; representation. Routine inspired by the one included in\n",
-        "; 'Ready Made Machine Language Routines' book\n",
-        "; Inputs:\n",
-        ";     A min number of characters: 8 or 16\n",
-        ";    HL string address\n",
-        ";    DE integer to convert\n",
-        "; Outputs:\n",
-        ";     HL address to the string with the conversion\n",
-        ";     BC, AF are modified\n",
-        "rt_int2bin:\n",
-        "\tpush    hl\n",
-        "\tinc     hl\n",
-        "\tld      c,8\n",
-        "\tcp      9\n",
-        "\tjr      c,__int2bin_low\n",
-        "__int2bin_high:\n",
-        "\tld      c,16\n",
-        "\tld      a,d\n",
-        "\tcall    __a2bin\n",
-        "__int2bin_low:\n",
-        "\tld      a,e\n",
-        "\tcall    __a2bin\n",
-        "\tpop     hl\n",
-        "\tld      (hl),c\n",
-        "\tret\n",
-        "__a2bin:\n",
-        "\tld      b,8\n",
-        "__a2bin_loop:\n",
-        "\trla\n",
-        "\tjr      c,$+6\n",
-        "\tld      (hl),&30\n",
-        "\tjr      $+4\n",
-        "\tld      (hl),&31\n",
-        "\tinc     hl\n",
-        "\tdjnz    __a2bin_loop\n",
-        "\tret\n",
-    ],[]),
-    "rt_copychrs": ([
-        "; RT_COPYCHRS\n",
-        "; Returns the character in the current cursor position for the\n"
-        "; stream given in A.\n",
-        "; Inputs:\n",
-        ";      A souce stream (0-9)\n",
-        ";     HL destination string\n",
-        "; Outputs:\n",
-        ";     HL  points to the resulting string (may be 0 len)\n",
-        ";     DE, AF and B are modified\n",
-        "rt_copychrs:\n",
-        "\tld      (hl),0\n",
-        "\tex      de,hl\n",
-        f"\tcall    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT\n",
-		"\tld      c,a     ; save current selected stream\n",
-		f"\tcall    {FWCALL.TXT_RD_CHAR}  ; TXT_RD_CHAR\n",
-        "\tret     nc      ; NC means error\n",
-		"\tld      b,a\n",
-        "\tld      a,c\n",
-		f"\tcall    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT\n",
-        "\tex      de,hl\n",
-        "\tld      (hl),1\n",
-        "\tinc     hl\n",
-        "\tld      (hl),b\n",
-        "\tdec     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_findstr": ([
-        "; RT_FINDSTR\n",
-        "; Search the string pointed by HL looking for\n",
-        "; substring pointed by DE. Returns in A 0\n",
-        "; if the substring wasn't found or the position\n",
-        "; Inputs:\n",
-        ";     HL address to the main string\n",
-        ";     DE address to the substring\n",
-        ";      B starting position in HL (starting from 1)\n",
-        "; Outputs:\n",
-        ";     HL  0 no match found or the position of first ocurrence\n",
-        ";     HL, BC, DE and AF are modified\n",
-        "rt_findstr:\n",
-        "\tld      a,(hl)  ; main string len\n",
-        "\tpush    hl\n",
-        "\tsub     b       ; apply starting position\n",
-        "\tjr      c,__findstr_nomatch+1\n",
-        "\tinc     a       ; bacause starting pos starts in 1\n",
-        "\tinc     hl\n",
-        "\tdjnz    $-1\n",
-        "\tld      b,a\n",
-        "__findstr_find1st:\n",
-        "\tld      a,(de)  ; substring len\n",
-        "\tld      c,a\n",
-        "\tpush    de\n",
-        "\tinc     de\n",
-        "\tld      a,(de)  ; first substr char\n",
-        "__findstr_loop1:\n",
-        "\tcp      (hl)\n",
-        "\tjr      z,__findstr_loop2\n",
-        "\tinc     hl\n",
-        "\tdjnz    __findstr_loop1\n",
-        "__findstr_nomatch:\n",
-        "\tpop     de\n",
-        "\tpop     hl\n",
-        "\tld      hl,0\n",
-        "\tret\n",
-        "__findstr_loop2:\n",
-        "\tdec     c\n",
-        "\tjr      z,__findstr_match\n",
-        "\tdec     b\n",
-        "\tjr      z,__findstr_nomatch\n",
-        "\tinc     de\n",
-        "\tinc     hl\n",
-        "\tld      a,(de)\n",
-        "\tcp      (hl)\n",
-        "\tjr      z,__findstr_loop2\n",
-        "\tpop     de\n",
-        "\tjr      __findstr_find1st\n",
-        "__findstr_match:\n",
-        "\tpop     de\n",
-        "\tld      a,(de)  ; len substr\n",
-        "\tdec     a\n",
-        "\tld      b,0\n",
-        "\tld      c,a\n",
-        "\tsbc     hl,bc   ; HL = current HL - (len DE - 1)\n",
-        "\tpop     de\n",
-        "\tsbc     hl,de   ; HL = HL - original HL\n",
-        "\tret\n",
-    ],[]),
-    "rt_substr": ([
-        "; RT_SUBSTR\n",
-        "; Returns part of a string (a substring) of the string pointed by HL\n",
-        "; and places them in the string pointed by DE. The starting position to\n",
-        "; copy is in C and B has the number of characters to copy (0 to copy\n",
-        "; to the end).\n",
-        "; Inputs:\n",
-        ";     HL address to the source string\n",
-        ";     DE address to the destintion string\n",
-        ";      C starting position in source string\n",
-        ";      B number of characters to copy, 0 copies to the end\n",
-        "; Outputs:\n",
-        ";     HL  points to the destination string\n",
-        ";     HL, BC, DE and AF are modified\n",
-        "rt_substr:\n",
-        "\tld      a,b\n",
-	    "\tor      a\n",
-	    "\tjr      nz,$+3\n",
-	    "\tld      b,(hl)  ; by default all chars from start to the end\n",
-        "\tld      a,(hl)  ; main string len\n",
-        "\tex      de,hl\n",
-        "\tld      (hl),0\n"
-        "\tsub     c\n",
-        "\tret     c\n",
-        "\tinc     a\n",
-        "\tcp      b\n",
-        "\tjr      nc,$+3\n",
-        "\tld      b,a\n",
-        "\tld      (hl),b\n",
-        "\tex      de,hl\n",
-        "\tinc     hl\n",
-        "\tdec     c\n",
-        "\tjr      nz,$-2\n",
-        "\tpush    de\n",
-        "\tinc     de\n",
-        "\tld      c,b\n",
-        "\tld      b,0\n",
-        "\tldir\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_strleft": ([
-        "; RT_STRLEFT\n",
-        "; Extracts characters to the left of the string pointed by HL\n",
-        "; and places them in the string pointed by DE. The number of\n",
-        "; characters to copy are in C\n",
-        "; Inputs:\n",
-        ";     HL address to the source string\n",
-        ";     DE address to the destintion string\n",
-        ";      C number of characters to copy\n",
-        "; Outputs:\n",
-        ";     HL  points to the destination string\n",
-        ";     HL, BC, DE and AF are modified\n",
-        "rt_strleft:\n",
-        "\tld      a,(hl)  ; main string len\n",
-        "\tcp      c       ; more chars than the len of source string\n",
-        "\tret     c\n",
-        "\tpush    de\n",
-        "\tld      (de),a  ; destination length\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tld      b,0\n",
-        "\tldir\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_strright": ([
-        "; RT_STRRIGHT\n",
-        "; Extracts characters to the right of the string pointed by HL\n",
-        "; and places them in the string pointed by DE. The number of\n",
-        "; characters to copy are in C\n",
-        "; Inputs:\n",
-        ";     HL address to the source string\n",
-        ";     DE address to the destintion string\n",
-        ";      C number of characters to copy\n",
-        "; Outputs:\n",
-        ";     HL  points to the destination string\n",
-        ";     HL, BC, DE and AF are modified\n",
-        "rt_strright:\n",
-        "\tld      a,(hl)  ; main string len\n",
-        "\tsub     c       ; more chars than the len of source string\n",
-        "\tret     c\n",
-        "\tret     z\n",
-        "\tld      b,a\n",
-        "\tld      a,c\n",
-        "\tld      (de),a\n",
-        "\tpush    de\n",
-        "\tinc     b\n",
-        "\tinc     de\n",
-        "\tinc     hl\n",
-        "\tdjnz    $-1\n",
-        "\tldir\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_strfill": ([
-        "; RT_STRFILL\n",
-        "; Fills the string pointed by DE with the character in C\n",
-        "; as may times as indicated by HL, returs in HL de address to DE\n",
-        ";Inputs:\n",
-        ";     DE target string address\n",
-        ";     HL number of repetitions (0-255)\n",
-        ";      C character to print\n",
-        ";Outputs:\n",
-        ";     HL points to string\n",
-        ";     AF, HL, DE and B are modified\n",
-        "rt_strfill:\n",
-        "\tld      a,l\n",
-        "\tld      b,a\n",
-        "\tld      (de),a\n",
-        "\tpush    de\n",
-        "\tld      a,c\n",
-        "\tinc     de\n",
-        "\tld      (de),a\n",
-        "\tdjnz    $-2\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_upper": ([
-        "; RT_UPPER\n",
-        "; Copies to address in DE a new string the same as the input string\n",
-        "; pointed by HL but in which all lower case characters are converted\n",
-        "; to upper case.\n",
-        ";Inputs:\n",
-        ";     DE target string address\n",
-        ";     HL source string address\n",
-        ";Outputs:\n",
-        ";     HL points to the target string\n",
-        ";     AF, HL, DE and B are modified\n",
-        "rt_upper:\n",
-        "\tpush    de  ; Save string address\n",
-        "\tld      a,(hl)\n",
-        "\tld      (de),a\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tld      b,a\n",
-        "\tinc     hl\n", 
-        "\tinc     de\n",  
-        "__upper_loop:\n",                    
-        "\tld      a,(hl)\n",
-        '\tcp      "a"  ; check if it is in the lower case range\n',
-        "\tjr      c,__upper_next\n",
-        '\tcp      "z"+1\n',
-        "\tjr      nc,__upper_next\n",
-        '\tsub     "a"-"A"\n',
-        "__upper_next:\n",
-        "\tld      (de),a\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tdjnz    __upper_loop\n",
-        "\tpop     hl\n",
-        "\tret\n",  
-    ], []),
-        "rt_lower": ([
-        "; RT_LOWER\n",
-        "; Copies to address in DE a new string the same as the input string\n",
-        "; pointed by HL but in which all upper case characters are converted\n",
-        "; to lower case.\n",
-        ";Inputs:\n",
-        ";     DE target string address\n",
-        ";     HL source string address\n",
-        ";Outputs:\n",
-        ";     HL points to the target string\n",
-        ";     AF, HL, DE and B are modified\n",
-        "rt_lower:\n",
-        "\tpush    de  ; Save string address\n",
-        "\tld      a,(hl)\n",
-        "\tld      (de),a\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tld      b,a\n",
-        "\tinc     hl\n", 
-        "\tinc     de\n",  
-        "__lower_loop:\n",                    
-        "\tld      a,(hl)\n",
-        '\tcp      "A"  ; check if it is in the upper case range\n',
-        "\tjr      c,__lower_next\n",
-        '\tcp      "Z"+1\n',
-        "\tjr      nc,__lower_next\n",
-        '\tadd     "a"-"A"\n',
-        "__lower_next:\n",
-        "\tld      (de),a\n",                    
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tdjnz    __lower_loop\n",
-        "\tpop     hl\n",
-        "\tret\n",  
-    ], []),
-    #
-    # DATA BLOCKS
-    # 
-    "rt_datablock": ([
-        "\trt_data_ptr: dw  _data_datablock_\n",
-    ],[]),
-    "rt_read_int": ([
-        "; RT_READ_INT\n",
-        "; Copies into HL the next INTEGER in the DATA block\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     HL next integer in the DATA block\n",
-        ";     DE next data address\n",
-        ";     HL and DE are modified\n",
-        "rt_read_int:\n",
-        "\tld      hl,(rt_data_ptr)\n",
-        "\tld      e,(hl)\n",
-        "\tinc     hl\n",
-        "\tld      d,(hl)\n",
-        "\tinc     hl\n",
-        "\tld      (rt_data_ptr),hl\n",
-        "\tex      de,hl\n",
-        "\tret\n",
-    ],["rt_datablock"]),
-    "rt_read_real": ([
-        "; RT_READ_REAL\n",
-        "; Copies into the real pointed by HL the next REAL in the DATA block\n",
-        "; Inputs:\n",
-        ";     HL address to the target real number\n",
-        "; Outputs:\n",
-        ";     HL address to the real number\n",
-        ";     HL, BC and DE are modified\n",
-        "rt_read_int:\n",
-        "\tpush    hl\n",
-        "\tld      de,(rt_data_ptr)\n",
-        "\tld      bc,5\n",
-        "\tex      de,hl\n",
-        "\tldir\n",
-        "\tinc     hl\n",
-        "\tld      (rt_data_ptr),hl\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],["rt_datablock"]),
-    "rt_read_str": ([
-        "; RT_READ_STR\n",
-        "; Copies into the string pointed by HL the next STRING in DATA block\n",
-        "; Inputs:\n",
-        ";     HL address to the target string\n",
-        "; Outputs:\n",
-        ";     HL address to the string\n",
-        ";     HL, DE and BC are modified\n",
-        "rt_read_str:\n",
-        "\tpush    hl\n",
-        "\tld      de,(rt_data_ptr)\n",
-        "\tex      de,hl\n",
-        "\tld      b,0\n",
-        "\tld      c,(hl)    ; string length\n",
-        "\tinc     c\n",
-        "\tldir\n",
-        "\tld      (rt_data_ptr),hl\n",
-        "\tpop     hl\n",
-        "\tret\n",
-    ],["rt_datablock"]),
-    #
-    # INPUT/OUTPUT
-    #
-    "rt_print_zone": ([
-        "; RT_PRINT_ZONE\n",
-        "; Variable that stores the zone size (13 by default)\n",
-        "rt_print_zone: db 13\n",
-    ], []),
-    "rt_print_nextzone": ([
-        "; RT_PRINT_NEXTZONE\n",
-        "; Moves the text cursor to the start of the next zone\n",
-        "; considering that each zone has RT_PRINT_ZONE characters\n"
-        ";Inputs:\n",
-        ";     None\n",
-        ";Outputs:\n",
-        ";     None\n",
-        ";     AF, HL and B are modified\n",
-        "rt_print_nextzone:\n",
-        f"\tcall    {FWCALL.TXT_GET_CURSOR}  ; TXT_GET_CURSOR\n",
-        "\tld      a,(rt_print_zone)\n",
-        "__nextzone_shift:\n",
-        "\tcp      h\n",
-        "\tjr      nc,__nextzone_end\n",
-        "\tadd     a\n",
-        "\tjr      __nextzone_shift\n",
-        "__nextzone_end:\n",
-        "\tld      h,a\n",
-        f"\tjp      {FWCALL.TXT_SET_CURSOR}  ; TXT_SET_CURSOR\n",
-    ],["rt_print_zone"]),
-    "rt_print_nl": ([
-        "; RT_PRINT_NL\n",
-        "; Prints an EOL which in Amstrad is composed\n",
-        "; by chraracters 0x0D 0x0A\n",
-        "; Inputs:\n",
-        ";     None \n",
-        "; Outputs:\n",
-        ";     None \n",
-        ";     AF is modified\n",
-        "rt_print_nl:\n",
-        "\tld      a,13\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
-        "\tld      a,10\n",
-        f"\tjp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
-    ],[]),
-    "rt_print_spc": ([
-        "; RT_PRINT_SPC\n",
-        "; L indicates the number of spaces to print\n",
-        "; but 127 is the maximum\n",
-        ";Inputs:\n",
-        ";     L number of spaces to print\n",
-        ";Outputs:\n",
-        ";     None\n",
-        ";     AF and B are modified\n",
-        "rt_print_spc:\n",
-        "\tld      a,l\n",
-        "\tand     &7F\n",
-        "\tcp      0\n",
-        "\tret     z\n",
-        "\tld      b,a\n",
-        "\tld      a,32   ; white space\n",
-        "__print_spc_loop:"
-        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
-        "\tdjnz    __print_spc_loop\n",
-        "\tret\n",
-    ],[]),
-    "rt_print_str": ([
-        "; RT_PRINT_STR\n",
-        "; Prints in the screen the string pointed by HL\n",
-        "; using the Amstrad CPC firmware routines\n",
-        "; Inputs:\n",
-        ";     HL address to the string to print\n",
-        "; Outputs:\n",
-        ";     C stores the total number of printed chars\n",
-        ";     AF, HL and BC are modified\n",
-        "rt_print_str:\n",
-        "\tld      a,(hl)\n",
-        "\tld      c,a        ; total number of printed chars\n",
-        "\tor      a\n",
-        "\tret     z          ; empty string\n",
-        "\tld      b,a\n",
-        "__print_str_loop:\n",
-        "\tinc     hl\n",
-        "\tld      a,(hl)\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
-        "\tdjnz    __print_str_loop\n",
-        "\tret\n",
-    ], []),
-    "rt_print_strz": ([
-        "; RT_PRINT_STRZ\n",
-        "; Prints in the screen the null-terminated string pointed by HL\n",
-        "; using the Amstrad CPC firmware routines\n",
-        "; Inputs:\n",
-        ";     HL address to the null-terminated string\n",
-        "; Outputs:\n",
-        ";     None\n",
-        ";     AF and HL are modified\n",
-        "rt_print_strz:\n",
-        "__print_strz_loop:\n",
-        "\tld      a,(hl)\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tinc     hl\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}\n",
-        "\tdjnz    __print_strz_loop\n",
-        "\tret\n",
-    ], []),
-    "rt_print_int": ([
-        "; RT_PRINT_INT\n",
-        "; Prints an Integer number which in Amstrad is composed\n",
-        "; by chraracters two bytes.\n",
-        "; Inputs:\n",
-        ";     HL holds the number to be printed \n",
-        "; Outputs:\n",
-        ";     None \n",
-        ";     HL, BC, DE and AF are modified\n",
-        "rt_print_int:\n",
-        "\tcall    rt_int2str\n",
-        "\txor     a     ; leave the '-' space in positive numbers\n",
-        "\tor      c\n",
-        "\tjr      nz,$+7\n",
-        "\tld      a,32\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
-        "\tcall    rt_print_str\n",
-        "\tld      a,32   ; trailing space\n",
-        f"\tjp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT\n",
-    ], ["rt_print_str", "rt_int2str"]),
-    "rt_print_real": ([
-        "; RT_PRINT_REAL\n",
-        "; Prints a Real number which in Amstrad is a\n",
-        "; five bytes floating-point representation.\n",
-        "; Inputs:\n",
-        ";     HL address to the real number \n",
-        "; Outputs:\n",
-        ";     None \n",
-        ";     HL, BC, DE, IX and AF are modified\n",
-        "rt_print_real:\n",
-        "call    rt_real2strz\n",
-        "ld      hl,rt_real2strz_buf\n",
-        "jp      rt_print_strz\n",
-    ], ["rt_math_call", "rt_real2strz", "rt_print_strz"]),
-    "rt_count_substrz": ([
-        "; RT_COUNT_SUBSTRZ\n",
-        "; Returns the number of existing substrings separated\n",
-        "; by commas in the null-terminated string addessed by HL.\n",
-        "; Inputs:\n",
-        ";     HL address to the string to scan\n",
-        "; Outputs:\n",
-        ";      B number of identified substrings\n",
-        ";      C total number of quote characters found\n",
-        ";     AF, HL and BC are modified\n", 
-        "rt_count_substrz:\n",
-        "\tld      bc,&0100    ; final number of substrings\n",
-        "__count_loop:\n",
-        "\tld      a,(hl)\n",
-        "\tor      a\n",
-        "\tret     z           ; null termination character\n",
-        "\tinc     hl\n",
-        "\tcp      &22         ; quote?\n",
-        "\tjr      z,__count_quote\n",
-        "\tcp      &2c         ; comma?\n",
-        "\tjr      nz,__count_loop\n",
-        "\tinc     b\n",
-        "\tjr      __count_loop\n",
-        "__count_quote:\n",
-        "\tinc     c\n",
-        "\tjr      __count_loop\n",
-    ], []),
-    "rt_extract_substrz": ([
-        "; RT_EXTRACT_SUBSTRZ\n",
-        "; Returns the number of existing substrings separated\n",
-        "; by commas in the string addessed by HL.\n",
-        "; Inputs:\n",
-        ";     HL address to the string to scan\n",
-        "; Outputs:\n",
-        ";      B number of identified substrings\n",
-        ";      C total number of quote characters found\n",
-        ";     AF, HL and BC are modified\n", 
-        "rt_extract_substrz:\n",
-        "\tld      de,rt_scratch_pad\n",
-        "\tld      c,0\n",
-        "\tcall    rt_strz_lstrip   ; remove spaces leaves char in A\n",
-        "\tcp      &22              ; quote?\n",
-        "\tjr      nz,__extract_comma_separated\n",
-        "\tcall    rt_remove_quotes\n",
-        "\tinc     de\n",
-        "\tinc     hl\n",
-        "\txor     a\n",
-        "\tld      (de),a\n",
-        "\tcall    rt_strz_lstrip   ; remove spaces after final quote\n",
-        "\tcp      &2c              ; comma\n",
-        "\tret     nz\n",
-        "\tinc     hl\n",
-        "\tret\n", 
-        "__extract_comma_separated:\n",
-        "\tor      a                ; 0?\n",
-        "\tjr      z,__extract_end\n",
-        "\tinc     hl\n",
-        "\tcp      &2c              ; ,?\n",
-        "\tjr      z,__extract_end\n",
-        "\tinc     c\n",
-        "\tld      (de),a\n",
-        "\tinc     de\n",
-        "\tld      a,(hl)\n",
-        "\tjr      __extract_comma_separated\n",
-        "__extract_end:\n",
-        "\txor     a\n",
-        "\tld      (de),a\n",
-        "\tld      a,c\n",
-        "\tor      c\n",
-        "\tret     z                ; empty string\n",
-        "\tdec     de               ; last character\n",
-        "\tex      de,hl\n",
-        "\tcall    rt_strz_rstrip\n",
-        "\tinc     hl\n",
-        "\tld      (hl),0\n",
-        "\tex      de,hl\n",
-        "\tret\n",
-    ], ["rt_scratch_pad"]),
-    "rt_strz_lstrip": ([
-        "; RT_STRZ_LSTRIP\n",
-        "; Scans the zero-terminated string pointed by HL from the left\n",
-        "; until if finds a character different from an empty space.\n",
-        "; Inputs:\n",
-        ";     HL address to the zero-terminated string to scan\n",
-        "; Outputs:\n",
-        ";     HL address to the resulting zero-terminated string\n",
-        ";      A first character different to an empty space\n",
-        ";     AF and HL are modified\n",
-        "rt_strz_lstrip:\n",
-        "\tld      a,(hl)\n",
-        "\tcp      &20  ; espace\n",
-        "\tret     nz\n",
-        "\tinc     hl\n",
-        "\tjr      rt_strz_lstrip\n",
-    ], []),
-    "rt_strz_rstrip": ([
-        "; RT_STRZ_RSTRIP\n",
-        "; Scans the zero-terminated string pointed by HL from the right\n",
-        "; until if finds a character different from an empty space.\n",
-        "; Inputs:\n",
-        ";     HL address to the zero-terminated string to scan\n",
-        "; Outputs:\n",
-        ";     HL address to the resulting zero-terminated string\n",
-        ";      A first character different to an empty space\n",
-        ";     AF and HL are modified\n", 
-        "rt_strz_rstrip:\n",
-        "\tld      a,(hl)\n",
-        "\tcp      &20  ; espace\n",
-        "\tret     nz\n",
-        "\tdec     hl\n",
-        "\tdec     c\n",
-        "\tjr      rt_strz_rstrip\n",
-    ], []),
-    "rt_remove_quotes": ([
-        "; RT_REMOVE_QUOTES\n",
-        "; Scans the zero-terminated string pointed by HL and\n",
-        "; returs the substring between quotes. Assumes that first\n",
-        "; character of HL string is already a quote.\n",
-        "; Inputs:\n",
-        ";     HL address to the zero-terminated string to scan\n",
-        ";     DE address to the resulting string\n",
-        "; Outputs:\n",
-        ";     DE address to the resulting string\n",
-        ";      C length of DE\n",
-        ";     AF, DE, HL and C are modified\n", 
-        "rt_remove_quotes:\n",
-        "\tinc     hl\n",
-        "\tld      c,0\n",
-        "__remove_quotes_loop:\n",
-        "\tld      a,(hl)\n",
-        "\tcp      &22\n",
-        "\tret     z\n",
-        "\tld      (de),a\n",
-        "\tinc     hl\n",
-        "\tinc     de\n",
-        "\tinc     c\n",
-        "\tjr      __remove_quotes_loop\n",
-    ], []),
-    "rt_extract_num": ([
-        "; RT_EXTRACT_NUM\n",
-        "; Converts and string with an integer or hexadecimal number\n",
-        "; Inputs:\n",
-        ";     DE address to the null-terminated string with the number\n",
-        "; Outputs:\n",
-        ";     HL resulting number\n",
-        ";     AF, HL, DE and BC are modified\n",
-        "rt_extract_num:\n",
-        "\tld      a,(de)\n",
-        '\tcp      "&"\n',
-        "\tjp      nz,rt_strz2int\n",
-        "\tinc     de\n",
-        "\tjp      rt_strz2hex\n",
-    ], []),
-    "rt_input": ([
-        "; RT_INPUT\n",
-        "; Camptures the keyboard input in a null-terminated string\n",
-        "; using the Amstrad CPC firmware routines.\n",
-        "; Returns in B and C some useful values to validate the input.\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     rt_input_buf stores the input as a null-terminated string\n",
-        ";      B stores the total number substrings (separated by commas)\n",
-        ";      C total number of quote characters found\n",
-        ";     AF, HL and BC are modified\n",
-        'rt_input_question: db 2,"? "\n',
-        'rt_input_redo:     db 16,"?Redo from start "\n',
-        'rt_input_buf:      defs 255\n',
-        "rt_input:\n",
-        f"\tcall    {FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE\n",
-        f"\tcall    {FWCALL.TXT_CUR_ON} ; TXT_CUR_ON\n",
-        "\tld      hl,rt_input_buf\n",
-        "\tld      (hl),0\n",
-        "\tld      bc,0  ; Initialize characters counter\n",
-        "__input_enterchar:\n",
-        f"\tcall    {FWCALL.KM_WAIT_KEY} ; KM_WAIT_KEY\n",
-        "\tcp      &7F  ; KM_WAIT_KEY returns characters in range &00-&7F\n",
-        "\tjr      nz,__input_processchar\n",
-        "\tld      a,b  ; backspace key\n",
-        "\tor      c\n",
-        "\tjr      z,__input_enterchar    ; String length is zero\n",
-        "\tld      a,8\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
-        '\tld      a," "\n',
-        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
-        "\tld      a,8\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
-        "\tdec     hl\n",
-        "\tdec     bc\n",
-        "\tjr      __input_enterchar\n",
-        "__input_processchar:\n",
-        "\tcp      13\n",
-        "\tjr      z,__input_end          ; Enter key pressed\n",
-        f"\tcall    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT\n",
-        "\tld      (hl),a\n",
-        "\tinc     hl\n",
-        "\tinc     bc\n",
-        "\tjr      __input_enterchar\n",
-        "__input_end:\n",
-        "\tld      (hl),0\n",
-        "\tcall    rt_print_nl\n",
-        f"\tcall    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE\n",
-        f"\tcall    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF\n",
-        "\tld      hl,rt_input_buf\n",
-        "\tjp      rt_count_substrz\n",      
-    ],["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"]),
-    "rt_writestr": ([
-        "; RT_WRITESTR\n",
-        "; Writes a quoted string to an already open file (with OPENIN)\n",
-        "; Inputs:\n",
-        ";     HL address to the input string\n",
-        "; Outputs:\n",
-        ";     A, B and HL are modified\n",
-        "rt_writestr:\n",
-        "\tld      a,&22\n",
-        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-        "\tld      b,(hl)\n",
-        "__writestr_loop:\n",
-        "\tinc     hl\n",
-        "\tld      a,(hl)\n",
-        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-        "\tdjnz    __writestr_loop\n",
-        "\tld      a,&22\n",
-        f"\tjp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-    ], []),
-    "rt_writeint": ([
-        "; RT_WRITEINT\n",
-        "; Writes the integer hold in HL to an already open file (with OPENIN)\n",
-        "; Inputs:\n",
-        ";     HL signed integer value\n",
-        "; Outputs:\n",
-        ";     A, B and HL are modified\n",
-        "rt_writeint:\n",
-        "\tcall    rt_int2str\n",
-        "\tld      b,(hl)\n",
-        "__writeint_loop:\n",
-        "\tinc     hl\n",
-        "\tld      a,(hl)\n",
-        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-        "\tdjnz    __writestr_loop\n",
-        "\tret     \n",
-    ], ["rt_int2str"]),
-    "rt_writenl": ([
-        "; RT_WRITENL\n",
-        "; Writes an EOL to an already open file (with OPENIN)\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     AF is modified\n",
-        "rt_writenl:\n",
-        "\tld      a,13\n",
-        f"\tcall    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-        "\tld      a,10\n",
-        f"\tjp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR\n",
-    ], ["rt_int2str"]),
-    "rt_readstr": ([
-        "; RT_READSTR\n",
-        "; Reads a quoted string from an already open file (with OPENIN).\n",
-        "; Ends trying to read the comma that separates data in the file.\n"
-        "; Inputs:\n",
-        ";     HL address to the destination string\n",
-        "; Outputs:\n",
-        ";     HL contains the address to the destination string\n",
-        ";     A, B and HL are modified\n",
-        "rt_readstr:\n",
-        "\tld      (hl),0\n",
-        f"\tcall    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR\n",
-        "\tcp      &22\n",
-        "\tret     nz\n",
-        "\tld      b,0\n",
-        "\tpush    hl\n",
-        "__readstr_loop:\n",
-        "\tinc     hl\n",
-        f"\tcall    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR\n",
-        "\tjr      nc,__readstr_end  ; if error jump to end\n",
-        "\tcp      &22\n",
-        "\tjr      z,__readstr_end\n",
-        "\tld      (hl),a\n",
-        "\tinc     b\n",
-        "\tjr      __readstr_loop\n",
-        "__readstr_end:\n",
-        "\tpop     hl\n",
-        "\tld      (hl),b\n",
-        "\tjp      rt_readnext   ; consume comma or new-line\n",
-    ], ["rt_readnext"]),
-    "rt_readint": ([
-        "; RT_READINT\n",
-        "; Reads an integer from an already open file (with OPENIN).\n",
-        "; It consumes any comma used to separate values.\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     HL contains the integer value\n",
-        ";     A, B and HL are modified\n",
-        "rt_readint_bufz: defs 19     ; space for 16 bits integers (including hex and bin formats)\n",
-        "rt_readint:\n",
-        "\tld      hl,0\n",
-        "\tld      b,18    ; max buffer length for numbers\n",
-        "\tld      de,rt_readint_bufz\n",
-        "__readint_loop:\n",
-        f"\tcall    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR\n",
-        "\tjr      nc,__readint_end  ; if error jump to end\n",
-        "\tcp      &2c\n",
-        "\tjr      z,__readint_end\n",
-        "\tcp      &0d\n",
-        "\tjr      z,__readint_end\n",
-        "\tcp      &0a\n",
-        "\tjr      z,__readint_end\n",
-        "\tld      (de),a\n",
-        "\tdjnz    __readint_loop\n",
-        "__readint_end:\n",
-        "\tinc     de\n",
-        "\txor     a\n",
-        "\tld      (de),a   ; zero-terminated string\n",
-        "\tld      de,rt_readint_bufz\n",
-        "\tcall    rt_strz2num\n",
-        "\tjp      rt_readnext\n",
-    ], ["rt_strz2num", "rt_readnext"]),
-    "rt_readnext": ([
-        "; RT_READNEXT\n",
-        "; Consume chars until it consumes a comma or a new-line\n",
-        "; Inputs:\n",
-        ";     None\n",
-        "; Outputs:\n",
-        ";     None\n",
-        ";     AF is modified\n",
-        "rt_readnext:\n",
-        "__readnext_loop:\n",
-        f"\tcall    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR\n",
-        "\tret     nc    ; error reading\n",
-        "\tcp      &2c   ; comma?\n",
-        "\tret     z\n",
-        "\tcp      &0a   ; end of new-line?\n",
-        "\tret     z\n",
-        "\tcp      &0d   ; new-line (0xd,0xa)?\n",
-        "\tjr      nz,__readnext_loop\n",
-        f"\tjp      {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR\n",
-    ], []),
-    #
-    # MATH
-    # 
-    "rt_umul16": ([
-        "; RT_UMULT16"
-        "; 16x16 unsigned multplication\n",
-        "; HL = HL * DE.\n",
-        "; Algorithm from Rodney Zaks, 'Programming the Z80'.\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL and DE\n",
-        "; Outputs:\n",
-        ";     HL is the HL * DE\n",
-        ";     AF, BC and DE are modified\n",
-        "rt_umul16:\n",
-        "\tld      a,l	    ; transfer HL to CA\n",
-        "\tld      c,h\n",
-        "\tld      b,16	    ; 16 bits to multiply\n",
-        "\tld      hl,0\n",
-        "__mul0_unsigned:\n",
-        "\tsrl     c		; shift CA right, get low bit\n",
-        "\trra\n",
-        "\tjr      nc,__mul1_unsigned	; zero fell out, do not add\n",
-        "\tadd     hl,de	; else add DE\n",
-        "__mul1_unsigned:\n",
-        "\tex      de,hl	; DE = DE*2\n",
-        "\tadd     hl,hl\n",
-        "\tex      de,hl\n",
-        "\tdjnz    __mul0_unsigned\n",
-        "\tret\n",
-    ],[]),
-    "rt_udiv16": ([
-        "; RT_UDIV16\n",
-        "; 16/16 unsigned division\n",
-        "; HL = HL DIV DE\n",
-        "; DE = HL MOD DE\n",
-        "; Algorithm from Rodney Zaks, 'Programming the Z80'.\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL, DE\n",
-        "; Outputs:\n",
-        ";     HL is the quotient\n",
-        ";     DE is the remainder\n",
-        ";     AF, BC are modified\n",
-        "rt_udiv16:\n",
-        "\tld      b,h	    ; store HL in BC\n",
-	    "\tld      c,l\n",
-        "\tld      a,e	    ; transfer DE to AC\n",
-	    "\tor      d\n",
-	    "\tld      hl,0	    ; intermediate result\n",
-	    "\tret     z		; DIV by 0?\n",      
-        "\tld      a,b\n",
-        "\tld      b,16	    ; 16 bits to divide\n",
-        "__div0_unsigned:\n",
-        "\trl      c		; get AC high bit, rotate in result bit\n",
-        "\trla\n",
-        "\tadc     hl,hl	; HL = HL*2, never sets C\n",
-        "\tsbc     hl,de	; trial subtract and test DE > HL\n",
-        "\tjr      nc,__div1_unsigned\n",
-        "\tadd     hl,de	; DE > HL, restore HL\n",
-        "__div1_unsigned:\n",
-        "\tccf		        ; result bit\n",
-        "\tdjnz    __div0_unsigned\n",
-        "\tex      de,hl\n",
-        "\trl      c		; rotate in last result bit\n",
-        "\trla\n",
-        "\tld      h,a\n",
-        "\tld      l,c\n",
-	    "\tret\n",
-    ],[]),
-    "rt_compute_sign": ([
-        "; RT_COMPUTE_SIGN\n",
-        "; Computes resulting sign between HL and DE integers\n",
-        "; returns C=0 (pos) if signs are equal and otherwise C=1 (neg)\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL, DE\n",
-        "; Outputs:\n",
-        ";     CF carry stores the sign\n",
-        ";     AF is modified\n",
-        "rt_compute_sign:\n",
-        "\tld      a,h\n",
-        "\txor     d\n",
-        "\trla		; sign to carry\n",
-        "\tret\n",
-    ],[]),
-    "rt_abs": ([   
-        "; RT_ABS\n", 
-        "; Strips sign from HL\n",
-        "; performing COMP+2 if it is negative\n",
-        "; Inputs:\n",
-        ";     HL\n",
-        "; Outputs:\n",
-        ";     HL is the number in possitive\n",
-        ";     AF is modified\n",
-        "rt_abs:\n",
-        "\tbit     7,h\n",
-        "\tret     z\n",
-        "\tld      a,h\n",
-        "\tcpl\n",
-        "\tld      h,a\n",
-        "\tld      a,l\n",
-        "\tcpl\n",
-        "\tld      l,a\n",
-        "\tinc     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_sign_strip": ([   
-        "; RT_SIGN_STRIP\n", 
-        "; Strips signs from HL and DE\n",
-        "; performing COMP+2 if they are negative\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL and DE\n",
-        "; Outputs:\n",
-        ";     HL is the number in possitive\n",
-        ";     DE is the number in possitive\n",
-        ";     AF is modified\n",
-        "rt_sign_strip:\n",
-        "\tbit     7,d\n",
-        "\tjr      z,__sign_strip_posde\n",
-        "\tld      a,d\n",
-        "\tcpl\n",
-        "\tld      d,a\n",
-        "\tld      a,e\n",
-        "\tcpl\n",
-        "\tld      e,a\n",
-        "\tinc     de\n",
-        "__sign_strip_posde:\n",
-        "\tbit     7,h\n",
-        "\tret     z\n",
-        "__sign_strip_neghl:\n",
-        "\tld      a,h\n",
-        "\tcpl\n",
-        "\tld      h,a\n",
-        "\tld      a,l\n",
-        "\tcpl\n",
-        "\tld      l,a\n",
-        "\tinc     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_mul16": ([
-        "; RT_MUL16\n",
-        "; 15x15 signed multiplication\n",
-        "; HL = HL * DE\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL and DE\n",
-        "; Outputs:\n",
-        ";     HL is the HL * DE\n",
-        ";     AF, BC, DE are modified\n",
-        "rt_mul16:\n",	
-        "\tcall    rt_compute_sign\n",
-        "\tpush    af\n",
-        "\tcall    rt_sign_strip\n",
-        "\tcall    rt_umul16\n",
-        "\tpop     af\n",
-        "\tret     nc\n",
-        "\tjr      __sign_strip_neghl\n",
-    ],["rt_compute_sign", "rt_sign_strip", "rt_umul16"]),
-    "rt_div16": ([
-        "; RT_DIV16\n",
-        "; 15/15 signed division\n",
-        "; HL = HL DIV DE\n",
-        "; DE = HL MOD DE\n",
-        "; Developed by Nils M. Holm (cc0)\n",
-        "; Inputs:\n",
-        ";     HL, DE\n",
-        "; Outputs:\n",
-        ";     HL is the quotient\n",
-        ";     DE is the remainder\n",
-        ";     AF, BC are changed\n",
-        "rt_div16:\n",
-        "\tcall    rt_compute_sign\n",
-        "\tpush    af\n",
-        "\tcall    rt_sign_strip\n",
-        "\tcall    rt_udiv16\n",
-        "\tpop     af\n",
-        "\tret     nc\n",
-        "\tjr      __sign_strip_neghl\n",
-    ],["rt_compute_sign", "rt_sign_strip", "rt_udiv16"]),
-    "rt_comp16": ([
-        "; RT_COMP16\n",
-        "; Signed comparison HL-DE, set Z and C flags,\n",
-        "; where C indicates that HL < DE\n",
-        "; Inputs:\n",
-        ";     HL, DE\n",
-        "; Outputs:\n",
-        ";     AF Z=1 if HL=DE; Z=0 & C=1 if HL < DE\n"
-        ";     HL is modified\n",
-        ";     BC, DE are preserved\n",
-        "rt_comp16:\n",
-        "\txor     a\n",
-        "\tsbc     hl,de\n",
-        "\tret     z\n",
-        "\tjp      m,__comp16_cs1\n",
-        "\tor      a\n",
-        "\tret\n",
-        "__comp16_cs1:\n",
-        "\tscf\n",
-        "\tret\n",
-    ],[]),
-    "rt_ucomp16": ([
-        "; RT_UCOMP16\n",
-        "; Unsigned comparison HL-DE, set ZF and CF flags,\n",
-        "; where CF indicates that HL < DE\n",
-        "; Inputs:\n",
-        ";     HL, DE\n",
-        "; Outputs:\n",
-        ";     AF ZF=1 if HL=DE; ZF=0 & CF=1 if HL < DE\n"
-        ";     HL is modified\n",
-        ";     BC, DE are preserved\n",
-        "rt_cuomp16:\n",
-        "\txor     a          ; Clear C flag\n",
-        "\tsbc     hl,de\n",
-        "\tret\n",
-    ],[]),
-    "rt_div32_by10": ([
-        "; RT_DIV32_BY10\n",
-        "; Fast integer (32 bits) division by 10\n",
-        "; Inputs:\n",
-        ";     DEHL 32 bits integer\n",
-        "; Outputs:\n",
-        ";     DEHL is the quotient\n",
-        ";      A is the remainder\n",
-        ";     BC is 10\n",
-        "rt_div32_by10:\n",
-        "\tld      bc,&0D0A\n",
-        "\txor     a\n",
-        "\tex      de,hl\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tcp      c\n",
-        "\tjr      c,$+4\n",
-        "\tsub     c\n",
-        "\tinc     l\n",
-        "\tdjnz    $-7\n",
-        "\tex      de,hl\n",
-        "\tld      b,16\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tcp      c\n",
-        "\tjr      c,$+4\n",
-        "\tsub     c\n",
-        "\tinc     l\n",
-        "\tdjnz    $-7\n",
-        "\tret\n",
-    ], []),
-    "rt_div16_by10": ([
-        "; RT_DIV16_BY10\n",
-        "; Fast integer division by 10\n",
-        "; Taken from:\n",
-        "; https://learn.cemetech.net/index.php/Z80:Math_Routines&Speed_Optimised_HL_div_10\n",
-        "; HL = HL DIV 10\n",
-        "; Inputs:\n",
-        ";     HL\n",
-        "; Outputs:\n",
-        ";     HL is the quotient\n",
-        ";     A is the remainder\n",
-        ";     HL, BC, AF are modified, DE is preserved\n",
-        "rt_div16_by10:\n",
-        "\tld      bc,&0D0A\n",
-        "\txor     a\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tadd     hl,hl\n",
-        "\trla\n",
-        "\tcp      c\n",
-        "\tjr      c,$+4\n",
-        "\tsub     c\n",
-        "\tinc     l\n",
-        "\tdjnz    $-7\n",
-        "\tret\n",
-    ],[]),
-    "rt_udiv8": ([
-        "; RT_UDIV8\n",
-        "; 8/8 unsigned integer division,\n",
-        ";Inputs:\n",
-        ";     A  numerator, E denominator\n",
-        ";Outputs:\n",
-        ";     D  quotient\n",
-        ";     A  remainder\n"
-        ";     BC, DE are preserved\n",
-        "rt_udiv8:\n",
-        "\tld d,0           ; Initialize quotient\n",
-        "__div8_loop:\n",
-        "\tcp e             ; Compare A with E\n",
-        "\tjr c,__div8_end  ; If A < E, we're done\n",
-        "\tsub e            ; Subtract E from A\n",
-        "\tinc d            ; Increment quotient\n",
-        "\tjr __div8_loop   ; Continue dividing\n",
-        "__div8_end:\n",
-        "\tret\n",
-    ],[]),
-    "rt_mul16_255": ([
-        "; RT_MUL16_255\n",
-        "; Multiplies HL by 255 and leaves the result in HL\n",
-        "; HL * 255 = HL * (256 - 1) = (HL << 8) - HL\n",
-        ";Inputs:\n",
-        ";     HL  number to be multiplied\n",
-        ";Outputs:\n",
-        ";     HL  result of HL * 255\n",
-        ";     AF, DE and HL are modified\n",
-        "rt_mul16_255:\n",
-        "\tld      d,h      ; keep HL so we can sub later\n",
-        "\tld      e,l\n",
-        "\tld      a,h\n",
-        "\tld      h,l      ; HL << 8\n",
-        "\tld      l,0\n",
-        "\tor      a        ; clear CF\n",
-        "\tsbc     hl,de    ; HL = (HL << 8) - DE\n",
-        "\tret\n",
-    ],[]),
-    "rt_mul16_A": ([
-        "; RT_MUL16_A\n",
-        "; Multiplies HL by A and leaves the result in HL\n",
-        "; Routine taken from:\n",
-        "; https://learn.cemetech.net/index.php/Z80:Math_Routines\n",
-        ";Inputs:\n",
-        ";     HL  number to be multiplied\n",
-        ";      A  number to by multiplied by\n",
-        ";Outputs:\n",
-        ";     HL  result of HL * A\n",
-        ";     AF, DE and HL are modified\n",
-        "rt_mul16_A:\n",
-        "\tld      b,8\n",
-        "\tld      hl,0\n",
-        "__mult16_a_loop:\n",
-        "\tadd     hl,hl\n",
-        "\trlca\n",
-        "\tjr      nc,$+3\n",
-        "\tadd     hl,de\n",
-        "\tdjnz    __mult16_a_loop\n",
-        "\tret\n",
-    ], []),
-    #
-    # runtime for BASIC commands support
-    #
-    "rt_real2int": ([
-        "; RT_REAL2INT\n",
-        "; Converts a 5-bytes float value into a 16-bits integer\n",
-        ";Inputs:\n",
-        ";     HL  address to the 5-bytes float number\n",
-        ";Outputs:\n",
-        ";     HL  16 bits integer\n",
-        ";     AF, HL, DE and IX are modified\n",
-        "rt_real2int:\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_TO_INT}  ; MATH_REAL_TO_INT\n",
-        "\tcall    rt_math_call\n",
-        "\tjp      p,$+10\n",
-        "\tld      de,0\n",
-        "\txor     a\n",
-        "\tex      hl,de\n",
-        "\tsbc     hl,de\n",
-        "\tret\n",
-    ], ["rt_math_call"]),
-    "rt_int2real": ([
-        "; RT_INT2REAL\n",
-        "; Converts a 16-bits integer in a 5-bytes floating point number\n",
-        ";Inputs:\n",
-        ";     HL  integer to convert\n",
-        ";Outputs:\n",
-        ";     rt_math_accum1 holds the converted number pointed by HL\n",
-        "rt_int2real:\n",
-        "\txor     a\n",
-        "\tld      a,h    ; bit 7 sets the sign\n",
-        "\tbit     7,a\n",
-        "\tjr      z,$+8\n",
-        "\tex      de,hl\n",
-        "\tld      hl,0\n",
-        "\tsbc     hl,de\n",
-        "\tld      de,rt_math_accum1\n",
-        f"\tld      ix,{FWCALL.MATH_INT_TO_REAL}  ; MATH_INT_TO_REAL\n",
-        "\tjp      rt_math_call\n",
-    ], ["rt_math_call"]),
-    "rt_real2fix": ([
-        "; RT_REAL2FIX\n",
-        "; Removes the decimal part of a floating point number rounding\n",
-        "; the integer part towards 0\n",
-        ";Inputs:\n",
-        ";     HL  address to the 5-bytes floating point number\n",
-        ";Outputs:\n",
-        ";     rt_math_accum1 holds the converted number pointed by HL\n",
-        "rt_real2fix:\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_FIX}  ; MATH_REAL_FIX\n",
-        "\tcall    rt_math_call\n",
-        "\tld      a,b   ; sign (bit 7)\n",
-        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n",
-        "\tcall    rt_math_call\n",
-        "\tjp      rt_real2int\n",
-        "\tret\n",
-    ], ["rt_math_call", "rt_real2int"]),
-    "rt_real_int": ([
-        "; RT_REAL_INT\n",
-        "; Removes the decimal part of a floating point number rounding\n",
-        "; the integer part towards 0, like FIX, but returning a lower result\n",
-        "; when working with negative decimal inputs.\n",
-        ";Inputs:\n",
-        ";     HL  address to the 5-bytes floating point number\n",
-        ";Outputs:\n",
-        ";     rt_math_accum1 holds the converted number pointed by HL\n",
-        "rt_real_int:\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_INT}  ; MATH_REAL_INT\n",
-        "\tcall    rt_math_call\n",
-        "\tld      a,b   ; sign (bit 7)\n",
-        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n",
-        "\tcall    rt_math_call\n",
-        "\tjp      rt_real2int\n",
-        "\tret\n",
-    ], ["rt_math_call", "rt_real2int"]),
-    "rt_real_round": ([
-        "; RT_REAL_ROUND\n",
-        "; Rounds the real value pointed by HL to de number of decimal places\n",
-        "; indicated by A. If A is negative, increases the number adding that\n",
-        "; amount of ceros at the end of the result.\n",
-        "; Inputs:\n",
-        ";     HL address to the 5-bytes real value\n",
-        ";      A decimal required precision\n",
-        "; Outputs:\n",
-        ";     HL points to the result (the rounded real number)\n",
-        ";     HL, A, BC, DE and IX are modified\n",
-        "rt_real_round:\n",
-        "\tld      de,rt_math_accum1\n",
-        "\tcall    rt_move_real      ; REAL to rt_math_accum1\n",
-        "\tpush    af\n",
-        "\tor      a\n",
-        "\tjr      z,$+9\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10\n",
-        "\tcall    rt_math_call\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_TO_BIN}  ; MATH_REAL_TO_BIN\n",
-        "\tcall    rt_math_call\n",
-        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n",
-        "\tcall    rt_math_call\n",
-        "\tpop     bc\n",
-        "\txor     a\n",
-        "\tsub     b\n",
-        "\tjr      z,$+9\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10\n",
-        "\tjp      rt_math_call\n",
-    ], ["rt_math_call", "rt_move_real"]),
-    "rt_timer": ([
-        "; RT_TIMER_GET\n",
-        "; Retrieves a AFTER/EVERY data block (tick block). Each tick block has\n",
-        "; a size of 13 bytes. The las 7 bytes are the event block contained\n",
-        "; inside the tick block\n",
-        ";Inputs:\n",
-        ";     B  timer number (0-3)\n",
-        ";Outputs:\n",
-        ";     HL address to the timer block\n",
-        "rt_timer_blocks: defs 13*4 ; 4 tick blocks\n",
-        "rt_timer_get:\n",
-        "\tld      hl,rt_timer_blocks\n",
-        "\tld      de,13       ; Block size\n",
-        "__timerget_loop:\n",
-        "\tadd     hl,de\n",
-        "\tdjnz    __timerget_loop\n",
-        "\tret\n",
-    ], []),
-    "rt_fill": ([
-        "; RT_FILL\n",
-        "; Wrapper for the GRA FILL firmware call in the 664 and 6128\n",
-        ";Inputs:\n",
-        ";      L  INK index\n",
-        ";Outputs:\n",
-        ";     None\n",
-        ";     AF, BC, DE and HL are modified\n",
-        "rt_timer_blocks: defs 13*4 ; 4 tick blocks\n",
-        "rt_fill_buffer: defs 70\n",
-        "rt_fill:\n",
-        "\tld      a,l\n",
-        "\tld      hl,rt_fill_buffer\n",
-        "\tld      de,70\n",
-        f"\tjp      {FWCALL.GRA_FILL}  ; GRA_FILL\n",
-    ],[]),
-    "rt_inkey": ([
-        "; RT_INKEY\n",
-        "; Wrapper for the KEY TEST firmware call\n",
-        ";Inputs:\n",
-        ";      HL  Key numeric value to test\n",
-        ";Outputs:\n",
-        ";     HL  -1 no pressed, 0, 32, 128 and 160 as per INKEY doc\n",
-        ";     AF, C, and HL are modified\n",
-        "rt_inkey:\n",
-        "\tld      a,l\n",
-        f"\tcall    {FWCALL.KM_TEST_KEY}  ; KM_TEST_KEY\n",
-        "\tld      hl,&FFFF  ; -1 (the key is not pressed)\n",
-        "\tjr      z,$+4\n",
-        "\tinc     h\n",
-        "\tld      l,c\n",
-        "\tret\n",
-    ],[]),
-    "rt_inkeys": ([
-        "; RT_INKEYS\n",
-        "; Wrapper for the READ CHAR firmware call\n",
-        ";Inputs:\n",
-        ";     HL  address to the string that will receive the pressed char\n",
-        ";Outputs:\n",
-        ";     HL  -1 no pressed, 0, 32, 128 and 160 as per INKEY doc\n",
-        ";     AF, C, and HL are modified\n",
-        "rt_inkeys:\n",
-        "ld      (hl),0\n",
-        f"call    {FWCALL.KM_READ_CHAR}  ; KM_READ_CHAR\n",
-        "jr      nc,$+7  ; if CF we have a character\n",
-        "ld      (hl),1\n",
-        "inc     hl\n",
-        "ld      (hl),a\n",
-        "dec     hl\n",
-        "\tret\n",
-    ],[]),
-    "rt_gettime": ([
-        "; RT_GETTIME\n",
-        "; Wrapper for the KL TIME PLEASE firmware call\n",
-        "; It captures the bin number and casts it to real\n",
-        "; Leaving the result in rt_math_accum1\n",
-        ";Inputs:\n",
-        ";     None\n",
-        ";Outputs:\n",
-        ";     HL points to rt_math_accum1\n",
-        ";     AF, HL, BC, DE and IX are modified\n",
-        "rt_gettime:\n",
-        f"\tcall     {FWCALL.KL_TIME_PLEASE}  ; KL_TIME_PLEASE\n",
-        "\tld      ix,rt_math_accum1\n",
-        "\tld      (ix+0),l\n",
-        "\tld      (ix+1),h\n",
-        "\tld      (ix+2),e\n",
-        "\tld      (ix+3),d\n",
-        "\txor     a\n",
-        "\tld      hl,rt_math_accum1\n"
-        f"\tld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL\n",
-        "\tjp      rt_math_call\n",
-    ],["rt_math_call"]),
-    "rt_randomize": ([
-    "; RT_RANDOMIZE\n",
-    "; Sets rt_rnd_seed1 and rt_rnd_seed2 which are used by rt_rnd\n",
-    ";Inputs:\n",
-    ";   HL address to a buffer with at least 4 bytes\n",
-    ";Outputs:\n",
-    ";   rt_rnd_seed1 gets the value of HL\n",
-    ";   rt_rnd_seed2 gets the value of DE\n",
-    ";   HL is modified\n",
-    "rt_rnd_seed1: db &6c,&07       ; some initial value just in case\n",
-    "rt_rnd_seed2: db &70,&c6\n",
-    "rt_old_seed1: db &6c,&07       ; to retrieve again last number\n",
-    "rt_old_seed2: db &07,&6c\n",
-    "rt_randomize:\n",
-    "\tld      a,(hl)\n",
-    "\tld      (rt_rnd_seed1),a\n",
-    "\tinc     hl\n",
-    "\tld      a,(hl)\n",
-    "\tld      (rt_rnd_seed1+1),a\n",
-    "\tinc     hl\n",
-    "\tld      a,(hl)\n",
-    "\tld      (rt_rnd_seed2),a\n",
-    "\tinc     hl\n",
-    "\tld      a,(hl)\n",
-    "\tld      (rt_rnd_seed2+1),a\n",
-    "\tret\n",
-    ], []),
-    "rt_rnd": ([
-    "; RT_RND\n",
-    "; This is a very fast, quality pseudo-random number generator.\n",
-    "; It combines a 16-bit Linear Feedback Shift Register and a 16-bit LCG.\n",
-    "; Taken from:\n",
-    "; https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Random\n",
-    ";Inputs:\n",
-    ";   (rt_rnd_seed1) contains a 16-bit seed value\n",
-    ";   (rt_rnd_seed2) contains a NON-ZERO 16-bit seed value\n",
-    ";Outputs:\n",
-    ";   HL address to the REAL result\n",
-    ";   BC is the result of the LCG, so not that great of quality\n",
-    ";   AF is modified, DE is preserved\n",
-    "rt_rnd_32767: db &00,&00,&FE,&7F,&8F\n",
-    "rt_rnd:\n",
-    "\tld      hl,(rt_rnd_seed1)\n",
-    "\tld      (rt_old_seed1),hl\n",
-    "\tld      b,h\n",
-    "\tld      c,l\n",
-    "\tadd     hl,hl\n",
-    "\tadd     hl,hl\n",
-    "\tinc     l\n",
-    "\tadd     hl,bc\n",
-    "\tld      (rt_rnd_seed1),hl\n",
-    "\tld      hl,(rt_rnd_seed2)\n",
-    "\tld      (rt_old_seed2),hl\n",
-    "\tadd     hl,hl\n",
-    "\tsbc     a,a\n",
-    "\tand     %00101101\n",
-    "\txor     l\n",
-    "\tld      l,a\n",
-    "\tld      (rt_rnd_seed2),hl\n",
-    "\tadd     hl,bc\n",
-    "\tres     7,h\n",
-    "\tld      de,rt_math_accum1  ; lests convert the number to REAL\n",
-    "\txor     a                  ; always positive\n",
-    f"\tld      ix,{FWCALL.MATH_INT_TO_REAL}           ; MATH_INT_TO_REAL\n",
-    "\tcall    rt_math_call\n",
-    "\tld      de,rt_rnd_32767    ; max number that can be generated\n",
-    f"\tld      ix,{FWCALL.MATH_REAL_DIV}           ; MATH_REAL_DIV\n",
-    "\tjp      rt_math_call\n\n",
-     "; RT_RND0\n",
-    "; Depending on the value of HL it returns the last generated number.\n",
-    "; a new one in the sequence\n",
-    ";Inputs:\n",
-    ";   HL 0 to get the latest generated number\n",
-    ";Outputs:\n",
-    ";   HL is the address to the REAL result\n",
-    ";   BC is the result of the LCG, so not that great of quality\n",
-    ";   AF is modified, DE is preserved\n",
-    "rt_rnd0:\n",
-    "\tld      a,l\n",
-    "\tor      a\n",
-    "\tjr      nz,rt_rnd\n",
-    "\tld      hl,rt_old_seed1\n",
-    "\tcall    rt_randomize\n"
-    "\tjr      rt_rnd\n",
-    ], ["rt_randomize"]),
-    "rt_fileinbuf": ([
-        "; Buffer for content read from files through OPENIN\n",
-        "rt_fileinbuf: defs 2048\n",
-    ], ["rt_error", "rt_restoredos"]),
-    "rt_fileoutbuf": ([
-        "; Buffer for content written to files through OPENOUT\n",
-        "rt_fileoutbuf: defs 2048\n",
-    ], ["rt_error", "rt_restoredos"]),
-    "rt_sound": ([
-        "; Adds a new sound to one of the available Amstrad CPC\n",
-        "; sound queues. The data must be kept in a buffer placed\n",
-        "; somewhere in the 32k central memory area.\n",
-        ";Inputs:\n",
-        ";   HL address to the sound buffer with the data.\n",
-        ";Outputs:\n",
-        ";   CF if sound was added to the queue.\n",
-        ";   AF, BC, DE, IX and HL are modified.\n",
-        "rt_sound_buf: defs 9\n",
-        "rt_sound:\n",
-        "\tld      hl,rt_sound_buf\n",
-        f"\tjp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE\n",
-    ], ["rt_error"]),
-    "rt_load": ([
-        "; RT_LOAD\n",
-        "; Reads an AMSDOS file (with header) and extracts length and\n",
-        "; target address, loading there the content.\n",
-        ";Inputs:\n",
-        ";   HL address to the file name\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF, HL, BC, DE and IX are modified\n",
-        "rt_load:\n",
-        "\tld      de,0   ; 2K buffer not needed with disks\n",
-        "\tld      b,(hl) ; filename length\n",
-        "\tinc     hl\n",
-        f"\tcall    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN\n",
-        "\tret     nc     ; Error\n",
-        "\tex      de,hl\n",
-        f"\tcall    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT\n",
-        f"\tjp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE\n",
-    ], ["rt_restoredos"]),
-    "rt_loadaddr": ([
-        "; RT_LOADADDR\n",
-        "; Reads an AMSDOS file (with header) and extracts its length.\n",
-        "; The content is loaded into the address stored in DE.\n",
-        ";Inputs:\n",
-        ";   HL address to the file name\n",
-        ";   DE address where content must be loaded\n",
-        ";Outputs:\n",
-        ";   CF if no error\n",
-        ";   AF, HL, BC, DE and IX are modified\n",
-        "rt_loadaddr:\n",
-        "\tpush    de\n",
-        "\tld      de,0   ; 2K buffer not needed with CAS_IN_DIRECT\n",
-        "\tld      b,(hl) ; filename length\n",
-        "\tinc     hl\n",
-        f"\tcall    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN\n",
-        "\tret     nc     ; Error\n",
-        "\tpop     hl\n",
-        f"\tcall    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT\n",
-        f"\tjp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE\n",
-    ], ["rt_restoredos"]),
-    "rt_save": ([
-        "; RT_SAVE\n",
-        "; Dumps a memory region as an AMSDOS binary file (with header)\n",
-        ";Inputs:\n",
-        ";   HL address to the file name\n",
-        ";   IX address to the first param in memory\n",
-        ";      IX + 0: Memory address\n",
-        ";      IX + 2: Entry point\n",
-        ";      IX + 4: Memory block length\n",
-        ";Outputs:\n",
-        ";   CF  if no error\n",
-        ";   AF, HL, BC, DE and IX are modified\n",
-        "rt_save:\n",
-        "\tld      de,0   ; 2K buffer not needed with CAS_OUT_DIRECT\n",
-        "\tld      b,(hl) ; filename length\n",
-        "\tinc     hl\n",
-        f"\tcall    {FWCALL.CAS_OUT_OPEN}  ; CAS_OUT_OPEN\n",
-        "\tret     nc     ; Error\n",
-        "\tld       l,(ix+0)\n",
-        "\tld       h,(ix+1)\n",
-        "\tld       c,(ix+2)\n",
-        "\tld       b,(ix+3)\n",
-        "\tld       e,(ix+4)\n",
-        "\tld       d,(ix+5)\n",
-        "\tld       a,2\n",
-        f"\tcall    {FWCALL.CAS_OUT_DIRECT}  ; CAS_OUT_DIRECT\n",
-        f"\tjp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE\n",
-    ], ["rt_restoredos"]),
-    "rt_onjump": ([
-        "; RT_ONJUMP\n",
-        "; Given a number in A, this routine jumps to the corresponding\n",
-        "; address stored in memory and pointed by HL\n",
-        ";Inputs:\n",
-        ";   DE address to the list of addresses in memory\n",
-        ";    A number to select one of the addresses, starting in 1\n",
-        ";    B number of options\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF, DE and HL are modified\n",
-        "rt_onjump:\n",
-        "\tor      a\n",
-        "\tret     z      ; do nothing if index is 0\n",
-        "\tld      l,a\n",
-        "\tld      a,b\n",
-        "\tcp      l\n",
-        "\tret     c\n",
-        "\tdec     l\n",
-        "\tld      h,0\n",
-        "\tadd     hl,hl\n",
-        "\tadd     hl,de\n",
-        "\tld      e,(hl)\n",
-        "\tinc     hl\n",
-        "\tld      d,(hl)\n",
-        "\tex      de,hl\n",
-        "\tjp      (hl)\n"
-    ], []),
-    "rt_speedwrite": ([
-        "; RT_SPEEDWRITE\n",
-        "; HL must be 0 or 1 and indicates the desired speed.\n",
-        ";Inputs:\n",
-        ";   HL integer value (0 or 1)\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF and HL are modified\n",
-        "rt_speedwrite:\n",
-        "\txor     a\n",
-        "\tadd     l\n",
-        "\tjr      nz,__speedwrite_1\n",
-        "\tld      hl,333\n",
-        "\tld      a,25\n",
-        f"\tjp      {FWCALL.CAS_SET_SPEED}\n",
-        "__speedwrite_1\n",
-        "\tld      hl,107\n",
-        "\tld      a,50\n",
-        f"\tjp      {FWCALL.CAS_SET_SPEED}\n",
-    ], []),
-    "rt_restoredos": ([
-        "; RT_RESTOREDOS\n",
-        "; Based on https://www.cpcwiki.eu/forum/programming/reactivating-amsdos-firmware\n",
-        "; This rutine leaves again the AMSDOS rom enabled to be used\n",
-        "; will disc/tape routines\n",
-        ";Inputs:\n",
-        ";   None\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF, HL, DE and BC are modified\n",
-        "rt_restoredos:\n",
-        "\tld      c,7      ; AMSDOS rom\n",
-        "\tld      de,&0040 ; first usable byte of memory\n",
-        "\tld      hl,&abff ; holds the address of the new last usable byte\n",
-        f"\tjp      {FWCALL.KL_INIT_BACK}  ; KL INIT BACK\n",
-    ], []),
-    "rt_onsq": ([
-        "; RT_ONSQ\n",
-        "; This rutine calls the Firmware to duplicate the effect of the BASIC\n",
-        "; command ON SQ\n",
-        ";Inputs:\n",
-        ";   A sound queue identifier\n",
-        ";  DE address where to jump to when the event happens\n",
-        ";Outputs:\n",
-        ";   None\n",
-        ";   AF, HL, DE and BC are modified\n",
-        "__onsq_event: defs 7\n",
-        "rt_onsq:\n",
-        "\tld      b,&81\n",
-        "\tld      hl,__onsq_event\n",
-        f"\tcall    {FWCALL.KL_INIT_EVENT}  ; HL_INIT_EVENT\n",
-        "\tld      hl,__onsq_event\n",
-        f"\tjp      {FWCALL.SOUND_ARM_EVENT}  ; SOUND_ARM_EVENT\n",
-    ], []),
-    "rt_max": ([
-        "; RT_MAX\n",
-        "; This rutine checks HL and DE and returns in HL the max number\n",
-        ";Inputs:\n",
-        ";   HL first integer\n",
-        ";   DE second integer\n",
-        ";Outputs:\n",
-        ";   HL max number\n",
-        ";   DE min number\n",
-        ";   AF, HL and DE are modified\n",
-        "rt_max:\n",
-        "\tpush    hl\n",
-        "\txor     a\n",
-        "\tsbc     hl,de\n",
-        "\tjp      m,__max_de\n",
-        "\tpop     hl\n",
-        "\tret\n",
-        "__max_de:\n",
-        "\tex      de,hl\n",
-        "\tpop     de\n",
-        "\tret\n",
-    ], []),
-    "rt_maxreal": ([
-        "; RT_MAXREAL\n",
-        "; This rutine checks REAL numbers in accum1 and accum2 and\n",
-        "; leaves en accum1 the mayor of them\n",
-        ";Inputs:\n",
-        ";   The float numbers stored in accum1 and accum2\n",
-        ";Outputs:\n",
-        ";   accum1 contains the mayor number and accum2 the minor\n",
-        ";   AF, HL, DE, BC and IX are modified\n",
-        "rt_maxreal_buf: defs 5\n",
-        "rt_maxreal:\n",
-        "\tld      hl,rt_math_accum1\n",
-        "\tld      de,rt_math_accum2\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_COMP}\n",
-        "\tcall    rt_math_call\n",
-        "\tcp      1\n",
-        "\tret     z\n",
-        "\tld      bc,5\n",
-        "\tld      de,rt_maxreal_buf\n",
-        "\tldir\n",
-        "\tld      bc,5\n",
-        "\tld      hl,rt_math_accum2\n",
-        "\tld      de,rt_math_accum1\n",
-        "\tldir\n",
-        "\tld      bc,5\n",
-        "\tld      hl,rt_maxreal_buf\n",
-        "\tld      de,rt_math_accum2\n",
-        "\tldir\n",
-        "\tret\n",
-    ], ["rt_math_call"]),
-    "rt_intsgn": ([
-        "; RT_INTSGN\n",
-        "; Checks the sign of the integer in HL and returns\n",
-        "; -1 (negative), 0 or 1 (positive) in HL\n",
-        ";Inputs:\n",
-        ";   HL integer number\n",
-        ";Outputs:\n",
-        ";   HL -1, 0 or 1\n",
-        ";   AF, HL and DE are modified\n",
-        "rt_intsgn:\n",
-        "\tex      de,hl\n",
-        "\tld      hl,0\n",
-        "\tld      a,d\n",
-        "\tor      e\n",
-        "\tret     z\n",
-        "\tinc     hl\n",
-        "\tbit     7,d\n",
-        "\tret     z\n",
-        "\tdec     hl\n",
-        "\tdec     hl\n",
-        "\tret\n",
-    ], []),
-    "rt_realsgn": ([
-        "; RT_INTSGN\n",
-        "; Checks the sign of the float pointed by accum1 and returns\n",
-        "; -1 (negative), 0 or 1 (positive) in HL\n",
-        ";Inputs:\n",
-        ";   accum1 float number\n",
-        ";Outputs:\n",
-        ";   HL -1, 0 or 1\n",
-        ";   AF, HL and DE are modified\n",
-        "rt_realsgn:\n",
-        f"\tld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM\n",
-        "\tld      hl,0\n",
-        "\tor      a\n",
-        "\tret     z\n",
-        "\tdec     hl\n",
-        "\tcp      1\n",
-        "\tret     c\n",
-        "\tinc     hl\n",
-        "\tinc     hl\n",
-        "\tret",
-    ], ["rt_math_call"]),
+#
+# RUNTIME VARIABLES
+#
+    "rt_tmp_memory": ([],
+"""
+rt_memory_next: dw rt_memory_start
+rt_memory_start:
+"""
+),
+    "rt_error": ([],
+"""
+; RT_ERROR
+; Variable, can be set by ERROR and read by ERR
+rt_error: db 0
+"""
+),
+#
+# MEM AND CALLS
+# 
+    "rt_malloc": (["rt_tmp_memory", "rt_free_all"],
+"""
+; RT_MALLOC
+; Returns in HL the address to a temporal free memory block
+; reserving as many bytes as indicated by BC
+; Inputs:
+;     BC number of bytes to allocate
+; Outputs:
+;     HL address to the new reserved memory
+;     HL and Flags are modified
+rt_malloc:
+    ld      hl,(rt_memory_next)
+    push    hl
+    add     hl,bc
+    ld      (rt_memory_next),hl
+    pop     hl
+    ret
+"""
+),
+    "rt_malloc_de": (["rt_tmp_memory", "rt_free_all"],
+"""
+; RT_MALLOC_DE
+; Returns in DE the address to a temporal free memory block
+; reserving as many bytes as indicated by BC
+; Inputs:
+;     BC number of bytes to allocate
+; Outputs:
+;     DE address to the new reserved memory
+;     DE and Flags are modified
+rt_malloc_de:
+    ld      de,(rt_memory_next)
+    push    de
+    ex      de,hl
+    add     hl,bc
+    ld      (rt_memory_next),hl
+    ex      de,hl
+    pop     de
+    ret
+"""
+),
+    "rt_free_all": (["rt_tmp_memory"],
+"""
+; RT_FREE_ALL
+; Resets the position of the next available temporal memory block
+; to its initial position
+; Inputs:
+;     None
+; Outputs:
+;     None
+;     DE gets modified
+rt_free_all:
+    ld      de,rt_memory_start
+    ld      (rt_memory_next),de
+    ret
+"""
+),
+    "rt_call": ([],
+"""
+; RT_CALL
+; Jumps to the address passed in HL and uses the RET from the
+; callee to return to the original caller.
+; Inputs:
+;      A number of additional parameters in the stack
+;     IX address to the last parameter in the stack
+;     HL address to call to
+; Outputs:
+;     Depends on the callee
+rt_call:
+    jp      (hl)
+"""
+),
+    "rt_math_call": ([],
+f"""
+; RT_MATH_CALL
+; Jumps to the address passed in DE but it adjusts the address
+; so in 664 and 6128 machines it adds 36 bytes which is the shift
+; in the math jumpblock between these machines and the 464.
+; Inputs:
+;     IX call address as per 464 firmware jumpblock
+; Outputs:
+;     Depends on the callee
+;     BC and IX are directly modified
+rt_math_call:
+    ld      bc,(rt_math_offset)  ; adjutst for non 464 machines
+    add     ix,bc
+    jp      (ix)
+; RT_MATH_SETOFFSET
+; Checks the Amstrad CPC model and sets the value of rt_math_offset
+; so rt_math_call can find the right jumpblock addres.
+; Inputs:
+;     None
+; Outputs:
+;     None
+;     AF, BC and DE are directly modified
+rt_math_accum1: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
+rt_math_accum2: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
+rt_math_offset: dw  0
+rt_math_setoffset:
+    ld      c,0     ; ROM select address
+    call    {FWCALL.KL_PROBE_ROM}   ; KL_PROBE_ROM
+    ld      a,h     ; 0 = CPC464, 1 = CPC664, 2 = CPC6128, 4 = Plus)
+    or      a
+    ret     z
+    ld      a,&24   ; offset for 664 and 6128
+    ld      (rt_math_offset),a
+    ret
+"""
+),
+    "rt_move_real": ([],
+"""
+; RT_MOVE_REAL
+; Copies the real number 5 bytes pointed by HL into de
+; memory pointed by DE
+; so rt_math_call can find the right jumpblock addres.
+; Inputs:
+;     HL address to the real number to copy
+;     DE address to the destination memory
+; Outputs:
+;     HL points to the destination memory
+;     HL and DE are modified
+rt_move_real:
+    push    bc
+    push    de
+    ld      bc,5
+    ldir
+    pop     hl
+    pop     bc
+    ret
+"""
+),
+    "rt_scratch_pad": ([],
+"""
+; Free memory for temporal use
+rt_scratch_pad:  defs  255
+"""
+),
+#
+# STRINGS
+#      
+    "rt_stradd_len": ([],
+"""
+; RT_STRADD_LEN
+; Returns the addition of two string lenghts.
+; Final length is cropped to 254 if exceeds.        
+; Inputs:
+;    HL address to length1 in memory
+;    DE address to length2 in memory
+; Outputs:
+;     A resulting length (HL) + (DE) truncated to 254 if needed
+;     B is modified, HL, DE and C are preserved
+rt_stradd_len:
+    ld     b,(hl)
+    ld     a,(de)
+    add    a,b
+    jr     nc,__addlen_checkmax
+    jr     __addlen_crop
+__addlen_checkmax:
+    cp     255
+    ret    c
+__addlen_crop:
+    ld     a,254  ; max allowed
+    ret
+"""
+),
+    "rt_strcopy": ([],
+"""
+; RT_STRCOPY
+; Strings length is limited to 254 characters
+; First byte contains the string length       
+; Inputs:
+;     HL destination
+;     DE origin
+; Outputs:
+;     HL address to the destination string
+;     AF, B and DE are modified, C is preserved
+rt_strcopy:
+    push    hl
+    ld      a,(de)     ; total characters to copy
+    ld      (hl),a     ; number of copied characters
+    ld      b,a
+__strcopy_loop:
+    inc     hl         ; reserve first byte for length
+    inc     de         ; first character
+    ld      a,(de)
+    ld      (hl),a
+    djnz    __strcopy_loop
+    pop     hl
+    ret
+"""
+),
+    "rt_strzcopy": ([],
+"""
+; RT_STRZCOPY
+; Copies a null-terminated string into a regular string which
+; stores its length in the first byte       
+; Inputs:
+;     HL destination string
+;     DE null-terminated string origin
+; Outputs:
+;     HL address to the destination string
+;     AF, B and DE are modified, C is preserved
+rt_strzcopy:
+    push    hl
+    ld      b,0
+__strzcopy_loop:
+    ld      a,(de)
+    or      a
+    jr      z,_strzcopy_end
+    inc     de
+    inc     hl
+    ld      (hl),a
+    inc     b
+    jr      __strzcopy_loop
+__strzcopy_end:
+    pop     hl
+    ld      (hl),b
+    ret
+"""
+),
+    "rt_strcat": (["rt_stradd_len"],
+"""
+; RT_STRCAT
+; DE string gets append to the end of HL string
+; First byte contains the string length
+; Inputs:
+;     HL and DE
+; Outputs:
+;     HL points to the resulting string (HL+DE)
+;     AF, BC and DE are modified
+rt_strcat:
+    call    rt_stradd_len     ; lets get final length
+    ld      b,(hl)            ; current length
+    ld      c,(hl)            ; current length backup
+    ld      (hl),a            ; store final length
+    sub     b
+    ld      b,a               ; B has the number of bytes to copy
+    push    hl
+    ld      a,c               ; destination string current len
+    add     a,l
+    ld      l,a
+    adc     a,h
+    sub     l
+    ld      h,a               ; HL points to the its string last byte
+__strcat_loop:
+    inc     hl
+    inc     de
+    ld      a,(de)
+    ld      (hl),a
+    djnz    __strcat_loop
+    pop     hl
+    ret
+"""
+),
+    "rt_strcmp": ([],
+"""
+; RT_STRCMP
+; Compares two strings pointed by HL and DE and sets ZF and CF:
+; HL=DE ZF=1, HL<DE ZF=0 CF=0, HL>DE ZF=0 CF=1
+; Inputs:
+;     HL and DE
+; Outputs:
+;     Flags ZF and CF store the result of the comparation
+;     AF and B are modified
+rt_strcmp:
+    ld      a,(de)
+    cp      (hl)
+    jr      nc,$+3
+    ld      a,(hl)
+    or      a
+    ret     z              ; empty strings
+    push    hl
+    push    de
+    ld      b,a            ; longer string length
+__strcmp_loop:
+    inc     hl
+    inc     de
+    ld      a,(de)
+    cp      (hl)
+    jr      nz,__strcmp_end
+    djnz    __strcmp_loop
+    pop     de            ; seems equal
+    pop     hl            ; lets check again their lengths
+    ld      a,(de)
+    cp      (hl)
+    ret
+__strcmp_end:
+    pop     de
+    pop     hl
+    ret\
+"""
+),
+    "rt_strreplace": ([],
+"""
+; RT_STRREPLACE
+; Replaces part of the string pointed by HL with the substring
+; pointed by DE. BC indicates the insertion position and the number
+; of original chars to drop.
+; Inputs:
+;   HL address to the target string
+;   DE address to the substring to be inserted
+;    B insertion point (1 to length)
+; Outputs:
+;   None
+;   AF, DE and BC are modified
+rt_strreplace:
+    ld      a,(hl)      ; max characters
+    or      a
+    ret     z
+    push    hl
+__replace_insertpos:
+    inc     hl
+    dec     a
+    jr      c,___replace_end
+    djnz    __replace_insertpos
+    ld      c,a         ; remaining chars
+    ld      a,(de)
+    ld      b,a
+    inc     de
+__replace__copy:
+    ld      a,(de)
+    ld      (hl),a
+    dec     c
+    jr      c,___replace_end
+    inc     hl
+    inc     de
+    djnz    __replace__copy
+___replace_end:
+    pop     hl
+    ret
+"""
+),
+    "rt_int2str": (["rt_div16_by10"],
+"""
+; RT_INT2STR
+; HL starts containing the number to convert to string
+; HL ends storing the memory address to the buffer
+; Subroutine taken from:
+; https://wikiti.brandonw.net/index.php?title=Z80_Routines:Other:DispA
+; Inputs:
+;     HL number to convert to string
+; Outputs:
+;     HL points to the temporal address in memory with the string
+;      C indicates if the number is negative (C=1) or positive (C=0)
+;     HL, BC, DE, AF are modified
+rt_int2str_buf: defs 8
+rt_int2str:
+    ld      de,rt_int2str_buf
+    inc     de     ; first byte stores string length
+    ld      bc,0   ; B will count total numbers and C indicates negative
+    ; Detect sign of HL
+    bit     7,h
+    jr      z,__int2str_loop1
+    ; HL is negative so add '-' to string and negate HL
+    ld      a,"-"
+    ld      (de),a
+    inc     de
+    inc     c
+    ; Negate HL 
+    xor     a
+    sub     l
+    ld      l,a
+    ld      a,0    ; Note that XOR A or SUB A would disturb CF
+    sbc     a,h
+    ld      h,a
+__int2str_loop1:
+    push    bc
+    call    rt_div16_by10 ; HL = HL / 10, A = remainder
+    pop     bc
+    push    af     ; Store digit in stack in reversed order
+    inc     b
+    ld      a,h
+    or      l      ; Stop if quotent is 0
+    jr      nz, __int2str_loop1
+    ; Store string length
+    ld      hl,rt_int2str_buf
+    ld      a,b
+    add     c
+    ld      (hl),a
+__int2str_loop2:
+    ; Retrieve digits from stack
+    pop     af
+    or      &30    ; '0' + A
+    ld      (de), a
+    inc     de
+    djnz    __int2str_loop2
+    ret
+"""
+),
+    "rt_long2str": (["rt_div32_by10"],
+"""
+; RT_LONG2STR
+; HL points to the number (32 bits) to convert to string
+; HL ends containing the memory address to the string
+; Inputs:
+;     HL points to an area of 4 bytes with the number to convert to string
+; Outputs:
+;     HL points to the temporal address in memory with the string
+;      C indicates if the number is negative (C=1) or positive (C=0)
+;     HL, BC, DE, AF are modified
+rt_long2str_buf: defs 10
+rt_long2str:
+    push    hl
+    pop     ix
+    ld      l,(ix+0)
+    ld      h,(ix+1)
+    ld      e,(ix+2)
+    ld      d,(ix+3)
+    ld      bc,0
+__long2str_loop1:
+    push    bc
+    call    rt_div32_by10 ; DEHL = DEHL / 10, A = remainder
+    pop     bc
+    push    af            ; store digit in stack in reversed order
+    inc     b
+    ld      a,l
+    or      h
+    or      e
+    or      d
+    jr      nz, __long2str_loop1
+    ld      hl,rt_long2str_buf
+    ld      de,rt_long2str_buf
+    ld      a,b
+    ld      (de),a
+    inc     de
+__long2str_loop2:
+    pop     af            ; retrieve digits from stack
+    or      &30           ; '0' + A
+    ld      (de),a
+    inc     de
+    djnz    __long2str_loop2
+    ret
+"""
+),
+    "rt_real2strz": (["rt_math_call", "rt_div32_by10", "rt_udiv8"],
+f"""
+; RT_REAL2STRZ
+; Converts a 5-bytes floating point number into a string
+; Inputs:
+;   HL pointer to the float acumulator where the float number is
+;  Outputs
+;   Leaves the converted string in the rt_real2strz_buf memory area
+;   AF, BC, DE, HL and IX are modified
+__r2str_conv_buf: defs 10
+rt_real2strz_buf: defs 12
+rt_real2strz:
+    ld      ix,{FWCALL.MATH_REAL_PREPARE}  ; MATH_REAL_PREPARE
+    call    rt_math_call
+    ld      a,b
+    cp      0
+    jr      z, __real2str_0
+    call    __r2str_calculate_digits
+    ld      (hl),0
+    ret
+__real2str_0:
+    ld      hl,rt_real2strz_buf
+    ld      (hl),"0"
+    inc     hl
+    ld      (hl),0
+    ret
+__r2str_calculate_digits
+    push    de
+    ld      l,(ix+0) ; Copy to DEHL the normed mantissa
+    ld      H,(ix+1)
+    ld      e,(ix+2)
+    ld      d,(ix+3)
+    ld      b,9      ; lets calculate the actual digits diving by 10 9 times
+    ld      c,9      ; lets store in C the significant digits (no trailing 0s)
+    ld      ix,__r2str_conv_buf+8 ; digits are stored here from back to front
+__r2str_calculate_digits_loop:
+    push    bc
+    call    rt_div32_by10
+    pop     bc
+    bit     7,c      ; check MSb, are we still removing traling 0?
+    jr      nz,__r2str_calculate_digits_next
+    or      a        ; is this a 0?
+    jr      nz,__r2str_calculate_digits_not0
+    dec     c
+    jr      __r2str_calculate_digits_next
+__r2str_calculate_digits_not0:
+    set     7,c      ; set MSb to 1 so we don't look for more trailing 0s
+__r2str_calculate_digits_next:
+    add     "0"
+    ld      (ix+0),a
+    dec     ix
+    djnz    __r2str_calculate_digits_loop
+    res     7,c    ; leave in C just the number of significant digits
+    pop     de
+    ld      hl,rt_real2strz_buf  ; address of our text buffer
+    ld      a,d      ; A is now the sign: 01 for + and FF for -
+    sub     1        ; A = 0 if possitive
+    jr      z,__float_check_exp
+    ld      (hl),"-" ; Lets write the negative sign
+    inc     hl
+__float_check_exp:
+    ld      b,0      ; total number of written digits
+    ld      ix,__r2str_conv_buf+5 ; position for E notation
+    ld      a,e
+    add     9        ; restore decimal position
+    cp      &80      ; EXP > 0? is a big number else small one
+    jr      c,__float_check_E_big
+    push    af
+    sub     c        ; check if decimal position plus digits is too much
+    cp      &F8
+    jr      c,__float_write_E_small ; restores af
+    pop     af                       ; restores af if didn't jump
+    jr      __float_check_exp_end
+__float_write_E_small:
+    pop     af
+    ld      (ix+0),"E"
+    ld      (ix+1),"-"
+    neg              ; make exponent positive (it was negative)
+    inc     a
+    jr      __float_write_exp
+__float_check_E_big:
+    cp      10         ; EXP > 10? then we need E notation
+    jr      c,__float_check_exp_end
+    ld      (ix+0),"E"
+    ld      (ix+1),"+" ; continue directly into _float_write_exp
+    dec     a
+__float_write_exp:
+    ; At this point we have written E+ or E- in the buffer
+    ld      e,10      ; divide by 10 to get first digit
+    call    rt_udiv8
+    add     "0"
+    ld      (ix+3),a  ; store ones digit
+    ld      a,d
+    add     "0"
+    ld      (ix+2),a  ; store tens digit
+    ld      a,1       ; set decimal position to 1
+    ld      c,1
+    jr      __float_copy_numbers ; ends doing a ret
+__float_check_exp_end:
+    ld      c,a      ; keep in C the decimal position + 9
+    call    __float_write_numbers
+    jr      __float_remove_trailing_0s ; ends doing a ret
+; A and C hold the decimal point position
+; B number of current written digits
+; HL text buffer
+__float_write_numbers:
+    cp      1        ; only if A <=0 we need leading 0s
+    jp      p,__float_copy_numbers
+    ld      (hl),"0"
+    inc     hl
+    ld      (hl),"."
+    inc     hl
+__put_leading_0s_loop:
+    or      a
+    jr      z,__float_copy_numbers ; ends doing a ret
+    ld      (hl),"0"
+    inc     hl
+    inc     a
+    inc     b
+    jr      __put_leading_0s_loop
+; HL points to the text buffer next position
+; In B we have the digits already written
+; In C we have the decimal position
+__float_copy_numbers:
+    ld      de,__r2str_conv_buf
+    ld      a,9
+    sub     b   
+    ld      b,a      ; B = max number of digits that we can still print
+__float_copy_numbers_loop:
+    ld      a,(de)
+    ld      (hl),a
+    inc     hl
+    inc     de
+    dec     b
+    ret     z
+    dec     c
+    jr      nz,__float_copy_numbers_loop
+    ld      (hl),"."    ; add . in the correct position
+    inc     hl          ; if number is >0
+    jr      __float_copy_numbers_loop
+; C contains again original decimal point position (biased -9)
+; HL points to the end of text buffer
+__float_remove_trailing_0s:
+    bit     7,c      ; if A is negative we remove trailing 0s
+    ret     z        ; no traling 0s
+    dec     hl       ; point to the last digit
+__float_remove_trailing_loop:
+    ld      a,(hl)
+    cp      "0"
+    jr      z,__float_remove_trailing_char
+    cp      "."
+    jr      z,__float_remove_decimal_char
+    inc     hl
+    ret    
+__float_remove_trailing_char:
+    ld      (hl),0
+    dec     hl
+    jr      __float_remove_trailing_loop
+__float_remove_decimal_char:
+    ld      (hl),0
+    ret
+"""
+),
+    "rt_strz2num": ([],
+"""
+; RT_STRZ2NUM
+; Converts a string with an integer, hexadecimal or binary number to
+; its numerical 16 bits long form
+; Inputs:
+;     DE address to the null-terminated string with the number
+; Outputs:
+;     HL resulting number
+;     AF, HL, DE and BC are modified
+rt_strz2num:
+    ld      a,(de)
+    cp      "&"
+    jr      nz,rt_strz2int
+    inc     de
+    ld      a,(de)
+    cp      "X"
+    jr      z,__strz2num_bin
+    cp      "x"
+    jr      z,__strz2num_bin
+    jp      rt_strz2hex
+__strz2num_bin:
+    inc     de
+    jp      z,rt_strz2bin
+
+; RT_STRZ2INT
+; DE address to the null-terminated string, ends pointing to first
+; char not converted.
+; Routine based in the library created by Zeda:
+; https://github.com/Zeda/Z80-Optimized-Routines
+; Inputs:
+;     DE address to the source null-terminated string
+; Outputs:
+;     HL contains the converted number
+;     HL, BC, DE, AF are modified
+rt_strz2int:
+    ld      hl,0
+__strz2int_loop:
+    ld      a,(de)
+    or      a
+    ret     z      ; end of string
+    sub     &30    ; '0' character
+    cp      10
+    ret     nc     ; some other character > 9
+    inc     de
+    ld      b,h
+    ld      c,l
+    add     hl,hl  ; x2
+    add     hl,hl  ; x4
+    add     hl,bc  ; x5
+    add     hl,hl  ; x10
+    add     l
+    ld      l,a
+    jr      nc,__strz2int_loop
+    inc     h
+    jr      __strz2int_loop
+
+; RT_STRZ2HEX
+; DE address to the null-terminated string with a hexadecimal number,
+; ends pointing to first char not converted.
+; Inputs:
+;     DE address to the source null-terminated string
+; Outputs:
+;     HL contains the converted number
+;     HL, BC, DE, AF are modified
+rt_strz2hex:
+    ld      hl,0
+__str2hex_next:
+    ld      a,(de)
+    or      a
+    ret     z
+    inc     de
+    cp      "&"
+    jr      z,__str2hex_next
+    cp      "H"
+    jr      z,__str2hex_next
+    cp      "h"
+    jr      z,__str2hex_next
+    cp      "0"
+    ret     c                 ; < 0 end of conversion
+    cp      "9"+1             ; < 10
+    jr      c,__str2hex_digit ; '0'..'9'
+    cp      "A"
+    ret     c                 ; < A end of conversion
+    cp      "F"+1
+    jr      c,__str2hex_upper ; 'A'..'F'
+    cp      "a"
+    ret     c                 ; < a end of conversion
+    cp      "f"+1
+    jr      c,__str2hex_lower
+    ret                       ; > f end of conversion
+__str2hex_digit:
+    sub     "0"
+    ld      c,a
+    jr      __str2hex_shiftadd
+__str2hex_upper:
+    sub     "A"-10
+    ld      c,a
+    jr      __str2hex_shiftadd
+__str2hex_lower:
+    sub     "a"-10
+    ld      c,a
+    jr      __str2hex_shiftadd
+__str2hex_shiftadd          ; HL = HL*16 + C
+    add     hl,hl           ; *2
+    add     hl,hl           ; *4
+    add     hl,hl           ; *8
+    add     hl,hl           ; *16
+    ld      b,0
+    ld      a,c
+    ld      c,a
+    add     hl,bc
+    jr      __str2hex_next
+
+; RT_STRZ2BIN
+; DE address to the null-terminated string with a binary number,
+; ends pointing to first char not converted.
+; Inputs:
+;     DE address to the source null-terminated string
+; Outputs:
+;     HL contains the converted number
+;     HL, BC, DE, AF are modified
+rt_strz2bin:
+    ld      hl,0
+__str2bin_next:
+    ld      a,(de)
+    or      a
+    ret     z
+    inc     de
+    cp      "&"
+    jr      z,__str2hex_next
+    cp      "X"
+    jr      z,__str2hex_next
+    cp      "x"
+    jr      z,__str2hex_next
+    cp      "0"
+    ret     c                 ; < 0 end
+    cp      "2"
+    ret     nc                ; > 1 end
+    sub     "0"
+    add     hl,hl             ; hl = hl *2
+    or      l
+    ld      l,a
+    jr      __str2bin_next
+"""
+),
+    "rt_int2hex": ([],
+"""
+; RT_INT2HEX"
+; Converts a two-bytes integer in an string with its hexadecimal
+; representation. Routine inspired by the one included in
+; 'Ready Made Machine Language Routines' book
+; Inputs:
+;     A min number of characters: 2 or 4
+;    HL string address
+;    DE integer to convert
+; Outputs:
+;     HL address to the string with the conversion
+;     BC, AF are modified
+rt_int2hex:
+    push    hl
+    inc     hl
+    ld      c,2
+    cp      3
+    jr      c,__int2hex_low
+__int2hex_high:
+    inc     c
+    inc     c
+    ld      a,d
+    call    __a2hex
+ __int2hex_low:
+    ld      a,e
+    call    __a2hex
+    pop     hl
+    ld      (hl),c
+    ret
+__a2hex:
+    push    bc
+    ld      b,2    ; b=0 marks the end
+    ld      c,a    ; keep number so we can restore it
+    rr      a      ; move high order bits
+    rr      a      ; into the low part
+    rr      a
+    rr      a
+__a2hex_conv:
+    and     &0F
+    cp      &0A    ; check if is greater or equal
+    jr      nc,__a2hex_letter
+    add     a,&30  ; get the number ASCII code
+    jr      __a2hex_store
+__a2hex_letter:
+    add     a,&37
+__a2hex_store:
+    ld      (hl),a
+    inc     hl
+    ld      a,c    ; restore number for next loop
+    djnz    __a2hex_conv
+    pop     bc
+    ret
+"""
+),
+    "rt_int2bin": ([],
+"""
+    ; RT_INT2BIN"
+    ; Converts a two-bytes integer in an string with its binary
+    ; representation. Routine inspired by the one included in
+    ; 'Ready Made Machine Language Routines' book
+    ; Inputs:
+    ;     A min number of characters: 8 or 16
+    ;    HL string address
+    ;    DE integer to convert
+    ; Outputs:
+    ;     HL address to the string with the conversion
+    ;     BC, AF are modified
+    rt_int2bin:
+    push    hl
+    inc     hl
+    ld      c,8
+    cp      9
+    jr      c,__int2bin_low
+__int2bin_high:
+    ld      c,16
+    ld      a,d
+    call    __a2bin
+__int2bin_low:
+    ld      a,e
+    call    __a2bin
+    pop     hl
+    ld      (hl),c
+    ret
+__a2bin:
+    ld      b,8
+__a2bin_loop:
+    rla
+    jr      c,$+6
+    ld      (hl),&30
+    jr      $+4
+    ld      (hl),&31
+    inc     hl
+    djnz    __a2bin_loop
+    ret
+"""
+),
+    "rt_strz2real": ([],
+f"""
+; RT_STRZ2REAL
+; DE address to the null-terminated string, ends pointing to first
+; char not converted.
+; Inputs:
+;     DE address to the source null-terminated string
+; Outputs:
+;     HL ponts to rt_strz2real_buf with the 5-bytes real
+;     HL, BC, DE, IX and AF are modified
+rt_strz2real_buf: defs 5
+__strz2real_0: db &00,&00,&00,&28,&00
+__strz2real_1: db &00,&00,&00,&00,&81
+__strz2real_2: db &00,&00,&00,&00,&82
+__strz2real_3: db &00,&00,&00,&40,&82
+__strz2real_4: db &00,&00,&00,&00,&83
+__strz2real_5: db &00,&00,&00,&20,&83
+__strz2real_6: db &00,&00,&00,&40,&83
+__strz2real_7: db &00,&00,&00,&60,&83
+__strz2real_8: db &00,&00,&00,&00,&84
+__strz2real_9: db &00,&00,&00,&10,&84
+rt_strz2real:
+    push    de
+    ld      de,rt_strz2real_buf
+    push    de
+    ld      hl,__strz2real_0
+    ld      bc,5
+    ldir             ; set result to 0.0
+    pop     hl
+    pop     de
+    xor     a
+    ld      b,a
+    ld      c,a
+__strz2real_loop:
+    ld      a,(de)
+    or      a
+    jr      z,__strz2real_end
+    inc     de
+    bit     7,c
+    jr      z,$+5    ; do not increase B no '.' found yet 
+    inc     b
+    jr      $+11     ; do not check for '.' it was already found
+    cp      "."
+    jr      nz,$+7   ; it's not '.' so jump to number processing
+    ld      bc,&0080
+    jr      __strz2real_loop
+    sub     &30      ; convert char to number substracting '0' character
+    cp      10
+    jr      nc,__strz2real_end  ; some other character > 9
+    push    de
+    push    bc
+    push    af
+    ld      a,1
+    ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    call    rt_math_call
+    pop     af
+    ld      de,__strz2real_0
+    ld      b,a       ; index inside the table of real numbers
+    add     a
+    add     a
+    add     b
+    add     e
+    ld      e,a
+    ld      a,0
+    adc     d
+    ld      d,a
+    ld      ix,{FWCALL.MATH_REAL_ADD}  ; MATH_REAL_ADD
+    call    rt_math_call
+    pop     bc
+    pop     de
+    jr      __strz2real_loop
+__strz2real_end:
+    xor     a
+    sub     b
+    ret     z
+    ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    jp      rt_math_call
+"""
+),
+    "rt_copychrs": ([],
+f"""
+; RT_COPYCHRS
+; Returns the character in the current cursor position for the
+; stream given in A.
+; Inputs:
+;      A souce stream (0-9)
+;     HL destination string
+; Outputs:
+;     HL  points to the resulting string (may be 0 len)
+;     DE, AF and B are modified
+rt_copychrs:
+    ld      (hl),0
+    ex      de,hl
+    call    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT
+    ld      c,a     ; save current selected stream
+    call    {FWCALL.TXT_RD_CHAR}  ; TXT_RD_CHAR
+    ret     nc      ; NC means error
+    ld      b,a
+    ld      a,c
+    call    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT
+    ex      de,hl
+    ld      (hl),1
+    inc     hl
+    ld      (hl),b
+    dec     hl
+    ret
+"""
+),
+    "rt_findstr": ([],
+"""
+; RT_FINDSTR
+; Search the string pointed by HL looking for
+; substring pointed by DE. Returns in A 0
+; if the substring wasn't found or the position
+; Inputs:
+;     HL address to the main string
+;     DE address to the substring
+;      B starting position in HL (starting from 1)
+; Outputs:
+;     HL  0 no match found or the position of first ocurrence
+;     HL, BC, DE and AF are modified
+rt_findstr:
+    ld      a,(hl)  ; main string len
+    push    hl
+    sub     b       ; apply starting position
+    jr      c,__findstr_nomatch+1
+    inc     a       ; bacause starting pos starts in 1
+    inc     hl
+    djnz    $-1
+    ld      b,a
+__findstr_find1st:
+    ld      a,(de)  ; substring len
+    ld      c,a
+    push    de
+    inc     de
+    ld      a,(de)  ; first substr char
+__findstr_loop1:
+    cp      (hl)
+    jr      z,__findstr_loop2
+    inc     hl
+    djnz    __findstr_loop1
+__findstr_nomatch:
+    pop     de
+    pop     hl
+    ld      hl,0
+    ret
+__findstr_loop2:
+    dec     c
+    jr      z,__findstr_match
+    dec     b
+    jr      z,__findstr_nomatch
+    inc     de
+    inc     hl
+    ld      a,(de)
+    cp      (hl)
+    jr      z,__findstr_loop2
+    pop     de
+    jr      __findstr_find1st
+__findstr_match:
+    pop     de
+    ld      a,(de)  ; len substr
+    dec     a
+    ld      b,0
+    ld      c,a
+    sbc     hl,bc   ; HL = current HL - (len DE - 1)
+    pop     de
+    sbc     hl,de   ; HL = HL - original HL
+    ret
+"""
+),
+    "rt_substr": ([],
+"""
+; RT_SUBSTR
+; Returns part of a string (a substring) of the string pointed by HL
+; and places them in the string pointed by DE. The starting position to
+; copy is in C and B has the number of characters to copy (0 to copy
+; to the end).
+; Inputs:
+;     HL address to the source string
+;     DE address to the destintion string
+;      C starting position in source string
+;      B number of characters to copy, 0 copies to the end
+; Outputs:
+;     HL  points to the destination string
+;     HL, BC, DE and AF are modified
+rt_substr:
+    ld      a,b
+    or      a
+    jr      nz,$+3
+    ld      b,(hl)  ; by default all chars from start to the end
+    ld      a,(hl)  ; main string len
+    ex      de,hl
+    ld      (hl),0
+    sub     c
+    ret     c
+    inc     a
+    cp      b
+    jr      nc,$+3
+    ld      b,a
+    ld      (hl),b
+    ex      de,hl
+    inc     hl
+    dec     c
+    jr      nz,$-2
+    push    de
+    inc     de
+    ld      c,b
+    ld      b,0
+    ldir
+    pop     hl
+    ret
+"""
+),
+    "rt_strleft": ([], 
+"""
+; RT_STRLEFT
+; Extracts characters to the left of the string pointed by HL
+; and places them in the string pointed by DE. The number of
+; characters to copy are in C
+; Inputs:
+;     HL address to the source string
+;     DE address to the destintion string
+;      C number of characters to copy
+; Outputs:
+;     HL  points to the destination string
+;     HL, BC, DE and AF are modified
+rt_strleft:
+    ld      a,(hl)  ; main string len
+    cp      c       ; more chars than the len of source string
+    ret     c
+    push    de
+    ld      (de),a  ; destination length
+    inc     hl
+    inc     de
+    ld      b,0
+    ldir
+    pop     hl
+    ret
+"""
+),
+    "rt_strright": ([],
+"""
+; RT_STRRIGHT
+; Extracts characters to the right of the string pointed by HL
+; and places them in the string pointed by DE. The number of
+; characters to copy are in C
+; Inputs:
+;     HL address to the source string
+;     DE address to the destintion string
+;      C number of characters to copy
+; Outputs:
+;     HL  points to the destination string
+;     HL, BC, DE and AF are modified
+rt_strright:
+    ld      a,(hl)  ; main string len
+    sub     c       ; more chars than the len of source string
+    ret     c
+    ret     z
+    ld      b,a
+    ld      a,c
+    ld      (de),a
+    push    de
+    inc     b
+    inc     de
+    inc     hl
+    djnz    $-1
+    ldir
+    pop     hl
+    ret
+"""
+),
+    "rt_strfill": ([],
+"""
+; RT_STRFILL
+; Fills the string pointed by DE with the character in C
+; as may times as indicated by HL, returs in HL de address to DE
+; Inputs:
+;     DE target string address
+;     HL number of repetitions (0-255)
+;      C character to print
+; Outputs:
+;     HL points to string
+;     AF, HL, DE and B are modified
+rt_strfill:
+    ld      a,l
+    ld      b,a
+    ld      (de),a
+    push    de
+    ld      a,c
+    inc     de
+    ld      (de),a
+    djnz    $-2
+    pop     hl
+    ret
+"""
+),
+    "rt_upper": ([],
+"""
+; RT_UPPER
+; Copies to address in DE a new string the same as the input string
+; pointed by HL but in which all lower case characters are converted
+; to upper case.
+; Inputs:
+;     DE target string address
+;     HL source string address
+; Outputs:
+;     HL points to the target string
+;     AF, HL, DE and B are modified
+rt_upper:
+    push    de  ; Save string address
+    ld      a,(hl)
+    ld      (de),a
+    or      a
+    ret     z
+    ld      b,a
+    inc     hl 
+    inc     de  
+__upper_loop:                    
+    ld      a,(hl)
+    cp      "a"  ; check if it is in the lower case range
+    jr      c,__upper_next
+    cp      "z"+1
+    jr      nc,__upper_next
+    sub     "a"-"A"
+__upper_next:
+    ld      (de),a
+    inc     hl
+    inc     de
+    djnz    __upper_loop
+    pop     hl
+    ret  
+"""
+),
+        "rt_lower": ([],
+"""
+; RT_LOWER
+; Copies to address in DE a new string the same as the input string
+; pointed by HL but in which all upper case characters are converted
+; to lower case.
+; Inputs:
+;     DE target string address
+;     HL source string address
+; Outputs:
+;     HL points to the target string
+;     AF, HL, DE and B are modified
+rt_lower:
+    push    de  ; Save string address
+    ld      a,(hl)
+    ld      (de),a
+    or      a
+    ret     z
+    ld      b,a
+    inc     hl 
+    inc     de  
+__lower_loop:                    
+    ld      a,(hl)
+    cp      "A"  ; check if it is in the upper case range
+    jr      c,__lower_next
+    cp      "Z"+1
+    jr      nc,__lower_next
+    add     "a"-"A"
+__lower_next:
+    ld      (de),a                    
+    inc     hl
+    inc     de
+    djnz    __lower_loop
+    pop     hl
+    ret  
+"""
+),
+#
+# DATA BLOCKS
+# 
+    "rt_datablock": ([],
+"""
+rt_data_ptr: dw  _data_datablock_
+"""
+),
+    "rt_read_int": (["rt_datablock"],
+"""
+; RT_READ_INT
+; Copies into HL the next INTEGER in the DATA block
+; Inputs:
+;     None
+; Outputs:
+;     HL next integer in the DATA block
+;     DE next data address
+;     HL and DE are modified
+rt_read_int:
+    ld      hl,(rt_data_ptr)
+    ld      e,(hl)
+    inc     hl
+    ld      d,(hl)
+    inc     hl
+    ld      (rt_data_ptr),hl
+    ex      de,hl
+    ret
+"""
+),
+    "rt_read_real": (["rt_datablock"],
+"""
+; RT_READ_REAL
+; Copies into the real pointed by HL the next REAL in the DATA block
+; Inputs:
+;     HL address to the target real number
+; Outputs:
+;     HL address to the real number
+;     HL, BC and DE are modified
+rt_read_int:
+    push    hl
+    ld      de,(rt_data_ptr)
+    ld      bc,5
+    ex      de,hl
+    ldir
+    inc     hl
+    ld      (rt_data_ptr),hl
+    pop     hl
+    ret
+"""
+),
+    "rt_read_str": (["rt_datablock"],
+"""
+; RT_READ_STR
+; Copies into the string pointed by HL the next STRING in DATA block
+; Inputs:
+;     HL address to the target string
+; Outputs:
+;     HL address to the string
+;     HL, DE and BC are modified
+rt_read_str:
+    push    hl
+    ld      de,(rt_data_ptr)
+    ex      de,hl
+    ld      b,0
+    ld      c,(hl)    ; string length
+    inc     c
+    ldir
+    ld      (rt_data_ptr),hl
+    pop     hl
+    ret
+"""
+),
+#
+# INPUT/OUTPUT
+#
+    "rt_print_zone": ([],
+"""
+; RT_PRINT_ZONE
+; Variable that stores the zone size (13 by default)
+rt_print_zone: db 13
+"""
+),
+    "rt_print_nextzone": (["rt_print_zone"],
+f"""
+; RT_PRINT_NEXTZONE
+; Moves the text cursor to the start of the next zone
+; considering that each zone has RT_PRINT_ZONE characters
+; Inputs:
+;     None
+; Outputs:
+;     None
+;     AF, HL and B are modified
+rt_print_nextzone:
+    call    {FWCALL.TXT_GET_CURSOR}  ; TXT_GET_CURSOR
+    ld      a,(rt_print_zone)
+__nextzone_shift:
+    cp      h
+    jr      nc,__nextzone_end
+    add     a
+    jr      __nextzone_shift
+__nextzone_end:
+    ld      h,a
+    jp      {FWCALL.TXT_SET_CURSOR}  ; TXT_SET_CURSOR
+"""
+),
+    "rt_print_nl": ([],
+f"""
+; RT_PRINT_NL
+; Prints an EOL which in Amstrad is composed
+; by chraracters 0x0D 0x0A
+; Inputs:
+;     None 
+; Outputs:
+;     None 
+;     AF is modified
+rt_print_nl:
+    ld      a,13
+    call    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
+    ld      a,10
+    jp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
+"""
+),
+    "rt_print_spc": ([],
+f"""
+; RT_PRINT_SPC
+; L indicates the number of spaces to print
+; but 127 is the maximum
+; Inputs:
+;     L number of spaces to print
+; Outputs:
+;     None
+;     AF and B are modified
+rt_print_spc:
+    ld      a,l
+    and     &7F
+    cp      0
+    ret     z
+    ld      b,a
+    ld      a,32   ; white space
+__print_spc_loop:"
+    call    {FWCALL.TXT_OUTPUT}
+    djnz    __print_spc_loop
+    ret
+"""
+),
+    "rt_print_str": ([],
+f"""
+; RT_PRINT_STR
+; Prints in the screen the string pointed by HL
+; using the Amstrad CPC firmware routines
+; Inputs:
+;     HL address to the string to print
+; Outputs:
+;     C stores the total number of printed chars
+;     AF, HL and BC are modified
+rt_print_str:
+    ld      a,(hl)
+    ld      c,a        ; total number of printed chars
+    or      a
+    ret     z          ; empty string
+    ld      b,a
+__print_str_loop:
+    inc     hl
+    ld      a,(hl)
+    call    {FWCALL.TXT_OUTPUT}
+    djnz    __print_str_loop
+    ret
+"""
+),
+    "rt_print_strz": ([],
+f"""
+; RT_PRINT_STRZ
+; Prints in the screen the null-terminated string pointed by HL
+; using the Amstrad CPC firmware routines
+; Inputs:
+;     HL address to the null-terminated string
+; Outputs:
+;     None
+;     AF and HL are modified
+rt_print_strz:
+    ld      a,(hl)
+    or      a
+    ret     z
+    inc     hl
+    call    {FWCALL.TXT_OUTPUT}
+    djnz    rt_print_strz
+    ret
+"""
+),
+    "rt_print_int": (["rt_print_str", "rt_int2str"],
+f"""
+; RT_PRINT_INT
+; Prints an Integer number which in Amstrad is composed
+; by chraracters two bytes.
+; Inputs:
+;     HL holds the number to be printed 
+; Outputs:
+;     None 
+;     HL, BC, DE and AF are modified
+rt_print_int:
+    call    rt_int2str
+    xor     a     ; leave the '-' space in positive numbers
+    or      c
+    jr      nz,$+7
+    ld      a,32
+    call    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
+    call    rt_print_str
+    ld      a,32   ; trailing space
+    jp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
+"""
+),
+    "rt_print_real": (["rt_math_call", "rt_real2strz", "rt_print_strz"],
+"""
+; RT_PRINT_REAL
+; Prints a Real number which in Amstrad is a
+; five bytes floating-point representation.
+; Inputs:
+;     HL address to the real number 
+; Outputs:
+;     None 
+;     HL, BC, DE, IX and AF are modified
+rt_print_real:
+    call    rt_real2strz
+    ld      hl,rt_real2strz_buf
+    jp      rt_print_strz
+"""
+),
+    "rt_count_substrz": ([],
+"""
+; RT_COUNT_SUBSTRZ
+; Returns the number of existing substrings separated
+; by commas in the null-terminated string addessed by HL.
+; Inputs:
+;     HL address to the string to scan
+; Outputs:
+;      B number of identified substrings
+;      C total number of quote characters found
+;     AF, HL and BC are modified 
+rt_count_substrz:
+    ld      bc,&0100    ; final number of substrings
+__count_loop:
+    ld      a,(hl)
+    or      a
+    ret     z           ; null termination character
+    inc     hl
+    cp      &22         ; quote?
+    jr      z,__count_quote
+    cp      &2c         ; comma?
+    jr      nz,__count_loop
+    inc     b
+    jr      __count_loop
+__count_quote:
+    inc     c
+    jr      __count_loop
+"""
+),
+    "rt_extract_substrz": (["rt_scratch_pad"],
+"""
+; RT_EXTRACT_SUBSTRZ
+; Returns the number of existing substrings separated
+; by commas in the string addessed by HL.
+; Inputs:
+;     HL address to the string to scan
+; Outputs:
+;      B number of identified substrings
+;      C total number of quote characters found
+;     AF, HL and BC are modified 
+rt_extract_substrz:
+    ld      de,rt_scratch_pad
+    ld      c,0
+    call    rt_strz_lstrip   ; remove spaces leaves char in A
+    cp      &22              ; quote?
+    jr      nz,__extract_comma_separated
+    call    rt_remove_quotes
+    inc     de
+    inc     hl
+    xor     a
+    ld      (de),a
+    call    rt_strz_lstrip   ; remove spaces after final quote
+    cp      &2c              ; comma
+    ret     nz
+    inc     hl
+    ret 
+__extract_comma_separated:
+    or      a                ; 0?
+    jr      z,__extract_end
+    inc     hl
+    cp      &2c              ; ,?
+    jr      z,__extract_end
+    inc     c
+    ld      (de),a
+    inc     de
+    ld      a,(hl)
+    jr      __extract_comma_separated
+__extract_end:
+    xor     a
+    ld      (de),a
+    ld      a,c
+    or      c
+    ret     z                ; empty string
+    dec     de               ; last character
+    ex      de,hl
+    call    rt_strz_rstrip
+    inc     hl
+    ld      (hl),0
+    ex      de,hl
+    ret
+"""
+),
+    "rt_strz_lstrip": ([],
+"""
+; RT_STRZ_LSTRIP
+; Scans the zero-terminated string pointed by HL from the left
+; until if finds a character different from an empty space.
+; Inputs:
+;     HL address to the zero-terminated string to scan
+; Outputs:
+;     HL address to the resulting zero-terminated string
+;      A first character different to an empty space
+;     AF and HL are modified
+rt_strz_lstrip:
+    ld      a,(hl)
+    cp      &20  ; espace
+    ret     nz
+    inc     hl
+    jr      rt_strz_lstrip
+"""
+),
+    "rt_strz_rstrip": ([],
+"""
+; RT_STRZ_RSTRIP
+; Scans the zero-terminated string pointed by HL from the right
+; until if finds a character different from an empty space.
+; Inputs:
+;     HL address to the zero-terminated string to scan
+; Outputs:
+;     HL address to the resulting zero-terminated string
+;      A first character different to an empty space
+;     AF and HL are modified 
+rt_strz_rstrip:
+    ld      a,(hl)
+    cp      &20  ; espace
+    ret     nz
+    dec     hl
+    dec     c
+    jr      rt_strz_rstrip
+"""
+),
+    "rt_remove_quotes": ([], """
+; RT_REMOVE_QUOTES
+; Scans the zero-terminated string pointed by HL and
+; returs the substring between quotes. Assumes that first
+; character of HL string is already a quote.
+; Inputs:
+;     HL address to the zero-terminated string to scan
+;     DE address to the resulting string
+; Outputs:
+;     DE address to the resulting string
+;      C length of DE
+;     AF, DE, HL and C are modified 
+rt_remove_quotes:
+    inc     hl
+    ld      c,0
+__remove_quotes_loop:
+    ld      a,(hl)
+    cp      &22
+    ret     z
+    ld      (de),a
+    inc     hl
+    inc     de
+    inc     c
+    jr      __remove_quotes_loop
+"""
+),
+    "rt_extract_num": (["rt_strz2num"],
+"""
+; RT_EXTRACT_NUM
+; Converts and string with an integer or hexadecimal number
+; Inputs:
+;     DE address to the null-terminated string with the number
+; Outputs:
+;     HL resulting number
+;     AF, HL, DE and BC are modified
+rt_extract_num:
+    ld      a,(de)
+    cp      "&"
+    jp      nz,rt_strz2int
+    inc     de
+    jp      rt_strz2hex
+"""
+),
+    "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],
+f"""
+; RT_INPUT
+; Camptures the keyboard input in a null-terminated string
+; using the Amstrad CPC firmware routines.
+; Returns in B and C some useful values to validate the input.
+; Inputs:
+;     None
+; Outputs:
+;     rt_input_buf stores the input as a null-terminated string
+;      B stores the total number substrings (separated by commas)
+;      C total number of quote characters found
+;     AF, HL and BC are modified
+rt_input_question: db 2,"? "
+rt_input_redo:     db 16,"?Redo from start "
+rt_input_buf:      defs 255
+rt_input:
+    call    {FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE
+    call    {FWCALL.TXT_CUR_ON} ; TXT_CUR_ON
+    ld      hl,rt_input_buf
+    ld      (hl),0
+    ld      bc,0  ; Initialize characters counter
+__input_enterchar:
+    call    {FWCALL.KM_WAIT_KEY} ; KM_WAIT_KEY
+    cp      &7F  ; KM_WAIT_KEY returns characters in range &00-&7F
+    jr      nz,__input_processchar
+    ld      a,b  ; backspace key
+    or      c
+    jr      z,__input_enterchar    ; String length is zero
+    ld      a,8
+    call    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT
+    ld      a," "
+    call    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT
+    ld      a,8
+    call    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT
+    dec     hl
+    dec     bc
+    jr      __input_enterchar
+__input_processchar:
+    cp      13
+    jr      z,__input_end          ; Enter key pressed
+    call    {FWCALL.TXT_OUTPUT} ; TXT_OUTPUT
+    ld      (hl),a
+    inc     hl
+    inc     bc
+    jr      __input_enterchar
+__input_end:
+    ld      (hl),0
+    call    rt_print_nl
+    call    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE
+    call    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF
+    ld      hl,rt_input_buf
+    jp      rt_count_substrz      
+"""
+),
+    "rt_writestr": ([],
+f"""
+; RT_WRITESTR
+; Writes a quoted string to an already open file (with OPENIN)
+; Inputs:
+;     HL address to the input string
+; Outputs:
+;     A, B and HL are modified
+rt_writestr:
+    ld      a,&22
+    call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+    ld      b,(hl)
+    __writestr_loop:
+    inc     hl
+    ld      a,(hl)
+    call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+    djnz    __writestr_loop
+    ld      a,&22
+    jp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+"""
+),
+    "rt_writeint": (["rt_int2str"],
+f"""
+; RT_WRITEINT
+; Writes the integer hold in HL to an already open file (with OPENIN)
+; Inputs:
+;     HL signed integer value
+; Outputs:
+;     A, B and HL are modified
+rt_writeint:
+    call    rt_int2str
+    ld      b,(hl)
+    __writeint_loop:
+    inc     hl
+    ld      a,(hl)
+    call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+    djnz    __writestr_loop
+    ret     
+"""
+),
+    "rt_writenl": (["rt_int2str"],
+f"""
+; RT_WRITENL
+; Writes an EOL to an already open file (with OPENIN)
+; Inputs:
+;     None
+; Outputs:
+;     AF is modified
+rt_writenl:
+    ld      a,13
+    call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+    ld      a,10
+    jp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+"""
+),
+    "rt_readstr": (["rt_readnext"],
+f"""
+; RT_READSTR
+; Reads a quoted string from an already open file (with OPENIN).
+; Ends trying to read the comma that separates data in the file.
+; Inputs:
+;     HL address to the destination string
+; Outputs:
+;     HL contains the address to the destination string
+;     A, B and HL are modified
+rt_readstr:
+    ld      (hl),0
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    cp      &22
+    ret     nz
+    ld      b,0
+    push    hl
+__readstr_loop:
+    inc     hl
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    jr      nc,__readstr_end  ; if error jump to end
+    cp      &22
+    jr      z,__readstr_end
+    ld      (hl),a
+    inc     b
+    jr      __readstr_loop
+__readstr_end:
+    pop     hl
+    ld      (hl),b
+    jp      rt_readnext   ; consume comma or new-line
+"""
+),
+    "rt_readint": (["rt_strz2num", "rt_readnext"],
+"""
+; RT_READINT
+; Reads an integer from an already open file (with OPENIN).
+; It consumes any comma used to separate values.
+; Inputs:
+;     None
+; Outputs:
+;     HL contains the integer value
+;     A, B and HL are modified
+rt_readint_bufz: defs 19     ; space for 16 bits integers (including hex and bin formats)
+rt_readint:
+    ld      hl,0
+    ld      b,18    ; max buffer length for numbers
+    ld      de,rt_readint_bufz
+__readint_loop:
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    jr      nc,__readint_end  ; if error jump to end
+    cp      &2c
+    jr      z,__readint_end
+    cp      &0d
+    jr      z,__readint_end
+    cp      &0a
+    jr      z,__readint_end
+    ld      (de),a
+    djnz    __readint_loop
+__readint_end:
+    inc     de
+    xor     a
+    ld      (de),a   ; zero-terminated string
+    ld      de,rt_readint_bufz
+    call    rt_strz2num
+    jp      rt_readnext
+"""
+),
+    "rt_readnext": ([],
+f"""
+; RT_READNEXT
+; Consume chars until it consumes a comma or a new-line
+; Inputs:
+;     None
+; Outputs:
+;     None
+;     AF is modified
+rt_readnext:
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    ret     nc    ; error reading
+    cp      &2c   ; comma?
+    ret     z
+    cp      &0a   ; end of new-line?
+    ret     z
+    cp      &0d   ; new-line (0xd,0xa)?
+    jr      nz,rt_readnext
+    jp      {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+"""
+),
+#
+# MATH
+# 
+    "rt_umul16": ([],
+"""
+; RT_UMULT16"
+; 16x16 unsigned multplication
+; HL = HL * DE.
+; Algorithm from Rodney Zaks, 'Programming the Z80'.
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL and DE
+; Outputs:
+;     HL is the HL * DE
+;     AF, BC and DE are modified
+rt_umul16:
+    ld      a,l	    ; transfer HL to CA
+    ld      c,h
+    ld      b,16	; 16 bits to multiply
+    ld      hl,0
+__mul0_unsigned:
+    srl     c		; shift CA right, get low bit
+    rra
+    jr      nc,__mul1_unsigned	; zero fell out, do not add
+    add     hl,de	; else add DE
+__mul1_unsigned:
+    ex      de,hl	; DE = DE*2
+    add     hl,hl
+    ex      de,hl
+    djnz    __mul0_unsigned
+    ret
+"""
+),
+    "rt_udiv16": ([],
+"""
+; RT_UDIV16
+; 16/16 unsigned division
+; HL = HL DIV DE
+; DE = HL MOD DE
+; Algorithm from Rodney Zaks, 'Programming the Z80'.
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL, DE
+; Outputs:
+;     HL is the quotient
+;     DE is the remainder
+;     AF, BC are modified
+rt_udiv16:
+    ld      b,h	    ; store HL in BC
+    ld      c,l
+    ld      a,e	    ; transfer DE to AC
+    or      d
+    ld      hl,0	    ; intermediate result
+    ret     z		; DIV by 0?      
+    ld      a,b
+    ld      b,16	    ; 16 bits to divide
+    __div0_unsigned:
+    rl      c		; get AC high bit, rotate in result bit
+    rla
+    adc     hl,hl	; HL = HL*2, never sets C
+    sbc     hl,de	; trial subtract and test DE > HL
+    jr      nc,__div1_unsigned
+    add     hl,de	; DE > HL, restore HL
+    __div1_unsigned:
+    ccf		        ; result bit
+    djnz    __div0_unsigned
+    ex      de,hl
+    rl      c		; rotate in last result bit
+    rla
+    ld      h,a
+    ld      l,c
+    ret
+"""
+),
+    "rt_compute_sign": ([],
+"""
+; RT_COMPUTE_SIGN
+; Computes resulting sign between HL and DE integers
+; returns C=0 (pos) if signs are equal and otherwise C=1 (neg)
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL, DE
+; Outputs:
+;     CF carry stores the sign
+;     AF is modified
+rt_compute_sign:
+    ld      a,h
+    xor     d
+    rla		; sign to carry
+    ret
+"""
+),
+    "rt_abs": ([],
+"""   
+; RT_ABS 
+; Strips sign from HL
+; performing COMP+2 if it is negative
+; Inputs:
+;     HL
+; Outputs:
+;     HL is the number in possitive
+;     AF is modified
+rt_abs:
+    bit     7,h
+    ret     z
+    ld      a,h
+    cpl
+    ld      h,a
+    ld      a,l
+    cpl
+    ld      l,a
+    inc     hl
+    ret
+"""
+),
+    "rt_sign_strip": ([],
+"""   
+; RT_SIGN_STRIP 
+; Strips signs from HL and DE
+; performing COMP+2 if they are negative
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL and DE
+; Outputs:
+;     HL is the number in possitive
+;     DE is the number in possitive
+;     AF is modified
+rt_sign_strip:
+    bit     7,d
+    jr      z,__sign_strip_posde
+    ld      a,d
+    cpl
+    ld      d,a
+    ld      a,e
+    cpl
+    ld      e,a
+    inc     de
+__sign_strip_posde:
+    bit     7,h
+    ret     z
+__sign_strip_neghl:
+    ld      a,h
+    cpl
+    ld      h,a
+    ld      a,l
+    cpl
+    ld      l,a
+    inc     hl
+    ret
+"""
+),
+    "rt_mul16": (["rt_compute_sign", "rt_sign_strip", "rt_umul16"],
+"""
+; RT_MUL16
+; 15x15 signed multiplication
+; HL = HL * DE
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL and DE
+; Outputs:
+;     HL is the HL * DE
+;     AF, BC, DE are modified
+rt_mul16:	
+    call    rt_compute_sign
+    push    af
+    call    rt_sign_strip
+    call    rt_umul16
+    pop     af
+    ret     nc
+    jr      __sign_strip_neghl
+"""
+),
+    "rt_div16": (["rt_compute_sign", "rt_sign_strip", "rt_udiv16"],
+"""
+; RT_DIV16
+; 15/15 signed division
+; HL = HL DIV DE
+; DE = HL MOD DE
+; Developed by Nils M. Holm (cc0)
+; Inputs:
+;     HL, DE
+; Outputs:
+;     HL is the quotient
+;     DE is the remainder
+;     AF, BC are changed
+rt_div16:
+    call    rt_compute_sign
+    push    af
+    call    rt_sign_strip
+    call    rt_udiv16
+    pop     af
+    ret     nc
+    jr      __sign_strip_neghl
+"""
+),
+    "rt_comp16": ([],
+"""
+; RT_COMP16
+; Signed comparison HL-DE, set Z and C flags,
+; where C indicates that HL < DE
+; Inputs:
+;     HL, DE
+; Outputs:
+;     AF Z=1 if HL=DE; Z=0 & C=1 if HL < DE
+;     HL is modified
+;     BC, DE are preserved
+rt_comp16:
+    xor     a
+    sbc     hl,de
+    ret     z
+    jp      m,__comp16_cs1
+    or      a
+    ret
+__comp16_cs1:
+    scf
+    ret
+"""
+),
+    "rt_ucomp16": ([],
+"""
+; RT_UCOMP16
+; Unsigned comparison HL-DE, set ZF and CF flags,
+; where CF indicates that HL < DE
+; Inputs:
+;     HL, DE
+; Outputs:
+;     AF ZF=1 if HL=DE; ZF=0 & CF=1 if HL < DE
+;     HL is modified
+;     BC, DE are preserved
+rt_cuomp16:
+    xor     a          ; clear CF
+    sbc     hl,de
+    ret
+"""
+),
+    "rt_div32_by10": ([],
+"""
+; RT_DIV32_BY10
+; Fast integer (32 bits) division by 10
+; Inputs:
+;     DEHL 32 bits integer
+; Outputs:
+;     DEHL is the quotient
+;      A is the remainder
+;     BC is 10
+rt_div32_by10:
+    ld      bc,&0D0A
+    xor     a
+    ex      de,hl
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    cp      c
+    jr      c,$+4
+    sub     c
+    inc     l
+    djnz    $-7
+    ex      de,hl
+    ld      b,16
+    add     hl,hl
+    rla
+    cp      c
+    jr      c,$+4
+    sub     c
+    inc     l
+    djnz    $-7
+    ret
+"""
+),
+    "rt_div16_by10": ([],
+"""
+; RT_DIV16_BY10
+; Fast integer division by 10
+; Taken from:
+; https://learn.cemetech.net/index.php/Z80:Math_Routines&Speed_Optimised_HL_div_10
+; HL = HL DIV 10
+; Inputs:
+;     HL
+; Outputs:
+;     HL is the quotient
+;     A is the remainder
+;     HL, BC, AF are modified, DE is preserved
+rt_div16_by10:
+    ld      bc,&0D0A
+    xor     a
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    cp      c
+    jr      c,$+4
+    sub     c
+    inc     l
+    djnz    $-7
+    ret
+"""
+),
+    "rt_udiv8": ([],
+"""
+; RT_UDIV8
+; 8/8 unsigned integer division,
+; Inputs:
+;     A  numerator, E denominator
+; Outputs:
+;     D  quotient
+;     A  remainder
+;     BC, DE are preserved
+rt_udiv8:
+    ld d,0           ; Initialize quotient
+__div8_loop:
+    cp e             ; Compare A with E
+    jr c,__div8_end  ; If A < E, we're done
+    sub e            ; Subtract E from A
+    inc d            ; Increment quotient
+    jr __div8_loop   ; Continue dividing
+__div8_end:
+    ret
+"""
+),
+    "rt_mul16_255": ([],
+"""
+; RT_MUL16_255
+; Multiplies HL by 255 and leaves the result in HL
+; HL * 255 = HL * (256 - 1) = (HL << 8) - HL
+; Inputs:
+;     HL  number to be multiplied
+; Outputs:
+;     HL  result of HL * 255
+;     AF, DE and HL are modified
+rt_mul16_255:
+    ld      d,h      ; keep HL so we can sub later
+    ld      e,l
+    ld      a,h
+    ld      h,l      ; HL << 8
+    ld      l,0
+    or      a        ; clear CF
+    sbc     hl,de    ; HL = (HL << 8) - DE
+    ret
+"""
+),
+    "rt_mul16_A": ([],
+"""
+; RT_MUL16_A
+; Multiplies HL by A and leaves the result in HL
+; Routine taken from:
+; https://learn.cemetech.net/index.php/Z80:Math_Routines
+; Inputs:
+;     HL  number to be multiplied
+;      A  number to by multiplied by
+; Outputs:
+;     HL  result of HL * A
+;     AF, DE and HL are modified
+rt_mul16_A:
+    ld      b,8
+    ld      hl,0
+__mult16_a_loop:
+    add     hl,hl
+    rlca
+    jr      nc,$+3
+    add     hl,de
+    djnz    __mult16_a_loop
+    ret
+"""
+),
+#
+# runtime for BASIC commands support
+#
+    "rt_real2int": (["rt_math_call"], 
+f"""
+; RT_REAL2INT
+; Converts a 5-bytes float value into a 16-bits integer
+; Inputs:
+;     HL  address to the 5-bytes float number
+; Outputs:
+;     HL  16 bits integer
+;     AF, HL, DE and IX are modified
+rt_real2int:
+    ld      ix,{FWCALL.MATH_REAL_TO_INT}  ; MATH_REAL_TO_INT
+    call    rt_math_call
+    jp      p,$+10
+    ld      de,0
+    xor     a
+    ex      hl,de
+    sbc     hl,de
+    ret
+"""
+),
+    "rt_int2real": (["rt_math_call"],
+f"""
+; RT_INT2REAL
+; Converts a 16-bits integer in a 5-bytes floating point number
+; Inputs:
+;     HL  integer to convert
+; Outputs:
+;     rt_math_accum1 holds the converted number pointed by HL
+rt_int2real:
+    xor     a
+    ld      a,h    ; bit 7 sets the sign
+    bit     7,a
+    jr      z,$+8
+    ex      de,hl
+    ld      hl,0
+    sbc     hl,de
+    ld      de,rt_math_accum1
+    ld      ix,{FWCALL.MATH_INT_TO_REAL}  ; MATH_INT_TO_REAL
+    jp      rt_math_call
+"""
+),
+    "rt_real2fix": (["rt_math_call", "rt_real2int"],
+f"""
+; RT_REAL2FIX
+; Removes the decimal part of a floating point number rounding
+; the integer part towards 0
+; Inputs:
+;     HL  address to the 5-bytes floating point number
+; Outputs:
+;     rt_math_accum1 holds the converted number pointed by HL
+rt_real2fix:
+    ld      ix,{FWCALL.MATH_REAL_FIX}  ; MATH_REAL_FIX
+    call    rt_math_call
+    ld      a,b   ; sign (bit 7)
+    ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
+    call    rt_math_call
+    jp      rt_real2int
+    ret
+"""
+),
+    "rt_real_int": (["rt_math_call", "rt_real2int"],
+f"""
+; RT_REAL_INT
+; Removes the decimal part of a floating point number rounding
+; the integer part towards 0, like FIX, but returning a lower result
+; when working with negative decimal inputs.
+; Inputs:
+;     HL  address to the 5-bytes floating point number
+; Outputs:
+;     rt_math_accum1 holds the converted number pointed by HL
+rt_real_int:
+    ld      ix,{FWCALL.MATH_REAL_INT}  ; MATH_REAL_INT
+    call    rt_math_call
+    ld      a,b   ; sign (bit 7)
+    ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
+    call    rt_math_call
+    jp      rt_real2int
+    ret
+"""
+),
+    "rt_real_round": (["rt_math_call", "rt_move_real"],
+f"""
+; RT_REAL_ROUND
+; Rounds the real value pointed by HL to de number of decimal places
+; indicated by A. If A is negative, increases the number adding that
+; amount of ceros at the end of the result.
+; Inputs:
+;     HL address to the 5-bytes real value
+;      A decimal required precision
+; Outputs:
+;     HL points to the result (the rounded real number)
+;     HL, A, BC, DE and IX are modified
+rt_real_round:
+    ld      de,rt_math_accum1
+    call    rt_move_real      ; REAL to rt_math_accum1
+    push    af
+    or      a
+    jr      z,$+9
+    ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    call    rt_math_call
+    ld      ix,{FWCALL.MATH_REAL_TO_BIN}  ; MATH_REAL_TO_BIN
+    call    rt_math_call
+    ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
+    call    rt_math_call
+    pop     bc
+    xor     a
+    sub     b
+    jr      z,$+9
+    ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    jp      rt_math_call
+"""
+),
+    "rt_timer": ([],
+"""
+; RT_TIMER_GET
+; Retrieves a AFTER/EVERY data block (tick block). Each tick block has
+; a size of 13 bytes. The las 7 bytes are the event block contained
+; inside the tick block
+; Inputs:
+;     B  timer number (0-3)
+; Outputs:
+;     HL address to the timer block
+rt_timer_blocks: defs 13*4 ; 4 tick blocks
+rt_timer_get:
+    ld      hl,rt_timer_blocks
+    ld      de,13       ; Block size
+__timerget_loop:
+    add     hl,de
+    djnz    __timerget_loop
+    ret
+"""
+),
+    "rt_fill": ([],
+f"""
+; RT_FILL
+; Wrapper for the GRA FILL firmware call in the 664 and 6128
+; Inputs:
+;      L  INK index
+; Outputs:
+;     None
+;     AF, BC, DE and HL are modified
+rt_timer_blocks: defs 13*4 ; 4 tick blocks
+rt_fill_buffer: defs 70
+rt_fill:
+    ld      a,l
+    ld      hl,rt_fill_buffer
+    ld      de,70
+    jp      {FWCALL.GRA_FILL}  ; GRA_FILL
+"""
+),
+    "rt_inkey": ([],
+f"""
+; RT_INKEY
+; Wrapper for the KEY TEST firmware call
+; Inputs:
+;      HL  Key numeric value to test
+; Outputs:
+;     HL  -1 no pressed, 0, 32, 128 and 160 as per INKEY doc
+;     AF, C, and HL are modified
+rt_inkey:
+    ld      a,l
+    call    {FWCALL.KM_TEST_KEY}  ; KM_TEST_KEY
+    ld      hl,&FFFF  ; -1 (the key is not pressed)
+    jr      z,$+4
+    inc     h
+    ld      l,c
+    ret
+"""
+),
+    "rt_inkeys": ([],
+f"""
+; RT_INKEYS
+; Wrapper for the READ CHAR firmware call
+; Inputs:
+;     HL  address to the string that will receive the pressed char
+; Outputs:
+;     HL  -1 no pressed, 0, 32, 128 and 160 as per INKEY doc
+;     AF, C, and HL are modified
+rt_inkeys:
+    ld      (hl),0
+    call    {FWCALL.KM_READ_CHAR}  ; KM_READ_CHAR
+    jr      nc,$+7  ; if CF we have a character
+    ld      (hl),1
+    inc     hl
+    ld      (hl),a
+    dec     hl
+    ret
+"""
+),
+    "rt_gettime": (["rt_math_call"],
+f"""
+; RT_GETTIME
+; Wrapper for the KL TIME PLEASE firmware call
+; It captures the bin number and casts it to real
+; Leaving the result in rt_math_accum1
+; Inputs:
+;     None
+; Outputs:
+;     HL points to rt_math_accum1
+;     AF, HL, BC, DE and IX are modified
+rt_gettime:
+    call     {FWCALL.KL_TIME_PLEASE}  ; KL_TIME_PLEASE
+    ld      ix,rt_math_accum1
+    ld      (ix+0),l
+    ld      (ix+1),h
+    ld      (ix+2),e
+    ld      (ix+3),d
+    xor     a
+    ld      hl,rt_math_accum1
+    ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
+    jp      rt_math_call
+"""
+),
+    "rt_randomize": ([],
+"""
+; RT_RANDOMIZE
+; Sets rt_rnd_seed1 and rt_rnd_seed2 which are used by rt_rnd
+; Inputs:
+;   HL address to a buffer with at least 4 bytes
+; Outputs:
+;   rt_rnd_seed1 gets the value of HL
+;   rt_rnd_seed2 gets the value of DE
+;   HL is modified
+rt_rnd_seed1: db &6c,&07       ; some initial value just in case
+rt_rnd_seed2: db &70,&c6
+rt_old_seed1: db &6c,&07       ; to retrieve again last number
+rt_old_seed2: db &07,&6c
+rt_randomize:
+    ld      a,(hl)
+    ld      (rt_rnd_seed1),a
+    inc     hl
+    ld      a,(hl)
+    ld      (rt_rnd_seed1+1),a
+    inc     hl
+    ld      a,(hl)
+    ld      (rt_rnd_seed2),a
+    inc     hl
+    ld      a,(hl)
+    ld      (rt_rnd_seed2+1),a
+    ret
+"""
+),
+    "rt_rnd": (["rt_randomize"],
+f"""
+; RT_RND
+; This is a very fast, quality pseudo-random number generator.
+; It combines a 16-bit Linear Feedback Shift Register and a 16-bit LCG.
+; Taken from:
+; https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Random
+; Inputs:
+;   (rt_rnd_seed1) contains a 16-bit seed value
+;   (rt_rnd_seed2) contains a NON-ZERO 16-bit seed value
+; Outputs:
+;   HL address to the REAL result
+;   BC is the result of the LCG, so not that great of quality
+;   AF is modified, DE is preserved
+rt_rnd_32767: db &00,&00,&FE,&7F,&8F
+rt_rnd:
+    ld      hl,(rt_rnd_seed1)
+    ld      (rt_old_seed1),hl
+    ld      b,h
+    ld      c,l
+    add     hl,hl
+    add     hl,hl
+    inc     l
+    add     hl,bc
+    ld      (rt_rnd_seed1),hl
+    ld      hl,(rt_rnd_seed2)
+    ld      (rt_old_seed2),hl
+    add     hl,hl
+    sbc     a,a
+    and     %00101101
+    xor     l
+    ld      l,a
+    ld      (rt_rnd_seed2),hl
+    add     hl,bc
+    res     7,h
+    ld      de,rt_math_accum1  ; lests convert the number to REAL
+    xor     a                  ; always positive
+    ld      ix,{FWCALL.MATH_INT_TO_REAL}           ; MATH_INT_TO_REAL
+    call    rt_math_call
+    ld      de,rt_rnd_32767    ; max number that can be generated
+    ld      ix,{FWCALL.MATH_REAL_DIV}           ; MATH_REAL_DIV
+    jp      rt_math_call
+    
+; RT_RND0
+; Depending on the value of HL it returns the last generated number.
+; a new one in the sequence
+; Inputs:
+;   HL 0 to get the latest generated number
+; Outputs:
+;   HL is the address to the REAL result
+;   BC is the result of the LCG, so not that great of quality
+;   AF is modified, DE is preserved
+rt_rnd0:
+    ld      a,l
+    or      a
+    jr      nz,rt_rnd
+    ld      hl,rt_old_seed1
+    call    rt_randomize
+    jr      rt_rnd
+"""
+),
+    "rt_fileinbuf": (["rt_error", "rt_restoredos"],
+"""
+; Buffer for content read from files through OPENIN
+rt_fileinbuf: defs 2048
+"""
+),
+    "rt_fileoutbuf": (["rt_error", "rt_restoredos"],
+"""
+; Buffer for content written to files through OPENOUT
+rt_fileoutbuf: defs 2048
+"""
+),
+    "rt_sound": (["rt_error"],
+f"""
+; Adds a new sound to one of the available Amstrad CPC
+; sound queues. The data must be kept in a buffer placed
+; somewhere in the 32k central memory area.
+; Inputs:
+;   HL address to the sound buffer with the data.
+; Outputs:
+;   CF if sound was added to the queue.
+;   AF, BC, DE, IX and HL are modified.
+rt_sound_buf: defs 9
+rt_sound:
+    ld      hl,rt_sound_buf
+    jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
+"""
+),
+    "rt_load": (["rt_restoredos"],
+f"""
+; RT_LOAD
+; Reads an AMSDOS file (with header) and extracts length and
+; target address, loading there the content.
+; Inputs:
+;   HL address to the file name
+; Outputs:
+;   None
+;   AF, HL, BC, DE and IX are modified
+rt_load:
+    ld      de,0   ; 2K buffer not needed with disks
+    ld      b,(hl) ; filename length
+    inc     hl
+    call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
+    ret     nc     ; Error
+    ex      de,hl
+    call    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT
+    jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
+"""
+),
+    "rt_loadaddr": (["rt_restoredos"],
+f"""
+; RT_LOADADDR
+; Reads an AMSDOS file (with header) and extracts its length.
+; The content is loaded into the address stored in DE.
+; Inputs:
+;   HL address to the file name
+;   DE address where content must be loaded
+; Outputs:
+;   CF if no error
+;   AF, HL, BC, DE and IX are modified
+rt_loadaddr:
+    push    de
+    ld      de,0   ; 2K buffer not needed with CAS_IN_DIRECT
+    ld      b,(hl) ; filename length
+    inc     hl
+    call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
+    ret     nc     ; Error
+    pop     hl
+    call    {FWCALL.CAS_IN_DIRECT}  ; CAS_IN_DIRECT
+    jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
+"""
+),
+    "rt_save": (["rt_restoredos"],
+f"""
+; RT_SAVE
+; Dumps a memory region as an AMSDOS binary file (with header)
+; Inputs:
+;   HL address to the file name
+;   IX address to the first param in memory
+;      IX + 0: Memory address
+;      IX + 2: Entry point
+;      IX + 4: Memory block length
+; Outputs:
+;   CF  if no error
+;   AF, HL, BC, DE and IX are modified
+rt_save:
+    ld      de,0   ; 2K buffer not needed with CAS_OUT_DIRECT
+    ld      b,(hl) ; filename length
+    inc     hl
+    call    {FWCALL.CAS_OUT_OPEN}  ; CAS_OUT_OPEN
+    ret     nc     ; Error
+    ld       l,(ix+0)
+    ld       h,(ix+1)
+    ld       c,(ix+2)
+    ld       b,(ix+3)
+    ld       e,(ix+4)
+    ld       d,(ix+5)
+    ld       a,2
+    call    {FWCALL.CAS_OUT_DIRECT}  ; CAS_OUT_DIRECT
+    jp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE
+"""
+),
+    "rt_onjump": ([],
+"""
+; RT_ONJUMP
+; Given a number in A, this routine jumps to the corresponding
+; address stored in memory and pointed by HL
+; Inputs:
+;   DE address to the list of addresses in memory
+;    A number to select one of the addresses, starting in 1
+;    B number of options
+; Outputs:
+;   None
+;   AF, DE and HL are modified
+rt_onjump:
+    or      a
+    ret     z      ; do nothing if index is 0
+    ld      l,a
+    ld      a,b
+    cp      l
+    ret     c
+    dec     l
+    ld      h,0
+    add     hl,hl
+    add     hl,de
+    ld      e,(hl)
+    inc     hl
+    ld      d,(hl)
+    ex      de,hl
+    jp      (hl)
+"""
+),
+    "rt_speedwrite": ([],
+f"""
+; RT_SPEEDWRITE
+; HL must be 0 or 1 and indicates the desired speed.
+; Inputs:
+;   HL integer value (0 or 1)
+; Outputs:
+;   None
+;   AF and HL are modified
+rt_speedwrite:
+    xor     a
+    add     l
+    jr      nz,__speedwrite_1
+    ld      hl,333
+    ld      a,25
+    jp      {FWCALL.CAS_SET_SPEED}
+__speedwrite_1
+    ld      hl,107
+    ld      a,50
+    jp      {FWCALL.CAS_SET_SPEED}
+"""
+),
+    "rt_restoredos": ([],
+f"""
+; RT_RESTOREDOS
+; Based on https://www.cpcwiki.eu/forum/programming/reactivating-amsdos-firmware
+; This rutine leaves again the AMSDOS rom enabled to be used
+; will disc/tape routines
+; Inputs:
+;   None
+; Outputs:
+;   None
+;   AF, HL, DE and BC are modified
+rt_restoredos:
+    ld      c,7      ; AMSDOS rom
+    ld      de,&0040 ; first usable byte of memory
+    ld      hl,&abff ; holds the address of the new last usable byte
+    jp      {FWCALL.KL_INIT_BACK}  ; KL INIT BACK
+"""
+),
+    "rt_onsq": ([],
+f"""
+; RT_ONSQ
+; This rutine calls the Firmware to duplicate the effect of the BASIC
+; command ON SQ
+; Inputs:
+;   A sound queue identifier
+;  DE address where to jump to when the event happens
+; Outputs:
+;   None
+;   AF, HL, DE and BC are modified
+__onsq_event: defs 7
+rt_onsq:
+    ld      b,&81
+    ld      hl,__onsq_event
+    call    {FWCALL.KL_INIT_EVENT}  ; HL_INIT_EVENT
+    ld      hl,__onsq_event
+    jp      {FWCALL.SOUND_ARM_EVENT}  ; SOUND_ARM_EVENT
+"""
+),
+    "rt_max": ([],
+"""
+; RT_MAX
+; This rutine checks HL and DE and returns in HL the max number
+; Inputs:
+;   HL first integer
+;   DE second integer
+; Outputs:
+;   HL max number
+;   DE min number
+;   AF, HL and DE are modified
+rt_max:
+    push    hl
+    xor     a
+    sbc     hl,de
+    jp      m,__max_de
+    pop     hl
+    ret
+__max_de:
+    ex      de,hl
+    pop     de
+    ret
+"""
+),
+    "rt_maxreal": (["rt_math_call"],
+f"""
+; RT_MAXREAL
+; This rutine checks REAL numbers in accum1 and accum2 and
+; leaves en accum1 the mayor of them
+; Inputs:
+;   The float numbers stored in accum1 and accum2
+; Outputs:
+;   accum1 contains the mayor number and accum2 the minor
+;   AF, HL, DE, BC and IX are modified
+rt_maxreal_buf: defs 5
+rt_maxreal:
+    ld      hl,rt_math_accum1
+    ld      de,rt_math_accum2
+    ld      ix,{FWCALL.MATH_REAL_COMP}
+    call    rt_math_call
+    cp      1
+    ret     z
+    ld      bc,5
+    ld      de,rt_maxreal_buf
+    ldir
+    ld      bc,5
+    ld      hl,rt_math_accum2
+    ld      de,rt_math_accum1
+    ldir
+    ld      bc,5
+    ld      hl,rt_maxreal_buf
+    ld      de,rt_math_accum2
+    ldir
+    ret
+"""
+),
+    "rt_intsgn": ([],
+"""
+; RT_INTSGN
+; Checks the sign of the integer in HL and returns
+; -1 (negative), 0 or 1 (positive) in HL
+; Inputs:
+;   HL integer number
+; Outputs:
+;   HL -1, 0 or 1
+;   AF, HL and DE are modified
+rt_intsgn:
+    ex      de,hl
+    ld      hl,0
+    ld      a,d
+    or      e
+    ret     z
+    inc     hl
+    bit     7,d
+    ret     z
+    dec     hl
+    dec     hl
+    ret
+"""
+),
+    "rt_realsgn": (["rt_math_call"],
+f"""
+; RT_INTSGN
+; Checks the sign of the float pointed by accum1 and returns
+; -1 (negative), 0 or 1 (positive) in HL
+; Inputs:
+;   accum1 float number
+; Outputs:
+;   HL -1, 0 or 1
+;   AF, HL and DE are modified
+rt_realsgn:
+    ld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM
+    ld      hl,0
+    or      a
+    ret     z
+    dec     hl
+    cp      1
+    ret     c
+    inc     hl
+    inc     hl
+    ret
+"""
+),
 }

@@ -52,7 +52,7 @@ class CPCEmitter:
             DataSec.DATA: "",
             DataSec.CONST: ""
         }
-        self.rtcode: list[str] = []
+        self.rtcode: str = ""
         self.runtime: list[str] = []
         self.constants: int = 0
         self.free_tmp_memory: bool = False
@@ -95,11 +95,10 @@ class CPCEmitter:
     def _emit_import(self, fname: str) -> bool:
         if fname not in self.runtime:
             self.runtime.append(fname)
-            fcode, depends = RT[fname]
+            depends, fcode = RT[fname]
             for dep in depends:
                 self._emit_import(dep)
-            self.rtcode = self.rtcode + fcode
-            self.rtcode.append('\n')
+            self.rtcode = self.rtcode + fcode + '\n'
             return True
         return False
 
@@ -208,7 +207,7 @@ class CPCEmitter:
         self._emit_data(f"{entry.label}: dw   0", section=DataSec.VARS)
 
     def _emit_runtime(self) -> str:
-        return "_runtime_:\n\n" + ''.join(self.rtcode) + '\n'
+        return "_runtime_:\n\n" + self.rtcode + '\n'
     
     def _emit_symbol_table(self) -> None:
         # 240 is the BASIC default if no SYMBOL AFTER is used
@@ -1622,7 +1621,17 @@ class CPCEmitter:
 
 
     def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
-        self._raise_error(2, v, 'float numbers in INPUT are not supported yet')
+        self._emit_import("rt_strz2real")
+        self._emit_import("rt_move_real")
+        if isinstance(v, AST.Variable):
+            self._emit_variable(v)
+        else:
+            self._emit_arrayitem_ptr(v)
+        self._emit_code("push    hl")
+        self._emit_code("ld      de,rt_scratch_pad")
+        self._emit_code("call    rt_strz2real")
+        self._emit_code("pop      de")
+        self._emit_code("call     rt_move_real")
 
     def _emit_INSTR(self, node:AST.Function):
         """
@@ -2995,20 +3004,23 @@ class CPCEmitter:
         Converts the numeric expression) to a decimal string representation in the
         same form as used in the PRINT command.
         """
-        # TODO: reals
-        self._emit_import("rt_print_real")
-        self._emit_import("rt_int2str")
         self._emit_code("; STR$(<numeric expression>)")
         arg = node.args[0]
         self._emit_expression(arg)
         if arg.etype == AST.ExpType.Integer:
+            self._emit_import("rt_int2str")
             self._emit_code("call    rt_int2str")
             self._reserve_memory_de(8)
             self._emit_code("push    de")
             self._emit_code("ldir")
             self._emit_code("pop     hl")
         else:
-            self._raise_error(2, arg, "REAL numbers not yet supported")
+            self._emit_import("rt_real2strz")
+            self._emit_import("rt_strzcopy")
+            self._emit_code("call    rt_real2strz")
+            self._reserve_memory(12)
+            self._emit_code("ld      de,rt_real2strz_buf")
+            self._emit_code("call    rt_strzcopy")
         self._emit_code(";")
 
     def _emit_SYMBOL(self, node:AST.Command):
