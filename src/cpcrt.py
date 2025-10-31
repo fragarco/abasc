@@ -313,7 +313,7 @@ rt_error: db 0
 #
 # MEM AND CALLS
 # 
-    "rt_malloc": (["rt_tmp_memory", "rt_free_all"],
+    "rt_malloc": (["rt_free_all"],
 """
 ; RT_MALLOC
 ; Returns in HL the address to a temporal free memory block
@@ -332,7 +332,7 @@ rt_malloc:
     ret
 """
 ),
-    "rt_malloc_de": (["rt_tmp_memory", "rt_free_all"],
+    "rt_malloc_de": (["rt_free_all"],
 """
 ; RT_MALLOC_DE
 ; Returns in DE the address to a temporal free memory block
@@ -353,7 +353,7 @@ rt_malloc_de:
     ret
 """
 ),
-    "rt_free_all": (["rt_tmp_memory"],
+    "rt_free_all": ([],
 """
 ; RT_FREE_ALL
 ; Resets the position of the next available temporal memory block
