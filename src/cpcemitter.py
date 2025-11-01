@@ -173,9 +173,9 @@ class CPCEmitter:
             elif entry.symtype == SymType.Param:
                 self._emit_paramdecl(entry)
             elif entry.symtype == SymType.RSX:
-                # last char must have bit 7 set
+                # last char must have bit 7 set and we have to remove RSX_
                 lastchar = ord(sym[-1]) + 128
-                self._emit_data(f'{entry.label}: db "{sym[0:-1]}",{lastchar}')
+                self._emit_data(f'{entry.label}: db "{sym[4:-1]}",{lastchar}')
             elif entry.symtype == SymType.Function:
                 self._emit_symbols(entry.locals.syms)
 
@@ -3897,14 +3897,26 @@ class CPCEmitter:
             self._raise_error(38, node)
 
     def _emit_RSX(self, node: AST.RSX):
+        """
+        |<RSX command>[,<argument>[,<argument>]*]
+        """
+        self._emit_import("rt_restoreroms")
+        self._emit_import("rt_rsx_setstring")
         self._emit_code(f"; RSX call to {node.command}")
         label = node.command
         sym = self.symtable.find(label, SymType.RSX, "")
+        stringargs = 0
         if sym is not None:
             params = len(node.args)
             if params > 0:
                 for a in node.args:
                     self._emit_expression(a)
+                    if a.etype == AST.ExpType.String:
+                        self._emit_code(f"ld      de,rt_rsx_string{stringargs+1}")
+                        self._emit_code("call    rt_rsx_setstring")
+                        stringargs += 1
+                        if stringargs > 2:
+                            self._raise_error(14, a, info="max string arguments is two")
                     self._emit_code("push    hl")
                 self._emit_code("ld      ix,0")
                 self._emit_code("add     ix,sp")

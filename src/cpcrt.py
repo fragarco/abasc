@@ -310,6 +310,34 @@ rt_memory_start:
 rt_error: db 0
 """
 ),
+    "rt_rsx_setstring": ([],
+"""
+; RT_RSX_SETSTRING
+; RSX commands expect strings in a specific format where
+; a header of 3 bytes defines the string as follows:
+; <1: string len><2-3: string address> -> "string"
+; Inputs:
+;     HL address to a regular BASC string
+;     DE address to one of the RSX string placeholders
+; Outputs:
+;     HL address to the filled placeholder
+;     A, HL and DE are modified
+rt_rsx_string1: defs 3
+rt_rsx_string2: defs 3
+rt_rsx_setstring:
+    push    de
+    ex      de,hl
+    ld      a,(de)
+    inc     de
+    ld      (hl),a
+    inc     hl
+    ld      (hl),e
+    inc     hl
+    ld      (hl),d
+    pop     hl
+    ret
+"""
+),
 #
 # MEM AND CALLS
 # 

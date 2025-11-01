@@ -2555,7 +2555,8 @@ class LocBasParser:
     def _parse_RSX(self) -> AST.RSX:
         name = self._advance().lexeme[1:]   # remove '|' symbol
         args: list[AST.Statement] = []
-        if not self._end_of_statement():
+        if  self._current_is(TokenType.COMMA):
+            self._advance()
             args = [self._parse_expression()]
             while self._current_is(TokenType.COMMA):
                 self._advance()
