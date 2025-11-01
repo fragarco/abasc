@@ -1161,7 +1161,7 @@ f"""
 ;     DE address to the source null-terminated string
 ; Outputs:
 ;     HL ponts to rt_strz2real_buf with the 5-bytes real
-;     HL, BC, DE, IX and AF are modified
+;     HL, BC, DE, IX, IY and AF are modified
 rt_strz2real_buf: defs 5
 __strz2real_0: db &00,&00,&00,&28,&00
 __strz2real_1: db &00,&00,&00,&00,&81
@@ -1185,6 +1185,11 @@ rt_strz2real:
     xor     a
     ld      b,a
     ld      c,a
+    ld      a,(de)    ; check sign
+    cp      "-"
+    jr      nz,__strz2real_loop
+    inc     de
+    inc     c
 __strz2real_loop:
     ld      a,(de)
     or      a
@@ -1193,10 +1198,10 @@ __strz2real_loop:
     bit     7,c
     jr      z,$+5    ; do not increase B no '.' found yet 
     inc     b
-    jr      $+11     ; do not check for '.' it was already found
+    jr      $+10     ; do not check for '.' it was already found
     cp      "."
-    jr      nz,$+7   ; it's not '.' so jump to number processing
-    ld      bc,&0080
+    jr      nz,$+6   ; it's not '.' so jump to number processing
+    set     7,c
     jr      __strz2real_loop
     sub     &30      ; convert char to number substracting '0' character
     cp      10
@@ -1224,10 +1229,16 @@ __strz2real_loop:
     pop     de
     jr      __strz2real_loop
 __strz2real_end:
+    push    bc
     xor     a
     sub     b
-    ret     z
+    jr      z,$+9
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    call    rt_math_call
+    pop     bc
+    bit     0,c
+    ret     z
+    ld      ix,{FWCALL.MATH_REAL_UMINUS}  ; MATH_REAL_UMINUS
     jp      rt_math_call
 """
 ),
