@@ -2586,15 +2586,19 @@ f"""
 ; amount of ceros at the end of the result.
 ; Inputs:
 ;     HL address to the 5-bytes real value
-;      A decimal required precision
+;      B decimal required precision
 ; Outputs:
 ;     HL points to the result (the rounded real number)
-;     HL, A, BC, DE and IX are modified
+;     HL, AF, BC, DE and IX are modified
 rt_real_round:
+    ld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM
+    call    rt_math_call
+    push    af
     ld      de,rt_math_accum1
     call    rt_move_real      ; REAL to rt_math_accum1
-    push    af
-    or      a
+    push    bc
+    xor     a
+    or      b
     jr      z,$+9
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
     call    rt_math_call
@@ -2607,6 +2611,10 @@ rt_real_round:
     sub     b
     jr      z,$+9
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
+    call    rt_math_call
+    pop     af    ; check original sign
+    ret     nc    ; positive number
+    ld      ix,{FWCALL.MATH_REAL_UMINUS}  ; MATH_REAL_UMINUS
     jp      rt_math_call
 """
 ),
