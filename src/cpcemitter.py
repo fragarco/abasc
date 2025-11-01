@@ -2774,14 +2774,11 @@ class CPCEmitter:
         # result, we ignore the third parameter that we will always consider to
         # be 'B'
         self._emit_import("rt_save")
-        self._emit_code(";  SAVE <filename>[,<file type>][,<binary parameters>]")
+        self._emit_code(";  SAVE <filename>[,<file type>][,<address>,<length>[,<entry point>]]")
         if len(node.args) < 4:
             self._raise_error(2, node, "only saving binaries is supported")
         else:
-            self._emit_code("ld      ix,0")
-            self._emit_code("add     ix,sp")
             self._emit_expression(node.args[2])
-            self._emit_code("push    hl")       # memory address
             if len(node.args) > 4:
                 self._emit_expression(node.args[4])
                 self._emit_code("push    hl")   # entry point
@@ -2789,6 +2786,9 @@ class CPCEmitter:
                 self._emit_code("push    hl")   # repeat memory address
             self._emit_expression(node.args[3])
             self._emit_code("push    hl")       # memory block length
+            self._emit_code("push    hl")       # memory address
+            self._emit_code("ld      ix,0")
+            self._emit_code("add     ix,sp")
             self._emit_expression(node.args[0]) # filename
             self._emit_code("call    rt_save")
         self._emit_code(";")
@@ -3255,6 +3255,7 @@ class CPCEmitter:
         Extracts a <numeric expression> from the beginning of the string expression.
         The opposite of STR$. 
         """
+        # In our case, VAL is restricted to integer convertions
         self._emit_import("rt_strz2num")
         self._emit_import("rt_scratch_pad")
         self._emit_code("; VAL(<string expression>)")
@@ -4007,8 +4008,8 @@ class CPCEmitter:
 
     def _compose_program(self) -> str:
         code = ""
-        if "rt_restoredos" in self.runtime:
-            self._emit_head("call    rt_restoredos")
+        if "rt_restoreroms" in self.runtime:
+            self._emit_head("call    rt_restoreroms")
         if "rt_math_call" in self.runtime:
             self._emit_head("call    rt_math_setoffset")
         if self.memlimit < 99999:

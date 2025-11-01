@@ -520,7 +520,7 @@ rt_strzcopy:
 __strzcopy_loop:
     ld      a,(de)
     or      a
-    jr      z,_strzcopy_end
+    jr      z,__strzcopy_end
     inc     de
     inc     hl
     ld      (hl),a
@@ -2809,13 +2809,13 @@ rt_rnd0:
     jr      rt_rnd
 """
 ),
-    "rt_fileinbuf": (["rt_error", "rt_restoredos"],
+    "rt_fileinbuf": (["rt_error", "rt_restoreroms"],
 """
 ; Buffer for content read from files through OPENIN
 rt_fileinbuf: defs 2048
 """
 ),
-    "rt_fileoutbuf": (["rt_error", "rt_restoredos"],
+    "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],
 """
 ; Buffer for content written to files through OPENOUT
 rt_fileoutbuf: defs 2048
@@ -2837,7 +2837,7 @@ rt_sound:
     jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
 """
 ),
-    "rt_load": (["rt_restoredos"],
+    "rt_load": (["rt_restoreroms"],
 f"""
 ; RT_LOAD
 ; Reads an AMSDOS file (with header) and extracts length and
@@ -2858,7 +2858,7 @@ rt_load:
     jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
 """
 ),
-    "rt_loadaddr": (["rt_restoredos"],
+    "rt_loadaddr": (["rt_restoreroms"],
 f"""
 ; RT_LOADADDR
 ; Reads an AMSDOS file (with header) and extracts its length.
@@ -2881,7 +2881,7 @@ rt_loadaddr:
     jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
 """
 ),
-    "rt_save": (["rt_restoredos"],
+    "rt_save": (["rt_restoreroms"],
 f"""
 ; RT_SAVE
 ; Dumps a memory region as an AMSDOS binary file (with header)
@@ -2895,18 +2895,18 @@ f"""
 ;   CF  if no error
 ;   AF, HL, BC, DE and IX are modified
 rt_save:
-    ld      de,0   ; 2K buffer not needed with CAS_OUT_DIRECT
-    ld      b,(hl) ; filename length
+    ld      de,0     ; 2K buffer not needed with CAS_OUT_DIRECT
+    ld      b,(hl)   ; filename length
     inc     hl
     call    {FWCALL.CAS_OUT_OPEN}  ; CAS_OUT_OPEN
-    ret     nc     ; Error
-    ld       l,(ix+0)
-    ld       h,(ix+1)
-    ld       c,(ix+2)
-    ld       b,(ix+3)
-    ld       e,(ix+4)
-    ld       d,(ix+5)
-    ld       a,2
+    ret     nc       ; Error
+    ld      c,(ix+0) ; entry point
+    ld      b,(ix+1)
+    ld      e,(ix+2) ; lenght
+    ld      d,(ix+3)
+    ld      l,(ix+4) ; address
+    ld      h,(ix+5)
+    ld      a,2
     call    {FWCALL.CAS_OUT_DIRECT}  ; CAS_OUT_DIRECT
     jp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE
 """
@@ -2963,22 +2963,31 @@ __speedwrite_1
     jp      {FWCALL.CAS_SET_SPEED}
 """
 ),
-    "rt_restoredos": ([],
+    "rt_restoreroms": ([],
 f"""
-; RT_RESTOREDOS
-; Based on https://www.cpcwiki.eu/forum/programming/reactivating-amsdos-firmware
-; This rutine leaves again the AMSDOS rom enabled to be used
-; will disc/tape routines
+; RT_RESTOREROMS
+; Based on https://www.cpcmania.com/Docs/Programming/Ficheros.htm
+; This rutine initializes again all ROMs, enabling, for example,
+; the AMSDOS rom so commands related to disc/tape work.
 ; Inputs:
 ;   None
 ; Outputs:
 ;   None
 ;   AF, HL, DE and BC are modified
-rt_restoredos:
-    ld      c,7      ; AMSDOS rom
-    ld      de,&0040 ; first usable byte of memory
-    ld      hl,&abff ; holds the address of the new last usable byte
-    jp      {FWCALL.KL_INIT_BACK}  ; KL INIT BACK
+rt_restoreroms:
+    ld      hl,(&be7d)             ; store the drive number the program was run from
+    ld      a,(hl)                 ; usually that is in &a700 
+    ld      (__restore_drive+1),a  ; self-modifying code
+    ld      c,&ff                  ; disable all roms
+    ld      hl, __restore_start    ; execution address for program
+    call    {FWCALL.MC_START_PROGRAM}                  ; MC_STRART_PROGRAM
+__restore_start: db 0
+    call    {FWCALL.KL_ROM_WALK}                  ; KL_ROM_WALK to initialize all roms 
+__restore_drive: 
+    ld      a, &00                 ; restore the drive number
+    ld      hl,(&be7d)             ; because when eneabling AMSDOS the drive
+    ld      (hl),a                 ; reverts to 0
+    jp      _code_                 ; jump back without a ret as the stack is empty
 """
 ),
     "rt_onsq": ([],
