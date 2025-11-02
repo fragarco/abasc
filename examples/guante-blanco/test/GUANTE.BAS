@@ -5,10 +5,6 @@
 50 INK 4,14:INK 5,24,12:INK 6,0:INK 7,0:INK 8,0:PAPER #1,7
 60 retardo=200
 70 DIM objx(5,20),objy(5,20),joyax(5,20),joyay(5,20)
-71 ' BASC require arrays to be declared before used
-72 DIM minx(10),miny(10),maxx(10),maxy(10)
-73 DIM dir(10,10),puerta$(10),conm$(2,1),vent$(10)
-74 DIM obj(10),luces(10),joyas(10)
 80 GOSUB 380
 90 GOSUB 720
 100 pausa=200:GOSUB 340
@@ -239,9 +235,9 @@
 2350 'Dibujar rectas
 2360 '
 2370 READ x1,y1,x2,y2
-2380 MOVE x1,y1,1,0
-2390 DRAW x1,y2,1,0:DRAW x2,y2,1,0
-2400 DRAW x2,y1,1,0:DRAW x1,y1,1,0
+2380 MOVE x1,y1,,0
+2390 DRAW x1,y2,,0:DRAW x2,y2,,0
+2400 DRAW x2,y1,,0:DRAW x1,y1,,0
 2410 GOTO 1290
 2420 '
 2430 'Dibujar interruptores
