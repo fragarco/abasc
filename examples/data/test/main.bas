@@ -1,23 +1,36 @@
 10 CLS
-20 T1 = TIME
+20 T! = TIME
 30 DIM Proofer$(4)
 40 DIM ProoferSurname$(4)
-50 FOR n=0 to 4
-60 READ Proofer$(n)
-70 READ ProoferSurname$(n)
-80 PRINT Proofer$(n);" "ProoferSurname$(n)
-90 DATA Bob,Smith,Dicky,Jones,Malcolm,Green,Alan,"Brown",Ivor,Curry
-100 NEXT
-110 T2 = TIME
+50 DIM a(10,10)
+60 FOR n=0 to 4
+70 READ Proofer$(n)
+80 READ ProoferSurname$(n)
+90 PRINT Proofer$(n);" "ProoferSurname$(n)
+100 DATA Bob,Smith,Dicky,Jones,Malcolm,Green,Alan,"Brown",Ivor,Curry
+110 NEXT
 120 FOR times=0 TO 10
 130 FOR N=0 TO 5
 140 READ A$
 150 PRINT A$;" ";
-160 'LABEL loopdata
+160 ' LABEL LOOPDATA
 170 DATA restored,data,can,be,read,again
 180 NEXT
 190 PRINT
-200 RESTORE 160
+200 RESTORE 170
 210 NEXT
-220 PRINT T2-T1,TIME-T2
-230 END
+220 RESTORE 310
+230 FOR j=0 to 5
+240 FOR i=0 to 5
+250 READ a(i,j): PRINT i;j,a(i,j)
+260 NEXT
+270 NEXT
+280 PRINT TIME-T!
+290 END
+300 ' LABEL DATABLOCK
+310 DATA 10,-11,12,-13,14,-15
+320 DATA 20,-21,22,-23,24,-25
+330 DATA 30,-31,32,-33,34,-35
+340 DATA 40,-41,42,-43,44,-45
+350 DATA 50,-51,52,-53,54,-55
+360 DATA 60,-61,62,-63,64,-65

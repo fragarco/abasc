@@ -2513,8 +2513,9 @@ rt_mul16_255:
 ;      A  number to by multiplied by
 ; Outputs:
 ;     HL  result of HL * A
-;     AF, DE and HL are modified
+;     B, Flags, DE and HL are modified
 rt_mul16_A:
+    ex      de,hl
     ld      b,8
     ld      hl,0
 __mult16_a_loop:

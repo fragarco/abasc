@@ -2525,7 +2525,7 @@ class CPCEmitter:
             elif isinstance(a, AST.ArrayItem):
                 self._emit_arrayitem_ptr(a)
             else:
-                self._raise_error(2, "READ doesn't support this variable type yet")
+                self._raise_error(2, a, "READ doesn't support this variable type yet")
             if a.etype == AST.ExpType.Integer:
                 self._emit_import("rt_read_int")
                 self._emit_code("call    rt_read_int")
@@ -3545,6 +3545,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
+    """
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
         var = self.symtable.find(node.name, SymType.Array)
         if var is not None:
@@ -3568,6 +3569,56 @@ class CPCEmitter:
             self._emit_code("add     hl,de")
         else:
             self._raise_error(38, node)
+    """
+    def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
+        """
+        Emit code to compute the address of an array element (multi-dimensional).
+        Each array type has a different element size:
+            Integer -> 2 bytes
+            Real    -> 5 bytes
+            String  -> 255 bytes
+        node.args   : list of index expressions
+        var.indexes : list of dimension lengths
+        """
+        self._emit_import("rt_mul16_A")
+        var = self.symtable.find(node.name, SymType.Array)
+        if var is None:
+            self._raise_error(38, node)
+        elif var.exptype != node.etype:
+            self._raise_error(13, node)
+        # addr = i1*dim0 + i0
+        dims = var.indexes  # type: ignore [union-attr]
+        ndims = len(dims)
+        nindexes = len(node.args)
+        if nindexes != ndims:
+            self._raise_error(2, node, info="bad subscript count")
+        # lets calculte the linear offset
+        self._emit_expression(node.args[0])
+        for i in range(1, ndims):
+            dim_size = dims[i] + 1   # Array dimensions are inclusive (0..N)
+            self._emit_code("push    hl", info=f"save partial offset (dim {i-1})")
+            self._emit_expression(node.args[i])
+            self._emit_code(f"ld      a,{dim_size}", info=f"next dimension size {dim_size}") 
+            self._emit_code("call    rt_mul16_A")
+            self._emit_code("pop     de")
+            self._emit_code("add     hl,de", info="add next index")
+        # address_offset = linear_offset * size_of(data)
+        if node.etype == AST.ExpType.Integer:
+            self._emit_code("add     hl,hl", info="index * 2 bytes")
+        elif node.etype == AST.ExpType.String:
+            self._emit_import("rt_mul16_255")
+            self._emit_code("call    rt_mul16_255", info="index * 255 bytes")
+        elif node.etype == AST.ExpType.Real:
+            self._emit_code("ld      d,h")
+            self._emit_code("ld      e,l")
+            self._emit_code("add     hl,hl", info="offset * 2")
+            self._emit_code("add     hl,hl", info="offset * 4")
+            self._emit_code("add     hl,de", info="offset * 5")
+        else:
+            self._emit_code("ld      hl,0", info="unsupported type")
+        # address = address_base + address_offset
+        self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
+        self._emit_code("add     hl,de", info="final address of this item element")
 
     def _emit_pointer(self, node: AST.Pointer):
         if isinstance(node.var, AST.ArrayItem):

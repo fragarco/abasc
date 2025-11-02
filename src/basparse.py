@@ -602,11 +602,11 @@ class LocBasParser:
         self._expect(TokenType.LPAREN)
         if not self._current_is(TokenType.RPAREN):
             sizes = [cast(int, self._expect(TokenType.INT).value)]
-            if sizes[-1] < 0: self._raise_error(9)
+            if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9)
             while self._current_is(TokenType.COMMA):
                 self._advance()
                 sizes.append(cast(int, self._expect(TokenType.INT).value))
-                if sizes[-1] < 0: self._raise_error(9)
+                if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9)
         self._expect(TokenType.RPAREN)
         return AST.Array(name=var, etype=vartype, sizes=sizes)
 
