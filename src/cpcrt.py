@@ -1574,19 +1574,22 @@ rt_data_ptr: dw  _data_datablock_
 ; RT_READ_INT
 ; Copies into HL the next INTEGER in the DATA block
 ; Inputs:
-;     None
+;     HL address to the integer variable
 ; Outputs:
-;     HL next integer in the DATA block
-;     DE next data address
+;     None, the read value is copied into the integer variable
 ;     HL and DE are modified
 rt_read_int:
+    push    hl
     ld      hl,(rt_data_ptr)
     ld      e,(hl)
     inc     hl
     ld      d,(hl)
     inc     hl
     ld      (rt_data_ptr),hl
-    ex      de,hl
+    pop     hl
+    ld      (hl),e
+    inc     hl
+    ld      (hl),d
     ret
 """
 ),

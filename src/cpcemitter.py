@@ -739,9 +739,7 @@ class CPCEmitter:
             if isinstance(a, AST.String):
                 dataline = dataline + f'{len(a.value)},"{a.value}",'
             elif isinstance(a, AST.Integer):
-                cpcint = (a.value).to_bytes(2,'little')
-                for b in cpcint:
-                    dataline = dataline + f'&{b:02X},'
+                dataline = dataline + f'{a.value % 256},{a.value // 256},'
             elif isinstance(a, AST.Real):
                 cpcreal = self._real(a.value)
                 for b in cpcreal:
@@ -2522,7 +2520,12 @@ class CPCEmitter:
         """
         self._emit_code("; READ list of:<variable>")
         for a in node.args:
-            self._emit_expression(a)
+            if isinstance(a, AST.Variable):
+                self._emit_variable_ptr(a)
+            elif isinstance(a, AST.ArrayItem):
+                self._emit_arrayitem_ptr(a)
+            else:
+                self._raise_error(2, "READ doesn't support this variable type yet")
             if a.etype == AST.ExpType.Integer:
                 self._emit_import("rt_read_int")
                 self._emit_code("call    rt_read_int")
@@ -3532,6 +3535,16 @@ class CPCEmitter:
                 self._emit_code("ld      d,(hl)")
                 self._emit_code("ex      de,hl")
 
+    def _emit_variable_ptr(self, node: AST.Variable):
+        # variables can be local to a DEF FN if they are declared as a parameter
+        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
+        if entry is None:
+            entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
+        if entry is not None:
+            self._emit_code(f"ld      hl,{entry.label}")
+        else:
+            self._raise_error(38, node)
+    
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
         var = self.symtable.find(node.name, SymType.Array)
         if var is not None:

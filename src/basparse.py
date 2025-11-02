@@ -437,16 +437,17 @@ class LocBasParser:
         sign: int = 1
         if tok.lexeme == '-':
             sign = -1
-            tok = self._advance()
+            self._advance()
+            tok = self._current()
         if tok.type == TokenType.INT:
+            self._advance()
             value = cast(int, tok.value) * sign
             nbytes = self._int_to_bytes(tok.lexeme, value)
             if nbytes == 0:
                 self._raise_error(6)
-            self._advance()
-            if nbytes == 4:
+            elif nbytes == 4:
                 return AST.Real(value=value)
-            return AST.Integer(value=cast(int, tok.value))
+            return AST.Integer(value=value)
         elif tok.type == TokenType.REAL:
             self._advance()
             return AST.Real(value=cast(float, tok.value))
