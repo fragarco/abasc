@@ -3589,16 +3589,16 @@ class CPCEmitter:
         # addr = i1*dim0 + i0
         dims = var.indexes  # type: ignore [union-attr]
         ndims = len(dims)
-        nindexes = len(node.args)
-        if nindexes != ndims:
+        if len(node.args) != ndims:
             self._raise_error(2, node, info="bad subscript count")
-        # lets calculte the linear offset
+        # lets calculte the linear offset: x + y*szx + z*szx*szy ...
         self._emit_expression(node.args[0])
+        dim_size = 0
         for i in range(1, ndims):
-            dim_size = dims[i] + 1   # Array dimensions are inclusive (0..N)
             self._emit_code("push    hl", info=f"save partial offset (dim {i-1})")
+            dim_size = dim_size + (dims[i-1] + 1) # adding 1 because array sizes are inclusive 0..N  
             self._emit_expression(node.args[i])
-            self._emit_code(f"ld      a,{dim_size}", info=f"next dimension size {dim_size}") 
+            self._emit_code(f"ld      a,{dim_size}", info=f"dimension {i-1} linear size") 
             self._emit_code("call    rt_mul16_A")
             self._emit_code("pop     de")
             self._emit_code("add     hl,de", info="add next index")
