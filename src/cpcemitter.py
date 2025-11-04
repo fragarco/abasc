@@ -3545,31 +3545,6 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
-    """
-    def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
-        var = self.symtable.find(node.name, SymType.Array)
-        if var is not None:
-            if var.exptype != node.etype:
-                self._raise_error(13, node)
-            self._emit_expression(node.args[0])  # index
-            if node.etype == AST.ExpType.Integer:
-                self._emit_code("add     hl,hl", info="index * 2 bytes")                
-            elif node.etype == AST.ExpType.String:
-                self._emit_import("rt_mul16_255")
-                self._emit_code("call    rt_mul16_255")
-            elif node.etype == AST.ExpType.Real:
-                self._emit_code("ld      d,h")
-                self._emit_code("ld      e,l")
-                self._emit_code("add     hl,hl", info="index * 5 bytes")
-                self._emit_code("add     hl,hl")
-                self._emit_code("add     hl,de")
-            else:
-                self._emit_code("ld      hl,0")
-            self._emit_code(f"ld      de,{var.label}")
-            self._emit_code("add     hl,de")
-        else:
-            self._raise_error(38, node)
-    """
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
         """
         Emit code to compute the address of an array element (multi-dimensional).
@@ -3593,10 +3568,10 @@ class CPCEmitter:
             self._raise_error(2, node, info="bad subscript count")
         # lets calculte the linear offset: x + y*szx + z*szx*szy ...
         self._emit_expression(node.args[0])
-        dim_size = 0
+        dim_size = 1
         for i in range(1, ndims):
             self._emit_code("push    hl", info=f"save partial offset (dim {i-1})")
-            dim_size = dim_size + (dims[i-1] + 1) # adding 1 because array sizes are inclusive 0..N  
+            dim_size = dim_size * (dims[i-1] + 1) # adding 1 because array sizes are inclusive 0..N  
             self._emit_expression(node.args[i])
             self._emit_code(f"ld      a,{dim_size}", info=f"dimension {i-1} linear size") 
             self._emit_code("call    rt_mul16_A")
