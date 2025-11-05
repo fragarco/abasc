@@ -1377,8 +1377,9 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
         if len(node.args) == 2:
             self._emit_expression(node.args[1])
+            self._raise_warning(1,"GRAPHICS PEN transparency is supported only by 664 and 6128 machines", node)
             self._emit_code("ld      a,l")
-            self._emit_code(f"call    {FWCALL.TXT_SET_BACK}", info="TXT_SET_BACK")
+            self._emit_code(f"call    {FWCALL.GRA_SET_BACK}", info="GRA_SET_BACK")
         self._emit_code(";")
 
     def _emit_HEXSS(self, node:AST.Function):

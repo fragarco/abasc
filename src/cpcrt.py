@@ -144,7 +144,8 @@ class FWCALL:
     GRA_LINE_ABSOLUTE   = "&BBF6"
     GRA_LINE_RELATIVE   = "&BBF9"
     GRA_WR_CHAR         = "&BBFC"
-    GRA_FILL            = "&BD52"
+    GRA_SET_BACK        = "&BD46"  # Overlaps with 464 maths
+    GRA_FILL            = "&BD52"  # Overlaps with 464 maths
 
     SCR_INITIALISE      = "&BBFF"
     SCR_RESET           = "&BC02"
