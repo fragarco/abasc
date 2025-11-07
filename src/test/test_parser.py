@@ -110,7 +110,6 @@ class TestParser(unittest.TestCase):
 90 PRINT FNadd(F)
 """
         ast, symt = self.parse_code(code)
-        # 40 and 50 get inside the ForLoop block
         self.assertEqual(len(ast.lines), 9)
         # X is a local variable inside FNADD context
         # so 4 symbols + 9 labels (line numbers)
@@ -201,15 +200,37 @@ class TestParser(unittest.TestCase):
                 self.parse_code(code)
 
     def test_call_basic(self):
+        # Regular call using an integer address
         codes = ['10 CALL 0', '10 CALL 2,2*2/4.5', '10 CALL &1000,"STRING",@NUM']
         for code in codes:
             ast, _ = self.parse_code(code)
             self.assertEqual(ast.lines[0].statements[0].name, "CALL")
             self.assertEqual(ast.lines[0].statements[0].etype, AST.ExpType.Void)
-        codes = ['10 CALL "2"', '10 CALL 2,@"3"', '10 CALL 2,"H",@2']
-        for code in codes:
-            with self.assertRaises(BasError):
-                self.parse_code(code)
+        # ASM call using string labels
+        code = '10 CALL "__my_asm_func",2,10'
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "CALL")
+        self.assertEqual(ast.lines[0].statements[0].etype, AST.ExpType.Void)
+        # calling SUB rutine
+        code = """
+10 SUB mysub(A,B)
+20    print A+B
+30 END SUB
+40 CALL mysub(2,10)
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[3].statements[0].name, "SUBmysub")
+        self.assertEqual(ast.lines[3].statements[0].etype, AST.ExpType.Void)
+        # calling FUNCTION rutine
+        code = """
+10 FUNCTION myfun(A,B)
+20    myfun=A*B
+30 END FUNCTION
+40 R = myfun(2,10)
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[3].statements[0].source.name, "FUNmyfun")
+        self.assertEqual(ast.lines[3].statements[0].source.etype, AST.ExpType.Integer)
 
     def test_chain_basic(self):
         codes = ['10 CHAIN "myfile.bas"', '10 CHAIN MERGE "myfile.bas"']
@@ -618,12 +639,12 @@ class TestParser(unittest.TestCase):
 30 PRINT "YES": J=1
 40 ELSE
 50 PRINT "NO": J=1
-60 IFEND
+60 END IF
 """
         ast, _ = self.parse_code(code)
         self.assertIsInstance(ast.lines[1].statements[0], AST.If)
         self.assertEqual(ast.lines[3].statements[0].name, "ELSE")
-        self.assertEqual(ast.lines[5].statements[0].name, "IFEND")
+        self.assertEqual(ast.lines[5].statements[0].name, "END IF")
 
     def test_if_else_while_nested(self):
         code = "10 I=10: IF I=10 THEN WHILE I>0: I=I-1: PRINT I: WEND ELSE J=I MOD 2: PRINT I"

@@ -46,6 +46,7 @@ class CPCEmitter:
         self.context = ""
         self.head = ""
         self.code = ""
+        self.codestack: list[str] = []
         self.data: dict[DataSec,str] = {
             DataSec.GEN: "",
             DataSec.VARS: "",
@@ -63,6 +64,7 @@ class CPCEmitter:
         self.ifblocks: list[AST.If] = []
         self.symbolafter = 9999
         self.memlimit = 99999
+        self.memstacks: list[bool] = []
 
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
@@ -101,6 +103,19 @@ class CPCEmitter:
             self.rtcode = self.rtcode + fcode + '\n'
             return True
         return False
+
+    def _emit_push_memstack(self) -> None:      
+        self.memstacks.append(self.free_tmp_memory)
+        self._emit_code("ld      hl,(rt_memory_start)")
+        self._emit_code("push    hl", info="store current tmp memory start address")
+        self._emit_code("ld      hl,(rt_memory_next)")
+        self._emit_code("ld      (rt_memory_start),hl")
+
+    def _emit_pop_memstack(self) -> None:
+        self._emit_free_mem()
+        self._emit_code("pop     hl")
+        self._emit_code("ld      (rt_memory_start),hl")
+        self.free_tmp_memory = self.memstacks.pop()
 
     def _emit_free_mem(self) -> None:
         if self.free_tmp_memory:
@@ -177,6 +192,8 @@ class CPCEmitter:
                 lastchar = ord(sym[-1]) + 128
                 self._emit_data(f'{entry.label}: db "{sym[4:-1]}",{lastchar}')
             elif entry.symtype == SymType.Function:
+                self._emit_symbols(entry.locals.syms)
+            elif entry.symtype == SymType.Procedure:
                 self._emit_symbols(entry.locals.syms)
 
     def _emit_vardecl(self, entry: SymEntry):
@@ -485,23 +502,27 @@ class CPCEmitter:
         order, ie. (IX+0) is the last parameter supplied.
         """
         self._emit_code("; CALL <address expression> ,[<list of: <parameter>]")
-        if len(node.args) == 1 and isinstance(node.args[0],AST.Integer):
-            address: int = node.args[0].value
+        params = node.args[1:]
+        if len(params) > 0:
+            for a in params:
+                self._emit_expression(a)
+                self._emit_code("push    hl")
+            self._emit_code("ld      ix,0")
+            self._emit_code("add     ix,sp")
+        if isinstance(node.args[0],AST.Integer):
+            address = node.args[0].value
             self._emit_code(f"call     {address}", info=f"calling {address:#04x}")
-        else:
+        elif isinstance(node.args[0],AST.String):
+            self._emit_code(f"call     {node.args[0].value}", info=f"calling asm routine")
+        elif node.args[0].etype == AST.ExpType.Integer:
             self._emit_import("rt_call")
-            params = node.args[1:]
-            if len(params) > 0:
-                for a in params:
-                    self._emit_expression(a)
-                    self._emit_code("push    hl")
-                self._emit_code("ld      ix,0")
-                self._emit_code("add     ix,sp")
             self._emit_expression(node.args[0])
             self._emit_code(f"ld      a,{len(params)}")
             self._emit_code("call    rt_call", info="HL has the address")
-            for a in params:
-                self._emit_code("pop     de")
+        else:
+            self._raise_error(5, node)
+        for a in params:
+            self._emit_code("pop     de")
         self._emit_code(";")
 
     def _emit_CAT(self, node:AST.Command):
@@ -818,7 +839,7 @@ class CPCEmitter:
         the execution loop. 
         """
         self._emit_code("; DEF FN <name> [(<formal parameters>)]=<general expression>")
-        self.context=node.name
+        self.context = node.name
         currentcode = self.code  # keep current generated code
         self.code = ""           # capture only the code that will be generated now
         self._emit_expression(node.body)
@@ -826,13 +847,14 @@ class CPCEmitter:
         fcode = self.code
         self.code = currentcode  # restore previous generated code
         self.context=""
-        self._emit_data(f"{self._get_userfun_label(node.name)}:")
+        flabel = self._get_userfun_label(node.name)
+        self._emit_data(f"{flabel}:", 0)
         offset = 0
         # retrieve param in reversed order
         for a in reversed(node.args):
             self._emit_data(f"ld      l,(ix+{offset})")
             self._emit_data(f"ld      h,(ix+{offset+1})")
-            entry = self.symtable.find(a.name, SymType.Param, node.name)
+            entry = self.symtable.find(a.name, SymType.Param, self.context)
             if entry is not None:
                 self._emit_data(f"ld      ({entry.label}),hl")
                 offset += 2
@@ -1001,7 +1023,7 @@ class CPCEmitter:
 
     def _emit_ELSE(self, node:AST.Statement):
         if len(self.ifblocks) > 0:
-            # IFEND will remove from the queue
+            # END IF will remove from the queue
             ifnode = self.ifblocks[-1]
             self._emit_code(f"jp      {ifnode.end_label}")
             self._emit_code("; ELSE")
@@ -1316,6 +1338,33 @@ class CPCEmitter:
         self._emit_code("sbc     hl,de")
         self._emit_code(";")
 
+    def _emit_FUNCTION(self, node:AST.DefFUN):
+        """
+        Adopted from Locomotive BASIC 2 Plus, FUNCTION allows the program to define
+        and use simple functions ended with END FUNCTION. Values are turned using
+        RETURN call.
+        It may be invoked throughout the program as regular functions. Variable types
+        must be consistent and the FUNCTION command should be written in part of the
+        program outside the execution loop AND BEFORE the function is called. 
+        """
+        self._emit_code("; FUNCTION <name> [(<formal parameters>)]=<general expression>")
+        self._emit_code(";")
+        self.context = node.name
+        flabel = self._get_userfun_label(node.name)
+        self.codestack.append(str(self.code))  # store current generated code
+        self.code = ""                         # so we generate now sub body only
+        self._emit_code(f"{flabel}:", 0)
+        self._emit_push_memstack()
+        # retrieve param in reversed order
+        offset = 0
+        for a in reversed(node.args):
+            self._emit_code(f"ld      l,(ix+{offset})")
+            self._emit_code(f"ld      h,(ix+{offset+1})")
+            entry = self.symtable.find(a.name, SymType.Param, self.context)
+            if entry is not None:
+                self._emit_code(f"ld      ({entry.label}),hl")
+                offset += 2
+
     def _emit_GOSUB(self, node:AST.Command):
         """
         Call a BASIC subroutine by branching to the specified line number or
@@ -1451,14 +1500,60 @@ class CPCEmitter:
         else:
             self.ifblocks.append(node)
 
-    def _emit_IFEND(self, node:AST.BlockEnd):
+    def _emit_END_FUNCTION(self, node:AST.Command):
+        """
+        Signals the end of a user defined FUNCTION. BASIC returns to continue
+        processing at the point after the expression which invoked it. Arriving
+        here is usually an error, as RETURN must be used to send back a result
+        of a function.
+        """
+        if len(self.codestack) == 0:
+            self._raise_error(41, node)
+        # Restore pointer to tmp free memory
+        self._emit_pop_memstack()
+        fretvar = self.context[3:]
+        # Return value is stored in a local variable with the same name as the function
+        # so we check that is exists or return an error
+        entry = self.symtable.find(fretvar, SymType.Variable, self.context)
+        if entry is not None:
+            if entry.exptype == AST.ExpType.Integer:  
+                self._emit_code(f"ld      hl,({entry.label})")
+            elif entry.exptype == AST.ExpType.String:
+                self._emit_code(f"ld      hl,{entry.label}")
+            elif entry.exptype == AST.ExpType.Real:
+                self._emit_code(f"ld      hl,{entry.label}")
+            else:
+                self._raise_error(2, node, info="invalid return type")
+        else:
+            self._raise_error(2, node, info="no return value in FUNCTION")
+        self._emit_code("ret")
+        subfun = str(self.code)
+        self.code = self.codestack.pop()
+        self._emit_data(subfun, 0)
+        self.context = ""
+
+    def _emit_END_IF(self, node:AST.BlockEnd):
         if len(self.ifblocks) > 0:
             ifnode = self.ifblocks.pop()
-            self._emit_code("; IFEND")
+            self._emit_code("; END IF")
             self._emit_code(ifnode.end_label, 0)
             self._emit_code(";")
         else:
             self._raise_error(36, node)
+
+    def _emit_END_SUB(self, node:AST.Command):
+        """
+        Signals the end of a subroutine. BASIC returns to continue processing at
+        the point after the CALL which invoked it.
+        """
+        if len(self.codestack) == 0:
+            self._raise_error(41, node)
+        self._emit_pop_memstack()
+        self._emit_code("ret")
+        subfun = str(self.code)
+        self.code = self.codestack.pop()      
+        self._emit_data(subfun, 0)
+        self.context = ""
 
     def _emit_INK(self, node:AST.Command):
         """
@@ -2695,6 +2790,12 @@ class CPCEmitter:
         the point after the GOSUB which invoked it.
         """
         self._emit_code("; RETURN")
+        if len(node.args):
+            # this must be a return inside a FUNCTION
+            if self.context == "":
+                self._raise_error(3, node)
+            self._emit_expression(node.args[0])
+            self._emit_free_mem()
         self._emit_code("ret")
         self._emit_code(";")
 
@@ -3026,6 +3127,31 @@ class CPCEmitter:
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
         self._emit_code(";")
+
+    def _emit_SUB(self, node:AST.DefSUB):
+        """
+        Adopted from Locomotive BASIC 2 Plus, SUB allows the program to define
+        and use simple procedures ended with END SUB.
+        It may be invoked throughout the program using CALL. Variable types must
+        be consistent and the SUB command should be written in part of the program
+        outside the execution loop. 
+        """
+        self._emit_code("; SUB <name> [(<formal parameters>)]=<general expression>")
+        self._emit_code(";")
+        self.codestack.append(str(self.code)) # store current generated code
+        self.code = ""                        # so we generate now sub body only
+        self.context = node.name
+        self._emit_code(f"{self._get_userfun_label(node.name)}:", 0)
+        self._emit_push_memstack()
+        # retrieve param in reversed order
+        offset = 0
+        for a in reversed(node.args):
+            self._emit_code(f"ld      l,(ix+{offset})")
+            self._emit_code(f"ld      h,(ix+{offset+1})")
+            entry = self.symtable.find(a.name, SymType.Param, self.context)
+            if entry is not None:
+                self._emit_code(f"ld      ({entry.label}),hl")
+                offset += 2
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
@@ -3897,7 +4023,7 @@ class CPCEmitter:
     def _emit_assigment(self, node: AST.Assignment):
         self._emit_expression(node.source)
         if isinstance(node.target, AST.ArrayItem):
-            var = self.symtable.find(node.target.name, SymType.Array)
+            var = self.symtable.find(node.target.name, SymType.Array, self.context)
             if var is not None:
                 self._emit_code("push    hl")
                 self._emit_arrayitem_ptr(node.target)
@@ -3919,7 +4045,7 @@ class CPCEmitter:
                     self._emit_code("inc     c")
                     self._emit_code("ldir")
         elif isinstance(node.target, AST.Variable):
-            var = self.symtable.find(node.target.name, SymType.Variable)
+            var = self.symtable.find(node.target.name, SymType.Variable, self.context)
             if var is not None:
                 if var.exptype == AST.ExpType.Integer:
                     self._emit_code(f"ld      ({var.label}),hl")
@@ -3976,8 +4102,8 @@ class CPCEmitter:
             self._emit_WEND(node)
         elif node.name == "ELSE":
             self._emit_ELSE(node)
-        elif node.name == "IFEND":
-            self._emit_IFEND(node)
+        elif node.name == "END IF":
+            self._emit_END_IF(node)
         else:
             self._raise_error(2, node, "not implemented yet")
 
@@ -4039,6 +4165,10 @@ class CPCEmitter:
             self._emit_WRITE(stmt)
         elif isinstance(stmt, AST.DefFN):
             self._emit_DEF_FN(stmt)
+        elif isinstance(stmt, AST.DefFUN):
+            self._emit_FUNCTION(stmt)
+        elif isinstance(stmt, AST.DefSUB):
+            self._emit_SUB(stmt)
         elif isinstance(stmt, AST.UserFun):
             self._emit_userfun(stmt)
         elif isinstance(stmt, AST.Function):

@@ -630,3 +630,33 @@ class DefFN(Statement):
         d["args"] = [a.to_json() for a in self.args]
         d["body"] = self.body.to_json()
         return d
+
+class DefFUN(Statement):
+    name: str 
+    args: list[Variable]
+
+    def __init__(self, name: str, args: list[Variable]):
+        super().__init__(etype=ExpType.Void, id="DefFUN")
+        self.name = name
+        self.args = args
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d
+
+class DefSUB(Statement):
+    name: str 
+    args: list[Variable]
+
+    def __init__(self, name: str, args: list[Variable]):
+        super().__init__(etype=ExpType.Void, id="SUB")
+        self.name = name
+        self.args = args
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["name"] = self.name
+        d["args"] = [a.to_json() for a in self.args]
+        return d

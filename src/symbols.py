@@ -29,6 +29,7 @@ class SymType(str, Enum):
     Param = "Parameter"
     Label = "Label"
     Function = "Function"
+    Procedure = "Procedure"
     RSX = "RSX"
 
 @dataclass
@@ -62,6 +63,8 @@ class SymTable:
             return f"__label_{name.upper()}"
         elif entry.symtype == SymType.Function:
             return f"FN_{name.upper()}"
+        elif entry.symtype == SymType.Procedure:
+            return f"SUB_{name.upper()}"
         elif entry.symtype == SymType.RSX:
             return f"RSX_{name.upper()}"
         return ""
@@ -77,6 +80,8 @@ class SymTable:
             return f"LABEL_{ident}"
         elif stype == SymType.Function:
             return f"FN_{ident}"
+        elif stype == SymType.Procedure:
+            return f"SUB_{ident}"
         elif stype == SymType.RSX:
             return f"RSX_{ident}"
         return ident
@@ -105,10 +110,11 @@ class SymTable:
                     self.syms[keyident].writes += 1
                     return True
         else:
-            # Local context
-            keyfun = self._code_symtype(context, SymType.Function)
-            if keyfun in self.syms:
-                return self.syms[keyfun].locals.add(ident, info, prefix=context)
+            # Local contexts
+            for ftype in [SymType.Function, SymType.Procedure]:
+                keyfun = self._code_symtype(context, ftype)
+                if keyfun in self.syms:
+                    return self.syms[keyfun].locals.add(ident, info, prefix=context)
         return False
         
     def find(self, ident: str, stype: SymType, context: str = "") -> Optional[SymEntry]:
@@ -121,13 +127,14 @@ class SymTable:
                 return self.syms[keyident]
         else:
             # Local context
-            keyfun = self._code_symtype(context, SymType.Function)
-            if keyfun in self.syms:
-                s = self.syms[keyfun].locals.find(ident, stype)
-                if s is None:
-                    # Search in the global context
-                    return self.find(ident, stype)
-                return s
+            for ftype in [SymType.Function, SymType.Procedure]:
+                keyfun = self._code_symtype(context, ftype)
+                if keyfun in self.syms:
+                    s = self.syms[keyfun].locals.find(ident, stype)
+                    if s is None:
+                        # Search in the global context
+                        return self.find(ident, stype)
+                    return s
         return None
 
 def symsto_json(syms: dict[str, SymEntry]) -> dict:
