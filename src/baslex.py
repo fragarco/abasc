@@ -272,7 +272,6 @@ class LocBasLexer:
     def _try_number(self) -> Optional[Tuple[str, Union[int | float | str], "TokenType"]]:
         start_i = self.pos
         ch = self._peek()
-
         # Check for Hex/Bin with &-prefix (&Hxxxx or &xxxx for hex, &Xbbbb for bin)
         if ch == "&":
             self._advance()
@@ -416,7 +415,8 @@ class LocBasLexer:
                 return Token(numtok[2], numtok[0], start_line, start_col, numtok[1], text=numtok[0])
 
         # Identifiers / reserved words including FN... and sufixes %,!,$
-        if ch.isalpha():
+        # record access can start witg '.' if we are parsing an Array Item
+        if ch.isalpha() or ch == '.':
             ident = self._consume_identifier_with_suffix()
             uident = ident.upper()
             # compounded reserved words (e.g. "ON ERROR GOTO")

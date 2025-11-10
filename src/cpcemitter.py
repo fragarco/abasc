@@ -3746,11 +3746,15 @@ class CPCEmitter:
         var.indexes : list of dimension lengths
         """
         self._emit_import("rt_mul16_A")
-        var = self.symtable.find(node.name, SymType.Array)
+        varname = node.name
+        record = ""
+        vartype = AST.exptype_fromname(varname)
+        if "$." in node.name:
+            varname, record = node.name.split("$.")
+            varname = varname + "$"
+        var = self.symtable.find(varname, SymType.Array, context=self.context)
         if var is None:
             self._raise_error(38, node)
-        elif var.exptype != node.etype:
-            self._raise_error(13, node)
         # addr = i1*dim0 + i0
         dims = var.indexes  # type: ignore [union-attr]
         ndims = len(dims)
@@ -3768,12 +3772,19 @@ class CPCEmitter:
             self._emit_code("pop     de")
             self._emit_code("add     hl,de", info="add next index")
         # address_offset = linear_offset * size_of(data)
-        if node.etype == AST.ExpType.Integer:
+        if var.exptype == AST.ExpType.Integer:
             self._emit_code("add     hl,hl", info="index * 2 bytes")
-        elif node.etype == AST.ExpType.String:
-            self._emit_import("rt_mul16_255")
-            self._emit_code("call    rt_mul16_255", info="index * 255 bytes")
-        elif node.etype == AST.ExpType.Real:
+        elif var.exptype == AST.ExpType.String:
+            self._emit_import("rt_mul16_A")
+            self._emit_code(f"ld      a,{var.datasz}")
+            self._emit_code("call    rt_mul16_A", info="index * length bytes")
+            if record != "":
+                # this is a record so we have to apply the final offset
+                entry = self.symtable.find(record, SymType.Record, context=self.context)
+                if entry is not None:
+                    self._emit_code(f"ld      de,{entry.memoff}")
+                    self._emit_code("add     hl,de", info="apply record attribute offset")
+        elif var.exptype == AST.ExpType.Real:
             self._emit_code("ld      d,h")
             self._emit_code("ld      e,l")
             self._emit_code("add     hl,hl", info="offset * 2")

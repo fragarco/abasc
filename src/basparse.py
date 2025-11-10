@@ -2780,7 +2780,15 @@ class LocBasParser:
                 if not AST.exptype_isint(indexes[-1].etype):
                     self._raise_error(13, tk)
             self._expect(TokenType.RPAREN)
-            return AST.ArrayItem(name=tkvar.lexeme, etype=etype, args=indexes) # type: ignore[union-attr]
+            varname = tkvar.lexeme
+            vartype = etype
+            tk = self._current()
+            if etype == AST.ExpType.String and tk.type == TokenType.IDENT and '.' in tk.lexeme:
+                # This is a record
+                tk = self._advance()
+                varname = varname + tk.lexeme
+                vartype = AST.exptype_fromname(varname)
+            return AST.ArrayItem(name=varname, etype=vartype, args=indexes) # type: ignore[union-attr]
         # regular variable
         return AST.Variable(name=tkvar.lexeme, etype=etype)
 
