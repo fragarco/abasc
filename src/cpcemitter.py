@@ -3772,11 +3772,11 @@ class CPCEmitter:
             self._emit_code("pop     de")
             self._emit_code("add     hl,de", info="add next index")
         # address_offset = linear_offset * size_of(data)
-        if var.exptype == AST.ExpType.Integer:
+        if vartype == AST.ExpType.Integer:
             self._emit_code("add     hl,hl", info="index * 2 bytes")
-        elif var.exptype == AST.ExpType.String:
+        elif vartype == AST.ExpType.String:
             self._emit_import("rt_mul16_A")
-            self._emit_code(f"ld      a,{var.datasz}")
+            self._emit_code(f"ld      a,{var.datasz}")  #type: ignore [union-attr]
             self._emit_code("call    rt_mul16_A", info="index * length bytes")
             if record != "":
                 # this is a record so we have to apply the final offset
@@ -3784,7 +3784,7 @@ class CPCEmitter:
                 if entry is not None:
                     self._emit_code(f"ld      de,{entry.memoff}")
                     self._emit_code("add     hl,de", info="apply record attribute offset")
-        elif var.exptype == AST.ExpType.Real:
+        elif vartype == AST.ExpType.Real:
             self._emit_code("ld      d,h")
             self._emit_code("ld      e,l")
             self._emit_code("add     hl,hl", info="offset * 2")
