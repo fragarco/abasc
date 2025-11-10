@@ -186,7 +186,7 @@ class CPCEmitter:
             elif entry.symtype == SymType.Array:
                 self._emit_arraydecl(entry)
             elif entry.symtype == SymType.Param:
-                self._emit_paramdecl(entry)
+                pass   # we will access params directly from the call stack frame
             elif entry.symtype == SymType.RSX:
                 # last char must have bit 7 set and we have to remove RSX_
                 lastchar = ord(sym[-1]) + 128
@@ -197,31 +197,15 @@ class CPCEmitter:
                 self._emit_symbols(entry.locals.syms)
 
     def _emit_vardecl(self, entry: SymEntry):
-        if entry.exptype == AST.ExpType.Integer:
-            self._emit_data(f"{entry.label}: dw   0", section=DataSec.VARS)
-        elif entry.exptype == AST.ExpType.String:
-            self._emit_data(f"{entry.label}: defs 255", section=DataSec.VARS)
-        elif entry.exptype == AST.ExpType.Real:
-            self._emit_data(f"{entry.label}: defs 5", section=DataSec.VARS)
+        self._emit_data(f"{entry.label}: defs {entry.datasz}", section=DataSec.VARS)
 
     def _emit_arraydecl(self, entry: SymEntry):
         items = 1
         # index starts in 0 and DIM sets the last usable index
         # so number of items = max index + 1
         for index in entry.indexes: items = items * (index + 1)
-        if entry.exptype == AST.ExpType.Integer:
-            self._emit_data(f"{entry.label}: defs {2*items}", section=DataSec.VARS)
-        elif entry.exptype == AST.ExpType.String:
-            self._emit_data(f"{entry.label}: defs {255*items}", section=DataSec.VARS)
-        elif entry.exptype == AST.ExpType.Real:
-            self._emit_data(f"{entry.label}: defs {5*items}", section=DataSec.VARS)
-    
-    def _emit_paramdecl(self, entry: SymEntry):
-        """
-        Currently all parameters are pointers to the real data or 16 bits
-        integers
-        """
-        self._emit_data(f"{entry.label}: dw   0", section=DataSec.VARS)
+        memsz = entry.datasz * items
+        self._emit_data(f"{entry.label}: defs {memsz}", section=DataSec.VARS)
 
     def _emit_runtime(self) -> str:
         return "_runtime_:\n\n" + self.rtcode + '\n'
@@ -351,7 +335,8 @@ class CPCEmitter:
         arg = node.args[0]
         self._emit_expression(node.args[0])
         if arg.etype == AST.ExpType.Real:
-            self._emit_import("rt_math_call")      
+            self._emit_import("rt_math_call")
+            self._emit_code("push    ix")   
             self._moveflo_accum1()
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SIGNUM}", info="MATH_REAL_SIGNUM")
             self._emit_code("call    rt_math_call")
@@ -359,6 +344,7 @@ class CPCEmitter:
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
             self._emit_code("call    rt_math_call")
             self._moveflo_temp()
+            self._emit_code("pop     ix")
         else:
             self._emit_code("call    rt_abs")
         self._emit_code(";")
@@ -433,11 +419,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; ATN(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_ARCTANGENT}", info="MATH_REAL_ARCTANGENT")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_AUTO(self, node:AST.Command):
@@ -504,6 +492,7 @@ class CPCEmitter:
         self._emit_code("; CALL <address expression> ,[<list of: <parameter>]")
         params = node.args[1:]
         if len(params) > 0:
+            self._emit_code("push    ix")
             for a in params:
                 self._emit_expression(a)
                 self._emit_code("push    hl")
@@ -521,8 +510,10 @@ class CPCEmitter:
             self._emit_code("call    rt_call", info="HL has the address")
         else:
             self._raise_error(5, node)
-        for a in params:
-            self._emit_code("pop     de")
+        if len(params) > 0:
+            for a in params:
+                self._emit_code("pop     de")
+            self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_CAT(self, node:AST.Command):
@@ -562,8 +553,7 @@ class CPCEmitter:
         available. 
         """
         # CHAIN MERGE is processed by the preprocessor and it is used to
-        # append additional BAS files, so here we don't have to do anything
-        # here.
+        # append additional BAS files, so here we don't have to do anything.
         self._emit_code("; CHAIN MERGE <file name>[,<line number>][, DELETE <range>]")
         self._raise_warning(0, 'CHAIN MERGE is ignored and has not effect', node)
         self._emit_code("; IGNORED")
@@ -606,10 +596,12 @@ class CPCEmitter:
         # Only set RAD and file closing actions are performed here
         self._emit_import("rt_math_call")
         self._emit_code("; CLEAR")
-        self._emit_code("xor      a")
+        self._emit_code("push    ix")
+        self._emit_code("xor     a")
         self._emit_code(f"ld      ix,{FWCALL.MATH_SET_ANGLE_MODE}", info="SET_ANGLE_MODE")
         self._emit_code("call    rt_math_call")
-        self._emit_code(f"call    {FWCALL.CAS_INITIALISE}", info="CAS_INITIALISE")  
+        self._emit_code(f"call    {FWCALL.CAS_INITIALISE}", info="CAS_INITIALISE")
+        self._emit_code("pop     ix")
         self._emit_code(";")
         
     def _emit_CLEAR_INPUT(self, node:AST.Command):
@@ -699,11 +691,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; COS(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_COSINE}", info="MATH_REAL_COSINE")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_CREAL(self, node:AST.Function):
@@ -781,6 +775,15 @@ class CPCEmitter:
         self._emit_data(dataline[:-1], section=DataSec.DATA)
         self._emit_code(";")
 
+    def _emit_DECLARE(self, node:AST.Command):
+        """
+        Imported from Locomotive BASIC 2 Plus
+        Declares a variable before being used. This allows users to set a size
+        lower than 254 (+1 for size) for strings.
+        """
+        self._emit_code("; DECLARE list of: <string ident> [FIXED INT] | <ident>")
+        self._emit_code(";")
+
     def _emit_DECSS(self, node:AST.Function):
         """
         Only available with BASIC 1.1
@@ -849,15 +852,6 @@ class CPCEmitter:
         self.context=""
         flabel = self._get_userfun_label(node.name)
         self._emit_data(f"{flabel}:", 0)
-        offset = 0
-        # retrieve param in reversed order
-        for a in reversed(node.args):
-            self._emit_data(f"ld      l,(ix+{offset})")
-            self._emit_data(f"ld      h,(ix+{offset+1})")
-            entry = self.symtable.find(a.name, SymType.Param, self.context)
-            if entry is not None:
-                self._emit_data(f"ld      ({entry.label}),hl")
-                offset += 2
         self._emit_data(fcode, 0)
         self._emit_code(";")
 
@@ -870,9 +864,11 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; DEG")
+        self._emit_code("push    ix")
         self._emit_code("ld      a,&FF")
         self._emit_code(f"ld      ix,{FWCALL.MATH_SET_ANGLE_MODE}", info="SET_ANGLE_MODE")
         self._emit_code("call    rt_math_call")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_DELETE(self, node:AST.Command):
@@ -934,9 +930,7 @@ class CPCEmitter:
                 if entry is not None:
                     mem = 1
                     for index in entry.indexes: mem = mem * (index + 1)
-                    if var.etype == AST.ExpType.String: mem = mem * 255
-                    elif var.etype == AST.ExpType.Integer: mem = mem * 2
-                    elif var.etype == AST.ExpType.Real: mem = mem * 5
+                    mem = mem * entry.datasz
                     self._emit_code(f"; Array variable {entry.label} with {mem} bytes")
                     if mem > 28*1024:
                         self._raise_error(7, node)
@@ -1207,11 +1201,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; EXP(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_EXP}", info="MATH_REAL_EXP")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_FILL(self, node:AST.Command):
@@ -1235,6 +1231,7 @@ class CPCEmitter:
         towards zero.
         """
         self._emit_code("; FIX(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Real:
             self._emit_import("rt_real2fix")
@@ -1242,6 +1239,7 @@ class CPCEmitter:
             self._emit_code("call    rt_real2fix")
         else:
             self._emit_code("; already INT so no action taken")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_FOR(self, node:AST.ForLoop):
@@ -1355,15 +1353,6 @@ class CPCEmitter:
         self.code = ""                         # so we generate now sub body only
         self._emit_code(f"{flabel}:", 0)
         self._emit_push_memstack()
-        # retrieve param in reversed order
-        offset = 0
-        for a in reversed(node.args):
-            self._emit_code(f"ld      l,(ix+{offset})")
-            self._emit_code(f"ld      h,(ix+{offset+1})")
-            entry = self.symtable.find(a.name, SymType.Param, self.context)
-            if entry is not None:
-                self._emit_code(f"ld      ({entry.label}),hl")
-                offset += 2
 
     def _emit_GOSUB(self, node:AST.Command):
         """
@@ -1513,7 +1502,7 @@ class CPCEmitter:
         self._emit_pop_memstack()
         fretvar = self.context[3:]
         # Return value is stored in a local variable with the same name as the function
-        # so we check that is exists or return an error
+        # so we check that it exists or return an error
         entry = self.symtable.find(fretvar, SymType.Variable, self.context)
         if entry is not None:
             if entry.exptype == AST.ExpType.Integer:  
@@ -1717,6 +1706,7 @@ class CPCEmitter:
     def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._emit_import("rt_strz2real")
         self._emit_import("rt_move_real")
+        self._emit_code("push    ix")
         if isinstance(v, AST.Variable):
             self._emit_variable(v)
         else:
@@ -1724,8 +1714,9 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("call    rt_strz2real")
-        self._emit_code("pop      de")
-        self._emit_code("call     rt_move_real")
+        self._emit_code("pop     de")
+        self._emit_code("call    rt_move_real")
+        self._emit_code("pop     ix")
 
     def _emit_INSTR(self, node:AST.Function):
         """
@@ -1757,6 +1748,7 @@ class CPCEmitter:
         for negative numbers not already integers.
         """
         self._emit_code("; INT(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Real:
             self._emit_import("rt_real_int")
@@ -1764,6 +1756,7 @@ class CPCEmitter:
             self._emit_code("call    rt_real_int")
         else:
             self._emit_code("; already INT so no action taken")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_JOY(self, node:AST.Function):
@@ -1932,11 +1925,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; LOG(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG}", info="MATH_REAL_LOG")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_LOG10(self, node:AST.Function):
@@ -1945,11 +1940,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; LOG10(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG_10}", info="MATH_REAL_LOG_10")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_LOWERSS(self, node:AST.Function):
@@ -2394,10 +2391,12 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; PI")
+        self._emit_code("push    ix")
         self._emit_code("ld      hl,rt_math_accum1")
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_PI}", info="MATH_REAL_PI")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
     
     def _emit_PLOT(self, node:AST.Command):
@@ -2561,9 +2560,11 @@ class CPCEmitter:
         # TODO: reals
         self._emit_import("rt_print_real")
         self._emit_code("; PRINT REAL item")
+        self._emit_code("push    ix")
         self._emit_expression(item)
         self._moveflo_accum1()
         self._emit_code("call    rt_print_real")
+        self._emit_code("pop     ix")
 
     def _print_separator(self, item:AST.Separator):
         self._emit_code(f"; PRINT separator [{item.sym}]")
@@ -2581,9 +2582,11 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; RAD")
-        self._emit_code("xor      a")
+        self._emit_code("push    ix")
+        self._emit_code("xor     a")
         self._emit_code(f"ld      ix,{FWCALL.MATH_SET_ANGLE_MODE}", info="SET_ANGLE_MODE")
         self._emit_code("call    rt_math_call")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_RANDOMIZE(self, node:AST.Command):
@@ -2599,12 +2602,14 @@ class CPCEmitter:
         # the real number to a temporal memory after callin gettime
         self._emit_import("rt_randomize")
         self._emit_code("; RANDOMIZE [<numeric expression>]")
+        self._emit_code("push    ix")
         if len(node.args):
             self._emit_expression(node.args[0])
         else:
             self._emit_import("rt_gettime")
             self._emit_code("call    rt_gettime")
         self._emit_code("call    rt_randomize")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_READ(self, node:AST.Command):
@@ -2677,6 +2682,17 @@ class CPCEmitter:
             else:
                 self._raise_error(2, v, "unsupported identifier")
         self._emit_code("ei")
+        self._emit_code(";")
+
+    def _emit_RECORD(self, node:AST.Command):
+        """
+        Imported from Locomotive BASIC 2 Plus
+        Defines a series of patterns that can be used to access specific parts
+        of an string variable memory so data can be store and manage as a
+        struct or record.
+        """
+        self._emit_code("; RECORD IDENT; IDENT[,IDENT]*")
+        # this is managed through the symbols table
         self._emit_code(";")
 
     def _emit_RELEASE(self, node:AST.Command):
@@ -2824,12 +2840,14 @@ class CPCEmitter:
         """
         self._emit_import("rt_rnd")
         self._emit_code(";  RND[(<int expression>)]")
+        self._emit_code("push    ix")
         if len(node.args) == 0:
             self._emit_code("call    rt_rnd")
         else:
             self._emit_expression(node.args[0])
             self._emit_code("call    rt_rnd0")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_ROUND(self, node:AST.Function):
@@ -2883,6 +2901,7 @@ class CPCEmitter:
         if len(node.args) < 4:
             self._raise_error(2, node, "only saving binaries is supported")
         else:
+            self._emit_code("push    ix")
             self._emit_expression(node.args[2])
             if len(node.args) > 4:
                 self._emit_expression(node.args[4])
@@ -2896,6 +2915,7 @@ class CPCEmitter:
             self._emit_code("add     ix,sp")
             self._emit_expression(node.args[0]) # filename
             self._emit_code("call    rt_save")
+            self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_SGN(self, node:AST.Function):
@@ -2911,9 +2931,11 @@ class CPCEmitter:
             self._emit_code("call    rt_intsgn")
         else:
             self._emit_import("rt_realsgn")
+            self._emit_code("push    ix")
             self._emit_expression(node.args[0])
             self._moveflo_accum1()
             self._emit_code("call    rt_realsgn")
+            self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_SIN(self, node:AST.Function):
@@ -2923,11 +2945,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; SIN(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SINE}", info="MATH_REAL_SINE")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_SOUND(self, node:AST.Command):
@@ -3066,11 +3090,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; SQR(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SQR}", info="MATH_REAL_SQR")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_STOP(self, node:AST.Statement):
@@ -3122,10 +3148,12 @@ class CPCEmitter:
         else:
             self._emit_import("rt_real2strz")
             self._emit_import("rt_strzcopy")
+            self._emit_code("push    ix")
             self._emit_code("call    rt_real2strz")
             self._reserve_memory(12)
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
+            self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_SUB(self, node:AST.DefSUB):
@@ -3143,15 +3171,6 @@ class CPCEmitter:
         self.context = node.name
         self._emit_code(f"{self._get_userfun_label(node.name)}:", 0)
         self._emit_push_memstack()
-        # retrieve param in reversed order
-        offset = 0
-        for a in reversed(node.args):
-            self._emit_code(f"ld      l,(ix+{offset})")
-            self._emit_code(f"ld      h,(ix+{offset+1})")
-            entry = self.symtable.find(a.name, SymType.Param, self.context)
-            if entry is not None:
-                self._emit_code(f"ld      ({entry.label}),hl")
-                offset += 2
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
@@ -3271,11 +3290,13 @@ class CPCEmitter:
         """
         self._emit_import("rt_math_call")
         self._emit_code("; TAN(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TANGENT}", info="MATH_REAL_TANGENT")
         self._emit_code("call    rt_math_call")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_TEST(self, node:AST.Function):
@@ -3316,8 +3337,10 @@ class CPCEmitter:
         """
         self._emit_import("rt_gettime")
         self._emit_code("; TIME")
+        self._emit_code("push    ix")
         self._emit_code("call    rt_gettime")
         self._moveflo_temp()
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_TROFF(self, node:AST.Statement):
@@ -3633,8 +3656,27 @@ class CPCEmitter:
         # send code without last ','
         self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
 
+    def _emit_record(self, node: AST.Variable):
+        varname, rname = node.name.split('$.')
+        varname = varname + "$" # restore data type character
+        var = self.symtable.find(varname, SymType.Variable, self.context)
+        entry = self.symtable.find(rname, SymType.Record, self.context)
+        if entry is not None and var is not None:
+            if node.etype == AST.ExpType.Integer:  
+                self._emit_code(f"ld      hl,({var.label}+{entry.memoff})")
+            else:
+                self._emit_code(f"ld      hl,{var.label}+{entry.memoff}")
+        else:
+            self._raise_error(38, node)
+
     def _emit_variable(self, node: AST.Variable):
-        # variables can be local to a DEF FN if they are declared as a parameter
+        """
+        Params are speciall variables because they don't have permanent reserved
+        memory but are stored in the call stack frame and accessed through IX.
+        """
+        if "$." in node.name:
+            self._emit_record(node)
+            return
         entry = self.symtable.find(node.name, SymType.Param, context = self.context)
         if entry is None:
             entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
@@ -3642,7 +3684,8 @@ class CPCEmitter:
             # parameters always contain the address to the real data so 
             # all behave in the same way
             if entry.symtype == SymType.Param:
-                self._emit_code(f"ld      hl,({entry.label})")
+                self._emit_code(f"ld      l,(ix+{entry.memoff})")
+                self._emit_code(f"ld      h,(ix+{entry.memoff+1})")
             elif node.etype == AST.ExpType.Integer:  
                 self._emit_code(f"ld      hl,({entry.label})")
             elif node.etype == AST.ExpType.String:
@@ -3662,15 +3705,35 @@ class CPCEmitter:
                 self._emit_code("ld      d,(hl)")
                 self._emit_code("ex      de,hl")
 
-    def _emit_variable_ptr(self, node: AST.Variable):
-        # variables can be local to a DEF FN if they are declared as a parameter
-        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
-        if entry is None:
-            entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
-        if entry is not None:
-            self._emit_code(f"ld      hl,{entry.label}")
+    def _emit_variable_recordptr(self, node: AST.Variable):
+        varname, rname = node.name.split('$.')
+        varname = varname + "$" # restore data type character
+        var = self.symtable.find(varname, SymType.Variable, self.context)
+        entry = self.symtable.find(rname, SymType.Record, self.context)
+        if entry is not None and var is not None:
+            self._emit_code(f"ld      hl,{var.label}+{entry.memoff}")
         else:
             self._raise_error(38, node)
+
+    def _emit_variable_ptr(self, node: AST.Variable):
+        """
+        variables can be local to a DEF FN, SUB or FUNCTION if they are parameters
+        so we check that case bacause their address is relative to IX.
+        """
+        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
+        if entry is not None:
+            self._emit_code("ld      hl,0", info="set param address in HL")
+            self._emit_code("add     hl,ix")
+            self._emit_code(f"add     hl,{entry.memoff}")
+        else:
+            if "$." in node.name:
+                self._emit_variable_recordptr(node)
+            else:
+                entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
+                if entry is not None:
+                    self._emit_code(f"ld      hl,{entry.label}")
+                else:
+                    self._raise_error(38, node)
     
     def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
         """
@@ -3772,9 +3835,11 @@ class CPCEmitter:
         elif node.etype == AST.ExpType.Real:
             if node.op == '-':
                 self._emit_import("rt_math_call")
+                self._emit_code("push    ix")
                 self._moveflo_accum1()
                 self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
                 self._emit_code("call    rt_math_call")
+                self._emit_code("pop     ix")
                 self._moveflo_temp()
         else:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
@@ -3844,6 +3909,7 @@ class CPCEmitter:
         WARNING: move to accum destroys DE and BC
         """
         self._emit_import("rt_math_call")
+        self._emit_code("push    ix")
         self._emit_code("push    hl", info="keep left value")
         self._emit_code("ex      hl,de", info="move right to accum2")
         self._moveflo_accum2()
@@ -3867,6 +3933,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'unknown "{op}" REAL op')
         self._moveflo_temp()
+        self._emit_code("pop     ix")
 
     def _emit_comparation(self, node: AST.BinaryOp):
         if node.left.etype == AST.ExpType.String:
@@ -3957,6 +4024,7 @@ class CPCEmitter:
         WARNING: move to accum destroys DE and BC
         """
         self._emit_import("rt_math_call")
+        self._emit_code("push    ix")
         self._emit_code("push    hl", info="keep left value")
         self._emit_code("ex      hl,de", info="move right to accum2")
         self._moveflo_accum2()
@@ -3998,6 +4066,7 @@ class CPCEmitter:
             self._emit_code("dec     hl", info="HL =-1 TRUE")
         else:
             self._raise_error(2, node, f'REAL "{node.op}" op not implemented yet')
+        self._emit_code("pop     ix")
         
     def _emit_stream(self) -> None:
         """
@@ -4020,47 +4089,78 @@ class CPCEmitter:
     def _emit_comment(self, node: AST.Comment):
         pass
 
+    def _emit_assigment_arrayitem(self, node: AST.ArrayItem):
+        var = self.symtable.find(node.name, SymType.Array, self.context)
+        if var is not None:
+            self._emit_code("push    hl")
+            self._emit_arrayitem_ptr(node)
+            if var.exptype == AST.ExpType.Integer:    
+                self._emit_code("pop     de")
+                self._emit_code(f"ld      (hl),e")
+                self._emit_code(f"inc     hl")
+                self._emit_code(f"ld      (hl),d")
+            elif var.exptype == AST.ExpType.Real:
+                self._emit_code("ex      de,hl")
+                self._emit_code("pop     hl")
+                self._emit_code("ld      bc,5")
+                self._emit_code("ldir")
+            elif var.exptype == AST.ExpType.String:
+                self._emit_code("ex      de,hl")
+                self._emit_code("pop     hl")
+                self._emit_code("ld      b,0")
+                self._emit_code("ld      c,(hl)")
+                self._emit_code("inc     c")
+                self._emit_code("ldir")
+    
+    def _emit_assigment_record(self, node: AST.Variable):
+        varname, rname = node.name.split('$.')
+        varname = varname + "$" # restore data type character
+        var = self.symtable.find(varname, SymType.Variable, self.context)
+        entry = self.symtable.find(rname, SymType.Record, self.context)
+        if entry is not None and var is not None:
+            if entry.exptype == AST.ExpType.Integer:
+                self._emit_code(f"ld      ({var.label}+{entry.memoff}),hl")
+            else:
+                self._emit_code(f"ld      de,{var.label}+{entry.memoff}")
+                self._emit_code("ld      b,0")
+                if entry.exptype == AST.ExpType.String:
+                    self._emit_code(f"ld      c,(hl)")
+                    self._emit_code("inc     c")
+                else:
+                    self._emit_code(f"ld      c,{entry.datasz}")
+                self._emit_code("ldir")
+        else:
+            self._raise_error(38, node)
+    
+    def _emit_assigment_variable(self, node: AST.Variable):          
+        var = self.symtable.find(node.name, SymType.Variable, self.context)
+        if var is not None:
+            if var.exptype == AST.ExpType.Integer:
+                self._emit_code(f"ld      ({var.label}),hl")
+            elif var.exptype == AST.ExpType.Real:
+                self._emit_code(f"ld      de,{var.label}")
+                self._emit_code(f"ld      bc,{var.datasz}")
+                self._emit_code("ldir")
+            elif var.exptype == AST.ExpType.String:
+                self._emit_code(f"ld      de,{var.label}")
+                self._emit_code("ld      b,0")
+                self._emit_code("ld      c,(hl)")
+                self._emit_code("inc     c")
+                self._emit_code("ldir")
+        else:
+            self._raise_error(38, node)
+
     def _emit_assigment(self, node: AST.Assignment):
         self._emit_expression(node.source)
         if isinstance(node.target, AST.ArrayItem):
-            var = self.symtable.find(node.target.name, SymType.Array, self.context)
-            if var is not None:
-                self._emit_code("push    hl")
-                self._emit_arrayitem_ptr(node.target)
-                if var.exptype == AST.ExpType.Integer:    
-                    self._emit_code("pop     de")
-                    self._emit_code(f"ld      (hl),e")
-                    self._emit_code(f"inc     hl")
-                    self._emit_code(f"ld      (hl),d")
-                elif var.exptype == AST.ExpType.Real:
-                    self._emit_code("ex      de,hl")
-                    self._emit_code("pop     hl")
-                    self._emit_code("ld      bc,5")
-                    self._emit_code("ldir")
-                elif var.exptype == AST.ExpType.String:
-                    self._emit_code("ex      de,hl")
-                    self._emit_code("pop     hl")
-                    self._emit_code("ld      b,0")
-                    self._emit_code("ld      c,(hl)")
-                    self._emit_code("inc     c")
-                    self._emit_code("ldir")
+            self._emit_assigment_arrayitem(node.target)
         elif isinstance(node.target, AST.Variable):
-            var = self.symtable.find(node.target.name, SymType.Variable, self.context)
-            if var is not None:
-                if var.exptype == AST.ExpType.Integer:
-                    self._emit_code(f"ld      ({var.label}),hl")
-                elif var.exptype == AST.ExpType.Real:
-                    self._emit_code(f"ld      de,{var.label}")
-                    self._emit_code("ld      bc,5")
-                    self._emit_code("ldir")
-                elif var.exptype == AST.ExpType.String:
-                    self._emit_code(f"ld      de,{var.label}")
-                    self._emit_code("ld      b,0")
-                    self._emit_code("ld      c,(hl)")
-                    self._emit_code("inc     c")
-                    self._emit_code("ldir")
+            if "$." in node.target.name:
+                self._emit_assigment_record(node.target)
+            else:
+                self._emit_assigment_variable(node.target)
         else:
-            self._raise_error(38, node)
+            self._raise_error(38, node.target)
 
     def _emit_RSX(self, node: AST.RSX):
         """
@@ -4075,6 +4175,7 @@ class CPCEmitter:
         if sym is not None:
             params = len(node.args)
             if params > 0:
+                self._emit_code("push    ix")
                 for a in node.args:
                     self._emit_expression(a)
                     if a.etype == AST.ExpType.String:
@@ -4091,8 +4192,10 @@ class CPCEmitter:
             self._emit_code("jr      nc,$+7", info="CF if find succeeded")         
             self._emit_code(f"ld      a,{params}")
             self._emit_code(f"call    {FWCALL.KL_FAR_PCHL}", info="KL_FAR_PCHL")
-            for i in range(0, params):
-                self._emit_code("pop     de")
+            if params > 0:
+                for i in range(0, params):
+                    self._emit_code("pop     de")
+                self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_blockend(self, node: AST.BlockEnd):
@@ -4109,14 +4212,18 @@ class CPCEmitter:
 
     def _emit_userfun(self, node: AST.UserFun):
         self._emit_code(f"; Calling USER FUN {node.name}")
-        for a in node.args:
-            self._emit_expression(a)
-            self._emit_code("push    hl")
-        self._emit_code("ld      ix,0", info="last parameter position")
-        self._emit_code("add     ix,sp")
+        if len(node.args):
+            self._emit_code("push    ix")
+            for a in node.args:
+                self._emit_expression(a)
+                self._emit_code("push    hl")
+            self._emit_code("ld      ix,0", info="last parameter position")
+            self._emit_code("add     ix,sp")
         self._emit_code(f"call    {self._get_userfun_label(node.name)}")
-        for a in node.args:
-            self._emit_code("pop     de", info="clean the stack")
+        if len(node.args):
+            for a in node.args:
+                self._emit_code("pop     de", info="clean the stack")
+            self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):

@@ -31,6 +31,7 @@ class SymType(str, Enum):
     Function = "Function"
     Procedure = "Procedure"
     RSX = "RSX"
+    Record = "Record"
 
 @dataclass
 class SymEntry:
@@ -42,6 +43,9 @@ class SymEntry:
     reads: int = 0
     nargs: int = 0                                   # Used by DEF FN and Arrays
     indexes: list[int] = field(default_factory=list) # Used by Arrays
+    memoff: int = 0     # if it's a param, offset in the call stack frame
+    datasz: int = 0     # integers = 2, reals = 5, string up to 255
+
 
 class SymTable:
     syms: dict[str, SymEntry]
@@ -91,6 +95,9 @@ class SymTable:
         Returns FALSE if the symbol exists and is not a VARIABLE or ARRAY which
         can be added multiple times (extra writes)
         """
+        if "$." in ident:
+            # check for Record pattern
+            ident = ident.split('.')[0]
         ident = ident.upper()
         keyident = self._code_symtype(ident, info.symtype)
         context = context.upper()
@@ -118,6 +125,9 @@ class SymTable:
         return False
         
     def find(self, ident: str, stype: SymType, context: str = "") -> Optional[SymEntry]:
+        if "$." in ident:
+            # check for Record pattern
+            ident = ident.split('.')[0]
         ident = ident.upper()
         keyident = self._code_symtype(ident, stype)
         context = context.upper()
@@ -148,7 +158,10 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
             "reads": data.reads,
             "nargs": data.nargs,
             "indexes": data.indexes,
-            "locals": symsto_json(data.locals.syms)
+            "locals": symsto_json(data.locals.syms),
+            "datasz": data.datasz,
+            "memoffset": data.memoff
+
         }
         jsontable[s] = info
     return jsontable

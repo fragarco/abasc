@@ -53,6 +53,14 @@ def exptype_fromname(ident: str) -> ExpType:
     else:
         return ExpType.Integer
 
+def exptype_memsize(t: ExpType) -> int:
+    if t == ExpType.Real:
+        return 5    # 5 bytes floating-point number
+    elif t == ExpType.String:
+        return 255  # 1 byte with str length plus 254 characters max
+    else:
+        return 2    # 2 bytes integer
+
 def exptype_isnum(etype: ExpType) -> bool:
     return etype in (ExpType.Integer, ExpType.Real)
 
@@ -268,16 +276,19 @@ class Variable(Statement):
 class Array(Statement):
     name: str
     sizes: list[int]
+    datasz: int
 
-    def __init__(self, name: str, etype: ExpType, sizes: list[int]):
+    def __init__(self, name: str, etype: ExpType, sizes: list[int], datasz: int):
         super().__init__(etype=etype, id="Array")
         self.name = name
         self.sizes = sizes
+        self.datasz = datasz
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
         d["sizes"] = self.sizes
+        d["datasz"] = self.datasz
         return d
 
 class ArrayItem(Statement):

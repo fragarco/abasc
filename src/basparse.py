@@ -492,6 +492,45 @@ class LocBasParser:
         return AST.Function(name="DEC$", args=args, etype=AST.ExpType.String)
 
     @astnode
+    def _parse_DECLARE(self) -> AST.Command:
+        # This allows the user to set a minor size for strings using the formula
+        # DECLARE A$ FIXED 50
+        # Added from Locomotive BASIC 2 PLUS
+        self._advance()
+        args: list[AST.Statement] = []
+        while True:
+            tk = self._expect(TokenType.IDENT)
+            entry = self.symtable.find(tk.lexeme, SymType.Variable, context=self.context)
+            if entry is not None:
+                self._raise_error(2, tk, info="variable already declared")
+            var = tk.lexeme
+            vartype = AST.exptype_fromname(var)
+            datasz = AST.exptype_memsize(vartype)
+            if vartype == AST.ExpType.String:
+                if self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
+                    self._advance()
+                    num = self._expect(TokenType.INT)
+                    datasz = cast(int, num.value) + 1
+                    if datasz > 255 or datasz < 2:
+                        self._raise_error(6, num, info="valid string size range is [1 - 254]")
+            self.symtable.add(
+                ident=var,
+                info=SymEntry(
+                    symtype=SymType.Variable,
+                    exptype=vartype,
+                    locals=SymTable(),
+                    datasz=datasz
+                ),
+                context=self.context
+            )
+            args.append(AST.Variable(var, vartype))
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+            else:
+                break
+        return AST.Command(name="DECLARE", args=args)
+
+    @astnode
     def _parse_DEF(self) -> AST.Command:
         # We decode DEF FN and not only DEF so if we find this
         # is an error
@@ -524,6 +563,8 @@ class LocBasParser:
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
+            info.memoff = 0
+            argoffset = 2
             self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             while self._current_is(TokenType.COMMA):
                 self._advance()
@@ -531,6 +572,8 @@ class LocBasParser:
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
                 info.exptype = vartype
+                info.memoff = argoffset
+                argoffset += 2
                 self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         self._expect(TokenType.COMP, "=")
@@ -544,6 +587,10 @@ class LocBasParser:
         if info.exptype != fbody.etype:
             self._raise_error(13, tk)
         info.nargs = len(fargs)
+        # time to set correctly the parameters offset now we know the total number
+        for localname in info.locals.syms:
+            entry = info.locals.syms[localname]
+            entry.memoff = (info.nargs * 2) - entry.memoff - 2
         return AST.DefFN(name=fname, args=fargs, body=fbody)
 
     @astnode
@@ -596,7 +643,7 @@ class LocBasParser:
         """ <DIM> ::= DIM <array_declaration>[,<array_declaration>]*"""
         # El numero dado como "size" es el maximo indice que se puede
         # usar, de esta forma es valido 10 DIM I(0): I(0) = 5
-        tk = self._advance()
+        tk = self._advance()      
         args: list[AST.Statement] = [self._parse_array_declaration()]
         while self._current_is(TokenType.COMMA):
             self._advance()
@@ -608,7 +655,8 @@ class LocBasParser:
                 exptype=var.etype,
                 locals=SymTable(),
                 nargs=len(var.sizes),   # type: ignore [attr-defined]
-                indexes=var.sizes       # type: ignore [attr-defined]
+                indexes=var.sizes,      # type: ignore [attr-defined]
+                datasz=var.datasz       # type: ignore [attr-defined]
             )
             if not self.symtable.add(ident=var.name, info=info, context=self.context): #type: ignore[attr-defined]
                 self._raise_error(10, tk)
@@ -619,6 +667,7 @@ class LocBasParser:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
         var = self._expect(TokenType.IDENT).lexeme
         vartype = AST.exptype_fromname(var)
+        datasz = AST.exptype_memsize(vartype)
         sizes = [10]
         self._expect(TokenType.LPAREN)
         if not self._current_is(TokenType.RPAREN):
@@ -631,7 +680,13 @@ class LocBasParser:
                 sizes.append(cast(int, tk.value))
                 if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
         self._expect(TokenType.RPAREN)
-        return AST.Array(name=var, etype=vartype, sizes=sizes)
+        if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
+            self._advance()
+            num = self._expect(TokenType.INT)
+            datasz = cast(int, num.value) + 1
+            if datasz > 255 or datasz < 2:
+                self._raise_error(6, num, info="valid string size range is [1 - 254]")
+        return AST.Array(name=var, etype=vartype, sizes=sizes, datasz=datasz)
 
     @astnode
     def _parse_DRAW(self) -> AST.Command:
@@ -844,7 +899,12 @@ class LocBasParser:
             # in Locomotive BASIC after the loop ends
             self.symtable.add(
                 ident=var,
-                info=SymEntry(symtype=SymType.Variable, exptype=vartype, locals=SymTable()),
+                info=SymEntry(
+                    symtype=SymType.Variable,
+                    exptype=vartype,
+                    locals=SymTable(),
+                    datasz=AST.exptype_memsize(vartype)
+                ),
                 context=self.context
             )
         start = self._parse_int_expression()
@@ -890,10 +950,12 @@ class LocBasParser:
         fname = "FUN" + tk.lexeme.upper()
         fargs: list[AST.Variable] = []
         self.context = fname
+        rettype = AST.exptype_fromname(tk.lexeme)
         info = SymEntry(
             symtype=SymType.Function,
-            exptype=AST.exptype_fromname(tk.lexeme),
+            exptype=rettype,
             locals=SymTable(),
+            datasz=AST.exptype_memsize(rettype)
             )
         if not self.symtable.add(ident=fname, info=info, context=""):
             self._raise_error(2, tk)
@@ -905,6 +967,8 @@ class LocBasParser:
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
+            info.memoff = 0
+            argoffset = 2
             self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             while self._current_is(TokenType.COMMA):
                 self._advance()
@@ -912,6 +976,8 @@ class LocBasParser:
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
                 info.exptype = vartype
+                info.memoff = argoffset
+                argoffset += 2
                 self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         # Lets update our procedure entry with
@@ -920,6 +986,10 @@ class LocBasParser:
         if info is None:
             self._raise_error(38, tk)
         info.nargs = len(fargs)
+        # time to set correctly the parameters offset now we know the total number
+        for localname in info.locals.syms:
+            entry = info.locals.syms[localname]
+            entry.memoff = (info.nargs * 2) - entry.memoff - 2
         node = AST.DefFUN(name=fname, args=fargs)
         self.codeblocks.append(CodeBlock(
             type=BlockType.FUNCTION,
@@ -1162,7 +1232,12 @@ class LocBasParser:
                 if self.symtable.find(ident=v.name, stype=SymType.Variable, context=self.context) is None:
                     self.symtable.add(
                         ident=v.name,
-                        info=SymEntry(symtype=SymType.Variable, exptype=v.etype, locals=SymTable()),
+                        info=SymEntry(
+                            symtype=SymType.Variable,
+                            exptype=v.etype,
+                            locals=SymTable(),
+                            datasz=AST.exptype_memsize(v.etype)
+                        ),
                         context=self.context
                     )
         if stream is not None and isinstance(stream,AST.Integer) and stream.value == 9:
@@ -1233,7 +1308,10 @@ class LocBasParser:
         label = self._expect(TokenType.IDENT)
         inserted = self.symtable.add(
             ident=label.lexeme,
-            info=SymEntry(symtype=SymType.Label, exptype=AST.ExpType.Void, locals=SymTable()),
+            info=SymEntry(
+                symtype=SymType.Label,
+                exptype=AST.ExpType.Void,
+                locals=SymTable()),
             context=""
         )
         if not inserted:
@@ -1294,7 +1372,12 @@ class LocBasParser:
             if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
                 self.symtable.add(
                     ident=var.name,
-                    info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
+                    info=SymEntry(
+                        symtype=SymType.Variable,
+                        exptype=var.etype,
+                        locals=SymTable(),
+                        datasz=AST.exptype_memsize(var.etype)
+                    ),
                     context=self.context
                 )
         return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, var=var)
@@ -1776,13 +1859,55 @@ class LocBasParser:
                 if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
                     self.symtable.add(
                         ident=var.name,
-                        info=SymEntry(symtype=SymType.Variable, exptype=var.etype, locals=SymTable()),
+                        info=SymEntry(
+                            symtype=SymType.Variable,
+                            exptype=var.etype,
+                            locals=SymTable(),
+                            datasz=AST.exptype_memsize(var.etype)
+                        ),
                         context=self.context
                     )
             if not self._current_is(TokenType.COMMA):
                 break
             self._advance()
         return AST.Command(name="READ", args=vars)
+
+    @astnode
+    def _parse_RECORD(self) -> AST.Command:
+        """ <RECORD> ::= RECORD IDENT; IDENT[,IDENT]* """
+        self._advance()
+        tk = self._expect(TokenType.IDENT)
+        offset = 0
+        root = tk.lexeme
+        self._expect(TokenType.SEMICOLON)
+        while self._current_is(TokenType.IDENT):
+            argtk = self._expect(TokenType.IDENT)
+            var = root + "." + argtk.lexeme
+            vartype = AST.exptype_fromname(argtk.lexeme)
+            datasz = AST.exptype_memsize(vartype)
+            if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
+                self._advance()
+                num = self._expect(TokenType.INT)
+                datasz = cast(int, num.value) + 1
+            inserted = self.symtable.add(
+                ident=var,
+                info=SymEntry(
+                    symtype=SymType.Record,
+                    exptype=vartype,
+                    locals=SymTable(),
+                    datasz=datasz,
+                    memoff=offset
+                ),
+                context=self.context
+            )
+            if not inserted:
+                self._raise_error(2, tk, info="record redifinition")
+            offset = datasz + offset
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+            else:
+                break
+        return AST.Command(name="RECORD")
 
     @astnode
     def _parse_RELEASE(self) -> AST.Command:
@@ -2064,6 +2189,8 @@ class LocBasParser:
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
+            info.memoff = 0
+            argoffset = 2
             self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             while self._current_is(TokenType.COMMA):
                 self._advance()
@@ -2071,6 +2198,8 @@ class LocBasParser:
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 pargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
                 info.exptype = vartype
+                info.memoff = argoffset
+                argoffset += 2
                 self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         # Lets update our procedure entry with
@@ -2079,6 +2208,10 @@ class LocBasParser:
         if info is None:
             self._raise_error(38, tk)
         info.nargs = len(pargs)
+        # time to set correctly the parameters offset now we know the total number
+        for localname in info.locals.syms:
+            entry = info.locals.syms[localname]
+            entry.memoff = (info.nargs * 2) - entry.memoff - 2
         node = AST.DefSUB(name=pname, args=pargs)
         self.codeblocks.append(CodeBlock(
             type=BlockType.SUB,
@@ -2739,7 +2872,12 @@ class LocBasParser:
             # have to add them to the symtable now
             self.symtable.add(
                 ident=target.name,
-                info=SymEntry(SymType.Variable, exptype=target.etype, locals=SymTable()),
+                info=SymEntry(
+                    SymType.Variable,
+                    exptype=target.etype,
+                    locals=SymTable(),
+                    datasz=AST.exptype_memsize(target.etype)
+                ),
                 context=self.context
             )
         return AST.Assignment(target=target, source=source, etype=target.etype)

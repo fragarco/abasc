@@ -99,16 +99,16 @@ _KEYWORDS = {
     # Commands
     "AFTER","ASM", "AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR",
     "CLEAR INPUT","CLG","CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA",
-    "DEF","DEF FN","DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI","DIM",
-    "DRAW","DRAWR","EDIT","EI","ELSE","END","END IF","END SUB","END FUNCTION","ENT",
-    "ENV","ERASE","ERL","ERROR","EVERY","FILL","FN","FOR","FRAME","FUNCTION","GOSUB",
-    "GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF","INK","INPUT","KEY",
+    "DECLARE","DEF","DEF FN","DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI",
+    "DIM","DRAW","DRAWR","EDIT","EI","ELSE","END","END IF","END SUB","END FUNCTION",
+    "ENT","ENV","ERASE","ERL","ERROR","EVERY","FILL","FIXED","FN","FOR","FRAME","FUNCTION",
+    "GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF","INK","INPUT","KEY",
     "KEY DEF","LABEL","LET","LINE","LINE INPUT","LIST","LOAD","LOCATE","MASK","MEMORY",
     "MERGE","MID$","MODE","MOVE","MOVER","NEW","NEXT","ON","ON BREAK","ON ERROR GOTO",
     "ON SQ","OPENIN","OPENOUT","ORIGIN","OUT","PAPER","PEN","PLOT","PLOTR","POKE",
-    "PRINT","RAD","RANDOMIZE","READ","RELEASE","REM","RENUM","RESTORE","RESUME","RETURN",
-    "RUN","SAVE","SOUND","SPC","SPEED","SPEED KEY", "SPEED INK", "SPEED WRITE","STEP",
-    "STOP","SUB","SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF",
+    "PRINT","RAD","RANDOMIZE","READ","RECORD","RELEASE","REM","RENUM","RESTORE","RESUME",
+    "RETURN","RUN","SAVE","SOUND","SPC","SPEED","SPEED KEY", "SPEED INK", "SPEED WRITE",
+    "STEP","STOP","SUB","SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF",
     "TRON","THEN","USING","WAIT","WEND","WHILE","WIDTH","WINDOW","WINDOW SWAP",
     "WRITE","ZONE",
     # Functions
@@ -151,6 +151,11 @@ class LocBasLexer:
     def _peek(self, n=0) -> str:
         nextch = self.pos + n
         return self.text[nextch] if nextch < len(self.text) else ""
+
+    def _next_ch(self) -> str:
+        if self.pos + 1 < len(self.text):
+            return self.text[self.pos + 1]
+        return ''
 
     def _advance(self) -> str:
         ch = self._peek()
@@ -238,8 +243,10 @@ class LocBasLexer:
             # Locomotive BASIC in the CPC allows '.' as part
             # of identifier names
             # 10 a.b=5
-            # above line is valid
-            if ch.isalnum() or ch == '.':
+            # above line is valid.
+            # Also, locomotive BASIC 2 plus uses . to apply records to
+            # string identifiers so A$.person.name$ is valid too.
+            if ch.isalnum() or ch == '.' or (ch == '$' and self._next_ch() == '.'):
                 out += self._advance()
             else:
                 break

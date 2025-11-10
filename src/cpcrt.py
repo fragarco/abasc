@@ -485,13 +485,13 @@ rt_scratch_pad:  defs  255
 """
 ; RT_STRADD_LEN
 ; Returns the addition of two string lenghts.
-; Final length is cropped to 254 if exceeds.        
+; Final length is cropped to 254 if exceeds.
 ; Inputs:
 ;    HL address to length1 in memory
 ;    DE address to length2 in memory
 ; Outputs:
 ;     A resulting length (HL) + (DE) truncated to 254 if needed
-;     B is modified, HL, DE and C are preserved
+;     B and Flags are modified
 rt_stradd_len:
     ld     b,(hl)
     ld     a,(de)
@@ -516,18 +516,17 @@ __addlen_crop:
 ;     DE origin
 ; Outputs:
 ;     HL address to the destination string
-;     AF, B and DE are modified, C is preserved
+;     AF, BC and DE are modified
 rt_strcopy:
     push    hl
-    ld      a,(de)     ; total characters to copy
-    ld      (hl),a     ; number of copied characters
+    ex      hl,de
+    ld      a,(hl)     ; total characters to copy
+    ld      (de),a     ; number of copied characters
+    inc     de
+    inc     hl
     ld      b,a
-__strcopy_loop:
-    inc     hl         ; reserve first byte for length
-    inc     de         ; first character
-    ld      a,(de)
-    ld      (hl),a
-    djnz    __strcopy_loop
+    ld      c,0
+    ldir
     pop     hl
     ret
 """
@@ -567,24 +566,24 @@ __strzcopy_end:
 ; DE string gets append to the end of HL string
 ; First byte contains the string length
 ; Inputs:
-;     HL and DE
+;     HL target string
+;     DE source string that will be append at the end of HL
 ; Outputs:
 ;     HL points to the resulting string (HL+DE)
 ;     AF, BC and DE are modified
 rt_strcat:
     call    rt_stradd_len     ; lets get final length
-    ld      b,(hl)            ; current length
-    ld      c,(hl)            ; current length backup
     ld      (hl),a            ; store final length
-    sub     b
-    ld      b,a               ; B has the number of bytes to copy
-    push    hl
-    ld      a,c               ; destination string current len
-    add     a,l
+    ld      c,(hl)            ; destination current length
+    sub     c
+    ld      b,a               ; number of bytes to copy
+    push    hl                ; address to return
+    ld      a,c               ; go to destination current last char
+    add     a,l               ; doing HL + current length
     ld      l,a
     adc     a,h
     sub     l
-    ld      h,a               ; HL points to the its string last byte
+    ld      h,a
 __strcat_loop:
     inc     hl
     inc     de
@@ -2559,6 +2558,7 @@ f"""
 ;     HL  integer to convert
 ; Outputs:
 ;     rt_math_accum1 holds the converted number pointed by HL
+;     AF, HL, DE and IX are modified
 rt_int2real:
     xor     a
     ld      a,h    ; bit 7 sets the sign
@@ -2581,6 +2581,7 @@ f"""
 ;     HL  address to the 5-bytes floating point number
 ; Outputs:
 ;     rt_math_accum1 holds the converted number pointed by HL
+;     AF, BC, HL, DE and IX are modified
 rt_real2fix:
     ld      ix,{FWCALL.MATH_REAL_FIX}  ; MATH_REAL_FIX
     call    rt_math_call
@@ -2588,7 +2589,6 @@ rt_real2fix:
     ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
     call    rt_math_call
     jp      rt_real2int
-    ret
 """
 ),
     "rt_real_int": (["rt_math_call", "rt_real2int"],
@@ -2601,14 +2601,15 @@ f"""
 ;     HL  address to the 5-bytes floating point number
 ; Outputs:
 ;     rt_math_accum1 holds the converted number pointed by HL
+;     AF, HL, DE and IX are modified
 rt_real_int:
+    push    ix
     ld      ix,{FWCALL.MATH_REAL_INT}  ; MATH_REAL_INT
     call    rt_math_call
     ld      a,b   ; sign (bit 7)
     ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL
     call    rt_math_call
     jp      rt_real2int
-    ret
 """
 ),
     "rt_real_round": (["rt_math_call", "rt_move_real"],
@@ -2794,7 +2795,7 @@ f"""
 ; Outputs:
 ;   HL address to the REAL result
 ;   BC is the result of the LCG, so not that great of quality
-;   AF is modified, DE is preserved
+;   AF, BC, HL, DE, and IX are modified
 rt_rnd_32767: db &00,&00,&FE,&7F,&8F
 rt_rnd:
     ld      hl,(rt_rnd_seed1)
