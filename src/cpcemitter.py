@@ -664,9 +664,12 @@ class CPCEmitter:
         Continue program execution after a *Break*, STOP or END, as long as the
         program has not been altered. Direct commands may be entered. 
         """
+        # We reuse CONT to be able to add "BREAK POINTS" that stop the execution
+        # until a key is pressed
         self._emit_code("; CONT")
-        self._raise_warning(0, 'CONT is ignored and has not effect', node)
-        self._emit_code("; IGNORED")
+        self._raise_warning(0, 'CONT will stop de program until a key is pressed', node)
+        self._emit_code(f"call    {FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
+        self._emit_code(";")
     
     def _emit_COPYCHRSS(self, node:AST.Function):
         """
@@ -1631,6 +1634,7 @@ class CPCEmitter:
         self._emit_import("rt_input")
         self._emit_code("; INPUT [#<stream>][;][<quoted string>,]<list: [var]>")
         if node.stream is not None:
+            self._emit_expression(node.stream)
             self._emit_stream()
         if node.prompt != "":
             self._print_str(AST.String(value=node.prompt))
