@@ -3,7 +3,7 @@
 ' its series of tutorials about printing sprites in BASIC
 ' http://fremos.cheesetea.com/2014/03/06/sprites-con-caracteres-en-basic-amstrad-cpc
 
-T = TIME
+T! = TIME
 SYMBOL AFTER 240
 SYMBOL 240,&00,&00,&74,&7E,&6C,&70,&7C,&30
 SYMBOL 241,&7E,&FD,&80,&80,&80,&80,&40,&00
@@ -30,5 +30,5 @@ LOCATE 5,3:PEN 11:PRINT CHR$(246);
 LOCATE 5,4:PEN 9:PRINT CHR$(247);
 LOCATE 5,4:PEN 3:PRINT CHR$(248);
 
-PRINT TIME - T
+PRINT TIME - T!
 END

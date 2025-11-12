@@ -496,9 +496,7 @@ rt_stradd_len:
     ld     b,(hl)
     ld     a,(de)
     add    a,b
-    jr     nc,__addlen_checkmax
-    jr     __addlen_crop
-__addlen_checkmax:
+    jr     c,__addlen_crop
     cp     255
     ret    c
 __addlen_crop:
@@ -521,11 +519,9 @@ rt_strcopy:
     push    hl
     ex      hl,de
     ld      a,(hl)     ; total characters to copy
-    ld      (de),a     ; number of copied characters
-    inc     de
-    inc     hl
-    ld      b,a
-    ld      c,0
+    inc     a          ; plus length byte
+    ld      c,a
+    ld      b,0
     ldir
     pop     hl
     ret
@@ -573,8 +569,8 @@ __strzcopy_end:
 ;     AF, BC and DE are modified
 rt_strcat:
     call    rt_stradd_len     ; lets get final length
-    ld      (hl),a            ; store final length
-    ld      c,(hl)            ; destination current length
+    ld      c,(hl)            ; current length
+    ld      (hl),a            ; final length
     sub     c
     ld      b,a               ; number of bytes to copy
     push    hl                ; address to return
@@ -1280,22 +1276,23 @@ f"""
 ;     HL destination string
 ; Outputs:
 ;     HL  points to the resulting string (may be 0 len)
-;     DE, AF and B are modified
+;     AF and B are modified
 rt_copychrs:
     ld      (hl),0
-    ex      de,hl
-    call    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT
-    ld      c,a     ; save current selected stream
-    call    {FWCALL.TXT_RD_CHAR}  ; TXT_RD_CHAR
-    ret     nc      ; NC means error
-    ld      b,a
-    ld      a,c
-    call    {FWCALL.TXT_STR_SELECT}  ; TXT_STR_SELECT
-    ex      de,hl
+    ex      de,hl   ; TXT_STR_SELECT destroys HL
+    call    {FWCALL.TXT_STR_SELECT}   ; TXT_STR_SELECT
+    ld      b,a     ; save current selected stream
+    call    {FWCALL.TXT_RD_CHAR}   ; TXT_RD_CHAR
+    jr      nc,__copychrs_end
+    ld      h,d
+    ld      l,e
     ld      (hl),1
     inc     hl
-    ld      (hl),b
-    dec     hl
+    ld      (hl),a
+__copychrs_end:
+    ld      a,b
+    call    {FWCALL.TXT_STR_SELECT}   ; TXT_STR_SELECT 
+    ex      de,hl
     ret
 """
 ),
@@ -1717,18 +1714,16 @@ f"""
 ; Inputs:
 ;     HL address to the string to print
 ; Outputs:
-;     C stores the total number of printed chars
 ;     AF, HL and BC are modified
 rt_print_str:
     ld      a,(hl)
-    ld      c,a        ; total number of printed chars
     or      a
     ret     z          ; empty string
     ld      b,a
 __print_str_loop:
     inc     hl
     ld      a,(hl)
-    call    {FWCALL.TXT_OUTPUT}
+    call    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
     djnz    __print_str_loop
     ret
 """
@@ -2603,7 +2598,6 @@ f"""
 ;     rt_math_accum1 holds the converted number pointed by HL
 ;     AF, HL, DE and IX are modified
 rt_real_int:
-    push    ix
     ld      ix,{FWCALL.MATH_REAL_INT}  ; MATH_REAL_INT
     call    rt_math_call
     ld      a,b   ; sign (bit 7)

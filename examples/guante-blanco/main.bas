@@ -1,3 +1,4 @@
+5 RANDOMIZE TIME
 10 'GUANTE BLANCO, por David Radisic
 20 'copyright (c) amosoft 1985
 30 '
@@ -102,7 +103,7 @@
 980 'Generar joyas y obtaculos
 990 '
 1000 FOR hab=1 TO 5
-1010 joyar=INT(RND*8)+2:objr=INT(RND*10)+5
+1010 joyar=INT(RND*8.0)+2:objr=INT(RND*10.0)+5
 1020 minx=minx(hab):miny=miny(hab):maxx=maxx(hab):maxy=maxy(hab)
 1030 FOR i=1 TO joyar
 1040 x=INT(RND*(maxx-minx+1))+minx
@@ -133,9 +134,9 @@
 1290 READ a$:IF a$="FIN" THEN RETURN
 1300 IF a$="D" THEN 2190
 1310 IF a$="W" THEN 2270
-1320 IF a$="L" THEN GRAPHICS PEN 1:GOTO 2350
+1320 IF a$="L" THEN lcolor=1:GOTO 2350
 1330 IF a$="S" THEN 2430
-1340 IF a$="F" THEN GRAPHICS PEN 6:GOTO 2350
+1340 IF a$="F" THEN lcolor=6:GOTO 2350
 1350 PRINT"***ERROR ***";
 1360 STOP
 1370 '
@@ -166,7 +167,7 @@
 1620 PAPER 0:LOCATE 4,24:PRINT"       ";:PAPER 8
 1630 xp=xp+xf:yp=yp+yf
 1640 LOCATE xp,yp:PRINT hombre$;
-1650 IF perro>0 THEN perro=perro MOD 2+1:IF perro=2 THEN 2560
+1650 IF perro>0 THEN perro=perro MOD 5+1:IF perro=5 THEN 2560
 1660 GOTO 1520
 1670 gol=INSTR(gol$,ht$):car=ASC(MID$(gol$,gol,1))
 1680 ON gol GOTO 1700,1700,1700,1700,1760,1760,1860,1910,1980,2100,2660
@@ -239,9 +240,9 @@
 2350 'Dibujar rectas
 2360 '
 2370 READ x1,y1,x2,y2
-2380 MOVE x1,y1,1,0
-2390 DRAW x1,y2,1,0:DRAW x2,y2,1,0
-2400 DRAW x2,y1,1,0:DRAW x1,y1,1,0
+2380 MOVE x1,y1,lcolor,0
+2390 DRAW x1,y2:DRAW x2,y2
+2400 DRAW x2,y1:DRAW x1,y1
 2410 GOTO 1290
 2420 '
 2430 'Dibujar interruptores

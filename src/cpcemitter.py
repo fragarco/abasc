@@ -565,11 +565,11 @@ class CPCEmitter:
         """
         self._emit_code("; CHR$(<integer expression>)") 
         self._emit_expression(node.args[0])
-        self._emit_code("ex      de,hl")
+        self._emit_code("ld      a,l")
         self._reserve_memory(2)
         self._emit_code("ld      (hl),1")
         self._emit_code("inc     hl")
-        self._emit_code("ld      (hl),e")
+        self._emit_code("ld      (hl),a")
         self._emit_code("dec     hl")
         self._emit_code(";")
 
@@ -578,6 +578,7 @@ class CPCEmitter:
         Converts the given value to a rounded integer in the range -32768..32767. 
         """
         self._emit_code("; CINT(<numeric expression>)")
+        self._emit_code("push    ix")
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Real:
             self._emit_import("rt_real2int")
@@ -585,6 +586,7 @@ class CPCEmitter:
             self._emit_code("call    rt_real2int")
         else:
             self._emit_code("; already INT so no action taken")
+        self._emit_code("pop     ix")
         self._emit_code(";")
 
     def _emit_CLEAR(self, node:AST.Command):
@@ -681,9 +683,8 @@ class CPCEmitter:
         self._emit_import("rt_copychrs")
         self._emit_code("; COPYCHR$(#<stream expression>)")
         self._emit_expression(node.args[0])
-        self._emit_code("ex      de,hl")
+        self._emit_code("ld      a,l")
         self._reserve_memory(2)
-        self._emit_code("ld      a,e")
         self._emit_code("call    rt_copychrs")
         self._emit_code(";")
 
@@ -794,9 +795,28 @@ class CPCEmitter:
         the specified <format template> to control the print format of the resulting string.
         The format template may contain ONLY the characters: + - £ $ * # , . ^
         """
-        # TODO: reals
         self._emit_code("; DEC$(<numeric expression>,<format template>)")
-        self._raise_error(2, node, 'not implemented yet')
+        # TODO: apply format
+        arg = node.args[0]
+        self._emit_expression(arg)
+        if arg.etype == AST.ExpType.Integer:
+            self._emit_import("rt_int2str")
+            self._emit_code("call    rt_int2str")
+            self._reserve_memory_de(8)
+            self._emit_code("push    de")
+            self._emit_code("ldir")
+            self._emit_code("pop     hl")
+        else:
+            self._emit_import("rt_real2strz")
+            self._emit_import("rt_strzcopy")
+            self._emit_code("push    ix")
+            self._emit_code("call    rt_real2strz")
+            self._reserve_memory(12)
+            self._emit_code("ld      de,rt_real2strz_buf")
+            self._emit_code("call    rt_strzcopy")
+            self._emit_code("pop     ix")
+        self._raise_warning(0, "text patterns are not supported yet", node)
+        self._emit_code(";")
 
     def _emit_DEFINT(self, node:AST.Command):
         """
@@ -1196,6 +1216,25 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
         self._emit_code(";")
 
+    def _emit_EXIT_FOR(self, node:AST.Command):
+        """
+        Interrupts a FOR ... NEXT loop and transfers the control to the line
+        just after the NEXT keyword.
+        """
+        self._emit_code("; EXIT FOR")
+        fornode = self.forloops[-1]
+        self._emit_code(f"jp      {fornode.end_label}")
+        self._emit_code(";")
+    
+    def _emit_EXIT_WHILE(self, node:AST.Command):
+        """
+        Interrupts a WHILE ... WEND loop and transfers the control to the line
+        just after the WEND keyword.
+        """
+        self._emit_code("; EXIT WHILE")
+        wnode = self.wloops[-1]
+        self._emit_code(f"jp      {wnode.end_label}")
+        self._emit_code(";")
 
     def _emit_EXP(self, node:AST.Function):
         """
@@ -1556,7 +1595,9 @@ class CPCEmitter:
         range 0 to 26. If an optional second <colour> is specified, the ink
         alternates between the two colours, at a rate determined by SPEED INK
         command. Depending on the current screen mode, a number of INKs are
-        available. 
+        available.
+        NOTE: Ink values are not sent to the hardware until the next FLYBACK (VSYNC)
+              event.
         """
         self._emit_code("; INK <ink>,<colour>[,<colour>]")
         self._emit_expression(node.args[1])
@@ -2023,7 +2064,6 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_MERGE(self, node:AST.Statement):
-        # TODO: can we arrive here?
         self._raise_error(2, node, 'not implemented yet')
 
     def _emit_MIDSS(self, node:AST.Function):
@@ -2382,7 +2422,7 @@ class CPCEmitter:
             self._emit_stream()
             args = args[1:]
         self._emit_expression(args[0])
-        self._emit_code("ld      a,l     ; color")
+        self._emit_code("ld      a,l", info="color")
         self._emit_code(f"call    {FWCALL.TXT_SET_PEN}", info="TXT_SET_PEN")
         if len(node.args) == 2:
             self._emit_stream_0()
@@ -2489,7 +2529,7 @@ class CPCEmitter:
         self._emit_code("ld      l,h")
         self._emit_code("ld      h,0")
         self._emit_code("push    hl")
-        self._emit_code("ld      l,a")
+        self._emit_code("ld      l,b")
         self._emit_stream()
         self._emit_code("pop     hl")
         self._emit_code(";")
@@ -2560,8 +2600,6 @@ class CPCEmitter:
         self._emit_code("call    rt_print_int")
 
     def _print_real(self, item:AST.Statement):
-        # let's convert to integer until we have a propper rutine
-        # TODO: reals
         self._emit_import("rt_print_real")
         self._emit_code("; PRINT REAL item")
         self._emit_code("push    ix")
@@ -3396,6 +3434,7 @@ class CPCEmitter:
         """
         # TODO: apply format
         self._emit_code("; USING <format template>;<expression>[,<expression>]*")
+        self._raise_warning(0, "text patterns are not supported yet", node)
         for a in node.args[1:]:
             if a.etype == AST.ExpType.Integer:
                 self._print_int(a)
@@ -3441,7 +3480,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_GET_CURSOR}", info="TXT_GET_CURSOR")
         self._emit_code("ld      h,0")
         self._emit_code("push    hl")
-        self._emit_code("ld      l,a")
+        self._emit_code("ld      l,b")
         self._emit_stream()
         self._emit_code("pop     hl")
         self._emit_code(";")

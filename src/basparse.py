@@ -850,6 +850,34 @@ class LocBasParser:
         return AST.Command(name="EVERY", args=args)
 
     @astnode
+    def _parse_EXIT_FOR(self) -> AST.Command:
+        """ <EXIT FOR> ::= EXIT FOR """
+        tk = self._advance()
+        # EXIT FOR can be inside an IF codeblock but not anything else from WHILE codeblock
+        for cblock in reversed(self.codeblocks):
+            if "NEXT" in cblock.until_keywords:
+                break
+            if not "END IF" in cblock.until_keywords:
+                break
+        if cblock is None or "NEXT" not in cblock.until_keywords:
+            self._raise_error(2, tk, info="unexpected EXIT FOR")
+        return AST.Command(name="EXIT FOR")
+
+    @astnode
+    def _parse_EXIT_WHILE(self) -> AST.Command:
+        """ <EXIT WHILE> ::= EXIT WHILE """
+        tk = self._advance()
+        # EXIT WHILE can be inside an IF codeblock but not anything else from WHILE codeblock
+        for cblock in reversed(self.codeblocks):
+            if "WEND" in cblock.until_keywords:
+                break
+            if not "END IF" in cblock.until_keywords:
+                break
+        if cblock is None or "WEND" not in cblock.until_keywords:
+            self._raise_error(2, tk, info="unexpected EXIT WHILE")
+        return AST.Command(name="EXIT WHILE")
+
+    @astnode
     def _parse_EXP(self) -> AST.Function:
         """ <EXP> ::= EXP(<num_expression>) """
         self._advance()
@@ -1026,6 +1054,9 @@ class LocBasParser:
         # THEN and ELSE can arrive here parsing just a number/label so we use 
         # match and not advance
         self._match(TokenType.KEYWORD, "GOTO")
+        for cblock in self.codeblocks:
+            if "NEXT" in cblock.until_keywords:
+                self._raise_warning(0, "GOTO is dangerous inside loops if it jumps outside")
         args: list[AST.Statement] = []
         tk = self._current()
         if self._current_is(TokenType.INT):
