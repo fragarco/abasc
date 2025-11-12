@@ -5,7 +5,7 @@
 ' and 17s when using integers.
 ' This is a good way to measure if the compiler produces
 ' speed improvements at all.
-T = TIME
+T! = TIME
 CLS
 FOR i=1 to 10
     FOR j=1 to 1000
@@ -14,7 +14,7 @@ FOR i=1 to 10
     PRINT ".";
 NEXT i
 PRINT " END!"
-PRINT TIME-T
+PRINT TIME-T!
 END
 
 

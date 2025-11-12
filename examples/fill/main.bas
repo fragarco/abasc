@@ -2,14 +2,14 @@
 '***********************************
 '*********** FILL - Basic **********
 MODE 1:DIM x(50),y(50)
-T=TIME
+T!=TIME
 
 MOVE 100,100
 DRAW 150,150,2:DRAW 100,200:DRAW 200,200:DRAW 180,180:DRAW 200,140:DRAW 200,100:DRAW 100,100
 MOVE 120,120:TAG:PRINT"X Y Z";:TAGOFF
 
 '*** Calling parameters
-x=160:y=160:f=3:GOSUB FILLSUB:PRINT TIME-T:END
+x=160:y=160:f=3:GOSUB FILLSUB:PRINT TIME-T!:END
 
 LABEL FILLSUB
     '******** Subrutine FILL ********
