@@ -105,9 +105,11 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(infile: str, codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool):
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool) -> str:
     emitter = CPCEmitter(codelines, ast, symtable, verbose=verbose)
-    asmcode = emitter.emit_program()
+    return emitter.emit_program()
+    
+def assemble(infile: str, asmcode: str):
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w") as fd:
             fd.write(asmcode)
@@ -126,7 +128,9 @@ def main() -> None:
         ast, symtable = parser(infile, codelines, tokens, args.verbose)
         optimizer = BasOptimizer()
         ast, symtable = optimizer.optimize_ast(ast, symtable)
-        emit(infile, codelines, ast, symtable, args.verbose)
+        asmcode = emit(codelines, ast, symtable, args.verbose)
+        asmcode = optimizer.optimize_peephole(asmcode)
+        assemble(infile, asmcode)
     except Exception as e:
         print(str(e))
         if args.debug:

@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 from __future__ import annotations
 from typing import List, Optional, cast, Any
+import re
 import astlib as AST
 import symbols as SYM
 
@@ -27,6 +28,8 @@ import symbols as SYM
 class BasOptimizer:
     def __init__(self) -> None:
         self.modified = False
+
+    # ----------------- AST Trasversal functions -----------------
 
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
@@ -56,8 +59,6 @@ class BasOptimizer:
         if node.left.id not in literals:
             node.left = self._op_statement(node.left)    
         return node 
-
-    # ----------------- AST Trasversal functions -----------------
 
     def _op_statement(self, stmt: AST.Statement) -> AST.Statement:
         if isinstance(stmt, AST.BinaryOp):
@@ -95,3 +96,49 @@ class BasOptimizer:
                 for i in range(0, len(line.statements)):
                     line.statements[i] = self._op_statement(line.statements[i])
         return program, syms
+
+    # ----------------- peephole optimizations -----------------
+
+
+    _ph_rules = [
+        (
+            "ld      hl,*:ld      a,l",
+            r"ld      a,\1"
+        ),
+        (
+            "ld      hl,*:ld      c,l*:ld      b,l*",
+            r"ld      b,\1\n\tld      c,b"
+        ),
+        (
+            "ld      hl,*:ld      b,l",
+            r"ld      b,\1"
+        ),
+        (
+            "ld      hl,*:ld      c,l",
+            r"ld      c,\1"
+        ),
+        (
+            "ld      hl,*:push    hl*:ld      hl,*:pop     de",
+            r"ld      hl,\1\n\tex      de,hl\n\tld      hl,\3"
+        ),
+        (
+            "push    bc*:ld      a,*:pop     bc",
+            r"ld      a,\2"
+        ),
+        (
+            "pop     de:push    de:ex      de,hl",
+            r"ex      de,hl"
+        ),
+    ]
+     
+    def optimize_peephole(self, code: str) -> str:
+        print("Optimizing assembly code...")
+        # apply peephole rules
+        for pattern, optcode in self._ph_rules:
+            regex = re.escape(pattern)
+            regex = regex.replace(r"\*", r"(.*)")
+            regex = regex.replace(r":", r"[\r\n]+\s*")
+            expr = re.compile(regex, flags=re.IGNORECASE)
+
+            code = re.sub(expr, optcode, code)
+        return code
