@@ -27,7 +27,7 @@ from baspp import CodeLine
 from baserror import BasError
 from symbols import SymTable, SymEntry, SymType, symsto_json
 import astlib as AST
-from cpcrt import FWCALL, RT
+from .cpcrt import FWCALL, RT
 
 class DataSec(str, Enum):
     """ Nodes related to sections of data """
@@ -56,6 +56,7 @@ class CPCEmitter:
         self.rtcode: str = ""
         self.runtime: list[str] = []
         self.constants: int = 0
+        self.issued_constants: dict[str,str] = {}
         self.free_tmp_memory: bool = False
         self.reserved_tmp_memory: int = 0
         self.org = 0x4000
@@ -2678,7 +2679,7 @@ class CPCEmitter:
             if a.etype == AST.ExpType.Real:
                 self._emit_import("rt_read_real")
                 self._emit_code("call    rt_read_real")
-        self._emit_data(";")
+        self._emit_code(";")
 
     def _emit_READIN(self, node:AST.ReadIn):
         """
@@ -3685,19 +3686,28 @@ class CPCEmitter:
             self._raise_error(2, node, 'expression not supported yet')
 
     def _emit_const_str(self, node: AST.String):
-        label = self._get_conststr_label()
+        if node.value not in self.issued_constants:
+            label = self._get_conststr_label()
+            self._emit_data(f'{label}: db {len(node.value)},"{node.value}"', section=DataSec.CONST)
+            self.issued_constants[node.value] = label
+        else:
+            label = self.issued_constants[node.value]
         self._emit_code(f"ld      hl,{label}")
-        self._emit_data(f'{label}: db {len(node.value)},"{node.value}"', section=DataSec.CONST)
 
     def _emit_const_real(self, node: AST.Real):
-        label = self._get_constreal_label()
+        vstr = str(node.value)
+        if vstr not in self.issued_constants:
+            label = self._get_constreal_label()
+            cpcreal = self._real(node.value)
+            values = ""
+            for b in cpcreal:
+                values = values + f'&{b:02X},'
+            # send code without last ','
+            self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
+            self.issued_constants[vstr] = label
+        else:
+            label = self.issued_constants[vstr]
         self._emit_code(f"ld      hl,{label}")
-        cpcreal = self._real(node.value)
-        values = ""
-        for b in cpcreal:
-            values = values + f'&{b:02X},'
-        # send code without last ','
-        self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
 
     def _emit_record(self, node: AST.Variable):
         varname, rname = node.name.split('$.')

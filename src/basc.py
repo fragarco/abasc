@@ -23,10 +23,10 @@ import traceback
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer, Token
 from basparse import LocBasParser
-from cpcemitter import CPCEmitter
+from emitters.cpcemitter import CPCEmitter
 from symbols import symsto_json, SymTable
 import astlib as AST
-import abasm as ABASM
+import utils.abasm as ABASM
 from basopt import BasOptimizer
 import json
 
@@ -40,6 +40,7 @@ def process_args() -> argparse.Namespace:
         description='A Locomotive BASIC compiler for the Amstrad CPC'
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
+    parser.add_argument('-O', type=int, default=2, help="Sets the level of optimization (0-disabled, 1-peephole, 2-all). It's set to 2 by default.")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
     parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
@@ -53,6 +54,7 @@ def clear(sourcefile: str):
         basefile.replace('.BAS', '.BPP'),
         basefile.replace('.BAS', '.LEX'),
         basefile.replace('.BAS', '.AST'),
+        basefile.replace('.BAS', '.SYM'),
     ]
     for f in files:
         if os.path.exists(f):
@@ -109,17 +111,20 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose
     emitter = CPCEmitter(codelines, ast, symtable, verbose=verbose)
     return emitter.emit_program()
     
-def assemble(infile: str, asmcode: str):
+def assemble(infile: str, outfile: str, asmcode: str):
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w") as fd:
             fd.write(asmcode)
-    ABASM.assemble(asmfile)
+    ABASM.assemble(asmfile, outfile)
 
 def main() -> None:
     start_t = time.process_time()
     args = process_args()
     outfile = args.out if args.out is not None else args.infile.rsplit('.')[0]
     infile = args.infile
+    if ".bin" not in outfile.lower(): outfile = outfile + ".bin"
+    if ".bas" not in infile.lower():  infile = infile + ".bas"
+    optlevel = args.O if args.O in [0,1,2] else 2
     try:
         clear(infile)
         bascontent = readsourcefile(infile)
@@ -127,10 +132,12 @@ def main() -> None:
         tokens = lexpass(infile, code, args.verbose)
         ast, symtable = parser(infile, codelines, tokens, args.verbose)
         optimizer = BasOptimizer()
-        ast, symtable = optimizer.optimize_ast(ast, symtable)
+        if optlevel > 1:
+            ast, symtable = optimizer.optimize_ast(ast, symtable)
         asmcode = emit(codelines, ast, symtable, args.verbose)
-        asmcode = optimizer.optimize_peephole(asmcode)
-        assemble(infile, asmcode)
+        if optlevel > 0:
+            asmcode = optimizer.optimize_peephole(asmcode)
+        assemble(infile, outfile, asmcode)
     except Exception as e:
         print(str(e))
         if args.debug:

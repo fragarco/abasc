@@ -12,7 +12,7 @@ set SOURCE=main
 set TARGET=chars
 
 set RUNBAS=python3 ../../src/basc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin
+set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"

@@ -22,19 +22,17 @@ import re
 import astlib as AST
 import symbols as SYM
 
-# NOTE: list of possible optimizations
-# - UnaryOp MINUS with Real or Integer literal, store just the resulting number
-
 class BasOptimizer:
     def __init__(self) -> None:
         self.modified = False
 
-    # ----------------- AST Trasversal functions -----------------
+    # ----------------- AST optimizations -----------------
 
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
             command = f'''{repr(node.left.value)} {node.op} {repr(node.right.value)}''' # type: ignore[attr-defined]
+            command = command.replace("AND", "and").replace("OR", "or").replace("MOD", "%").replace("\\", "//")
             try:
                 result = eval(command)                 
                 self.modified = True
@@ -52,6 +50,7 @@ class BasOptimizer:
                 nnode.col = node.col
                 return nnode
             except:
+                print("AAA not eval")
                 return node
         # functions calls, variables, etc.
         if node.right.id not in literals:
@@ -59,6 +58,38 @@ class BasOptimizer:
         if node.left.id not in literals:
             node.left = self._op_statement(node.left)    
         return node 
+
+    def _op_CINT(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            return AST.Integer(value=int(node.args[0].value + 0.5))
+        return node
+
+    def _op_INT(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            num = node.args[0].value
+            if num < 0.0:
+                return AST.Integer(value=int(node.args[0].value))
+            else:
+                return AST.Integer(value=int(node.args[0].value - 0.999999999))
+        return node
+
+    def _op_FIX(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            return AST.Integer(value=int(node.args[0].value))
+        return node
+
+    def _op_CREAL(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            return AST.Real(value=float(node.args[0].value))
+        return node
+
+    def _op_keyword(self, stmt: AST.Command | AST.Function) -> AST.Statement:
+        keyword = stmt.name
+        funcname = "_op_" + keyword.replace('$','SS').replace(' ', '_')
+        op_keyword_fn = getattr(self, funcname , None)
+        if op_keyword_fn is not None:
+            return op_keyword_fn(stmt)
+        return stmt
 
     def _op_statement(self, stmt: AST.Statement) -> AST.Statement:
         if isinstance(stmt, AST.BinaryOp):
@@ -82,9 +113,11 @@ class BasOptimizer:
         elif isinstance(stmt, AST.Function):
             for i in range(0, len(stmt.args)):
                 stmt.args[i] = self._op_statement(stmt.args[i])
+            stmt = self._op_keyword(stmt)
         elif isinstance(stmt, AST.Command):
             for i in range(0, len(stmt.args)):
                 stmt.args[i] = self._op_statement(stmt.args[i])
+            stmt = self._op_keyword(stmt)
         return stmt
       
     def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:
@@ -128,6 +161,10 @@ class BasOptimizer:
         (
             "pop     de:push    de:ex      de,hl",
             r"ex      de,hl"
+        ),
+        (
+            "ld      a,0",
+            r"xor     a"
         ),
     ]
      

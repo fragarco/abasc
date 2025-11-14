@@ -12,7 +12,7 @@ set SOURCE=main
 set TARGET=esgrima
 
 set RUNBAS=python3 ../../src/basc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
+set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
