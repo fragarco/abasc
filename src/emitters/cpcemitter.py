@@ -1907,6 +1907,7 @@ class CPCEmitter:
         the echo of carriage return / line feed. The default <stream expression> is, as always,
         #0 :screen. 
         """
+        # TODO: TBC
         self._emit_code("; LINE INPUT [<#stream expression>,][;][quoted string; ]<string variable>")
         self._raise_error(2, node, 'not implemented yet')
 
