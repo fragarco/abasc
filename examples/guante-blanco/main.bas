@@ -167,7 +167,7 @@
 1620 PAPER 0:LOCATE 4,24:PRINT"       ";:PAPER 8
 1630 xp=xp+xf:yp=yp+yf
 1640 LOCATE xp,yp:PRINT hombre$;
-1650 IF perro>0 THEN perro=perro MOD 5+1:IF perro=5 THEN 2560
+1650 IF perro>0 THEN perro=(perro MOD 5)+1:IF perro=5 THEN 2560
 1660 GOTO 1520
 1670 gol=INSTR(gol$,ht$):car=ASC(MID$(gol$,gol,1))
 1680 ON gol GOTO 1700,1700,1700,1700,1760,1760,1860,1910,1980,2100,2660

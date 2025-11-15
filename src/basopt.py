@@ -135,46 +135,44 @@ class BasOptimizer:
 
     _ph_rules = [
         (
-            "ld      hl,*:ld      a,l",
+            r"ld      hl,([&0-9a-fA-F]+).*:ld      a,l",
             r"ld      a,\1"
         ),
         (
-            "ld      hl,*:ld      c,l*:ld      b,l*",
-            r"ld      b,\1\n\tld      c,b"
+            r"ld      hl,([&0-9a-fA-F]+).*:ld      c,l(.*):ld      b,l(.*)",
+            r"ld      c,\1\n    ld      b,c"
         ),
         (
-            "ld      hl,*:ld      b,l",
+            r"ld      hl,([&0-9a-fA-F]+).*:ld      b,l",
             r"ld      b,\1"
         ),
         (
-            "ld      hl,*:ld      c,l",
+            r"ld      hl,([&0-9a-fA-F]+).*:ld      c,l",
             r"ld      c,\1"
         ),
         (
-            "ld      hl,*:push    hl*:ld      hl,*:pop     de",
-            r"ld      hl,\1\n\tex      de,hl\n\tld      hl,\3"
+            r"ld      hl,(.*):push    hl(.*):ld      hl,(.*):pop     de",
+            r"ld      hl,\1\n    ex      de,hl\n    ld      hl,\3"
         ),
         (
-            "push    bc*:ld      a,*:pop     bc",
+            r"push    bc(.*):ld      a,(.*):pop     bc",
             r"ld      a,\2"
         ),
         (
-            "pop     de:push    de:ex      de,hl",
+            r"pop     de:push    de:ex      de,hl",
             r"ex      de,hl"
         ),
         (
-            "ld      a,0",
-            r"xor     a"
+            r"ld      hl,([&0-9a-fA-F]+).*:ld      e,l(.*):dec     e",
+            r"ld      e,\1-1"
         ),
     ]
-     
+
     def optimize_peephole(self, code: str) -> str:
         print("Optimizing assembly code...")
         # apply peephole rules
         for pattern, optcode in self._ph_rules:
-            regex = re.escape(pattern)
-            regex = regex.replace(r"\*", r"(.*)")
-            regex = regex.replace(r":", r"[\r\n]+\s*")
+            regex = pattern.replace(r":", r"[\r\n]+\s*")
             expr = re.compile(regex, flags=re.IGNORECASE)
 
             code = re.sub(expr, optcode, code)
