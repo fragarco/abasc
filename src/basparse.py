@@ -1239,7 +1239,7 @@ class LocBasParser:
         self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
-        vars: list[AST.Variable] = []
+        vars: list[AST.Variable | AST.ArrayItem] = []
         if self._current_is(TokenType.HASH):
             self._advance()
             stream = self._parse_int_expression()

@@ -1998,7 +1998,6 @@ __input_processchar:
     jr      __input_enterchar
 __input_end:
     ld      (hl),0
-    call    rt_print_nl
     call    {FWCALL.TXT_CUR_DISABLE} ; TXT_CUR_DISABLE
     call    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF
     ld      hl,rt_input_buf
@@ -2146,6 +2145,40 @@ rt_readnext:
     cp      &0d   ; new-line (0xd,0xa)?
     jr      nz,rt_readnext
     jp      {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+"""
+),
+    "rt_freadstr": ([],
+f"""
+; RT_FREADSTR
+; Reads a string from an already open file (with OPENIN).
+; Reads up to 254 characters or until it finds a EOL (0xD,0xA).
+; Inputs:
+;     HL address to the destination string
+; Outputs:
+;     HL contains the address to the destination string
+;     A, B and HL are modified
+rt_freadstr:
+    ld      (hl),0
+    ld      b,254
+    push    hl
+__freadstr_loop:
+    inc     hl
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    jr      nc,__freadstr_end
+    cp      &0a
+    jr      z,__freadstr_end
+    cp      &0d
+    jr      z,__freadstr_loop
+    ld      (hl),a
+    dec     b
+    jr      z,__freadstr_end
+    jr      __freadstr_loop
+__freadstr_end:
+    pop     hl
+    ld      a,254
+    sub     b
+    ld      (hl),a
+    ret
 """
 ),
 #
@@ -2928,10 +2961,10 @@ rt_save:
     inc     hl
     call    {FWCALL.CAS_OUT_OPEN}  ; CAS_OUT_OPEN
     ret     nc       ; Error
-    ld      c,(ix+0) ; entry point
-    ld      b,(ix+1)
-    ld      e,(ix+2) ; lenght
-    ld      d,(ix+3)
+    ld      e,(ix+0) ; length
+    ld      d,(ix+1)
+    ld      c,(ix+2) ; entry point
+    ld      b,(ix+3)
     ld      l,(ix+4) ; address
     ld      h,(ix+5)
     ld      a,2

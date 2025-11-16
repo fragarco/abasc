@@ -560,7 +560,7 @@ class Input(Statement):
     question: bool
     vars: Sequence[Variable | ArrayItem]
 
-    def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable]):
+    def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable | ArrayItem]):
         super().__init__(etype=ExpType.Void, id="Input")
         self.stream = stream
         self.prompt = prompt
@@ -579,7 +579,7 @@ class ReadIn(Statement):
     prompt: str
     vars: Sequence[Variable | ArrayItem]
 
-    def __init__(self, vars: list[Variable]):
+    def __init__(self, vars: list[Variable | ArrayItem]):
         super().__init__(etype=ExpType.Void, id="ReadIn")
         self.vars = vars
 
