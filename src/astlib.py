@@ -592,13 +592,15 @@ class LineInput(Statement):
     stream: Optional[Statement]
     prompt: str
     carriage: bool
+    question: bool
     var: Variable | ArrayItem
 
-    def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, var: Variable):
+    def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, question: bool, var: Variable | ArrayItem):
         super().__init__(etype=ExpType.Void, id="LineInput")
         self.stream = stream
         self.prompt = prompt
         self.carriage = carriage
+        self.question = question
         self.var = var
 
     def to_json(self) -> dict:

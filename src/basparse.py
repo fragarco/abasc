@@ -1379,24 +1379,33 @@ class LocBasParser:
 
     @astnode
     def _parse_LINE_INPUT(self) -> AST.LineInput:
-        """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][STRING(;|,)]<ident> """
+        """ <LINE_INPUT>::= LINE INPUT [#<int_expression>,][;][STRING](;|,)<ident> """
         self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
+        carriage: bool = True
+        question: bool = False
         if self._current_is(TokenType.HASH):
-            self._advance()
+            tk = self._advance()
             stream = self._parse_int_expression()
-            self._match(TokenType.COMMA)
+            self._expect(TokenType.COMMA)
+        if self._current_is(TokenType.SEMICOLON):
+            self._advance()
+            if self._current_is(TokenType.IDENT):
+                question = True
+            else:
+                carriage = False
         if self._current_is(TokenType.STRING):
-            prompt = self._advance().lexeme.strip('"')
-        if stream is not None or prompt != "":
+            prompt = self._advance().lexeme.strip('"')    
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2, self._current())
-        carriage: bool = False if self._match(TokenType.SEMICOLON) else True
-        self._match(TokenType.COMMA)
+            question = False if self._advance().type == TokenType.COMMA else True
         if not self._current_is(TokenType.IDENT):
             self._raise_error(2, self._current())
-        var = self._parse_ident()
+        tk = self._current()
+        var: AST.Variable | AST.ArrayItem = self._parse_ident()
+        if var.etype != AST.ExpType.String:
+            self._raise_error(13, tk)
         # LINE INPUT can declare a new variable so we need to add it
         # but only if it is not an ArrayItem
         if isinstance(var, AST.Variable):
@@ -1411,7 +1420,7 @@ class LocBasParser:
                     ),
                     context=self.context
                 )
-        return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, var=var)
+        return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, question=question, var=var)
  
     @astnode
     def _parse_LIST(self) -> AST.Command:

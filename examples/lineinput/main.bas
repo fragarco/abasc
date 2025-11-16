@@ -4,7 +4,7 @@ REM https://malagaoriginal.blogspot.com/2025/11/mostrar-el-contenido-de-un-archi
 
 mode 2
 file$="TEST.TXT"
-opein "!"+UPPER$(file$)
+openin "!"+UPPER$(file$)
 while not eof
     line input #9,c$
     print c$
@@ -14,4 +14,4 @@ while not eof
         mode 2
     end if
 wend
-clesein
+closein

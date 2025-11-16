@@ -877,11 +877,10 @@ class TestParser(unittest.TestCase):
         self.assertEqual(len(ast.lines[0].statements[1].items[0].args), 1)
 
     def test_line_input_basic(self):
-        codes = ['10 LINE INPUT ;A$', '10 LINE INPUT "NAME"; N$']
+        codes = ['10 LINE INPUT ;A$', '10 LINE INPUT "NAME"; N$', '10 LINE INPUT #0,;A$', '10 LINE INPUT #0,A$']
         for code in codes:
             ast, _ = self.parse_code(code)
             self.assertIsInstance(ast.lines[0].statements[0], AST.LineInput)
-            self.assertFalse(ast.lines[0].statements[0].carriage)
 
     def test_load_basic(self):
         code = '10 LOAD "TITLE.SCN",&C000'
