@@ -565,7 +565,7 @@ class Input(Statement):
         self.stream = stream
         self.prompt = prompt
         self.vars = vars
-        self.question = True if prompt == "" else question
+        self.question = question
 
     def to_json(self) -> dict:
         d = super().to_json()

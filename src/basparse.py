@@ -1239,6 +1239,7 @@ class LocBasParser:
         self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
+        question: bool = True
         vars: list[AST.Variable | AST.ArrayItem] = []
         if self._current_is(TokenType.HASH):
             self._advance()
@@ -1249,8 +1250,8 @@ class LocBasParser:
             prompt = tk.lexeme.strip('"')
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2, tk)
-        question: bool = True if self._match(TokenType.SEMICOLON) else False
-        self._match(TokenType.COMMA)
+        if self._match(TokenType.COMMA): question = False
+        self._match(TokenType.SEMICOLON)
         while True:
             var = self._parse_ident()
             vars.append(var)
