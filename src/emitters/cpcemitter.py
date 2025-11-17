@@ -1747,7 +1747,9 @@ class CPCEmitter:
         self._emit_code("call    rt_strz2num")
         self._emit_code("ex      de,hl")
         self._emit_code("pop     hl")
-        self._emit_code("ld      (hl),de")
+        self._emit_code("ld      (hl),e")
+        self._emit_code("inc     hl")
+        self._emit_code("ld      (hl),d")
         
     def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
         self._emit_import("rt_strz2real")
@@ -2736,7 +2738,9 @@ class CPCEmitter:
                     self._emit_code("call    rt_readint")
                     self._emit_code("pop     de")
                     self._emit_code("ex      de,hl")
-                    self._emit_code("ld      (hl),de")
+                    self._emit_code("ld      (hl),e")
+                    self._emit_code("inc     hl")
+                    self._emit_code("ld      (hl),d")
                 elif v.etype == AST.ExpType.Real:
                     self._raise_error(13, node, 'REAL variables are not supported')
             else:
@@ -3713,7 +3717,7 @@ class CPCEmitter:
             if len(content):
                 for b in content:
                     values = values + f'&{b:02X},'
-                self._emit_data(f'{label}: db {len(values)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
+                self._emit_data(f'{label}: db {len(content)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
             else:
                 self._emit_data(f'{label}: db 0', info=repr(node.value), section=DataSec.CONST)
             self.issued_constants[node.value] = label
@@ -4184,9 +4188,9 @@ class CPCEmitter:
             self._emit_arrayitem_ptr(node)
             if var.exptype == AST.ExpType.Integer:    
                 self._emit_code("pop     de")
-                self._emit_code(f"ld      (hl),e")
-                self._emit_code(f"inc     hl")
-                self._emit_code(f"ld      (hl),d")
+                self._emit_code("ld      (hl),e")
+                self._emit_code("inc     hl")
+                self._emit_code("ld      (hl),d")
             elif var.exptype == AST.ExpType.Real:
                 self._emit_code("ex      de,hl")
                 self._emit_code("pop     hl")
