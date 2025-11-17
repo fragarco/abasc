@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.2'
+__version__='1.2.0'
 
 import sys, os
 import re
@@ -41,6 +41,12 @@ RSTATE_DISABLED = 0  # assemble all encounted code
 RSTATE_ASSEMBLE = 1  # assemble code inside REPEAT body
 RSTATE_FIND_END = 2  # do not assemble code inside REPEAT body
 RSTATE_LOOP     = 3  # go back to REPEAT condition
+
+# Minimun tolerance level required to pass as a warning
+TLEVEL_STRINCT  = 0
+TLEVEL_LOW      = 1
+TLEVEL_HIGH     = 2
+TLEVEL_LENIENT  = 3
 
 NO_REG = -1
 REG_B = 0
@@ -106,6 +112,7 @@ class AsmContext:
     def __init__(self):
         self.reset()
         self.verbose = False
+        self.tolerance = 0
         self.registernames = [
             "A", "F", "B", "C", "D", "E", "H", "L", "I", "R",
             "IXL", "IXH", "IYL", "IYH", "AF", "BC", "DE", "HL",
@@ -116,16 +123,17 @@ class AsmContext:
         self.outputfile = ""
         self.listingfile = None
         self.origin = 0x4000
-        self.limit  = 65536
+        self.limit  = 64*1024
         self.modulename = ""
         self.modules = []
         self.include_stack = []
         self.symboltable = {}
         self.lettable = {}
         self.symusetable = {}
-        self.memory = bytearray(0x00 for i in range(0,0xFFFF))
+        self.memory = bytearray(0x00 for _ in range(0, 64*1024))
         self.memory_high = 0
         self.memory_low = 0xFFFF
+        self.memory_bytes = 0
         self.machine_code = bytearray()
         self.ifstack = []
         self.ifstate = IFSTATE_DISABLED
@@ -144,6 +152,7 @@ class AsmContext:
         self.defining_macro = None
         self.applying_macro = None
         self.list_instruction = True
+        self.tolerance = 0
     
     def parse_logic_expr(self, expr):
         """
@@ -217,6 +226,9 @@ class AsmContext:
                         elif testsymbol[0] == '"' and testsymbol[-1]=='"':
                             # string literal used in some expressions
                             pass
+                        elif testsymbol[0] == '!' and c == '=':
+                            # is not a local label but the logic operation !=
+                            pass
                         else:
                             errormsg = f"symbol {testsymbol} is undefined"
                             if testsymbol.upper() in self.registernames:
@@ -234,7 +246,7 @@ class AsmContext:
                             if digit == '1':
                                 literal += 1
                             elif digit != '0':
-                                abort("Invalid binary digit '" + digit + "'")
+                                abort("invalid binary digit '" + digit + "'")
                         testsymbol = str(literal)
 
                     elif testsymbol[0]=='0' and len(testsymbol)>1 and testsymbol[1]!='x':
@@ -256,11 +268,11 @@ class AsmContext:
         if not signed:
             if byte:
                 if narg < -128 or narg > 255:
-                    warning ("unsigned byte value truncated from " + str(narg))
+                    warning(f'unsigned byte value truncated from {str(narg)}', TLEVEL_HIGH)
                 narg %= 256
             elif word:
                 if narg < -32768 or narg > 65535:
-                    warning ("unsigned word value truncated from " + str(narg))
+                    warning(f'unsigned word value truncated from {str(narg)}', TLEVEL_HIGH)
                 narg %= 65536
         return narg
 
@@ -282,7 +294,7 @@ class AsmContext:
             self.lettable[sym] = value
         self.symboltable[sym] = (value, self.modulename)
         if self.verbose:
-            print(f" adding {type} {orgsym} to the symbols table with values ({value}, {self.modulename})")
+            print(f"{self.currentfile} adding {type} {orgsym} to the symbols table with values ({value}, {self.modulename})")
 
     def get_symbol(self, sym):
         sym = sym.upper()
@@ -314,7 +326,7 @@ class AsmContext:
                 self.check_symbol(label, type='label')
                 self.set_symbol(label, self.origin, is_label = True, type='label')
             elif self.get_symbol(label) != self.origin:
-                abort("label address differs from previous stored value")
+                warning(f'label address redefinition: {hex(self.get_symbol(label)).upper()} != {hex(self.origin).upper()}', TLEVEL_LENIENT)
 
     def process_macro(self, macro, args):
         argv = args.replace(' ', '').split(',')
@@ -328,12 +340,16 @@ class AsmContext:
         macrocode.append(f"_MACRO_LEAVE_ {macro}")
         return macrocode
 
-    def store(self, p, bytes):
+    def store(self, p, content):
         if p == 2:
-            self.lstcode = ""
             mempos = self.origin
-            for b in bytes:
-                self.memory[mempos] = b
+            self.lstcode = ""
+            self.memory_bytes = self.memory_bytes + len(content)
+            for b in content:
+                try:
+                    self.memory[mempos] = b
+                except ValueError:
+                    abort("0-255 range value was expected")
                 self.lstcode = self.lstcode + "%02X " % (b)
                 mempos = mempos + 1
             self.memory_low = min(self.memory_low, self.origin)
@@ -355,7 +371,7 @@ class AsmContext:
                         f.write('\t"%s": [0x%04X, %d, "%s"],\n' % (sym, addr, used, modulename))
                 f.write('}\n')
         except Exception as e:
-            abort(f"Error trying to generate the file {filename}: " + str(e))
+            abort(f"couldn't create the file {filename}: " + str(e))
 
     def save_memory(self, filename, start, size):
         memory = bytearray()
@@ -366,7 +382,7 @@ class AsmContext:
             with open(filename, 'wb') as fd:
                 fd.write(memory)
         except Exception as e:
-            abort(f"Error trying to generate the file {filename}: " + str(e))
+            abort(f"couldn't create the file {filename}: " + str(e))
 
     def write_listinfo(self, line):
         if self.listingfile == None:
@@ -374,8 +390,7 @@ class AsmContext:
         self.listingfile.write(line + "\n")
 
     def save_binfile(self, filename):
-        size = 0
-        if self.memory_low < self.memory_high:
+        if self.memory_bytes > 0:
             # something has been assembled
             size = self.memory_high - self.memory_low + 1
             self.save_memory(filename, self.memory_low, size)
@@ -387,7 +402,7 @@ class AsmContext:
         # Lines must start by characters or underscord or '.'
         match = re.match(r'^(\.\w+|\!\w+|\w+)(.*)', line.strip())
         if not match:
-            abort("in '" + line + "'. Valid literals must start with a letter, an underscord, '.' or '!' symbols")
+            abort("valid literals must start with a letter, an underscord, '.' or '!' symbols")
 
         inst = match.group(1).upper().strip()
         args = match.group(2).strip()
@@ -440,7 +455,7 @@ class AsmContext:
             return content
         except Exception as e:
             print("[abasm]", str(e))
-            abort("Couldn't open file '" + inputfile + "' for reading")
+            abort("couldn't open file '" + inputfile + "' for reading")
 
     @staticmethod
     def split_line(instr, sep):
@@ -474,7 +489,7 @@ class AsmContext:
             opcode = opcode.strip()
             if opcode != "":
                 # sanity check
-                if opcode.count('"') % 2 != 0 or opcode.count("'") % 2 != 0:
+                if opcode.count('"') % 2 != 0:
                     abort("mismatched quotes")
                 # label: equ <value> exception
                 if (index+ 1) < len(opcodes) and 'EQU 'in opcodes[index+1].upper():
@@ -498,7 +513,6 @@ class AsmContext:
         self.currentline = ""
         self.linenumber = 0
         srccode = self.read_srcfile(inputfile)
-
         while self.linenumber < len(srccode):
             self.currentline = srccode[self.linenumber].replace("\t", "  ")
             self.currentfile = inputfile + ":" + str(self.linenumber)   
@@ -565,23 +579,29 @@ g_opcode_functions = {}
 ###########################################################################
 # Error and warning reporting
 
-def warning(message):
-    print("[abasm]", os.path.basename(g_context.currentfile) + ':', 'warning:', message)
-    print('\t', g_context.currentline.strip())
+def warning(message, tolerancelevel):
+    """
+    tolerancelevel > current level -> warning is converted in error
+    tolerancelevel = current level -> warning is shown
+    tolerancelevel < current level -> warning is ignored
+    """
+    if tolerancelevel > g_context.tolerance:
+        abort(message, tolerancelevel)
+    elif tolerancelevel == g_context.tolerance:
+        print("[abasm]", os.path.basename(g_context.currentfile) + ':', f'warning (TL{tolerancelevel}):', message)
+        print('\t', f"in {g_context.currentline.strip()}")
 
-def abort(message):
-    line1 = f"{os.path.basename(g_context.currentfile)}: error: {message}"
+def abort(message, tolerancelevel=0):
+    line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: Syntax Error ({message})"
     code = g_context.currentline.strip()
-    line2 = '' if code == '' else f"in '{code}'"
+    line2 = '' if code == '' else f"in {code}"
     if g_context.listingfile != None:
         g_context.listingfile.close()
     if __name__ == "__main__":
-        print("[abasm]", line1)
-        if line2 != '': print("\t", line2)
+        print(line1, line2)
         sys.exit(1)
     else:
         raise RuntimeError(f"{line1} {line2}")
-
 
 ###########################################################################
 # Refactored common code shared by several opcode implementations
@@ -737,7 +757,7 @@ def store_registerorpair_arg_type(p, opargs, rinstr, rrinstr, step_per_register=
     if r == NO_REG:
         pre,rr = double(opargs)
         if rr == NO_REG:
-            abort("Invalid argument")
+            abort("invalid argument")
 
         instr = pre
         instr.append(rrinstr + step_per_pair * rr)
@@ -776,7 +796,7 @@ def store_add_type(p, opargs, rinstr, ninstr, rrinstr, step_per_register=1, step
         dummy, rr2 = double(args[1])
 
         if rr1 == rr2 and pre != dummy:
-            abort("Can't mix index registers and HL")
+            abort("can't mix index registers and HL")
         if len(rrinstr) > 1 and pre:
             abort(f"this instruction can't use index registers {args[0]} {pre} {rr1}")
 
@@ -801,7 +821,7 @@ def store_bit_type(p, opargs, offset):
         abort("argument out of range")
     pre, r, post = single(p, arg2, allow_half=0)
     if r == NO_REG:
-        abort("Invalid argument")
+        abort("invalid argument")
     instr = pre
     instr.append(0xcb)
     instr.extend(post)
@@ -815,7 +835,7 @@ def store_pushpop_type(p, opargs, offset):
     prefix, rr = double(opargs, allow_af_instead_of_sp=1)
     instr = prefix
     if rr == NO_REG:
-        abort("Invalid argument")
+        abort("invalid argument")
     else:
         instr.append(offset + 16 * rr)
     if p == 2:
@@ -834,7 +854,7 @@ def store_jumpcall_type(p, opargs, offset, condoffset):
 
     match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
     if match:
-        abort("Illegal indirection")
+        abort("illegal indirection")
 
     if p == 2:
         nn = g_context.parse_expression(args[-1], word=1)
@@ -865,13 +885,13 @@ def op_SAVE(p, opargs):
 def op_DUMP(p, opargs):
     # Not currently implemented. Maxam used it to write symbol information
     # ABASM outputs the MAP file instead
-    warning ("directive DUMP found but ignored, Abasm uses MAP files instead")
+    warning('directive DUMP found but ignored, Abasm uses MAP files instead', TLEVEL_LOW)
     return 0
 
 def op_BRK(p, opargs):
     # Not currently implemented. WinAPE uses it to set a breakpoint using RST &30
     # as MAXAM did back in the day
-    warning ("directive BRK (breakpoint) found but ignored")
+    warning('directive BRK (breakpoint) found but ignored', TLEVEL_LOW)
     return 0
 
 def op_PRINT(p, opargs):
@@ -903,7 +923,7 @@ def op_EQU(p, opargs):
         if existing == None:
             g_context.set_symbol(symbol, expr_result, type='alias')
         elif existing != expr_result:
-                abort("Symbol " + symbol +
+                abort("symbol " + symbol +
                       ": expected " + str(existing) +
                       " but calculated " + str(expr_result) +
                       ", has this symbol been used twice?")
@@ -935,7 +955,7 @@ def op_RMEM(p, opargs):
     check_args(opargs, 1)
     s = g_context.parse_expression(opargs)
     if s < 0:
-        abort("Allocated invalid space < 0 bytes (" + str(s) + ")")
+        abort("allocated invalid space < 0 bytes (" + str(s) + ")")
     g_context.store(p, [0 for i in range(0, s)])
     return s
 
@@ -963,21 +983,22 @@ def op_DEFM(p, opargs):
 
 def op_DEFB(p, opargs):
     args = AsmContext.split_line(opargs, ',')
-    bytes = []
+    totbytes = []
     for arg in args:
         texts = re.findall(r'"(.*?)"', arg)
         if len(texts) == 0: texts = re.findall(r"'(.*?)'", arg)
-        if len(texts) > 0:
-            # text string between "" or '', special case is '' which
-            # produces an empty list but should write &00
+        if len(texts) > 0 and len(texts[0]) > 1:
+            # manage text strings of multiple characters
+            # otherwise we go to parse_expression which will convert
+            # single characters in numeric values
             txtbytes = list(texts[0].encode('latin-1'))
             if len(txtbytes) == 0: txtbytes = [0]
-            bytes = bytes + txtbytes
+            totbytes = totbytes + txtbytes
         else:
             byte = 0 if p == 1 else g_context.parse_expression(arg, byte=1)
-            bytes.append(byte)
-    if p == 2: g_context.store(p, bytes)
-    return len(bytes)
+            totbytes.append(byte)
+    if p == 2: g_context.store(p, totbytes)
+    return len(totbytes)
 
 def op_LET(p, opargs):
     args = opargs.replace(" ", "").upper().split("=")
@@ -1099,7 +1120,7 @@ def op_ASSERT(p, opargs):
     if p == 2:
         value = g_context.parse_expression(opargs)
         if value == 0:
-            abort("Assertion failed (" + opargs + ")")
+            abort("assertion failed (" + opargs + ")")
     return 0
 
 def op_STOP(p, opargs):
@@ -1256,7 +1277,7 @@ def op_SLA(p, opargs):
 def op_SRA(p, opargs):
     return store_store_cbshifts_type(p, opargs, 0x28)
 
-def op_SL1(p, opargs):
+def op_SLL(p, opargs):
     return store_store_cbshifts_type(p, opargs, 0x30)
 
 def op_SRL(p, opargs):
@@ -1269,7 +1290,7 @@ def op_SUB(p, opargs):
     # lets support that in case we get two parameters and issue a warning
     args = opargs.strip().split(',')
     if len(args) > 1:
-        warning('invalid <SUB expr,expr> opcode. Assuming alias SUB A,expr')
+        warning('invalid SUB <expr>,<expr> opcode, SUB <expr> expected', TLEVEL_LOW)
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0x90, [0xd6])
 
@@ -1280,7 +1301,7 @@ def op_AND(p, opargs):
     # lets support that in case we get two parameters and issue a warning
     args = opargs.strip().split(',')
     if len(args) > 1:
-        warning('invalid <ADD expr,expr> opcode. Assuming alias ADD A,expr')
+        warning('invalid ADD <expr>,<expr> opcode, ADD <expr> expected', TLEVEL_LOW)
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xa0, [0xe6])
 
@@ -1294,7 +1315,7 @@ def op_OR(p, opargs):
     # lets support that in case we get two parameters and issue a warning
     args = opargs.strip().split(',')
     if len(args) > 1:
-        warning('invalid <OR expr,expr> opcode. Assuming alias OR A,expr')
+        warning('invalid OR <expr>,<expr> opcode, OR <expr> expected', TLEVEL_LOW)
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xb0, [0xf6])
 
@@ -1305,7 +1326,7 @@ def op_CP(p, opargs):
     # lets support that in case we get two parameters and issue a warning
     args = opargs.strip().split(',')
     if len(args) > 1:
-        warning('invalid <CP expr,expr> opcode. Assuming alias CP A,expr')
+        warning('invalid CP <expr>,<expr> opcode, CP <expr> expected', TLEVEL_LOW)
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xb8, [0xfe])
 
@@ -1359,7 +1380,7 @@ def op_DJNZ(p,opargs):
         target = g_context.parse_expression(opargs, word=1)
         displacement = target - (g_context.origin + 2)
         if displacement > 127 or displacement < -128:
-            abort ("Displacement from " + str(g_context.origin) + " to " + str(target) + " is out of range")
+            abort ("displacement from " + str(g_context.origin) + " to " + str(target) + " is out of range")
         g_context.store(p, [0x10, (displacement + 256) % 256])
     return 2
 
@@ -1372,13 +1393,13 @@ def op_JR(p, opargs):
         if cond == -1:
             abort("expected condition but received '" + opargs + "'")
         elif cond >= 4:
-            abort ("Invalid condition for JR")
+            abort ("invalid condition for JR")
         instr = 0x20 + 8 * cond
     if p == 2:
         target = g_context.parse_expression(args[-1], word=1)
         displacement = target - (g_context.origin + 2)
         if displacement > 127 or displacement < -128:
-            abort ("Displacement from " + str(g_context.origin) +
+            abort ("displacement from " + str(g_context.origin) +
                    " to " + str(target)+" is out of range")
         g_context.store(p, [instr, (displacement + 256) % 256])
     return 2
@@ -1550,19 +1571,19 @@ def op_LD(p,opargs):
                     elif r1 == REG_R:
                         g_context.store(p, [0xed,0x4f])
                         return 2
-                abort("Invalid argument")
+                abort("invalid argument")
 
             if r1 == REG_IND and r2 == REG_IND:
                 abort("Ha - nice try. That's a HALT.")
 
             if (r1 == REG_H or r1 == REG_L) and (r2 == REG_H or r2 == REG_L) and prefix1 != prefix2:
-                abort("Illegal combination of operands")
+                abort("illegal combination of operands")
 
             if r1 == REG_IND and (r2 == REG_H or r2 == REG_L) and len(prefix2) != 0:
-                abort("Illegal combination of operands")
+                abort("illegal combination of operands")
 
             if r2 == REG_IND and (r1 == REG_H or r1 == REG_L) and len(prefix1) != 0:
-                abort("Illegal combination of operands")
+                abort("illegal combination of operands")
 
             instr = prefix1
             if len(prefix1) == 0:
@@ -1575,7 +1596,7 @@ def op_LD(p,opargs):
 
         else:
             if r1 > REG_A:
-                abort("Invalid argument")
+                abort("invalid argument")
 
             if r1 == REG_A and re.search(r"\A\s*\(\s*BC\s*\)\s*\Z", arg2, re.IGNORECASE):
                 g_context.store(p, [0x0a])
@@ -1586,7 +1607,7 @@ def op_LD(p,opargs):
             match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
             if match:
                 if r1 != REG_A:
-                    abort("Illegal indirection")
+                    abort("illegal indirection")
                 if p == 2:
                     nn = g_context.parse_expression(match.group(1), word=1)
                     g_context.store(p, [0x3a, nn%256, nn//256])
@@ -1622,11 +1643,14 @@ def op_LD(p,opargs):
 
 def op_IF(p, opargs):
     check_args(opargs, 1)
+    # WinAPE supports = as equal sym in IF directive while we need ==
+    if '=' in opargs and '==' not in opargs and '!=' not in opargs:
+        opargs = opargs.replace('=','==')
     g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
     if g_context.ifstate < IFSTATE_DISCART:
         # No undefined symbols are allowed in IF expressions or we may
         # calculate wrong other symbols
-        cond = g_context.parse_logic_expr(opargs)
+        cond = g_context.parse_expression(opargs)
         if cond:
             g_context.ifstate = IFSTATE_ASSEMBLE
         else:
@@ -1640,7 +1664,11 @@ def op_ELSE(p, opargs):
         g_context.ifstate = IFSTATE_FIND_END
     elif g_context.ifstate == IFSTATE_DISCART:
         if opargs.upper().startswith("IF"):
-            cond = g_context.parse_logic_expr(opargs[2:].strip())
+            ifarg = opargs[2:].strip()
+            # WinAPE supports = as equal sym in IF directive while we need ==
+            if '=' in ifarg and '==' not in ifarg and '!=' not in ifarg:
+                ifarg = ifarg.replace('=','==')
+            cond = g_context.parse_expression(ifarg)
             if cond:
                 g_context.ifstate = IFSTATE_ASSEMBLE
             else:
@@ -1653,13 +1681,13 @@ def op_ELSE(p, opargs):
 
 def op_ELSEIF(p, opargs):
     # Pass "IF (cond)" to op_ELSE
-    return op_ELSE(p, opargs[4:])
+    return op_ELSE(p, "IF " + opargs)
 
 def op_ENDIF(p, opargs):
     check_args(opargs, 0)
 
     if len(g_context.ifstack) == 0:
-        abort("Mismatched ENDIF")
+        abort("mismatched ENDIF")
 
     _, state = g_context.ifstack.pop()
     g_context.ifstate = state
@@ -1710,19 +1738,20 @@ def create_opdict():
         if 'op_' == sym[0:3]:
             g_opcode_functions[sym] = fun
 
-def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000):
+def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000, tolerance = 0):
     create_opdict()
     if (outputfile == None):
         outputfile = os.path.splitext(inputfile)[0] + ".bin"
     
     g_context.reset()
     g_context.outputfile = outputfile
+    g_context.tolerance = tolerance
     for sym in predefsymbols:
         sym[0] = sym[0].upper()
         try:
             val = aux_int(sym[1])
         except:
-            print("Error: invalid format for command-line symbol definition in" + val)
+            print("error: invalid format for command-line symbol definition in" + val)
             sys.exit(1)
         g_context.set_symbol(sym[0], aux_int(sym[1]), type='predefined symbol')
 
@@ -1741,11 +1770,18 @@ def process_args():
         description = f'A Z80 assembler focused on the Amstrad CPC. Based on pyz80 but using a dialect compatible with Maxam/WinAPE and RVM.'
     )
     parser.add_argument('inputfile', help = 'Input file.')
-    parser.add_argument('-d', '--define', nargs = 2, default = [], action = 'append', help = 'Defines a pair SYMBOL=VALUE.')
-    parser.add_argument('-o', '--output', help = 'Target file in binary format. If not specified, first input file name will be used.')
-    parser.add_argument('--start', type = aux_int, default = 0x4000, help = 'Starting address. Can be overwritten by ORG directive (default 0x4000).')
-    parser.add_argument('-v', '--version', action='version', version=f' Abasm Assembler Version {__version__}', help = "Shows program's version and exits")
-    parser.add_argument('--verbose', action='store_true', help = 'Prints all source code lines as they are assembled')
+    parser.add_argument('-d', '--define', nargs = 2, default = [], action = 'append',
+                        help = 'Defines a pair SYMBOL=VALUE.')
+    parser.add_argument('-o', '--output',
+                        help = 'Target file in binary format. If not specified, first input file name will be used.')
+    parser.add_argument('--start', type = aux_int, default = 0x4000,
+                        help = 'Starting address. Can be overwritten by ORG directive (default 0x4000).')
+    parser.add_argument('-t', '--tolerance', type = aux_int, default=0,
+                        help = 'Sets the tolerance level for deviations from strictly correct syntax (WinApe performs relatively lenient syntax checks). Accepted values: 0, 1, and 2. The default value is 0, indicating the strictest level of syntax enforcement.')
+    parser.add_argument('-v', '--version', action='version', version=f' Abasm Assembler Version {__version__}',
+                        help = "Shows program's version and exits")
+    parser.add_argument('--verbose', action='store_true',
+                        help = 'Prints all source code lines as they are assembled')
     args = parser.parse_args()
     return args
 
@@ -1753,7 +1789,7 @@ def main():
     global g_context
     args = process_args()
     g_context.verbose = args.verbose
-    assemble(args.inputfile, args.output, args.define, args.start)
+    assemble(args.inputfile, args.output, args.define, args.start, args.tolerance)
     sys.exit(0)
 
 if __name__ == "__main__":

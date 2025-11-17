@@ -3710,9 +3710,12 @@ class CPCEmitter:
             label = self._get_conststr_label()
             content = bytearray(node.value.encode('utf-8'))
             values = ""
-            for b in content:
-                values = values + f'&{b:02X},'
-            self._emit_data(f'{label}: db {len(values)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
+            if len(content):
+                for b in content:
+                    values = values + f'&{b:02X},'
+                self._emit_data(f'{label}: db {len(values)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
+            else:
+                self._emit_data(f'{label}: db 0', info=repr(node.value), section=DataSec.CONST)
             self.issued_constants[node.value] = label
         else:
             label = self.issued_constants[node.value]
