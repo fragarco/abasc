@@ -31,8 +31,9 @@ class BasOptimizer:
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
-            command = f'''{repr(node.left.value)} {node.op} {repr(node.right.value)}''' # type: ignore[attr-defined]
-            command = command.replace("AND", "and").replace("OR", "or").replace("MOD", "%").replace("\\", "//")
+            command = f'''{repr(node.left.value)}'''
+            command += f" {node.op} ".replace("AND", "and").replace("OR", "or").replace("MOD", "%").replace("\\", "//")
+            command += f'''{repr(node.right.value)}'''
             try:
                 result = eval(command)                 
                 self.modified = True
@@ -50,7 +51,6 @@ class BasOptimizer:
                 nnode.col = node.col
                 return nnode
             except:
-                print("AAA not eval")
                 return node
         # functions calls, variables, etc.
         if node.right.id not in literals:
@@ -61,11 +61,13 @@ class BasOptimizer:
 
     def _op_CINT(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
+            self.modified = True
             return AST.Integer(value=int(node.args[0].value + 0.5))
         return node
 
     def _op_INT(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
+            self.modified = True
             num = node.args[0].value
             if num < 0.0:
                 return AST.Integer(value=int(node.args[0].value))
@@ -75,12 +77,20 @@ class BasOptimizer:
 
     def _op_FIX(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
+            self.modified = True
             return AST.Integer(value=int(node.args[0].value))
         return node
 
     def _op_CREAL(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
+            self.modified = True
             return AST.Real(value=float(node.args[0].value))
+        return node
+
+    def _op_CHRSS(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Integer) and node.args[0].value < 128:
+            self.modified = True
+            return AST.String(value=chr(node.args[0].value))
         return node
 
     def _op_keyword(self, stmt: AST.Command | AST.Function) -> AST.Statement:

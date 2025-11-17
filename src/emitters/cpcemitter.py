@@ -3708,7 +3708,11 @@ class CPCEmitter:
     def _emit_const_str(self, node: AST.String):
         if node.value not in self.issued_constants:
             label = self._get_conststr_label()
-            self._emit_data(f'{label}: db {len(node.value)},"{node.value}"', section=DataSec.CONST)
+            content = bytearray(node.value.encode('utf-8'))
+            values = ""
+            for b in content:
+                values = values + f'&{b:02X},'
+            self._emit_data(f'{label}: db {len(values)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
             self.issued_constants[node.value] = label
         else:
             label = self.issued_constants[node.value]
@@ -3723,7 +3727,7 @@ class CPCEmitter:
             for b in cpcreal:
                 values = values + f'&{b:02X},'
             # send code without last ','
-            self._emit_data(f'{label}: db {values[:-1]}', section=DataSec.CONST)
+            self._emit_data(f'{label}: db {values[:-1]}', info=f'{node.value}', section=DataSec.CONST)
             self.issued_constants[vstr] = label
         else:
             label = self.issued_constants[vstr]
