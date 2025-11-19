@@ -1019,7 +1019,8 @@ class LocBasParser:
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
             entry.memoff = (info.nargs * 2) - entry.memoff - 2
-        node = AST.DefFUN(name=fname, args=fargs)
+        asm = self._match(TokenType.KEYWORD, lex="ASM") is not None
+        node = AST.DefFUN(name=fname, args=fargs, asm=asm)
         self.codeblocks.append(CodeBlock(
             type=BlockType.FUNCTION,
             until_keywords=("END FUNCTION",),
@@ -1180,23 +1181,23 @@ class LocBasParser:
     def _parse_END_FUNCTION(self) -> AST.Command:
         """ <END_FUNCTION> ::= END FUNCTION """
         tk = self._advance()
-        if "END FUNCTION" in self.codeblocks[-1].until_keywords:               
+        cblock = self.codeblocks.pop()
+        if "END FUNCTION" in cblock.until_keywords:               
             self.context=""
-            self.codeblocks.pop()
         else:
             self._raise_error(43, tk)
-        return AST.Command(name="END FUNCTION")
+        return AST.Command(name="END FUNCTION", args=[cblock.start_node])
 
     @astnode
     def _parse_END_SUB(self) -> AST.Command:
         """ <END_SUB> ::= END SUB """
         tk = self._advance()
-        if "END SUB" in self.codeblocks[-1].until_keywords:
+        cblock = self.codeblocks.pop()
+        if "END SUB" in cblock.until_keywords:
             self.context=""
-            self.codeblocks.pop()
         else:
             self._raise_error(41, tk)
-        return AST.Command(name="END SUB")
+        return AST.Command(name="END SUB", args=[cblock.start_node])
 
     @astnode
     def _parse_INK(self) -> AST.Command:
@@ -2247,7 +2248,8 @@ class LocBasParser:
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
             entry.memoff = (info.nargs * 2) - entry.memoff - 2
-        node = AST.DefSUB(name=pname, args=pargs)
+        asm = self._match(TokenType.KEYWORD, lex="ASM") is not None
+        node = AST.DefSUB(name=pname, args=pargs, asm=asm)
         self.codeblocks.append(CodeBlock(
             type=BlockType.SUB,
             until_keywords=("END SUB",),

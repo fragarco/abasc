@@ -1416,7 +1416,11 @@ class CPCEmitter:
         self.codestack.append(str(self.code))  # store current generated code
         self.code = ""                         # so we generate now sub body only
         self._emit_code(f"{flabel}:", 0)
-        self._emit_push_memstack()
+        if not node.asm:
+            # procedures decorated with ASM in the declaration doesn't need
+            # to care about the temporal memory but may better use only
+            # ASM code or something bad will happen!
+            self._emit_push_memstack()
 
     def _emit_GOSUB(self, node:AST.Command):
         """
@@ -1563,7 +1567,8 @@ class CPCEmitter:
         if len(self.codestack) == 0:
             self._raise_error(41, node)
         # Restore pointer to tmp free memory
-        self._emit_pop_memstack()
+        if not node.args[0].asm:        # type: ignore [attr-defined]
+            self._emit_pop_memstack()
         fretvar = self.context[3:]
         # Return value is stored in a local variable with the same name as the function
         # so we check that it exists or return an error
@@ -1604,7 +1609,8 @@ class CPCEmitter:
         """
         if len(self.codestack) == 0:
             self._raise_error(41, node)
-        self._emit_pop_memstack()
+        if not node.args[0].asm:        # type: ignore [attr-defined]
+            self._emit_pop_memstack()
         self._emit_code("ret")
         subfun = str(self.code)
         self.code = self.codestack.pop()
@@ -3252,7 +3258,11 @@ class CPCEmitter:
         self.code = ""                        # so we generate now sub body only
         self.context = node.name
         self._emit_code(f"{self._get_userfun_label(node.name)}:", 0)
-        self._emit_push_memstack()
+        if not node.asm:
+            # procedures decorated with ASM in the declaration doesn't need
+            # to care about the temporal memory but may better use only
+            # ASM code or something bad will happen!
+            self._emit_push_memstack()
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
