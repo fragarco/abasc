@@ -646,30 +646,36 @@ class DefFN(Statement):
 
 class DefFUN(Statement):
     name: str 
+    asm: bool
     args: list[Variable]
 
-    def __init__(self, name: str, args: list[Variable]):
+    def __init__(self, name: str, args: list[Variable], asm=False):
         super().__init__(etype=ExpType.Void, id="DefFUN")
         self.name = name
+        self.asm = asm
         self.args = args
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
+        d["asm"] = self.asm
         d["args"] = [a.to_json() for a in self.args]
         return d
 
 class DefSUB(Statement):
     name: str 
+    asm: bool
     args: list[Variable]
 
-    def __init__(self, name: str, args: list[Variable]):
+    def __init__(self, name: str, args: list[Variable], asm=False):
         super().__init__(etype=ExpType.Void, id="SUB")
         self.name = name
+        self.asm = asm
         self.args = args
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
+        d["asm"] = self.asm
         d["args"] = [a.to_json() for a in self.args]
         return d

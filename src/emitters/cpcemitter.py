@@ -1584,7 +1584,7 @@ class CPCEmitter:
         self.code = self.codestack.pop()
         # we only really emit this code if the function was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Function)
-        if entry.calls > 0:
+        if entry and entry.calls > 0:
             self._emit_data(subfun, 0)
         self.context = ""
 
@@ -1610,7 +1610,7 @@ class CPCEmitter:
         self.code = self.codestack.pop()
         # we only really emit this code if the subrutine was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Procedure)
-        if entry.calls > 0:
+        if entry and entry.calls > 0:
             self._emit_data(subfun, 0)
         self.context = ""
 

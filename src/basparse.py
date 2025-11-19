@@ -2852,7 +2852,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         if entry.nargs != len(args): # type: ignore[union-attr]
             self._raise_error(2, tk, "wrong number of arguments")
-        entry.calls += 1
+        if entry: entry.calls += 1
         return AST.UserFun(name=fname, etype=entry.exptype, args=args) # type: ignore[union-attr]
 
     @astnode
