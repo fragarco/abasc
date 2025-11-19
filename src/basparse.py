@@ -48,6 +48,7 @@ from enum import Enum, auto
 from math import log
 from functools import wraps
 from baserror import BasError
+from baserror import WarningLevel as WL
 from baspp import CodeLine
 from baslex import LocBasLexer, TokenType, Token
 from symbols import SymTable, SymEntry, SymType
@@ -68,12 +69,12 @@ class CodeBlock:
     tk: Token
 
 class LocBasParser:
-    def __init__(self, code: list[CodeLine], tokens: list[Token], warning_level=-1):
+    def __init__(self, code: list[CodeLine], tokens: list[Token], warning_level: WL=WL.ALL):
         self.tokens = tokens
         self.lines = code
         self.pos = 0
         self.codeblocks: list[CodeBlock] = []
-        self.warning_level = warning_level
+        self.warning_level: WL = warning_level
         self.symtable = SymTable()
         self.context = ""
         self.current_usrlabel = ""
@@ -105,12 +106,12 @@ class LocBasParser:
             info
         ) 
 
-    def _raise_warning(self, level: int, msg: str, node: Optional[AST.ASTNode] = None):
-        if self.warning_level<0 or self.warning_level>=level:
+    def _raise_warning(self, level: WL, msg: str, node: Optional[AST.ASTNode] = None):
+        if level <= self.warning_level:
             current: AST.ASTNode | Token = node if node is not None else self._current()
             # tokens start line counting in 1
             codeline = self.lines[current.line - 1]
-            print(f"[WARNING] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
+            print(f"[WARNING{level:02d}] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
 
     # ----------------- Token management -----------------
 
@@ -1056,7 +1057,7 @@ class LocBasParser:
         self._match(TokenType.KEYWORD, "GOTO")
         for cblock in self.codeblocks:
             if "NEXT" in cblock.until_keywords:
-                self._raise_warning(0, "GOTO is dangerous inside loops if it jumps outside")
+                self._raise_warning(WL.HIGH, "GOTO is dangerous inside loops if it jumps outside")
         args: list[AST.Statement] = []
         tk = self._current()
         if self._current_is(TokenType.INT):
@@ -1864,13 +1865,6 @@ class LocBasParser:
                 items.append(self._parse_expression())
         return AST.Print(stream=stream, items=items)      
 
-    @astnode 
-    def _parse_PROC(self) -> AST.Command:
-        # DEF parses PROC so if we arrive here is a syntax error
-        tk = self._advance()
-        self._raise_error(2, tk)
-        return AST.Command(name="PROC")
-
     @astnode
     def _parse_RAD(self) -> AST.Command:
         """ <RAD> ::= RAD """
@@ -2529,7 +2523,7 @@ class LocBasParser:
         Real > Integer
         """
         if etype == AST.ExpType.Integer and node.etype != AST.ExpType.Integer:
-            self._raise_warning(1, f"implicit cast of REAL to INT", node)
+            self._raise_warning(WL.MEDIUM, f"implicit cast of REAL to INT", node)
             node = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
         elif etype == AST.ExpType.Real and node.etype != AST.ExpType.Real:
             node = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
@@ -2796,7 +2790,7 @@ class LocBasParser:
             expr = self._parse_expression()
             self._expect(TokenType.RPAREN)
             return expr
-        self._raise_error(2, tok, f"unexpected symbol {tok.lexeme}")
+        self._raise_error(2, tok, f"unexpected symbol '{tok.lexeme}'")
         return AST.Nop()
     
     @astnode
@@ -2858,6 +2852,7 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         if entry.nargs != len(args): # type: ignore[union-attr]
             self._raise_error(2, tk, "wrong number of arguments")
+        entry.calls += 1
         return AST.UserFun(name=fname, etype=entry.exptype, args=args) # type: ignore[union-attr]
 
     @astnode
@@ -2973,7 +2968,7 @@ class LocBasParser:
             return AST.Comment(text=self._advance().lexeme)
         elif tok.type == TokenType.RSX:
             return self._parse_RSX()
-        elif tok.type == TokenType.IDENT and (lex[:2] == "FN" or lex[:4] == "PROC"):
+        elif tok.type == TokenType.IDENT and lex[:2] == "FN":
             # User call to a function defined with DEF FN
             return self._parse_user_fun()
         elif tok.type == TokenType.IDENT:

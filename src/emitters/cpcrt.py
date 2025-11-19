@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 # Addresses for CPC Firmware Rutines
 #
 class FWCALL:
-    LOW_LIMIT           = "&170"
-    HIGH_LIMIT          = "&B899"
+    LOW_LIMIT           = "&170"     # Starting address for BASIC programs
+    HIGH_LIMIT          = "&A6FB"    # Last free position before Firmware variables
 
     # LOW jumpblock
     

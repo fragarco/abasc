@@ -40,8 +40,8 @@ class SymEntry:
     locals: "SymTable"
     label: str = ""
     writes: int = 1
-    reads: int = 0
-    nargs: int = 0                                   # Used by DEF FN and Arrays
+    calls: int = 0      # Used by SUB, FUNCTION and DEF FN: times that a func is called
+    nargs: int = 0      # Used by DEF FN and Arrays
     indexes: list[int] = field(default_factory=list) # Used by Arrays
     memoff: int = 0     # if it's a param, offset in the call stack frame
     datasz: int = 0     # integers = 2, reals = 5, string up to 255
@@ -155,7 +155,7 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
             "symtype": data.symtype,
             "exptype": data.exptype,
             "writes":  data.writes,
-            "reads": data.reads,
+            "calls": data.calls,
             "nargs": data.nargs,
             "indexes": data.indexes,
             "locals": symsto_json(data.locals.syms),

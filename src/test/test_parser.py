@@ -6,6 +6,7 @@ python3 -m unittest test/test_parser.py
 
 import unittest
 from baserror import BasError
+from baserror import WarningLevel as WL
 from basparse import LocBasParser
 from baslex import LocBasLexer
 from baspp import CodeLine
@@ -21,7 +22,7 @@ class TestParser(unittest.TestCase):
         lx = LocBasLexer(code)
         tokens = list(lx.tokens())
         codelines = [CodeLine("TEST.BAS", i, c) for i,c in enumerate(code.split('\n'))]
-        return LocBasParser(codelines, tokens, warning_level=0).parse_program()
+        return LocBasParser(codelines, tokens, warning_level=WL.NONE).parse_program()
 
 # ---------- Statement and Expression parsing
 

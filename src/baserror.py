@@ -103,6 +103,7 @@ Table of ERRor codes:
 
 from __future__ import annotations
 import os
+from enum import Enum
 os.system("")  # enables ansi escape characters in terminal
 
 TERM = {
@@ -189,3 +190,10 @@ class BasError(Exception):
             code = code[:self.col-1] + TERM["UNDER"] + code[self.col-1:] + TERM["END"]
         msg = msg + (f"in {code}" if code != "" else "")
         return msg
+
+class WarningLevel(int, Enum):
+    NONE     = 0,
+    HIGH     = 1,
+    MEDIUM   = 2,
+    LOW      = 3,
+    ALL      = 4

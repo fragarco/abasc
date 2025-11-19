@@ -25,6 +25,7 @@ from typing import cast
 from enum import Enum
 from baspp import CodeLine
 from baserror import BasError
+from baserror import WarningLevel as WL
 from symbols import SymTable, SymEntry, SymType, symsto_json
 import astlib as AST
 from .cpcrt import FWCALL, RT
@@ -37,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=-1, verbose=False):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -65,7 +66,7 @@ class CPCEmitter:
         self.ifblocks: list[AST.If] = []
         self.symbolafter = 9999
         self.memlimit = 99999
-        self.memstacks: list[bool] = []
+        self.memstacks: list[tuple[bool,int]] = []
 
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
@@ -106,7 +107,7 @@ class CPCEmitter:
         return False
 
     def _emit_push_memstack(self) -> None:      
-        self.memstacks.append(self.free_tmp_memory)
+        self.memstacks.append((self.free_tmp_memory, self.reserved_tmp_memory))
         self._emit_code("ld      hl,(rt_memory_start)")
         self._emit_code("push    hl", info="store current tmp memory start address")
         self._emit_code("ld      hl,(rt_memory_next)")
@@ -116,7 +117,7 @@ class CPCEmitter:
         self._emit_free_mem()
         self._emit_code("pop     hl")
         self._emit_code("ld      (rt_memory_start),hl")
-        self.free_tmp_memory = self.memstacks.pop()
+        self.free_tmp_memory, self.reserved_tmp_memory = self.memstacks.pop()
 
     def _emit_free_mem(self) -> None:
         if self.free_tmp_memory:
@@ -124,27 +125,37 @@ class CPCEmitter:
             self.free_tmp_memory = False
             self.reserved_tmp_memory = 0
 
-    def _reserve_memory(self, nbytes: int):
+    def _reserve_memory(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
         self._emit_code("call    rt_malloc", info="HL points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
+        totaltmp = self.reserved_tmp_memory
+        for _, reservedtmp in self.memstacks:
+            totaltmp += reservedtmp
+        if totaltmp > 2048:
+            self._raise_warning(WL.HIGH, "reserved temporal memory exceeds 2K", node)
 
-    def _reserve_memory_de(self, nbytes: int):
+    def _reserve_memory_de(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc_de")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
         self._emit_code("call    rt_malloc_de", info="DE points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
+        totaltmp = self.reserved_tmp_memory
+        for _, reservedtmp in self.memstacks:
+            totaltmp += reservedtmp
+        if totaltmp > 2048:
+            self._raise_warning(WL.HIGH, "reserved temporal memory exceeds 2K", node)
 
     def _emit_pushcontext(self):
         if self.context != "":
-            self._emit_pushcontext()
+            self._emit_push_memstack()
 
     def _emit_popcontext(self):
         if self.context != "":
-            self._emit_popcontext()
+            self._emit_pop_memstack()
 
     def _moveflo_accum1(self):
         """ Moves real number in (HL) to rt_math_accum1"""
@@ -158,13 +169,13 @@ class CPCEmitter:
         self._emit_code("ld      de,rt_math_accum2")
         self._emit_code("call    rt_move_real", info="REAL to rt_math_accum2")
 
-    def _moveflo_temp(self):
+    def _moveflo_temp(self, node: AST.ASTNode):
         """ 
         Copies the current float number pointed by HL to a new
         temporal memory location. Returns in Hl that address. 
         """
         self._emit_import("rt_move_real")
-        self._reserve_memory_de(5)
+        self._reserve_memory_de(5, node)
         self._emit_code("call    rt_move_real", info="REAL to tmp memory")
 
     def _emit_preamble(self):
@@ -326,11 +337,11 @@ class CPCEmitter:
             info
         ) 
 
-    def _raise_warning(self, level: int, msg: str, node: AST.ASTNode):
-        if self.warning_level < 0 or self.warning_level >= level:
+    def _raise_warning(self, level: WL, msg: str, node: AST.ASTNode):
+        if level <= self.warning_level:
             # tokens start line counting in 1
             codeline = self.source[node.line - 1]
-            print(f"[WARNING] {codeline.source}:{codeline.line}:{node.col}: {msg} in {codeline.code}")
+            print(f"[WARNING{level:02d}] {codeline.source}:{codeline.line}:{node.col}: {msg} in {codeline.code}")
 
     # ----------------- Commands and Functions -----------------
 
@@ -352,7 +363,7 @@ class CPCEmitter:
             self._emit_code("jr      nc,$+8")
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
             self._emit_code("call    rt_math_call")
-            self._moveflo_temp()
+            self._moveflo_temp(node)
             self._emit_popcontext()
         else:
             self._emit_code("call    rt_abs")
@@ -413,7 +424,7 @@ class CPCEmitter:
         """
         Inserts direct ASM code.
         """
-        self._emit_code("; ASM(<string>[<string>]*)")
+        self._emit_code("; ASM <string>[,<string>]* ")
         for a in node.args:
             if isinstance(a, AST.String):
                 self._emit_code(a.value)
@@ -433,7 +444,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_ARCTANGENT}", info="MATH_REAL_ARCTANGENT")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -445,7 +456,7 @@ class CPCEmitter:
         line number to be generated, both default to 10 if not specified.
         """
         self._emit_code("; AUTO [<line number>l[,<increment>]")
-        self._raise_warning(0, 'AUTO is ignored and has not effect', node)
+        self._raise_warning(WL.MEDIUM, 'AUTO is ignored and has not effect', node)
         self._emit_code("; IGNORED")
         
     def _emit_BINSS(self, node:AST.Function):
@@ -464,7 +475,7 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
         self._emit_code("ex      de,hl", info="number to convert")
-        self._reserve_memory(17)
+        self._reserve_memory(17, node)
         self._emit_code("pop     bc", info="number of characters")
         self._emit_code("ld      a,c", info="only 8 or 16 are valid")
         self._emit_code("call    rt_int2bin")
@@ -549,7 +560,7 @@ class CPCEmitter:
         Protected files (saved with the ',P' type) can be loaded and run by chaining.
         """
         self._emit_code("; CHAIN <file name>[,<line number>]")
-        self._raise_warning(0, 'CHAIN is ignored and has not effect', node)
+        self._raise_warning(WL.HIGH, 'CHAIN is ignored and has not effect', node)
         self._emit_code("; IGNORED")
         self._emit_code(";")
 
@@ -564,7 +575,7 @@ class CPCEmitter:
         # CHAIN MERGE is processed by the preprocessor and it is used to
         # append additional BAS files, so here we don't have to do anything.
         self._emit_code("; CHAIN MERGE <file name>[,<line number>][, DELETE <range>]")
-        self._raise_warning(0, 'CHAIN MERGE is ignored and has not effect', node)
+        self._raise_warning(WL.LOW, 'CHAIN MERGE is ignored and has not effect', node)
         self._emit_code("; IGNORED")
 
     def _emit_CHRSS(self, node:AST.Function):
@@ -575,7 +586,7 @@ class CPCEmitter:
         self._emit_code("; CHR$(<integer expression>)") 
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
-        self._reserve_memory(2)
+        self._reserve_memory(2, node)
         self._emit_code("ld      (hl),1")
         self._emit_code("inc     hl")
         self._emit_code("ld      (hl),a")
@@ -680,7 +691,7 @@ class CPCEmitter:
         # We reuse CONT to be able to add "BREAK POINTS" that stop the execution
         # until a key is pressed
         self._emit_code("; CONT")
-        self._raise_warning(0, 'CONT will stop de program until a key is pressed', node)
+        self._raise_warning(WL.HIGH, 'CONT will stop de program until a key is pressed', node)
         self._emit_code(f"call    {FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
         self._emit_code(";")
     
@@ -695,7 +706,7 @@ class CPCEmitter:
         self._emit_code("; COPYCHR$(#<stream expression>)")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
-        self._reserve_memory(2)
+        self._reserve_memory(2, node)
         self._emit_code("call    rt_copychrs")
         self._emit_code(";")
 
@@ -711,7 +722,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_COSINE}", info="MATH_REAL_COSINE")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -724,7 +735,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Integer:
             self._emit_code("call    rt_int2real", info="REAL in rt_math_accum1")
-            self._moveflo_temp()
+            self._moveflo_temp(node)
         else:
             self._emit_code("; already REAL so no action taken")
         self._emit_code(";")
@@ -813,7 +824,7 @@ class CPCEmitter:
         if arg.etype == AST.ExpType.Integer:
             self._emit_import("rt_int2str")
             self._emit_code("call    rt_int2str")
-            self._reserve_memory_de(8)
+            self._reserve_memory_de(8, node)
             self._emit_code("push    de")
             self._emit_code("ldir")
             self._emit_code("pop     hl")
@@ -822,11 +833,11 @@ class CPCEmitter:
             self._emit_import("rt_strzcopy")
             self._emit_pushcontext()
             self._emit_code("call    rt_real2strz")
-            self._reserve_memory(12)
+            self._reserve_memory(12, node)
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
             self._emit_popcontext()
-        self._raise_warning(0, "text patterns are not supported yet", node)
+        self._raise_warning(WL.MEDIUM, "text patterns are not supported yet", node)
         self._emit_code(";")
 
     def _emit_DEFINT(self, node:AST.Command):
@@ -838,7 +849,7 @@ class CPCEmitter:
         # In our case, this command is ignored as types must be especified
         # always using sufixes
         self._emit_code("; DEFINT <range(s) of letters>")
-        self._raise_warning(0, "DEFINT has no effect, use % ! $ sufixes instead", node)
+        self._raise_warning(WL.LOW, "DEFINT has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
     def _emit_DEFREAL(self, node:AST.Command):
@@ -850,7 +861,7 @@ class CPCEmitter:
         # In our case, this command is ignored as types must be especified
         # always using sufixes
         self._emit_code("; DEFREAL <range(s) of letters>")
-        self._raise_warning(0, "DEFREAL has no effect, use % ! $ sufixes instead", node)
+        self._raise_warning(WL.LOW, "DEFREAL has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
     def _emit_DEFSTR(self, node:AST.Command):
@@ -862,7 +873,7 @@ class CPCEmitter:
         # In our case, this command is ignored as types must be especified
         # always using sufixes
         self._emit_code("; DEFSTR <range(s) of letters>")
-        self._raise_warning(0, "DEFSTR has no effect, use % ! $ sufixes instead", node)
+        self._raise_warning(WL.LOW, "DEFSTR has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
     def _emit_DEF_FN(self, node:AST.DefFN):
@@ -935,7 +946,7 @@ class CPCEmitter:
         occured. See the listing of error messages. 
         """
         self._emit_code("; DERR")
-        self._raise_warning(0, "DERR is ignored and has no effect", node)
+        self._raise_warning(WL.MEDIUM, "DERR is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_DI(self, node:AST.Command):
@@ -1038,7 +1049,7 @@ class CPCEmitter:
         Edit a program line by calling for a specific line number. 
         """
         self._emit_code("; EDIT <line number>")
-        self._raise_warning(0, "EDIT is ignored and has no effect", node)
+        self._raise_warning(WL.MEDIUM, "EDIT is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_EI(self, node:AST.Command):
@@ -1180,7 +1191,7 @@ class CPCEmitter:
         Reports the Line number of the last ERror encountered.
         """
         self._emit_code("; ERL")
-        self._raise_warning(0, "ERL is ignored and has no effect", node)
+        self._raise_warning(WL.MEDIUM, "ERL is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_ERR(self, node:AST.Function):
@@ -1259,7 +1270,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_EXP}", info="MATH_REAL_EXP")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -1272,7 +1283,7 @@ class CPCEmitter:
         """
         self._emit_import("rt_fill")
         self._emit_code("; FILL <ink>")
-        self._raise_warning(1,"FILL is supported only by 664 and 6128 machines", node)
+        self._raise_warning(WL.MEDIUM,"FILL is supported only by 664 and 6128 machines", node)
         self._emit_expression(node.args[0])
         self._emit_code("call    rt_fill")
         self._emit_code(";")
@@ -1468,7 +1479,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
         if len(node.args) == 2:
             self._emit_expression(node.args[1])
-            self._raise_warning(1,"GRAPHICS PEN transparency is supported only by 664 and 6128 machines", node)
+            self._raise_warning(WL.MEDIUM,"GRAPHICS PEN transparency is supported only by 664 and 6128 machines", node)
             self._emit_code("ld      a,l")
             self._emit_code(f"call    {FWCALL.GRA_SET_BACK}", info="GRA_SET_BACK")
         self._emit_code(";")
@@ -1488,7 +1499,7 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
         self._emit_code("ex      de,hl", info="number to convert")
-        self._reserve_memory(5)
+        self._reserve_memory(5, node)
         self._emit_code("pop     bc", info="number of characters")
         self._emit_code("ld      a,c", info="only 2 or 4 are valid")
         self._emit_code("call    rt_int2hex")
@@ -1571,7 +1582,10 @@ class CPCEmitter:
         self._emit_code("ret")
         subfun = str(self.code)
         self.code = self.codestack.pop()
-        self._emit_data(subfun, 0)
+        # we only really emit this code if the function was called
+        entry = self.symtable.find(ident=self.context, stype=SymType.Function)
+        if entry.calls > 0:
+            self._emit_data(subfun, 0)
         self.context = ""
 
     def _emit_END_IF(self, node:AST.BlockEnd):
@@ -1593,8 +1607,11 @@ class CPCEmitter:
         self._emit_pop_memstack()
         self._emit_code("ret")
         subfun = str(self.code)
-        self.code = self.codestack.pop()      
-        self._emit_data(subfun, 0)
+        self.code = self.codestack.pop()
+        # we only really emit this code if the subrutine was called
+        entry = self.symtable.find(ident=self.context, stype=SymType.Procedure)
+        if entry.calls > 0:
+            self._emit_data(subfun, 0)
         self.context = ""
 
     def _emit_INK(self, node:AST.Command):
@@ -1658,7 +1675,7 @@ class CPCEmitter:
         """
         self._emit_code("; INKEY$")
         self._emit_import("rt_inkeys")
-        self._reserve_memory(2)
+        self._reserve_memory(2, node)
         self._emit_code("call    rt_inkeys")
         self._emit_code(";")
 
@@ -1835,7 +1852,7 @@ class CPCEmitter:
         with a given expansion character. 
         """
         self._emit_code("; KEY <integer expression>,<string expression>")
-        self._raise_warning(0, "KEY is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "KEY is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_KEY_DEF(self, node:AST.Command):
@@ -1849,7 +1866,7 @@ class CPCEmitter:
         of the SPEED KEY command. 
         """
         self._emit_code("; KEY DEF <key number>,<repeat>[,<normal>[,<shifted>[,<control>]]]")
-        self._raise_warning(0, "KEY DEF is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "KEY DEF is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_LABEL(self, node:AST.Label):
@@ -1874,7 +1891,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strleft")
         self._emit_code(";")
@@ -1945,7 +1962,7 @@ class CPCEmitter:
         the printer.
         """
         self._emit_code("; LIST [<line number range>][,#<strea m expression>]")
-        self._raise_warning(0, "LIST is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "LIST is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_LOAD(self, node:AST.Command):
@@ -2005,7 +2022,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG}", info="MATH_REAL_LOG")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2020,7 +2037,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG_10}", info="MATH_REAL_LOG_10")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2033,7 +2050,7 @@ class CPCEmitter:
         self._emit_import("rt_lower")
         self._emit_code("; LOWER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
@@ -2074,7 +2091,7 @@ class CPCEmitter:
                 self._moveflo_accum2()
                 self._emit_code("call    rt_maxreal")
             self._emit_code("ld      hl,rt_math_accum1")
-            self._moveflo_temp()
+            self._moveflo_temp(node)
         self._emit_code(";")
 
     def _emit_MEMORY(self, node:AST.Command):
@@ -2090,7 +2107,7 @@ class CPCEmitter:
         if isinstance(limit, AST.Integer):
             self.memlimit = min(self.memlimit, cast(int, limit.value))
         else:
-            self._raise_warning(0, "MEMORY can be evaluated only at compiling time", node)
+            self._raise_error(2, node, "MEMORY can be evaluated only at compiling time")
         self._emit_code(";")
 
     def _emit_MERGE(self, node:AST.Statement):
@@ -2116,7 +2133,7 @@ class CPCEmitter:
             self._emit_code("ld      b,l")
             self._emit_code("push    bc")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_substr")
         self._emit_code(";")
@@ -2144,7 +2161,7 @@ class CPCEmitter:
                 self._moveflo_accum1()
                 self._emit_code("call    rt_maxreal")
             self._emit_code("ld      hl,rt_math_accum2")
-            self._moveflo_temp()
+            self._moveflo_temp(node)
         self._emit_code(";")
 
     def _emit_MODE(self, node:AST.Command):
@@ -2295,7 +2312,7 @@ class CPCEmitter:
         twice.  ON BREAK STOP disables the trap, but has no other immediate effect.
         """
         self._emit_code("; ON BREAK GOSUB <line number> | STOP")
-        self._raise_warning(0, "ON BREAK is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "ON BREAK is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_ON_ERROR_GOTO(self, node:AST.Command):
@@ -2303,7 +2320,7 @@ class CPCEmitter:
         Go to a specified line number in the program on detecting an error. 
         """
         self._emit_code("; ON ERROR GOTO <linenumber>")
-        self._raise_warning(0, "ON ERROR is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "ON ERROR is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_ON_SQ(self, node:AST.Command):
@@ -2473,7 +2490,7 @@ class CPCEmitter:
         self._emit_code("ld      hl,rt_math_accum1")
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_PI}", info="MATH_REAL_PI")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
     
@@ -2809,7 +2826,7 @@ class CPCEmitter:
         if RENUM 10,,10 were issued. Line numbers are valid in the range 1 to 65535. 
         """
         self._emit_code("; RENUM [<new line number>][ ,[<old line number>][,< increment>]")
-        self._raise_warning(0, "RENUM is ignored and has not effect", node)
+        self._raise_warning(WL.LOW, "RENUM is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_REPLACESS(self, node:AST.Command):
@@ -2862,7 +2879,7 @@ class CPCEmitter:
         which the error has occurred is returned to.
         """
         self._emit_code("; RESUME <linenumber> | NEXT")
-        self._raise_warning(0, "RESUME is ignored and has not effect", node)
+        self._raise_warning(WL.LOW, "RESUME is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_RETURN(self, node:AST.Command):
@@ -2891,7 +2908,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strright")
         self._emit_code(";")
@@ -2911,7 +2928,7 @@ class CPCEmitter:
         else:
             self._emit_expression(node.args[0])
             self._emit_code("call    rt_rnd0")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2934,7 +2951,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("pop     af")
         self._emit_code("call    rt_real_round")
-        self._moveflo_temp()   
+        self._moveflo_temp(node)   
         self._emit_code(";")
 
     def _emit_RUN(self, node:AST.Command):
@@ -3015,7 +3032,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SINE}", info="MATH_REAL_SINE")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3058,7 +3075,7 @@ class CPCEmitter:
         self._emit_import("rt_strfill")
         self._emit_code("; SPACE$(<integer expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("ld      c,32")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
@@ -3160,7 +3177,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SQR}", info="MATH_REAL_SQR")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3185,7 +3202,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         if node.args[1].etype == AST.ExpType.String:
             self._emit_code("inc     hl")
             self._emit_code("ld      c,(hl)", info="first character")
@@ -3206,7 +3223,7 @@ class CPCEmitter:
         if arg.etype == AST.ExpType.Integer:
             self._emit_import("rt_int2str")
             self._emit_code("call    rt_int2str")
-            self._reserve_memory_de(8)
+            self._reserve_memory_de(8, node)
             self._emit_code("push    de")
             self._emit_code("ldir")
             self._emit_code("pop     hl")
@@ -3215,7 +3232,7 @@ class CPCEmitter:
             self._emit_import("rt_strzcopy")
             self._emit_pushcontext()
             self._emit_code("call    rt_real2strz")
-            self._reserve_memory(12)
+            self._reserve_memory(12, node)
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
             self._emit_popcontext()
@@ -3360,7 +3377,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TANGENT}", info="MATH_REAL_TANGENT")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3404,7 +3421,7 @@ class CPCEmitter:
         self._emit_code("; TIME")
         self._emit_pushcontext()
         self._emit_code("call    rt_gettime")
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3415,7 +3432,7 @@ class CPCEmitter:
         is executed. TRON enables the feature, TROFF turns it off.
         """
         self._emit_code("; TROFF")
-        self._raise_warning(0, "TROFF is ignored and has not effect", node)
+        self._raise_warning(WL.LOW, "TROFF is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_TRON(self, node:AST.Statement):
@@ -3425,7 +3442,7 @@ class CPCEmitter:
         is executed. TRON enables the feature, TROFF turns it off.
         """
         self._emit_code("; TRON")
-        self._raise_warning(0, "TRON is ignored and has not effect", node)
+        self._raise_warning(WL.LOW, "TRON is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
     def _emit_UNT(self, node:AST.Function):
@@ -3445,7 +3462,7 @@ class CPCEmitter:
         self._emit_import("rt_upper")
         self._emit_code("; UPPER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255)
+        self._reserve_memory_de(255, node)
         self._emit_code("call    rt_upper")
         self._emit_code(";")
 
@@ -3457,7 +3474,7 @@ class CPCEmitter:
         """
         # TODO: apply format
         self._emit_code("; USING <format template>;<expression>[,<expression>]*")
-        self._raise_warning(0, "text patterns are not supported yet", node)
+        self._raise_warning(WL.MEDIUM, "text patterns are not supported yet", node)
         for a in node.args[1:]:
             if a.etype == AST.ExpType.Integer:
                 self._print_int(a)
@@ -3571,7 +3588,7 @@ class CPCEmitter:
         BASIC to insert carriage returns as required when printing. 
         """
         self._emit_code("; WIDTH <integer expression>")
-        self._raise_warning(0, 'WIDTH is ignored and has not effect', node)
+        self._raise_warning(WL.MEDIUM, 'WIDTH is ignored and has not effect', node)
         self._emit_code("; IGNORED")
 
     def _emit_WINDOW(self, node:AST.Command):
@@ -3932,7 +3949,7 @@ class CPCEmitter:
                 self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
                 self._emit_code("call    rt_math_call")
                 self._emit_popcontext()
-                self._moveflo_temp()
+                self._moveflo_temp(node)
         else:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
 
@@ -3988,7 +4005,7 @@ class CPCEmitter:
             self._emit_import("rt_strcat")
             self._emit_code("push    de")
             self._emit_code("ex      de,hl")
-            self._reserve_memory(255)
+            self._reserve_memory(255, node)
             self._emit_code("call    rt_strcopy", info="(HL) <- (DE)")
             self._emit_code("pop     de")
             self._emit_code("call    rt_strcat", info="(HL) <- (HL) + (DE)")
@@ -4024,7 +4041,7 @@ class CPCEmitter:
             self._emit_code("call    rt_math_call")
         else:
             self._raise_error(2, node, f'unknown "{op}" REAL op')
-        self._moveflo_temp()
+        self._moveflo_temp(node)
         self._emit_popcontext()
 
     def _emit_comparation(self, node: AST.BinaryOp):
@@ -4275,7 +4292,7 @@ class CPCEmitter:
                         self._emit_code("call    rt_rsx_setstring")
                         stringargs += 1
                         if stringargs > 2:
-                            self._raise_error(14, a, info="max string arguments is two")
+                            self._raise_error(14, a, info="too many string arguments")
                     self._emit_code("push    hl")
                 self._emit_code("ld      ix,0")
                 self._emit_code("add     ix,sp")

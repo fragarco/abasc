@@ -588,8 +588,7 @@ def warning(message, tolerancelevel):
     if tolerancelevel > g_context.tolerance:
         abort(message, tolerancelevel)
     elif tolerancelevel == g_context.tolerance:
-        print("[abasm]", os.path.basename(g_context.currentfile) + ':', f'warning (TL{tolerancelevel}):', message)
-        print('\t', f"in {g_context.currentline.strip()}")
+        print(f"[WARNING{tolerancelevel:02d}] {os.path.basename(g_context.currentfile)}: {message} in {g_context.currentline.strip()}")
 
 def abort(message, tolerancelevel=0):
     line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: Syntax Error ({message})"

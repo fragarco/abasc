@@ -20,6 +20,7 @@ import sys, os
 import argparse
 import time
 import traceback
+from baserror import WarningLevel as WL
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer, Token
 from basparse import LocBasParser
@@ -41,6 +42,7 @@ def process_args() -> argparse.Namespace:
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
     parser.add_argument('-O', type=int, default=2, help="Sets the level of optimization (0-disabled, 1-peephole, 2-all). It's set to 2 by default.")
+    parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
     parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
@@ -93,8 +95,8 @@ def lexpass(infile: str, code: str, verbose: bool) -> list[Token]:
             fd.write(lexjson)
     return tokens
 
-def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose: bool) -> tuple[AST.Program, SymTable]:
-    parser = LocBasParser(codelines, tokens)
+def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose: bool, wlevel: WL) -> tuple[AST.Program, SymTable]:
+    parser = LocBasParser(codelines, tokens, wlevel)
     ast, symtable = parser.parse_program()
     if verbose:
         astjson = ast.to_json()
@@ -107,8 +109,8 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool) -> str:
-    emitter = CPCEmitter(codelines, ast, symtable, verbose=verbose)
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL) -> str:
+    emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str):
@@ -125,16 +127,17 @@ def main() -> None:
     if ".bin" not in outfile.lower(): outfile = outfile + ".bin"
     if ".bas" not in infile.lower():  infile = infile + ".bas"
     optlevel = args.O if args.O in [0,1,2] else 2
+    wlevel = args.W if args.W in [0,1,2,3] else WL.ALL
     try:
         clear(infile)
         bascontent = readsourcefile(infile)
         codelines, code = preprocess(infile, bascontent, args.verbose)
         tokens = lexpass(infile, code, args.verbose)
-        ast, symtable = parser(infile, codelines, tokens, args.verbose)
+        ast, symtable = parser(infile, codelines, tokens, args.verbose, wlevel)
         optimizer = BasOptimizer()
         if optlevel > 1:
             ast, symtable = optimizer.optimize_ast(ast, symtable)
-        asmcode = emit(codelines, ast, symtable, args.verbose)
+        asmcode = emit(codelines, ast, symtable, args.verbose, wlevel)
         if optlevel > 0:
             asmcode = optimizer.optimize_peephole(asmcode)
         assemble(infile, outfile, asmcode)
