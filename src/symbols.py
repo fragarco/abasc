@@ -45,7 +45,7 @@ class SymEntry:
     indexes: list[int] = field(default_factory=list) # Used by Arrays
     memoff: int = 0     # if it's a param, offset in the call stack frame
     datasz: int = 0     # integers = 2, reals = 5, string up to 255
-
+    heapused: int = 0    # DEF FN functions can reserve heap (temp) memory and we need to track that
 
 class SymTable:
     syms: dict[str, SymEntry]
@@ -160,7 +160,8 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
             "indexes": data.indexes,
             "locals": symsto_json(data.locals.syms),
             "datasz": data.datasz,
-            "memoffset": data.memoff
+            "memoffset": data.memoff,
+            "heapused": data.heapused
 
         }
         jsontable[s] = info

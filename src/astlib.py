@@ -630,16 +630,19 @@ class DefFN(Statement):
     name: str 
     args: list[Variable]
     body: Statement
+    heapmem: int    # used by the emiter to save the amount of tmp memory per call
 
     def __init__(self, name: str, args: list[Variable], body: Statement):
         super().__init__(etype=ExpType.Void, id="DefFN")
         self.name = name
         self.args = args
         self.body = body
+        self.heapmem = 0
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
+        d["heap"] = self.heapmem
         d["args"] = [a.to_json() for a in self.args]
         d["body"] = self.body.to_json()
         return d

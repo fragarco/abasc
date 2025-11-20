@@ -81,20 +81,24 @@ class CPCEmitter:
         self.head = self.head + line + "\n"
 
     def _emit_code(self, line: str="", indent: int=4, info: str=""):
-        line = self._emit_prepare_line(line, indent, info)
-        self.code = self.code + line + "\n"
+        """ Pure comments are added only if we are in verbose mode """
+        if self.verbose or line == "" or line[0] != ";":
+            line = self._emit_prepare_line(line, indent, info)
+            self.code = self.code + line + "\n"
 
     def _emit_data(self, line: str="", indent: int=4, info: str="", section: DataSec=DataSec.GEN):
         line = self._emit_prepare_line(line,indent, info)
         self.data[section] = self.data[section] + line +"\n"
 
     def _emit_line_label(self, line: AST.Line):
-        sym = self.symtable.find(str(line.number), SymType.Label, "")
-        if sym is not None:
-            codeline = self.source[line.line-1]
-            self._emit_code(f"{sym.label}:", info=codeline.code)
-        else:
-            self._raise_error(2, line)
+        """ Only if we are in verbose mode """
+        if self.verbose:
+            sym = self.symtable.find(str(line.number), SymType.Label, "")
+            if sym is not None:
+                codeline = self.source[line.line-1]
+                self._emit_code(f"{sym.label}:", info=codeline.code)
+            else:
+                self._raise_error(2, line)
 
     def _emit_import(self, fname: str) -> bool:
         if fname not in self.runtime:
@@ -106,14 +110,14 @@ class CPCEmitter:
             return True
         return False
 
-    def _emit_push_memstack(self) -> None:      
+    def _emit_push_memheap(self) -> None:      
         self.memstacks.append((self.free_tmp_memory, self.reserved_tmp_memory))
         self._emit_code("ld      hl,(rt_memory_start)")
         self._emit_code("push    hl", info="store current tmp memory start address")
         self._emit_code("ld      hl,(rt_memory_next)")
         self._emit_code("ld      (rt_memory_start),hl")
 
-    def _emit_pop_memstack(self) -> None:
+    def _emit_pop_memheap(self) -> None:
         self._emit_free_mem()
         self._emit_code("pop     hl")
         self._emit_code("ld      (rt_memory_start),hl")
@@ -131,11 +135,7 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc", info="HL points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
-        totaltmp = self.reserved_tmp_memory
-        for _, reservedtmp in self.memstacks:
-            totaltmp += reservedtmp
-        if totaltmp > 2048:
-            self._raise_warning(WL.HIGH, "reserved temporal memory exceeds 2K", node)
+        self._check_tmp_memory()
 
     def _reserve_memory_de(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc_de")
@@ -143,6 +143,9 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc_de", info="DE points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
+        self._check_tmp_memory()
+
+    def _check_tmp_memory(self):
         totaltmp = self.reserved_tmp_memory
         for _, reservedtmp in self.memstacks:
             totaltmp += reservedtmp
@@ -151,11 +154,11 @@ class CPCEmitter:
 
     def _emit_pushcontext(self):
         if self.context != "":
-            self._emit_push_memstack()
+            self._emit_code("push    ix")
 
     def _emit_popcontext(self):
         if self.context != "":
-            self._emit_pop_memstack()
+            self._emit_code("pop     ix")
 
     def _moveflo_accum1(self):
         """ Moves real number in (HL) to rt_math_accum1"""
@@ -186,13 +189,13 @@ class CPCEmitter:
         self._emit_head(f"org     {FWCALL.LOW_LIMIT}", 0)
         self._emit_head("xor     a", 0, info="Set stream to its default value (#0)")
         self._emit_head(f"call    {FWCALL.TXT_STR_SELECT}", 0, info="TXT_STR_SELECT")
-        self._emit_head("jp      _code_", 0)
+        self._emit_head("jp      _program_main_", 0)
         self._emit_head()
         self._emit_head("; DYNAMIC MEMORY AREA, USED BY MALLOC AND FREE",0)
         self._emit_head(RT["rt_tmp_memory"][1], 0)
         self._emit_head()
         self._emit_head("; PROGRAM MAIN", 0)
-        self._emit_head(f"org     &{hex(self.org)[2:]}", 0)
+        self._emit_head(f"_program_main_: org &{hex(self.org)[2:]}", 0)
 
     def _emit_code_end(self):
         self._emit_code()
@@ -734,8 +737,10 @@ class CPCEmitter:
         self._emit_import("rt_int2real")
         self._emit_expression(node.args[0])
         if node.args[0].etype == AST.ExpType.Integer:
+            self._emit_pushcontext()
             self._emit_code("call    rt_int2real", info="REAL in rt_math_accum1")
             self._moveflo_temp(node)
+            self._emit_popcontext()
         else:
             self._emit_code("; already REAL so no action taken")
         self._emit_code(";")
@@ -890,6 +895,7 @@ class CPCEmitter:
         self.context = node.name
         currentcode = self.code  # keep current generated code
         self.code = ""           # capture only the code that will be generated now
+        heapused = self.reserved_tmp_memory
         self._emit_expression(node.body)
         self._emit_code("ret")
         fcode = self.code
@@ -898,6 +904,13 @@ class CPCEmitter:
         flabel = self._get_userfun_label(node.name)
         self._emit_data(f"{flabel}:", 0)
         self._emit_data(fcode, 0)
+        # If the expresion required heap memory (tmp memory)
+        # we keep track of that now because it has to be freed after every call
+        entry = self.symtable.find(node.name, SymType.Function)
+        if entry is not None:
+            entry.heapused = self.reserved_tmp_memory - heapused
+            self.reserved_tmp_memory = heapused
+            self.free_tmp_memory = heapused > 0
         self._emit_code(";")
 
     def _emit_DEG(self, node:AST.Statement):
@@ -1078,7 +1091,7 @@ class CPCEmitter:
         """
         # In our version, we call FULL RESET after any key is pressed
         self._emit_code("; END")
-        self._emit_code(f"call    {FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
+        self._emit_code(f"jp      _code_end_")
         self._emit_code("call    0")
 
     def _emit_ENT(self, node:AST.Command):
@@ -1420,7 +1433,7 @@ class CPCEmitter:
             # procedures decorated with ASM in the declaration doesn't need
             # to care about the temporal memory but may better use only
             # ASM code or something bad will happen!
-            self._emit_push_memstack()
+            self._emit_push_memheap()
 
     def _emit_GOSUB(self, node:AST.Command):
         """
@@ -1568,23 +1581,23 @@ class CPCEmitter:
             self._raise_error(41, node)
         # Restore pointer to tmp free memory
         if not node.args[0].asm:        # type: ignore [attr-defined]
-            self._emit_pop_memstack()
-        fretvar = self.context[3:]
-        # Return value is stored in a local variable with the same name as the function
-        # so we check that it exists or return an error
-        entry = self.symtable.find(fretvar, SymType.Variable, self.context)
-        if entry is not None:
-            if entry.exptype == AST.ExpType.Integer:  
-                self._emit_code(f"ld      hl,({entry.label})")
-            elif entry.exptype == AST.ExpType.String:
-                self._emit_code(f"ld      hl,{entry.label}")
-            elif entry.exptype == AST.ExpType.Real:
-                self._emit_code(f"ld      hl,{entry.label}")
+            self._emit_pop_memheap()
+            fretvar = self.context[3:]
+            # Return value is stored in a local variable with the same name as the function
+            # so we check that it exists or return an error
+            entry = self.symtable.find(fretvar, SymType.Variable, self.context)
+            if entry is not None:
+                if entry.exptype == AST.ExpType.Integer:  
+                    self._emit_code(f"ld      hl,({entry.label})")
+                elif entry.exptype == AST.ExpType.String:
+                    self._emit_code(f"ld      hl,{entry.label}")
+                elif entry.exptype == AST.ExpType.Real:
+                    self._emit_code(f"ld      hl,{entry.label}")
+                else:
+                    self._raise_error(2, node, info="invalid return type")
             else:
-                self._raise_error(2, node, info="invalid return type")
-        else:
-            self._raise_error(2, node, info="no return value in FUNCTION")
-        self._emit_code("ret")
+                self._raise_error(2, node, info="no return value in FUNCTION")
+            self._emit_code("ret")
         subfun = str(self.code)
         self.code = self.codestack.pop()
         # we only really emit this code if the function was called
@@ -1610,8 +1623,8 @@ class CPCEmitter:
         if len(self.codestack) == 0:
             self._raise_error(41, node)
         if not node.args[0].asm:        # type: ignore [attr-defined]
-            self._emit_pop_memstack()
-        self._emit_code("ret")
+            self._emit_pop_memheap()
+            self._emit_code("ret")
         subfun = str(self.code)
         self.code = self.codestack.pop()
         # we only really emit this code if the subrutine was called
@@ -1881,7 +1894,7 @@ class CPCEmitter:
         """
         sym = self.symtable.find(node.value, SymType.Label, "")
         if sym is not None:
-            self._emit_code(f"{sym.label}", info="USER DEFINED LABEL")
+            self._emit_code(f"{sym.label}:", info="USER DEFINED LABEL")
         else:
             self._raise_error(38, node)
 
@@ -3262,7 +3275,7 @@ class CPCEmitter:
             # procedures decorated with ASM in the declaration doesn't need
             # to care about the temporal memory but may better use only
             # ASM code or something bad will happen!
-            self._emit_push_memstack()
+            self._emit_push_memheap()
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
@@ -4343,6 +4356,14 @@ class CPCEmitter:
             for a in node.args:
                 self._emit_code("pop     de", info="clean the stack")
             self._emit_popcontext()
+        if node.name[:2] == "FN":
+            # DEF FN can use heap (tmp) memory in each call and must be
+            # tracked here so we can call freemem if needed
+            entry = self.symtable.find(node.name, SymType.Function)
+            if entry is not None and entry.heapused > 0:
+                self.reserved_tmp_memory += entry.heapused
+                self.free_tmp_memory = True
+                self._check_tmp_memory()
         self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):
@@ -4391,10 +4412,13 @@ class CPCEmitter:
             self._emit_WRITE(stmt)
         elif isinstance(stmt, AST.DefFN):
             self._emit_DEF_FN(stmt)
+            return # we don't free mem after function declaration
         elif isinstance(stmt, AST.DefFUN):
             self._emit_FUNCTION(stmt)
+            return # we don't free mem after function declaration
         elif isinstance(stmt, AST.DefSUB):
             self._emit_SUB(stmt)
+            return # we don't free mem after sub declaration
         elif isinstance(stmt, AST.UserFun):
             self._emit_userfun(stmt)
         elif isinstance(stmt, AST.Function):
@@ -4415,23 +4439,24 @@ class CPCEmitter:
             self._emit_statement(stmt)
 
     def _compose_program(self) -> str:
-        code = ""
+        program = ""
+        # First code after _code_ label
         if "rt_restoreroms" in self.runtime:
             self._emit_head("call    rt_restoreroms")
         if "rt_math_call" in self.runtime:
             self._emit_head("call    rt_math_setoffset")
+        # Add initial LIMIT directive for ABASM if set    
         if self.memlimit < 99999:
-            code = self.head.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
+            program = self.head.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
         else:
-            code = self.head.replace("$LIMIT$", "")
-        
-        code = code + "_code_:\n" + self.code + "\n"
-        code = code + "_data_:\n" + self.data[DataSec.GEN] + "\n"
-        code = code + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
-        code = code + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
-        code = code + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
-        code = code + self._emit_runtime()
-        return code + "_program_end_:\n"
+            program = self.head.replace("$LIMIT$", "")
+        program = program + "_code_:\n" + self.code + "\n"
+        program = program + "_data_:\n" + self.data[DataSec.GEN] + "\n"
+        program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
+        program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
+        program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
+        program = program + self._emit_runtime()
+        return program + "_program_end_:\n"
 
     def emit_program(self) -> str:
         print("Generating assembly code...")
