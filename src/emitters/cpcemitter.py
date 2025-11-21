@@ -3189,7 +3189,7 @@ class CPCEmitter:
     def _emit_SQ(self, node:AST.Function):
         """
         The SQ function is used to check the number of free entries in the queue for
-        a given channel, where channel A is 1, B is 2, and C is 3. The function
+        a given channel, where channel A is 1, B is 2, and C is 4. The function
         determines whether the channel is active - and if not - why the entry at the
         head of the queue (if any) is waiting.
         The result is bit significant:
@@ -3268,6 +3268,7 @@ class CPCEmitter:
             self._emit_code("ldir")
             self._emit_code("pop     hl")
         else:
+            self._moveflo_accum1()
             self._emit_import("rt_real2strz")
             self._emit_import("rt_strzcopy")
             self._emit_pushcontext()
