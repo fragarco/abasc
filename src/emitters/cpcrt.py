@@ -145,6 +145,8 @@ class FWCALL:
     GRA_LINE_RELATIVE   = "&BBF9"
     GRA_WR_CHAR         = "&BBFC"
     GRA_SET_BACK        = "&BD46"  # Overlaps with 464 maths
+    GRA_SET_FIRST       = "&BD49"  # Overlaps with 464 maths
+    GRA_SET_LINEMASK    = "&BD4C"  # Overlaps with 464 maths
     GRA_FILL            = "&BD52"  # Overlaps with 464 maths
 
     SCR_INITIALISE      = "&BBFF"
@@ -2652,17 +2654,22 @@ f"""
 ;     HL points to the result (the rounded real number)
 ;     HL, AF, BC, DE and IX are modified
 rt_real_round:
-    ld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM
-    call    rt_math_call
-    push    af
+    push    bc
     ld      de,rt_math_accum1
     call    rt_move_real      ; REAL to rt_math_accum1
+    ld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM
+    call    rt_math_call
+    pop     bc
+    push    af
     push    bc
-    xor     a
-    or      b
-    jr      z,$+9
+    ld      a,b
+    bit     7,a    ; Check negative numbers
+    jr      nz,__real_round_toint
+    cp      0
+    jr      z,__real_round_toint
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
     call    rt_math_call
+__real_round_toint:
     ld      ix,{FWCALL.MATH_REAL_TO_BIN}  ; MATH_REAL_TO_BIN
     call    rt_math_call
     ld      ix,{FWCALL.MATH_BIN_TO_REAL}  ; MATH_BIN_TO_REAL

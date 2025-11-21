@@ -63,7 +63,7 @@ def clear(sourcefile: str):
             os.remove(f)
 
 def readsourcefile(source: str) -> str:
-    with open(source, "r") as fd:
+    with open(source, "r", encoding="utf-8") as fd:
         return fd.read()
 
 def check_linenums(source: str) -> bool:
@@ -91,7 +91,7 @@ def lexpass(infile: str, code: str, verbose: bool) -> list[Token]:
     lexjson, tokens = lx.tokens_json()
     if verbose:
         lexfile = infile.upper().replace('BAS','LEX')
-        with open(lexfile, "w") as fd:
+        with open(lexfile, "w", encoding="utf-8") as fd:
             fd.write(lexjson)
     return tokens
 
@@ -105,7 +105,7 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(astjson, indent=4))
         symfile = infile.upper().replace('BAS','SYM')
         symjson = symsto_json(symtable.syms)
-        with open(symfile, "w") as fd:
+        with open(symfile, "w", encoding="utf-8") as fd:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
@@ -115,7 +115,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose
     
 def assemble(infile: str, outfile: str, asmcode: str):
     asmfile = infile.upper().replace('BAS','ASM')
-    with open(asmfile, "w") as fd:
+    with open(asmfile, "w", encoding="utf-8") as fd:
             fd.write(asmcode)
     ABASM.assemble(asmfile, outfile)
 

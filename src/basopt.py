@@ -146,7 +146,7 @@ class BasOptimizer:
     _ph_rules = [
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      a,l",
-            r"ld      a,\1"
+            r"ld      a,\1 & 0xFF"
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      c,l(.*):ld      b,l(.*)",
@@ -154,11 +154,11 @@ class BasOptimizer:
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      b,l",
-            r"ld      b,\1"
+            r"ld      b,\1 & 0xFF"
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      c,l",
-            r"ld      c,\1"
+            r"ld      c,\1 & 0xFF"
         ),
         (
             r"ld      hl,(.*):push    hl(.*):ld      hl,(.*):pop     de",
@@ -174,7 +174,7 @@ class BasOptimizer:
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      e,l(.*):dec     e",
-            r"ld      e,\1-1"
+            r"ld      e,(\1 & 0xFF)-1"
         ),
     ]
 

@@ -984,7 +984,7 @@ class CPCEmitter:
         # more than 28K of central memory leaving 4K max for code.
         for var in node.args:
             if isinstance(var, AST.Array):
-                entry = self.symtable.find(var.name, SymType.Array, context="")
+                entry = self.symtable.find(var.name, SymType.Array, context=self.context)
                 if entry is not None:
                     mem = 1
                     for index in entry.indexes: mem = mem * (index + 1)
@@ -1296,7 +1296,7 @@ class CPCEmitter:
         """
         self._emit_import("rt_fill")
         self._emit_code("; FILL <ink>")
-        self._raise_warning(WL.MEDIUM,"FILL is supported only by 664 and 6128 machines", node)
+        self._raise_warning(WL.HIGH,"FILL is supported only by 664 and 6128 machines", node)
         self._emit_expression(node.args[0])
         self._emit_code("call    rt_fill")
         self._emit_code(";")
@@ -1325,7 +1325,7 @@ class CPCEmitter:
         variable between a start and an end value. If not specified, STEP
         defaults to 1. 
         """
-        sym = self.symtable.find(node.var.name, SymType.Variable)
+        sym = self.symtable.find(node.var.name, SymType.Variable, self.context)
         startlab, endlab = self._get_for_labels()
         node.start_label = startlab
         node.end_label = endlab
@@ -1364,7 +1364,7 @@ class CPCEmitter:
             node.var_label = sym.label
             self.forloops.append(node)
         else:
-            self._raise_error(2, node, "undeclared variable {var.name}")
+            self._raise_error(2, node, f"undeclared variable {node.var.name}")
 
     def _emit_FRAME(self, node:AST.Statement):
         """
@@ -1750,9 +1750,9 @@ class CPCEmitter:
             self._emit_code("call    rt_extract_substrz")
             self._emit_code("push    hl", info="current position in input buffer")
             self._emit_pointer(v)
-            entry = self.symtable.find(v.name, SymType.Variable)
+            entry = self.symtable.find(v.name, SymType.Variable, self.context)
             if entry is None:
-                entry = self.symtable.find(v.name, SymType.Array)
+                entry = self.symtable.find(v.name, SymType.Array, self.context)
             if entry is not None:
                 self._emit_code(f"; identifier {v.name}")
                 if v.etype == AST.ExpType.String:
@@ -2085,7 +2085,17 @@ class CPCEmitter:
         omitted, that particular setting is not changed. 
         """
         self._emit_code("; MASK [<integer expression>l[,<first point setting>]")
-        self._raise_error(2, node, 'not implemented yet')
+        self._raise_warning(WL.HIGH,"MASK is supported only by 664 and 6128 machines", node)
+        self._emit_expression(node.args[0])
+        self._emit_code("ld      a,l")
+        self._emit_code(f"call    {FWCALL.GRA_SET_LINEMASK}", info="GRA_SET_LINEMASK")
+        if len(node.args) == 2:
+            self._emit_expression(node.args[1])
+            self._emit_code("ld      a,l")
+            self._emit_code("or      a")
+            self._emit_code("jr      z,$+4")
+            self._emit_code("ld      a,&FF")
+            self._emit_code(f"call     {FWCALL.GRA_SET_FIRST}", info="GRA_SET_FIRST")
         self._emit_code(";")
 
     def _emit_MAX(self, node:AST.Function):
@@ -2328,7 +2338,7 @@ class CPCEmitter:
     def _emit_ON_BREAK(self, node:AST.Command):
         """
         Calls a subroutine on breaking from program execution by pressing [ESC]
-        twice.  ON BREAK STOP disables the trap, but has no other immediate effect.
+        twice. ON BREAK STOP disables the trap, but has no other immediate effect.
         """
         self._emit_code("; ON BREAK GOSUB <line number> | STOP")
         self._raise_warning(WL.MEDIUM, "ON BREAK is ignored and has not effect", node)
@@ -2383,16 +2393,15 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.CAS_IN_OPEN}", info="CAS_IN_OPEN")
         self._emit_code("ex      de,hl")
         self._emit_code("xor     a")
-        self._emit_code("ld      (rt_error),a")
-        self._emit_code("jr      c,$+7", info="if CF the file was open")
-        self._emit_code("ld      a,31")
-        self._emit_code("ld      (rt_error),a", info="lets set ERR to 'File not open'")
+        self._emit_code("jr      c,$+4", info="if CF the file was open")
+        self._emit_code("ld      a,31", info="File not open error code")
+        self._emit_code("ld      (rt_error),a", info="update ERR")
         self._emit_popcontext()
         self._emit_code(";")
 
     def _emit_OPENOUT(self, node:AST.Command):
         """
-        Opens an output file onto disc or cassette. If the tape dekc is selected
+        Opens an output file onto disc or cassette. If the tape deck is selected
         and the first character in the <file name> is ! then the displayed cassette
         processing messages are suppressed. The program creates the first block of data,
         in the file with the given name. Each block consists of up to 2048 bytes of data. 
@@ -2407,10 +2416,9 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.CAS_OUT_OPEN}", info="CAS_OUT_OPEN")
         self._emit_code("ex      de,hl")
         self._emit_code("xor     a")
-        self._emit_code("ld      (rt_error),a")
-        self._emit_code("jr      c,$+7", info="if CF the file was open")
-        self._emit_code("ld      a,31")
-        self._emit_code("ld      (rt_error),a", info="lets set ERR to 'File not open'")
+        self._emit_code("jr      c,$+4", info="if CF the file was open")
+        self._emit_code("ld      a,31", info="File not open error code")
+        self._emit_code("ld      (rt_error),a", info="update ERR")
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2430,6 +2438,18 @@ class CPCEmitter:
         self._emit_expression(node.args[1])
         self._emit_code("pop     de")
         self._emit_code(f"call    {FWCALL.GRA_SET_ORIGIN}", info="GRA_SET_ORIGIN")
+        if len(node.args) > 2:
+            # change graphics window dimensions
+            self._emit_expression(node.args[2])
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[3])
+            self._emit_code("pop     de")
+            self._emit_code(f"call    {FWCALL.GRA_WIN_WIDTH}", info="GRA_WIN_WIDTH")
+            self._emit_expression(node.args[4])
+            self._emit_code("push    hl")
+            self._emit_expression(node.args[5])
+            self._emit_code("pop     de")
+            self._emit_code(f"call    {FWCALL.GRA_WIN_HEIGHT}", info="GRA_WIN_HEIGHT")
         self._emit_code(";")
 
     def _emit_OUT(self, node:AST.Command):
@@ -2761,9 +2781,9 @@ class CPCEmitter:
         self._emit_code("di")
         for v in node.vars:
             self._emit_pointer(v)
-            entry = self.symtable.find(v.name, SymType.Variable)
+            entry = self.symtable.find(v.name, SymType.Variable, self.context)
             if entry is None:
-                entry = self.symtable.find(v.name, SymType.Array)
+                entry = self.symtable.find(v.name, SymType.Array, self.context)
             if entry is not None:
                 if v.etype == AST.ExpType.String:
                     self._emit_import("rt_readstr")
@@ -2963,12 +2983,13 @@ class CPCEmitter:
         self._emit_code("; ROUND (<numeric expression>[,<integer expression>])")
         if len(node.args) == 2:
             self._emit_expression(node.args[-1])
-            self._emit_code("ld      a,l")
+            self._emit_code("ld      b,l")
         else:
             self._emit_code("xor     a")
-        self._emit_code("push    af")
+            self._emit_code("ld      b,a")
+        self._emit_code("push    bc")
         self._emit_expression(node.args[0])
-        self._emit_code("pop     af")
+        self._emit_code("pop     bc")
         self._emit_code("call    rt_real_round")
         self._moveflo_temp(node)   
         self._emit_code(";")
@@ -3752,12 +3773,16 @@ class CPCEmitter:
     def _emit_const_str(self, node: AST.String):
         if node.value not in self.issued_constants:
             label = self._get_conststr_label()
-            content = bytearray(node.value.encode('utf-8'))
             values = ""
-            if len(content):
-                for b in content:
-                    values = values + f'&{b:02X},'
-                self._emit_data(f'{label}: db {len(content)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
+            for c in node.value:
+                cnum = ord(c)
+                if c == "Ñ": cnum = 161
+                if c == "ñ": cnum = 171
+                if c == "¿": cnum = 174
+                if c == "¡": cnum = 175
+                values = values + f'&{cnum:02X},'
+            if len(values):
+                self._emit_data(f'{label}: db {len(node.value)},{values[:-1]}', info=node.value, section=DataSec.CONST)
             else:
                 self._emit_data(f'{label}: db 0', info=repr(node.value), section=DataSec.CONST)
             self.issued_constants[node.value] = label
@@ -3801,9 +3826,9 @@ class CPCEmitter:
         if "$." in node.name:
             self._emit_record(node)
             return
-        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
+        entry = self.symtable.find(node.name, SymType.Param, context=self.context)
         if entry is None:
-            entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
+            entry = self.symtable.find(node.name, SymType.Variable, context=self.context)
         if entry is not None:
             # parameters always contain the address to the real data so 
             # all behave in the same way
@@ -3844,7 +3869,7 @@ class CPCEmitter:
         variables can be local to a DEF FN, SUB or FUNCTION if they are parameters
         so we check that case bacause their address is relative to IX.
         """
-        entry = self.symtable.find(node.name, SymType.Param, context = self.context)
+        entry = self.symtable.find(node.name, SymType.Param, context=self.context)
         if entry is not None:
             self._emit_code("ld      hl,0", info="set param address in HL")
             self._emit_code("add     hl,ix")
@@ -3853,7 +3878,7 @@ class CPCEmitter:
             if "$." in node.name:
                 self._emit_variable_recordptr(node)
             else:
-                entry = self.symtable.find(node.name, SymType.Variable, context = self.context)
+                entry = self.symtable.find(node.name, SymType.Variable, context=self.context)
                 if entry is not None:
                     self._emit_code(f"ld      hl,{entry.label}")
                 else:
