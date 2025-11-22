@@ -168,7 +168,7 @@
 1630 xp=xp+xf:yp=yp+yf
 1640 LOCATE xp,yp:PRINT hombre$;
 1650 IF perro>0 THEN perro=(perro MOD 5)+1:IF perro=5 THEN 2560
-1660 GOTO 1520
+1660 FRAME: GOTO 1520
 1670 gol=INSTR(gol$,ht$):car=ASC(MID$(gol$,gol,1))
 1680 ON gol GOTO 1700,1700,1700,1700,1760,1760,1860,1910,1980,2100,2660
 1690 GOTO 1610
@@ -177,7 +177,7 @@
 1720 PEN 3:LOCATE xp+xf,yp+yf:PRINT CHR$(car);
 1730 luces(rm)=luces(rm) XOR 1
 1740 IF luces(rm) THEN INK 7,10:INK 8,10 ELSE INK 7,0:INK 8,0
-1750 GOTO 1520
+1750 FRAME: GOTO 1520
 1760 IF xf<>0 AND yf<>0 THEN 1640
 1770 IF xf<0 THEN dir=4 ELSE IF xf>0 THEN dir=3
 1780 IF yf<0 THEN dir=1 ELSE IF yf>0 THEN dir=2
@@ -197,7 +197,7 @@
 1920 LOCATE 3,3:PRINT"Usted ha escapado";
 1930 LOCATE 8,5:PRINT"con";
 1940 IF joyas=robado THEN LOCATE 8,7:PRINT"todas las";ELSE LOCATE 8,7
-1950 PRINT USING " ##";robado;
+1950 PRINT robado;
 1960 PEN 5:LOCATE 8,9:PRINT"joyas";
 1970 muerto=1:RETURN
 1980 LOCATE xp,yp:PRINT" ";:xp=xp+xf:yp=yp+yf

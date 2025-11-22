@@ -1556,14 +1556,14 @@ class CPCEmitter:
         if len(node.inline_then):
             for stmt in node.inline_then:
                 self._emit_statement(stmt)
-                if node.has_else:
-                    self._emit_code(f"jp      {endlabel}")
+            if node.has_else:
+                self._emit_code(f"jp      {endlabel}")
             if len(node.inline_else):
                 self._emit_code("; ELSE")
                 self._emit_code(f"{elselabel}:", 0)
                 for stmt in node.inline_else:
                     self._emit_statement(stmt)
-            self._emit_code("; IF end")
+            self._emit_code("; IFEND")
             self._emit_code(f"{endlabel}:", 0)
         else:
             self.ifblocks.append(node)
