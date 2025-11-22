@@ -135,7 +135,7 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc", info="HL points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
-        self._check_tmp_memory()
+        self._check_tmp_memory(node)
 
     def _reserve_memory_de(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc_de")
@@ -143,9 +143,9 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc_de", info="DE points to tmp memory")
         self.free_tmp_memory = True
         self.reserved_tmp_memory += nbytes
-        self._check_tmp_memory()
+        self._check_tmp_memory(node)
 
-    def _check_tmp_memory(self):
+    def _check_tmp_memory(self, node):
         totaltmp = self.reserved_tmp_memory
         for _, reservedtmp in self.memstacks:
             totaltmp += reservedtmp
@@ -4389,7 +4389,7 @@ class CPCEmitter:
             if entry is not None and entry.heapused > 0:
                 self.reserved_tmp_memory += entry.heapused
                 self.free_tmp_memory = True
-                self._check_tmp_memory()
+                self._check_tmp_memory(node)
         self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):

@@ -102,10 +102,8 @@ class ASTNode:
     def to_json(self) -> dict:
         return {
             "id": self.id,
-            "origin": {
-                "line": self.line,
-                "col": self.col
-            }
+            "line": self.line,
+            "col": self.col
         }
 
     def __str__(self) -> str:

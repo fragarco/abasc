@@ -88,8 +88,7 @@ class LocBasParser:
         def inner(inst, *args, **kwargs):
             tk = inst._current()
             node = func(inst, *args, **kwargs)
-            node.line = tk.line
-            node.col = tk.col
+            node.set_origin(tk.line,tk.col)
             return node
         return inner
 
@@ -943,6 +942,7 @@ class LocBasParser:
         if self._match(TokenType.KEYWORD, "STEP"):
             step = self._parse_int_expression()
         index = AST.Variable(name=var, etype=vartype)
+        index.set_origin(tk.line, tk.col)
         node = AST.ForLoop(var=index, start=start, end=end, step=step)
         self.codeblocks.append(CodeBlock(
             type=BlockType.FOR,
@@ -1972,14 +1972,18 @@ class LocBasParser:
     @astnode
     def _parse_RESTORE(self) -> AST.Command:
         """ <RESTORE> ::= RESTORE [INT | IDENT] """
-        self._advance()
+        rtk = self._advance()
         args: list[AST.Statement] = []
         if self._current_is(TokenType.INT):
             num = self._advance()
             args = [AST.Integer(value = cast(int, num.value))]
+            args[0].set_origin(num.line,num.col)
         elif self._current_is(TokenType.IDENT):
             label = self._advance()
             args = [AST.Label(value = label.lexeme)]
+            args[0].set_origin(label.line,label.col)
+        else:
+            self._raise_error(2, rtk, "invalid label")
         return AST.Command(name="RESTORE", args=args)
 
     @astnode
@@ -2526,9 +2530,13 @@ class LocBasParser:
         """
         if etype == AST.ExpType.Integer and node.etype != AST.ExpType.Integer:
             self._raise_warning(WL.MEDIUM, f"implicit cast of REAL to INT", node)
-            node = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
+            nnode = AST.Function(name="CINT", etype=AST.ExpType.Integer, args=[node])
+            nnode.set_origin(node.line, node.col)
+            return nnode
         elif etype == AST.ExpType.Real and node.etype != AST.ExpType.Real:
-            node = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
+            nnode = AST.Function(name="CREAL", etype=AST.ExpType.Real, args=[node])
+            nnode.set_origin(node.line, node.col)
+            return nnode
         return node
 
     def _cast_numtypes(self, left: AST.Statement, right: AST.Statement, etype: AST.ExpType, tk: Token) -> tuple[AST.Statement, AST.Statement]:
@@ -2596,13 +2604,14 @@ class LocBasParser:
         """ <logic_xor> ::= <logic_or> [OR <logic_or>] """
         left = self._parse_logic_or()
         while self._current_is(TokenType.OP, "XOR"):
-            self._advance()
+            op = self._advance()
             tk = self._current()
             right = self._parse_logic_and()
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
             left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
             left = AST.BinaryOp(op="XOR", left=left, right=right, etype=AST.ExpType.Integer)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2610,13 +2619,14 @@ class LocBasParser:
         """ <logic_or> ::= <logic_and> [OR <logic_and>] """
         left = self._parse_logic_and()
         while self._current_is(TokenType.OP, "OR"):
-            self._advance()
+            op = self._advance()
             tk = self._current()
             right = self._parse_logic_and()
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
             left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
             left = AST.BinaryOp(op="OR", left=left, right=right, etype=AST.ExpType.Integer)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2624,13 +2634,14 @@ class LocBasParser:
         """ <logic_and> ::= <comparison> [AND <comparison>] """
         left = self._parse_comparison()
         while self._current_is(TokenType.OP, "AND"):
-            self._advance()
+            op = self._advance()
             tk = self._current()
             right = self._parse_comparison()
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
             left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
             left = AST.BinaryOp(op="AND", left=left, right=right, etype=AST.ExpType.Integer)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2639,7 +2650,7 @@ class LocBasParser:
         left = self._parse_mod()
         while self._current_is(TokenType.COMP):
             op = self._advance()
-            tk = self._current()
+            self._current()
             right = self._parse_mod()
             dtype = AST.exptype_derive(left, right)
             if not AST.exptype_isvalid(dtype):
@@ -2653,6 +2664,7 @@ class LocBasParser:
                 right = self._cast_numtype(right, dtype)
             opname = op.lexeme.replace('=>','>=').replace('=<','<=') # one operation one symbol
             left = AST.BinaryOp(op=opname, left=left, right=right, etype=AST.ExpType.Integer)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2660,12 +2672,13 @@ class LocBasParser:
         """ <MOD> ::= <term> [MOD <term>] """
         left = self._parse_term()
         while self._current_is(TokenType.OP, "MOD"):
-            self._advance()
+            op = self._advance()
             tk = self._current()
             right = self._parse_term()
             # MOD always produces an integer result and needs integer operators
             left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
             left = AST.BinaryOp(op="MOD", left=left, right=right, etype=AST.ExpType.Integer)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2686,6 +2699,7 @@ class LocBasParser:
             else:
                 left, right = self._cast_numtypes(left, right, dtype, tk)
             left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -2702,6 +2716,7 @@ class LocBasParser:
                 dtype = AST.exptype_derive(left, right)
             left, right = self._cast_numtypes(left, right, dtype, tk)
             left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+            left.set_origin(op.line, op.col)
         return left
 
     @astnode
@@ -3032,28 +3047,3 @@ class LocBasParser:
                 self._raise_error(24, self.tokens[-1])
         return AST.Program(lines=lines), self.symtable
 
-if __name__ == "__main__":
-    program = r"""
-5  LET A = 0
-10 FOR I = 1 TO 5
-20   PRINT I
-30 NEXT I
-40 WHILE I < 10
-50   I = I + 1
-60 WEND
-70 IF I > 5 THEN
-80   PRINT "OK"
-90 ELSE
-100  PRINT "FAIL"
-110 END IF
-120 END
-"""
-    try:
-        lx = LocBasLexer(program)
-        tokens = list(lx.tokens())
-        code = [CodeLine("example.bas", i, line) for i,line in enumerate(program.split('\n'))]
-        parser = LocBasParser(code, tokens)
-        ast, _ = parser.parse_program()
-        print(ast.to_json())
-    except BasError as e:
-        print(e)
