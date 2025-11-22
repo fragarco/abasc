@@ -3578,7 +3578,7 @@ class CPCEmitter:
         a non-zero result occurs. BASIC will get stuck in a WAIT loop if the
         required condition does not occur. 
         """
-        self._emit_code("; WAIT <port number>,<mask>[,<inversion)]")
+        self._emit_code("; WAIT <port number>,<mask>[,<inversion]")
         self._emit_expression(node.args[0])
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
