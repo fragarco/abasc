@@ -88,7 +88,7 @@ class BasOptimizer:
         return node
 
     def _op_CHRSS(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Integer) and node.args[0].value < 128:
+        if isinstance(node.args[0], AST.Integer):
             self.modified = True
             return AST.String(value=chr(node.args[0].value))
         return node
@@ -150,7 +150,7 @@ class BasOptimizer:
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      c,l(.*):ld      b,l(.*)",
-            r"ld      c,\1\n    ld      b,c"
+            r"ld      c,\1 & 0xFF\n    ld      b,c"
         ),
         (
             r"ld      hl,([&0-9a-fA-F]+).*:ld      b,l",

@@ -91,14 +91,12 @@ class CPCEmitter:
         self.data[section] = self.data[section] + line +"\n"
 
     def _emit_line_label(self, line: AST.Line):
-        """ Only if we are in verbose mode """
-        if self.verbose:
-            sym = self.symtable.find(str(line.number), SymType.Label, "")
-            if sym is not None:
-                codeline = self.source[line.line-1]
-                self._emit_code(f"{sym.label}:", info=codeline.code)
-            else:
-                self._raise_error(2, line)
+        sym = self.symtable.find(str(line.number), SymType.Label, "")
+        if sym is not None:
+            codeline = self.source[line.line-1]
+            self._emit_code(f"{sym.label}:", info=codeline.code)
+        else:
+            self._raise_error(2, line)
 
     def _emit_import(self, fname: str) -> bool:
         if fname not in self.runtime:
@@ -1562,11 +1560,11 @@ class CPCEmitter:
                     self._emit_code(f"jp      {endlabel}")
             if len(node.inline_else):
                 self._emit_code("; ELSE")
-                self._emit_code(elselabel, 0)
+                self._emit_code(f"{elselabel}:", 0)
                 for stmt in node.inline_else:
                     self._emit_statement(stmt)
             self._emit_code("; IF end")
-            self._emit_code(endlabel, 0)
+            self._emit_code(f"{endlabel}:", 0)
         else:
             self.ifblocks.append(node)
 
@@ -1610,7 +1608,7 @@ class CPCEmitter:
         if len(self.ifblocks) > 0:
             ifnode = self.ifblocks.pop()
             self._emit_code("; END IF")
-            self._emit_code(ifnode.end_label, 0)
+            self._emit_code(f"{ifnode.end_label}:", 0)
             self._emit_code(";")
         else:
             self._raise_error(36, node)
@@ -2073,7 +2071,7 @@ class CPCEmitter:
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
-    def _emit_MASK(self, node:AST.Statement):
+    def _emit_MASK(self, node:AST.Command):
         """
         Only available with BASIC 1.1
         Sets the mask or template to be used when drawing lines. The binary value
@@ -2288,7 +2286,7 @@ class CPCEmitter:
             self._emit_code("inc     hl")
         self._emit_code(f"ld      ({fornode.var_label}),hl")
         self._emit_code(f"jp      {fornode.start_label}")
-        self._emit_code(fornode.end_label, 0)
+        self._emit_code(f"{fornode.end_label}:", 0)
         if fornode.step is not None:
             self._emit_code("pop     bc")
         self._emit_code("pop     hl")
@@ -3603,7 +3601,7 @@ class CPCEmitter:
         wnode = self.wloops.pop()
         self._emit_code("; WEND")
         self._emit_code(f"jp      {wnode.start_label}")
-        self._emit_code(wnode.end_label, 0)
+        self._emit_code(f"{wnode.end_label}:", 0)
         self._emit_code(";")
 
     def _emit_WHILE(self, node:AST.WhileLoop):
@@ -3783,9 +3781,9 @@ class CPCEmitter:
                 if c == "¡": cnum = 175
                 values = values + f'&{cnum:02X},'
             if len(values):
-                self._emit_data(f'{label}: db {len(node.value)},{values[:-1]}', info=node.value, section=DataSec.CONST)
+                self._emit_data(f'{label}: db {len(node.value)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
             else:
-                self._emit_data(f'{label}: db 0', info=repr(node.value), section=DataSec.CONST)
+                self._emit_data(f'{label}: db 0', section=DataSec.CONST)
             self.issued_constants[node.value] = label
         else:
             label = self.issued_constants[node.value]
