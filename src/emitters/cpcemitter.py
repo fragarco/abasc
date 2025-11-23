@@ -3774,12 +3774,7 @@ class CPCEmitter:
             label = self._get_conststr_label()
             values = ""
             for c in node.value:
-                cnum = ord(c)
-                if c == "Ñ": cnum = 161
-                if c == "ñ": cnum = 171
-                if c == "¿": cnum = 174
-                if c == "¡": cnum = 175
-                values = values + f'&{cnum:02X},'
+                values = values + f'&{ord(c):02X},'
             if len(values):
                 self._emit_data(f'{label}: db {len(node.value)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
             else:
