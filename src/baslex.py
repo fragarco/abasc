@@ -216,6 +216,12 @@ class LocBasLexer:
                 # parser to provide an error
                 break
             c = self._advance()
+            # Some letters have different code in Amstrad as it uses a non-standar
+            # charset
+            if c == "Ñ": c = chr(161)
+            elif c == "ñ": c = chr(171)
+            elif c == "¿": c = chr(174)
+            elif c == "¡": c = chr(175)
             out += c
             if c == '"':
                 break
