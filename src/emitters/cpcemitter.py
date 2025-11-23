@@ -342,7 +342,7 @@ class CPCEmitter:
         if level <= self.warning_level:
             # tokens start line counting in 1
             codeline = self.source[node.line - 1]
-            print(f"[WARNING{level:02d}] {codeline.source}:{codeline.line}:{node.col}: {msg} in {codeline.code}")
+            print(f"[WARNING{int(level):02d}] {codeline.source}:{codeline.line}:{node.col}: {msg} in {codeline.code}")
 
     # ----------------- Commands and Functions -----------------
 

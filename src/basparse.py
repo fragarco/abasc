@@ -110,7 +110,7 @@ class LocBasParser:
             current: AST.ASTNode | Token = node if node is not None else self._current()
             # tokens start line counting in 1
             codeline = self.lines[current.line - 1]
-            print(f"[WARNING{level:02d}] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
+            print(f"[WARNING{int(level):02d}] {codeline.source}:{codeline.line}:{current.col}: {msg} in {codeline.code}")
 
     # ----------------- Token management -----------------
 
