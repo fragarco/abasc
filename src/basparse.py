@@ -2346,9 +2346,15 @@ class LocBasParser:
 
     @astnode
     def _parse_TIME(self) -> AST.Function:
-        """ <TIME> ::= TIME """
+        """ <TIME> ::= TIME[(<int_expression>)] """
         self._advance()
-        return AST.Function(name="TIME", etype=AST.ExpType.Real)
+        args: list[AST.Statement] = []
+        etype = AST.ExpType.Real
+        if self._match(TokenType.LPAREN):
+            args = [self._parse_int_expression()]
+            self._expect(TokenType.RPAREN)
+            etype=AST.ExpType.Void
+        return AST.Function(name="TIME", etype=etype, args=args)
 
     @astnode
     def _parse_TRON(self) -> AST.Command:

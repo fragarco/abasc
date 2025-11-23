@@ -1648,13 +1648,15 @@ PRINT TEST(320,200)
 
 Función. Igual que `TEST` pero siendo `x` e `y` posiciones relativas y no absolutas.
 
-### `TIME`
+### `TIME[(n)]`
 
 Función. Devuelve el tiempo transcurrido desde el encendido de la máquina. Mide el tiempo en pasos de 1/300 segundos. Requiere que las interrupciones estén activas, por lo que `DI` y ciertas operaciones de disco/cinta harán que deje de contarse el tiempo. El valor devuelto es un número real.
 
+BASC permite una segunda forma de uso en la que TIME se comporta como un **comando**. Es este caso, es posible especificar un valor entero entre paréntesis y ese valor se fijará como el nuevo valor de TIME.
+
 ```basic
 CLS
-T! = TIME
+T! = TIME     ' Podria usarse TIME(0)
 FOR i=1 to 10
     FOR j=1 to 1000
         s = 1000 + j
@@ -1662,7 +1664,16 @@ FOR i=1 to 10
     PRINT ".";
 NEXT i
 PRINT " FIN!"
-PRINT "Tiempo="; (TIME-T!)/300.0; "s"
+PRINT "Tiempo="; (TIME-T!)/300.0; "s" ' Si se uso TIME(0) no hace falta restar
+```
+ Por último, si BASC detecta que se está combirtiendo el valor devuelto por TIME a un entero, ejecuta una optimización en la llamada para evitar el uso de números reales. Sin embargo, el programador debería tener cuidado al usar TIME de este modo, ya que el valor da una vuelta entera cada 3 segundos debido a la menor precisión de los números enteros.
+
+ ``` basic
+ TIME(0)
+FOR I=0 TO 20
+    FRAME
+    PRINT CINT(TIME)
+NEXT
 ```
 
 ### `TROFF`

@@ -63,6 +63,11 @@ class BasOptimizer:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
             return AST.Integer(value=int(node.args[0].value + 0.5))
+        elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
+            # Lets use the interger version of TIME
+            self.modified = True
+            node.args[0].etype = AST.ExpType.Integer
+            return node.args[0]
         return node
 
     def _op_INT(self, node: AST.Function) -> AST.Statement:

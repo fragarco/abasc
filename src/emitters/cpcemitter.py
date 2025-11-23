@@ -3460,12 +3460,23 @@ class CPCEmitter:
         The firmware call returns the result in DEHL. The call eneables interrups.
         As this is a long number, the result is coded into a Real.
         """
-        self._emit_import("rt_gettime")
-        self._emit_code("; TIME")
-        self._emit_pushcontext()
-        self._emit_code("call    rt_gettime")
-        self._moveflo_temp(node)
-        self._emit_popcontext()
+        # We allow programmers to set TIME value too. For example, with TIME(0)
+        self._emit_code("; TIME [(<int_expression>)]")
+        if len(node.args):
+            self._emit_import("rt_settime")
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_settime")
+        elif node.etype == AST.ExpType.Integer:
+            # This is the integer version of TIME so we can call
+            # the rutine because it leaves the value directly in HL
+            self._emit_code(f"call    {FWCALL.KL_TIME_PLEASE}", info="KL_TIME_PLEASE")
+        else:
+            # Full TIME GET
+            self._emit_import("rt_gettime")
+            self._emit_pushcontext()
+            self._emit_code("call    rt_gettime")
+            self._moveflo_temp(node)
+            self._emit_popcontext()
         self._emit_code(";")
 
     def _emit_TROFF(self, node:AST.Statement):

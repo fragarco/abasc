@@ -2787,6 +2787,22 @@ rt_gettime:
     jp      rt_math_call
 """
 ),
+    "rt_settime": ([],
+f"""
+; RT_SETTIME
+; Wrapper for the KL TIME SET firmware call
+; Inputs:
+;     HL integer value to set as new time
+; Outputs:
+;     None
+;     AF and DE are modified
+rt_settime:
+    xor      a
+    ld       e,a
+    ld       d,a
+    jp      {FWCALL.KL_TIME_SET}  ; KL_TIME_SET
+"""
+),
     "rt_randomize": ([],
 """
 ; RT_RANDOMIZE
