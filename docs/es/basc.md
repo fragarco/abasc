@@ -1,6 +1,209 @@
-# BASC: MANUAL DEL USUARIO
-
+<!-- omit in toc -->
+BASC: MANUAL DEL USUARIO
+==================
 **Un compilador cruzado de BASIC para los Amstrad CPC**
+
+- [Introducción](#introducción)
+  - [Influencias](#influencias)
+  - [Un recorrido por las distintas versiones de Locomotive BASIC](#un-recorrido-por-las-distintas-versiones-de-locomotive-basic)
+    - [Versión 1.0](#versión-10)
+    - [Versión 1.1](#versión-11)
+    - [Versión 2](#versión-2)
+    - [Versión 2 Plus](#versión-2-plus)
+- [Referencias](#referencias)
+- [Sintaxis soportada por BASC](#sintaxis-soportada-por-basc)
+    - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
+    - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
+- [Uso del compilador](#uso-del-compilador)
+    - [Opciones](#opciones)
+- [Herramientas adicionales](#herramientas-adicionales)
+- [Peculiaridades del compilador](#peculiaridades-del-compilador)
+  - [Tipos y variables](#tipos-y-variables)
+    - [Cadenas de texto](#cadenas-de-texto)
+    - [Arrays](#arrays)
+    - [Estructuras con RECORD](#estructuras-con-record)
+  - [Soporte para procedimientos](#soporte-para-procedimientos)
+  - [Uso de código ensamblador](#uso-de-código-ensamblador)
+  - [Gestión de la memoria](#gestión-de-la-memoria)
+  - [Uso del Firmware](#uso-del-firmware)
+- [Comandos y sintaxis del lenguaje](#comandos-y-sintaxis-del-lenguaje)
+  - [Notación](#notación)
+  - [Listado de comandos y funciones](#listado-de-comandos-y-funciones)
+    - [`ABS(<numeric expression>)`](#absnumeric-expression)
+    - [`AFTER delay[,timer] GOSUB etiqueta`](#after-delaytimer-gosub-etiqueta)
+    - [`ASC(string)`](#ascstring)
+    - [`ASM string[,string]*`](#asm-stringstring)
+    - [`ATN(x)`](#atnx)
+    - [`AUTO linenumber[,increment]`](#auto-linenumberincrement)
+    - [`BIN$(number,digits)`](#binnumberdigits)
+    - [`BORDER colour1[,colour2]`](#border-colour1colour2)
+    - [`CALL address[,list of parameters]`](#call-addresslist-of-parameters)
+    - [`CAT`](#cat)
+    - [`CHAIN`](#chain)
+    - [`CHAIN MERGE string`](#chain-merge-string)
+    - [`CHR$(x)`](#chrx)
+    - [`CINT(x)`](#cintx)
+    - [`CLEAR`](#clear)
+    - [`CLEAR INPUT`](#clear-input)
+    - [`CLG [tinta]`](#clg-tinta)
+    - [`CLOSEIN`](#closein)
+    - [`CLOSEOUT`](#closeout)
+    - [`CLS [#x]`](#cls-x)
+    - [`CONT`](#cont)
+    - [`COPYCHR$()`](#copychr)
+    - [`COS(x)`](#cosx)
+    - [`CREAL(x)`](#crealx)
+    - [`CURSOR sistema[,usuario]`](#cursor-sistemausuario)
+    - [`DATA lista-de-constantes`](#data-lista-de-constantes)
+    - [`DECLARE variable[$ FIXED longitud]),...`](#declare-variable-fixed-longitud)
+    - [`DEC$(numero,patron)`](#decnumeropatron)
+    - [DEF FN nombre(parametros)=expresion](#def-fn-nombreparametrosexpresion)
+    - [`DEFINT, DEFSTR, DEFREAL`](#defint-defstr-defreal)
+    - [`DEG`](#deg)
+    - [`DELETE bajo-alto`](#delete-bajo-alto)
+    - [`DERR`](#derr)
+    - [`DI`](#di)
+    - [`DIM array(indice1, indice2, ...) [FIXED longitud]`](#dim-arrayindice1-indice2--fixed-longitud)
+    - [`DRAW x,y[,i[,modo]]`](#draw-xyimodo)
+    - [`DRAWR x,y[,i[,modo]]`](#drawr-xyimodo)
+    - [`EDIT linea[-linea]`](#edit-linea-linea)
+    - [`EI`](#ei)
+    - [`END`](#end)
+    - [`END FUNCTION`](#end-function)
+    - [`END SUB`](#end-sub)
+    - [`ENT numero de envolvente, secciones`](#ent-numero-de-envolvente-secciones)
+    - [ENV `número de envolvente, secciones`](#env-número-de-envolvente-secciones)
+    - [`EOF`](#eof)
+    - [`ERASE arrayname`](#erase-arrayname)
+    - [`ERL`](#erl)
+    - [`ERR`](#err)
+    - [`ERROR integer`](#error-integer)
+    - [`EVERY tiempo[,temporizador] GOSUB etiqueta`](#every-tiempotemporizador-gosub-etiqueta)
+    - [`EXIT FOR`](#exit-for)
+    - [`EXIT WHILE`](#exit-while)
+    - [`EXP(x)`](#expx)
+    - [`FILL`](#fill)
+    - [`FIX(x)`](#fixx)
+    - [`FOR variable=inicio TO fin STEP variacion`](#for-variableinicio-to-fin-step-variacion)
+    - [`FRAME`](#frame)
+    - [`FRE(x)`](#frex)
+    - [`FUNCTION nombre(parametros) [ASM]`](#function-nombreparametros-asm)
+    - [`GOSUB etiqueta`](#gosub-etiqueta)
+    - [`GOTO etiqueta`](#goto-etiqueta)
+    - [`GRAPHICS PAPER tinta`](#graphics-paper-tinta)
+    - [`GRAPHICS PEN tinta,modo`](#graphics-pen-tintamodo)
+    - [`HEX$(x,digitos)`](#hexxdigitos)
+    - [`HIMEM`](#himem)
+    - [`IF expression THEN expression ELSE expression END IF`](#if-expression-then-expression-else-expression-end-if)
+    - [`INK tinta,color1[,color2]`](#ink-tintacolor1color2)
+    - [`INKEY(tecla)`](#inkeytecla)
+    - [`INKEY$`](#inkey)
+    - [`INP(puerto)`](#inppuerto)
+    - [`INPUT [#canal,]["mesnaje"][;]variable1,variable2...`](#input-canalmesnajevariable1variable2)
+    - [INSTR(\[posición,\]cadena1,cadena2)](#instrposicióncadena1cadena2)
+    - [`INT(x)`](#intx)
+    - [`JOY(joystick)`](#joyjoystick)
+    - [`KEY tecla,cadena`](#key-teclacadena)
+    - [`KEY DEF tecla,repetir[,<normal>[,<mayus>[,<control>]]]`](#key-def-teclarepetirnormalmayuscontrol)
+    - [`LABEL etiqueta`](#label-etiqueta)
+    - [`LEFT$(cadena,n)`](#leftcadenan)
+    - [`LEN(cadena)`](#lencadena)
+    - [`LET variable=expression`](#let-variableexpression)
+    - [`LINE INPUT [#canal,][;][cadena;]<variable>`](#line-input-canalcadenavariable)
+    - [`LIST [rango de líneas][,#canal]`](#list-rango-de-líneascanal)
+    - [`LOAD fichero[,dirección]`](#load-ficherodirección)
+    - [`LOCATE [#canal,]x,y`](#locate-canalxy)
+    - [`LOG(x)`](#logx)
+    - [`LOG10(x)`](#log10x)
+    - [`LOWER$(cadena)`](#lowercadena)
+    - [`MASK mascara[,puntoinicial]`](#mask-mascarapuntoinicial)
+    - [`MAX(a,b[,c,d,e...])`](#maxabcde)
+    - [MEMORY maxdir](#memory-maxdir)
+    - [`MERGE fichero`](#merge-fichero)
+    - [`MID$(cadena,inicio[,n])`](#midcadenainicion)
+    - [`MIN(a,b[,c,d,e,f...]`](#minabcdef)
+    - [`MODE n`](#mode-n)
+    - [`MOVE x,y[tinta[,modo]]`](#move-xytintamodo)
+    - [`MOVER x,y[,tinta[,modo]]`](#mover-xytintamodo)
+    - [`NEW`](#new)
+    - [`NEXT variable`](#next-variable)
+    - [`ON n GOSUB lista de etiquetas`](#on-n-gosub-lista-de-etiquetas)
+    - [`ON n GOTO lista de etiquetas`](#on-n-goto-lista-de-etiquetas)
+    - [`ON BREAK GOSUB etiqueta`](#on-break-gosub-etiqueta)
+    - [`ON BREAK STOP`](#on-break-stop)
+    - [`ON ERROR GOTO etiqueta`](#on-error-goto-etiqueta)
+    - [`ON SQ (canal) GOSUB etiqueta`](#on-sq-canal-gosub-etiqueta)
+    - [`OPENIN fichero`](#openin-fichero)
+    - [`OPENOUT fichero`](#openout-fichero)
+    - [`ORIGIN x,y[,izq,der,arriba,abajo]`](#origin-xyizqderarribaabajo)
+    - [`OUT puerto,n`](#out-puerton)
+    - [`PAPER [#canal,]tinta`](#paper-canaltinta)
+    - [`PEEK(direccion)`](#peekdireccion)
+    - [`PEN [#canal,]tinta`](#pen-canaltinta)
+    - [`PI`](#pi)
+    - [`PLOT x,y[,tinta[,modo]]`](#plot-xytintamodo)
+    - [`PLOTR x,y[,tinta[,modo]]`](#plotr-xytintamodo)
+    - [`POKE dirección,n`](#poke-direcciónn)
+    - [`POS(#canal)`](#poscanal)
+    - [`PRINT [#canal,][lista de elementos]`](#print-canallista-de-elementos)
+    - [`RAD`](#rad)
+    - [`RANDOMIZE [n]`](#randomize-n)
+    - [`READ lista-de-variables`](#read-lista-de-variables)
+    - [`READIN lista-de-variables`](#readin-lista-de-variables)
+    - [`RECORD nombre;lista-de-variables`](#record-nombrelista-de-variables)
+    - [`RELEASE canal`](#release-canal)
+    - [`REM texto`](#rem-texto)
+    - [`REMAIN(temporizador)`](#remaintemporizador)
+    - [`RENUM nueva-linea, linea-origen, incremento`](#renum-nueva-linea-linea-origen-incremento)
+    - [`RESTORE [etiqueta]`](#restore-etiqueta)
+    - [`RESUME`](#resume)
+    - [`RETURN`](#return)
+    - [`RIGHT$(cadena,n)`](#rightcadenan)
+    - [`RND[(0)]`](#rnd0)
+    - [`ROUND(x[,n])`](#roundxn)
+    - [`RUN etiqueta o fichero`](#run-etiqueta-o-fichero)
+    - [`SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`](#save-ficherotipodireccióntamañoentrada)
+    - [`SGN(x)`](#sgnx)
+    - [`SIN(x)`](#sinx)
+    - [`SOUND canal,perido-tono,duracion,volumen,env,ent,ruido`](#sound-canalperido-tonoduracionvolumenenventruido)
+    - [`SPACE$(n)`](#spacen)
+    - [`SPEED INK t1,t2`](#speed-ink-t1t2)
+    - [`SPEED KEY espera,repetición`](#speed-key-esperarepetición)
+    - [`SPEED WRITE n`](#speed-write-n)
+    - [SQ canal](#sq-canal)
+    - [`SQR(x)`](#sqrx)
+    - [`STOP`](#stop)
+    - [`STR$(x)`](#strx)
+    - [`STRING$(n,carácter)`](#stringncarácter)
+    - [`SUB [(parámetros)] [ASM]`](#sub-parámetros-asm)
+    - [`SYMBOL carácter,valor1,valor2,...,valor8`](#symbol-caráctervalor1valor2valor8)
+    - [`SYMBOL AFTER n`](#symbol-after-n)
+    - [`TAG [#canal]`](#tag-canal)
+    - [TAGOFF \[#canal\]](#tagoff-canal)
+    - [`TAN(x)`](#tanx)
+    - [`TEST(x,y)`](#testxy)
+    - [`TESTR(x,y)`](#testrxy)
+    - [`TIME[(n)]`](#timen)
+    - [`TROFF`](#troff)
+    - [`TRON`](#tron)
+    - [`UNT(n)`](#untn)
+    - [`UPPER$(cadena)`](#uppercadena)
+    - [`VAL(cadena)`](#valcadena)
+    - [`VPOS(#canal)`](#vposcanal)
+    - [\`WAIT puerto,mascara\[,inversion\]](#wait-puertomascarainversion)
+    - [`WEND`](#wend)
+    - [`WHILE condición`](#while-condición)
+    - [`WIDTH n`](#width-n)
+    - [`WINDOW [#canal,]izq,derecha,arriba,abajo`](#window-canalizqderechaarribaabajo)
+    - [`WINDOW SWAP canal1,canal2`](#window-swap-canal1canal2)
+    - [`WRITE [#canal],dato1,dato2,...`](#write-canaldato1dato2)
+    - [`XPOS`](#xpos)
+    - [`YPOS`](#ypos)
+    - [ZONE n](#zone-n)
+- [Apéndice I: Depurando programas compilados](#apéndice-i-depurando-programas-compilados)
+  - [Comprobar código BASIC](#comprobar-código-basic)
+  - [Depurar nuestro código paso a paso](#depurar-nuestro-código-paso-a-paso)
+- [Apéndice II: Ampliando el compilador](#apéndice-ii-ampliando-el-compilador)
 
 # Introducción
 
@@ -9,6 +212,10 @@
 Está diseñado para soportar el dialecto de BASIC creado por **Locomotive Software** para los microordenadores Amstrad CPC, de modo que toda la documentación existente sobre este lenguaje siga siendo plenamente relevante y útil.
 
 Además, al tratarse de un compilador cruzado que se ejecuta en sistemas modernos, BASC incorpora diversas carácterísticas de **Locomotive BASIC 2 Plus**, lo que permite una experiencia de desarrollo más cercana a los lenguajes actuales sin renunciar al estilo clásico del BASIC original.
+
+## Influencias
+
+BASC debe su existencia al compilador de BASIC **CPCBasic** https://cpcbasic.webcindario.com/CPCBasicSp.html. Probablemente, BASC no existiría si el proyecto siguiese activo y sus fuentes fueran públicas y accesibles.
 
 ## Un recorrido por las distintas versiones de Locomotive BASIC
 
@@ -106,10 +313,12 @@ DATA "Elvira", 20, 2005
 
 # Herramientas adicionales
 
+Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes. 
+
 -   `abasm.py` --- ensamblador compatible con WinAPE y RVM.\
--   `img.py` --- conversión de imágenes al formato CPC.\
--   `dsk.py` --- creación de disquetes `.DSK`.\
--   `cdt.py` --- creación de cintas `.CDT`.
+-   `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga.\
+-   `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales.\
+-   `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales.\
 
 # Peculiaridades del compilador
 
@@ -318,6 +527,8 @@ Sin embargo, es posible utilizar la sentencia `ASM` para definir alternativas m�
 Otra opción es modificar directamente el código ensamblador del programa, ya que BASC genera durante la compilación un fichero con extenisón `.ASM` que contiene todo el código del programa. Esto permite al programador modificarlo o añadir optimizaciones específicas cuando sea necesario, pudiendo usar **ABASM** para obtener el binario correspondiente. Mediante la opción `--verbose` obtendremos muchos más comentarios en el fichero ASM generado, lo que nos ayudará a realizar un mejor seguimiento de la traducción de nuestras sentencias BASIC a código ensamblador.
 
 # Comandos y sintaxis del lenguaje
+
+A continuación se muestra una breve guía de la notiación y de los comandos y funciones soportadas. No pretende ser una guía exhaustiva sobre Locomotive BASIC, sino recoger aquellos aspectos particulares del compilador. Para aprender más sobre el lenguaje, se recomienda consultar las obras listadas en la sección `Referencias`, al principio de este manual.
 
 ## Notación
 
@@ -1815,3 +2026,70 @@ PRINT "A","B"
 ZONE 4
 PRINT "A","B"
 ```
+
+
+# Apéndice I: Depurando programas compilados
+
+Depurar programas generados con un compilador cruzado puede ser una tarea bastante compleja puesto que la máquina con el código es diferente a la máquina donde se ejecuta. Por suerte, los emuladores puedes ayudarnos en la tarea. Por ejemplo, podemos ayudarnos de **WinApe** y **Retro Virtual Machine** para configurar un entorno de depuración bastante eficaz.
+
+## Comprobar código BASIC
+
+**WinApe** permite de forma cómoda "pegar" código en BASIC y ejecutarlo. Esto nos permitirá comparar los resultados entre el intérprete de BASIC y nuestro código compilado. Obviamente, para poder comparar, no podremos hacer uso de las funciones que fueron introducidas en la versión 2.0 (como `FUNCTION`, `SUB`, `IF` multilinea, etc.). Si podremos, en cambio, utilizar los siguientes opciones:
+
+* Código sin números de línea
+* Código dividido en varios ficheros
+
+Al compilar con BASC, el primer paso lo lleva a cabo el preprocesador. Con la opción `--verbose` activa, generará un fichero intermedio con extesión `.BPP` donde se habrán añadido números de línea y se habrá insertado cualquier fichero adicional referenciado con `CHAIN MERGE`.
+
+Para "pegar" código en **WinApe** seguiremos estos pasos:
+
+* seleccionamos el código deseado en nuestro editor favorito y elegimos la opción `Copiar`.
+* En **WinApe** vamos al menú `File` y elegimos la opción `Paste`.
+* Si es mucho código podemos hacelerar la copia activando la opción `Settings`, `High Speed`. Hay que acordarse de seleccionar la opción `Normal Speed` una vez acabado el proceso de pegado.
+
+## Depurar nuestro código paso a paso
+
+No es posible depurar nuestro código en BASIC paso a paso, pero sí podemos depurar el código ensamblador producido por el compilador. Como parte del proceso de compilación, BASC genera un fichero intermedio con extensión `.ASM`. Dicho fichero utiliza una sintaxis compatible con **WinApe** y **Retro Virtual Machine 2.0**. En este último emulador podemos activar las herramientas de depuración:
+
+* Abrir nuestra máquina Amstrad CPC (464 o 6128).
+* Presionar en el menú de haburguesa de la esquina superior izquierda.
+* Activar la opción `Developer Mode`.
+
+Aparecerá en la barra superior de iconos uno con el símbolo de un martillo. Al pinchar sobre él nos parecerá un submenu con otras herramientas. Pincharemos en la última, la consola de **Retro Virtual Machine**. Desde dicha consola podremos movernos por los directorios de nuestra máquina y cargar nuestro código como sigue:
+
+* ls - nos permite listar el contenido del directorio actual.
+* cd - nos permite cambiar de directorio.
+* asm - nos permite `ensamblar` el fichero .ASM especificado.
+
+De esta forma, podremos llevar nuestro programa de forma mucho más rápida a un entorno de pruebas que usando ficheros .DSK y el soporte para disco. Una vez tenemos nuestro programa en memoria, podremos ejecutarlo mediante la orden `CALL &170`.
+
+Además, después de haber ensamblado nuestro código con **Retro Virtual Machine**, es posible listar en la consola todos los símbolos (etiquetas de línea, nombres de variables, etc.) con el comando `symbols`. Podremos, entonces, poner un punto de parada (break point) en cualquier posición de la memoria con `break dirección-de-memoria`, consultando la que nos venga mejor de la lista de simbolos mencionada antes. si necesitamos borrar todos los puntos de parada, podremos hacerlo con `break -x`.
+
+Obviamente, este proceso de depuración requiere cierta familiaridad con el código en ensamblador. En la sección de `Referencias` se incluyen algunas obras que pueden servir muy bien de material de aprendizaje.
+
+Por último, se anima al lector a consular la documentación propia de estos dos emuladores para aprender más sobre las opciones que nos proporcionan para facilitarnos la depuración de nuestros programas.
+
+# Apéndice II: Ampliando el compilador
+
+Una de las ventajas de BASC es que al estar programado en Python es sencillo ampliar las funciones del compilador. El código del mismo se reparte por los siguientes ficheros principales:
+
+* basc.py - `Fichero principal`. Procesa las diferentes opciones y ejecuta la compilación paso a paso.
+* baspp.py - `Preprocesador`. Añade números de línea e inserta cualquier fichero de código adicional referenciado por `CHAIN MERGE`. Genera un fichero intermedio con extensión `.BPP` si se usa la opción `--verbose`.
+* baslex.py - `Analizador léxico`. Recorre el código fuente y genera una lista de tokens equivalente. Genera un fichero intermedio con extesión `.LEX` si se usa la opción `--verbose`.
+* basparse.py - `Analizador sintático`. Toma la lista de tokens y comprueba que la sintaxis del programa es correcta, generando en el proceso una representación intermedia del código como Árbol de Sintaxis Abstraco (AST). Genera un fichero intermedio con extensión `.AST` si se usa la opción `--verbose`.
+* emitters/cpcemitter.py - `Generador de código ensablador`. Toma el árbol generado por el analizador sintáctico y produce el código ensamblador equivalente. Genera un fichero con extensión `.ASM` como resultado del proceso. Dicho fichero será ensamblado por **ABASM** para generar el fichero binario final.
+* emitters/cpcrt.py - `Runtime del compilador`. Proporciona rutinas en ensamblador que son llamadas por el código generado por cpcemitter.py
+
+Siempre que se modifique el código en cualquiera de los ficheros anteriores, se puede comprobar que no se han introducido errores obvios ejecutando los siguientes comandos desde el directorio donde se encuentra nuestro fichero `basc.py`:
+
+* Comprobación de tipos:
+```
+mypy . --explicit-package-bases
+```
+
+* Pruebas unitarias:
+```
+python3 -m unittest -b
+```
+
+Por último, el directorio `examples` incluye varios programas que se pueden compilar y utilizar también para pruebas.

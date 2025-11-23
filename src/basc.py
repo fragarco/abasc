@@ -32,7 +32,7 @@ from basopt import BasOptimizer
 import json
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='0.0dev'
+__version__= "0.99 beta"
 
 
 def process_args() -> argparse.Namespace:
