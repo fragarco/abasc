@@ -39,6 +39,10 @@ def exptype_derive(op1: "Statement", op2: "Statement") -> ExpType:
         if op1.etype != op2.etype:
             return ExpType.Mismatch
         return ExpType.String
+    elif ExpType.Void in (op1.etype, op2.etype):
+        return ExpType.Void
+    elif ExpType.Mismatch in (op1.etype, op2.etype):
+        return ExpType.Mismatch
     elif ExpType.Real in (op1.etype, op2.etype):
         return ExpType.Real
     else:
