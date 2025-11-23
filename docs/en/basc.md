@@ -1,65 +1,69 @@
-# BASC: MANUAL DEL USUARIO
+<!-- omit in toc -->
+BASC: USER MANUAL
+==================
+**A BASIC cross compiler for the Amstrad CPC machines**
 
-**Un compilador cruzado de BASIC para los Amstrad CPC**
+# Introduction
 
-# Introducción
+**BASC (BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
 
-**BASC (BASic Compiler)** es un compilador cruzado escrito íntegramente en Python y sin dependencias externas, lo que favorece su portabilidad a cualquier sistema que disponga de una instalación estándar de **Python 3**.
+It is designed to support the dialect of BASIC created by **Locomotive Software** for the Amstrad CPC microcomputers, ensuring that all existing documentation for this language remains fully relevant and useful.
 
-Está diseñado para soportar el dialecto de BASIC creado por **Locomotive Software** para los microordenadores Amstrad CPC, de modo que toda la documentación existente sobre este lenguaje siga siendo plenamente relevante y útil.
+Furthermore, as a cross-compiler running on modern systems, BASC incorporates several features from **Locomotive BASIC 2 Plus**, providing a development experience closer to modern programming languages while preserving the classic style of the original BASIC.
 
-Además, al tratarse de un compilador cruzado que se ejecuta en sistemas modernos, BASC incorpora diversas carácterísticas de **Locomotive BASIC 2 Plus**, lo que permite una experiencia de desarrollo más cercana a los lenguajes actuales sin renunciar al estilo clásico del BASIC original.
+## Influences
 
-## Un recorrido por las distintas versiones de Locomotive BASIC
+BASC owes its existence to the **CPCBasic** compiler: [https://cpcbasic.webcindario.com/CPCBasicSp.html](https://cpcbasic.webcindario.com/CPCBasicSp.html). BASC would likely not exist if that project was still active and its source code publicly available.
 
-### Versión 1.0
+## A Brief Overview of the Locomotive BASIC Versions
 
-La primera versión de este BASIC apareció con los Amstrad CPC 464. Era un lenguaje relativamente rápido en comparación con otros BASIC de la época. Entre sus ventajas principales contaba con un acceso amplio a las funcionalidades del chip de audio. Utilizaba números de línea como etiquetas para las sentencias `GOTO` y `GOSUB`.
+### Version 1.0
 
-### Versión 1.1
+The first version of Locomotive BASIC appeared with the Amstrad CPC 464. It was a relatively fast language compared to other BASIC implementations of its time. Among its main advantages was broad access to the audio chip’s capabilities. Program lines were numbered and those numbers served as labels for the `GOTO` and `GOSUB` statements.
 
-Introducida con los CPC 664 y 6128, esta versión corregía diversos fallos e incorporaba nuevas funciones, como `FRAME`, `COPYCHR$` o `FILL`. Aun así, seguía requiriendo el uso de números de línea.
+### Version 1.1
 
-### Versión 2
+Introduced with the CPC 664 and 6128, this version fixed various bugs and added new functions such as `FRAME`, `COPYCHR$`, and `FILL`. However, it still required the use of line numbers.
 
-Lanzada en 1987 para los Amstrad PC 1512 y 1640, esta versión eliminaba la necesidad de numerar líneas gracias al comando `LABEL` y permitía crear aplicaciones para el entorno gráfico GEM, aunque todavía no ofrecía mecanismos avanzados de estructuración del código.
+### Version 2
 
-### Versión 2 Plus
+Released in 1987 for the Amstrad PC 1512 and 1640, this version removed the need for line numbers thanks to the `LABEL` command and enabled the development of applications for the GEM graphical environment, although it still lacked advanced code-structuring mechanisms.
 
-Aparecida en 1989, esta revisión añadía `FUNCTION`, `SUB`, sentencias `IF` de varias líneas y otras mejoras orientadas a facilitar el desarrollo de programas más estructurados.
+### Version 2 Plus
 
-# Referencias
+Introduced in 1989, this revision added `FUNCTION`, `SUB`, multi-line `IF` statements, and other enhancements aimed at facilitating the development of more structured programs.
 
-Este manual no trata de ser una guía exhaustiva de programación en BASIC. Como material de consulta sobre la programación en Locomotive BASIC es más recomendable consultar los siguientes textos:
+# References
 
-* Amstrad CPC464 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
-* Manual de Referencia BASIC para el Programador (Amsoft)
-* Amstrad CPC6128 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
-* BASIC 2 User Guide (Locomotive Software ltd.)
-* BASIC 2 PLUS Language Reference (Locomotive Software ltd.)
-* Using Locomotive BASIC 2 on the Amstrad 1512 (Robert Ransom)
+This manual is **not** intended to be a comprehensive guide to programming in BASIC. For in-depth information on Locomotive BASIC programming, the following texts are recommended:
 
-Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sobre programación en ensablador para el procesador Z80, se recomiendan los siguientes libros de consulta:
+* *Amstrad CPC464 – User Manual* (I. Spital, R. Perry, W. Poel, C. Lawson)
+* *BASIC Programmer’s Reference Manual* (Amsoft)
+* *Amstrad CPC6128 – User Manual* (I. Spital, R. Perry, W. Poel, C. Lawson)
+* *BASIC 2 User Guide* (Locomotive Software Ltd.)
+* *BASIC 2 PLUS Language Reference* (Locomotive Software Ltd.)
+* *Using Locomotive BASIC 2 on the Amstrad 1512* (Robert Ransom)
 
-* CPC464/664/6128 FIRMWARE, ROM rutines and explanations (B. Godden, P. Overell, D. Radisic) 
-* The Amstrad CPC Firnware Guide (Bob Taylor)
-* Z80 Assembly Langauge Programming (Lance A. Leventhal)
-* Ready Made Machine Language Routines For the Amstrad CPC (Joe Pritchard)
-* Código máquina para principantes con Amstrad (Steve Kramer)
+To deepen your knowledge of the Amstrad CPC464/CPC6128 firmware, or of Z80 assembly programming, the following reference books are recommended:
 
-# Sintaxis soportada por BASC
+* *CPC464/664/6128 FIRMWARE, ROM Routines and Explanations* (B. Godden, P. Overell, D. Radisic)
+* *The Amstrad CPC Firmware Guide* (Bob Taylor)
+* *Z80 Assembly Language Programming* (Lance A. Leventhal)
+* *Ready-Made Machine Language Routines for the Amstrad CPC* (Joe Pritchard)
 
-1.  No es necesario usar números de línea.\
-2.  Se pueden definir etiquetas para saltos mediante `LABEL`.\
-3.  Bloques `IF ... THEN ... ELSE ... END IF` de varias líneas.\
-4.  Definición de procedimientos con `FUNCTION` y `SUB`.\
-5.  Inclusión de código ensamblador mediante `ASM`.\
-6.  Inclusión de código BASIC externo con `CHAIN MERGE`.\
-7.  Definición de estructuras de datos con `RECORD`.
+# Syntax Supported by BASC
 
-### Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)
+1. Line numbers are not required.
+2. Labels for jumps can be defined using `LABEL`.
+3. Multi-line `IF ... THEN ... ELSE ... END IF` blocks.
+4. Procedure definitions with `FUNCTION` and `SUB`.
+5. Inline assembly through `ASM`.
+6. Inclusion of external BASIC code with `CHAIN MERGE`.
+7. Data structure definitions using `RECORD`.
 
-``` basic
+### Example 1 (syntax compatible with BASIC 1.0 and 1.1)
+
+```basic
 10 MODE 1
 20 BORDER 0
 30 PAPER 3
@@ -69,9 +73,9 @@ Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sob
 70 END
 ```
 
-### Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)
+### Example 2 (syntax using several BASIC 2 enhancements)
 
-``` basic
+```basic
 RECORD person; name$ FIXED 10, age, birth
 DIM records$(5) FIXED 14
 
@@ -92,106 +96,107 @@ DATA "Rachel", 45, 1980
 DATA "Elvira", 20, 2005
 ```
 
-# Uso del compilador
+# Using the Compiler
 
-    python basc.py [opciones] archivo.bas [-o archivo]
-
-### Opciones
-
--   `--version` --- muestra la versión del compilador.
--   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
--   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
--   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
--   `-o`, `--out` --- nombre de salida sin extensión.\
-
-# Herramientas adicionales
-
--   `abasm.py` --- ensamblador compatible con WinAPE y RVM.\
--   `img.py` --- conversión de imágenes al formato CPC.\
--   `dsk.py` --- creación de disquetes `.DSK`.\
--   `cdt.py` --- creación de cintas `.CDT`.
-
-# Peculiaridades del compilador
-
-Aunque el objetivo de BASC es permitir la compilación, sin apenas cambios, de programas escritos para BASIC 1.0 o 1.1, la propia naturaleza de un compilador —frente a un intérprete— introduce ciertas diferencias. En esta sección exploramos esos aspectos particulares que pueden tomar por sorpresa al programador acostumbrado al uso del intérprete de BASIC.
-
-## Tipos y variables
-
-BASC utiliza un sistema de tipado algo más estricto que el proporcionado por el intérprete original de BASIC. Para empezar, todas las variables son de tipo **entero** por defecto, salvo que se utilice un sufijo para indicar otro tipo de dato.
-
-| Tipo   | Sufijo       | Notas                                                                         |
-| ------ | ------------ | ----------------------------------------------------------------------------- |
-| Entero | % (opcional) | Valores enteros en el rango -32768...32767                                    |
-| Real   | !            | Números en coma flotante de 5 bytes (4 para la mantisa y 1 para el exponente) |
-| Texto  | $            | Cadenas de hasta 254 carácteres (ver siguiente sección)     
-
-### Cadenas de texto
-
-En la implementación original de Locomotive BASIC para los Amstrad CPC, las cadenas utilizaban una estructura de **doble indirección**. Una variable de tipo texto ocupaba inicialmente 3 bytes:
-
-* byte 1: longitud
-* bytes 2 y 3: dirección al contenido de la cadena
-
-La longitud máxima era de 255 carácteres.
-
-En BASC, el contenido de la cadena se almacena directamente a continuación del byte de longitud, reservando un máximo de **255 bytes para toda la estructura**, por lo que **la longitud máxima de una cadena es de 254 carácteres**.
-
-La única excepción son las **llamadas RSX**, para las que BASC conserva la estructura original de Locomotive BASIC con el fin de garantizar la compatibilidad. Por ello, una rutina RSX recibirá siempre las cadenas de texto en una estructura de 3 bytes:
-
-* 1 byte: longitud
-* 2 bytes: puntero al contenido
-
-Además, es posible que el programador no desee reservar siempre los 254 bytes por defecto para una cadena, por lo que BASC incorpora dos sentencias procedentes de Locomotive BASIC 2: **`FIXED`** y **`DECLARE`**.
-
-Estas permiten ajustar el espacio reservado para la cadena, como en el siguiente ejemplo:
-
-```basic
-DECLARE A$ FIXED 10  ' La cadena A$ podrá contener hasta 10 carácteres
+```
+python basc.py [options] file.bas [-o output]
 ```
 
-La cadena anterior reservará un total de 11 bytes (1 de longitud + 10 de contenido).
-Es importante destacar que, al no existir comprobaciones en tiempo de ejecución —como sí ocurre en un intérprete—, nada impide que el programador intente almacenar más carácteres de los permitidos en `A$`, lo que provocará comportamientos impredecibles.
+### Options
+
+* `--version` — Displays the compiler version.
+* `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
+* `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
+* `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
+* `-o`, `--out` — Output file name (without extension).
+
+# Additional Tools
+
+In addition to the compiler, the development package includes several extra tools that cover the entire workflow from generating the binary to package it for distribution. Each tool has its own manual distributed alongside the compiler documentation. All utilities are fully independent and can be used on their own.
+
+* `abasm.py` — Assembler compatible with WinAPE and RVM syntax.
+* `img.py` — Converts images to CPC format and can generate loading screens.
+* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files.
+* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files.
+
+# Peculiarities of the Compiler
+
+Although BASC aims to compile programs written for BASIC 1.0 and 1.1 with little or no modification, the very nature of a compiler versus an interpreter naturally introduces certain differences. This section explains those particular behaviors that may surprise programmers accustomed to the traditional BASIC interpreter.
+
+## Types and Variables
+
+BASC uses a somewhat stricter type system than the original Locomotive BASIC interpreter. By default, **all variables are integers**, unless a suffix is used to indicate a different data type.
+
+| Type    | Suffix       | Notes                                                            |
+| ------- | ------------ | ---------------------------------------------------------------- |
+| Integer | % (optional) | Integer values in the range -32768 to 32767                      |
+| Real    | !            | 5-byte floating-point values (4-byte mantissa + 1-byte exponent) |
+| String  | $            | Strings of up to 254 characters (see next section)               |
+
+### String Handling
+
+In the original Locomotive BASIC, strings used a **double-indirection** structure. A string variable occupied 3 bytes:
+
+* Byte 1: length
+* Bytes 2–3: pointer to the string data
+
+The maximum length was 255 characters.
+
+In BASC, string data is stored **directly after the length byte**, reserving **up to 255 bytes for the entire structure**. Therefore, **the maximum string length is 254 characters**.
+
+The only exception is **RSX calls**, for which BASC preserves the original Locomotive BASIC string structure to ensure compatibility. Thus, RSX routines will always receive strings in the 3-byte indirection format:
+
+* 1 byte: length
+* 2 bytes: pointer to content
+
+In addition, programmers may not always want to reserve the full 254 bytes for every string. BASC therefore includes two statements from Locomotive BASIC 2: **`FIXED`** and **`DECLARE`**, which allow specifying the exact buffer size:
+
+```basic
+DECLARE A$ FIXED 10  ' A$ may contain up to 10 characters
+```
+
+The above sentence reserves 11 bytes total (1 length byte + 10 characters). It is important to note that BASC does **not perform runtime bounds checking**—unlike an interpreter—so writing more characters than the space allocated for `A$` will lead to unpredictable behavior.
 
 ### Arrays
 
-En Locomotive BASIC, un array que no ha sido declarado previamente con `DIM` se considera que tiene 10 elementos por defecto. BASC es más estricto: la compilación fallará si el código intenta operar con arrays que no hayan sido declarados explicitamente mediante `DIM`.
+In Locomotive BASIC, an array that has not been explicitly declared with `DIM` is assumed to contain 10 elements. BASC is stricter: compilation will fail if the program attempts to use an array that has not been declared explicitly with `DIM`.
 
-Además, un array de cadenas reservará inmediatamente la memoria necesaria para todos sus elementos. Por defecto, cada cadena ocupa 255 bytes (1 para la longitud y 254 para el contenido), lo que puede consumir rápidamente la memoria disponible. Por ello, igual que con las cadenas individuales, es posible utilizar la cláusula `FIXED`:
-
-```basic
-DIM A$(5) FIXED 10   ' El espacio total será de 11 bytes × 5 elementos
-```
-
-### Estructuras con RECORD
-
-BASC incluye soporte para la organización de variables en estructuras más complejas denominadas **REGISTROS**. Internamente, un registro es simplemente una forma de dividir y etiquetar la memoria reservada por una cadena de texto. Para utilizar registros, el primer paso es declarar su estructura mediante la sentencia `RECORD`.
-
-```
-RECORD nombre; lista de campos
-```
-
-Ejemplo:
+Furthermore, a string array immediately allocates memory for **all its elements**. By default, each string occupies 255 bytes (1 length + 254 content), which can quickly exhaust available memory. As with individual strings, the `FIXED` clause may be used:
 
 ```basic
-RECORD persona; nom$ FIXED 10, edad
+DIM A$(5) FIXED 10   ' Total memory = 11 bytes × 5 elements
 ```
 
-Los patrones definidos con `RECORD` pueden aplicarse a cadenas empleando el símbolo `.` tras el nombre de la variable:
+### RECORD Structures
+
+BASC supports organizing data into more complex structures known as **records** as it was introduced by Locomotive BASIC version 2 Plus. Internally, a record is simply a structured way of subdividing and labeling the memory reserved by a string. To use records, their layout must first be defined using the `RECORD` statement:
+
+```
+RECORD name; field list
+```
+
+Example:
 
 ```basic
-DECLARE A$ FIXED 13  ' No es obligatorio, pero reduce el consumo de memoria
-RECORD persona; nom$ FIXED 10, edad ' Requiere 13 bytes de memoria
-
-A$.persona.nom$ = "Juan"
-A$.persona.edad = 20
+RECORD person; name$ FIXED 10, age
 ```
 
-El programa anterior dejará el contenido de la memoria reservada por `A$`como sigue:
+Record patterns may then be applied to strings by using the `.` operator:
 
-| BYTE   |  Contenido      |  Valor     |
-|--------|-----------------|------------|
-| 0 - 10 | longitud y contenido de `nom$` | 4,J,u,a,n,0,0,0,0,0,0 |
-| 11 - 12 | valor de `edad` | 20        |
+```basic
+DECLARE A$ FIXED 13         ' Optional but reduces memory usage
+RECORD person; name$ FIXED 10, age   ' Requires 13 bytes total
+
+A$.person.name$ = "Juan"
+A$.person.age = 20
+```
+
+The program above leaves the memory reserved for `A$` in the following layout:
+
+| Bytes | Content                     | Value                           |
+| ----- | --------------------------- | ------------------------------- |
+| 0–10  | Length + content of `name$` | 4, J, u, a, n, 0, 0, 0, 0, 0, 0 |
+| 11–12 | Value of `age`              | 20                              |
 
 ## Soporte para procedimientos
 
