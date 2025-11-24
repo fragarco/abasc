@@ -45,7 +45,6 @@ class LocBasPreprocessor:
     def _insert_file(self, basedir, line: int, code: str, lines: list[CodeLine]) -> list[CodeLine]:
         parser = LocBasLexer(code)
         tokens = list(parser.tokens())
-        pos = 0
         for i,t in enumerate(tokens):
             if t.type == TokenType.KEYWORD and t.lexeme=="CHAIN MERGE":
                 if tokens[i+1].type != TokenType.STRING:
@@ -57,6 +56,13 @@ class LocBasPreprocessor:
                         lines[line].code
                     )
                 infile = os.path.join(basedir, tokens[i+1].value) # type: ignore [arg-type]
+                if not os.path.exists(infile):
+                    # may be a library
+                    infile = os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "lib",
+                        tokens[i+1].value # type: ignore [arg-type]
+                    )
                 try:
                     with open(infile, 'r') as f:
                         filecontent = f.read()
@@ -65,7 +71,7 @@ class LocBasPreprocessor:
                 except IOError:
                     self._raise_error(
                         25,
-                        f"cannot access {infile}",
+                        f"cannot access {tokens[i+1].value}",
                         lines[line].source,
                         lines[line].line,
                         lines[line].code

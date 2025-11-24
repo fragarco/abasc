@@ -39,6 +39,7 @@ from enum import Enum, auto
 from typing import Union, Any, Optional, Tuple, Iterator
 import re
 import json
+import os
 
 # -------------------------------
 # Token types
@@ -473,19 +474,4 @@ class LocBasLexer:
         print("Parsing source files...")
         tokens = list(self.tokens())
         return json.dumps(tokens, indent=4, cls=TokenEncoder), tokens
-        
-# Use example:
-    
-if __name__ == "__main__":
-    program = r"""
-10 REM Demo
-20 LET a%=3: b!=&H2A: c$="HELLO"
-30 IF a%<=10 THEN PRINT b! \ 2, c$
-40 ' the other way to comment a line
-50 PRINT "END"
-60 END
-"""
 
-    lx = LocBasLexer(program)
-    jsonstr, _ = lx.tokens_json()
-    print(jsonstr)

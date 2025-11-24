@@ -205,6 +205,8 @@ BASC: MANUAL DEL USUARIO
   - [Depurar nuestro código paso a paso](#depurar-nuestro-código-paso-a-paso)
 - [Apéndice II: Ampliando el compilador](#apéndice-ii-ampliando-el-compilador)
 
+---
+
 # Introducción
 
 **BASC (BASic Compiler)** es un compilador cruzado escrito íntegramente en Python y sin dependencias externas, lo que favorece su portabilidad a cualquier sistema que disponga de una instalación estándar de **Python 3**.
@@ -235,6 +237,8 @@ Lanzada en 1987 para los Amstrad PC 1512 y 1640, esta versión eliminaba la nece
 
 Aparecida en 1989, esta revisión añadía `FUNCTION`, `SUB`, sentencias `IF` de varias líneas y otras mejoras orientadas a facilitar el desarrollo de programas más estructurados.
 
+---
+
 # Referencias
 
 Este manual no trata de ser una guía exhaustiva de programación en BASIC. Como material de consulta sobre la programación en Locomotive BASIC es más recomendable consultar los siguientes textos:
@@ -253,6 +257,8 @@ Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sob
 * Z80 Assembly Langauge Programming (Lance A. Leventhal)
 * Ready Made Machine Language Routines For the Amstrad CPC (Joe Pritchard)
 * Código máquina para principantes con Amstrad (Steve Kramer)
+
+---
 
 # Sintaxis soportada por BASC
 
@@ -299,6 +305,8 @@ DATA "Rachel", 45, 1980
 DATA "Elvira", 20, 2005
 ```
 
+---
+
 # Uso del compilador
 
     python basc.py [opciones] archivo.bas [-o archivo]
@@ -311,6 +319,8 @@ DATA "Elvira", 20, 2005
 -   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
 -   `-o`, `--out` --- nombre de salida sin extensión.\
 
+---
+
 # Herramientas adicionales
 
 Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes. 
@@ -319,6 +329,8 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 -   `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga.\
 -   `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales.\
 -   `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales.\
+
+---
 
 # Peculiaridades del compilador
 
@@ -402,7 +414,7 @@ El programa anterior dejará el contenido de la memoria reservada por `A$`como s
 | 0 - 10 | longitud y contenido de `nom$` | 4,J,u,a,n,0,0,0,0,0,0 |
 | 11 - 12 | valor de `edad` | 20        |
 
-## Soporte para procedimientos
+## Procedimientos y Funciones
 
 Tradicionalmente, BASIC permite organizar código reutilizable mediante rutinas invocadas con `GOSUB` y `RETURN` (sin soporte para parámetros) o mediante funciones de una sola línea definidas con `DEF FN`. BASC es plenamente compatible con ambos mecanismos, pero además incorpora una forma más moderna de estructurar el código, introducida en la versión 2 Plus de Locomotive BASIC. La sintaxis es la siguiente:
 
@@ -491,6 +503,13 @@ END SUB
 CALL cpcSetColor(0,&14)
 ```
 
+Mediante `ASM` es posible importar a nuestro proyecto otros ficheros con código en ensamblador o ficheros binarios:
+
+```basic
+ASM "read 'mylib.asm'    ; codigo ensablador adicional"
+ASM "incbin 'assets.bin' ; contenido binario"
+```
+
 ## Gestión de la memoria
 
 El mapa de memoria de un programa compilado con BASC es el siguiente:
@@ -525,6 +544,25 @@ BASC se apoya de manera extensa en las rutinas del **Firmware del Amstrad CPC**,
 Sin embargo, es posible utilizar la sentencia `ASM` para definir alternativas más eficaces para las llamadas al Firmware (como `CLS`, `INK`, `BORDER`, `PAPER`, etc.). Sin embargo, debe tenerse en cuenta que, si no se deshabilitan las interrupciones, el Firmware seguirá activo y **podría sobrescribir los cambios realizados** sin previo aviso.
 
 Otra opción es modificar directamente el código ensamblador del programa, ya que BASC genera durante la compilación un fichero con extenisón `.ASM` que contiene todo el código del programa. Esto permite al programador modificarlo o añadir optimizaciones específicas cuando sea necesario, pudiendo usar **ABASM** para obtener el binario correspondiente. Mediante la opción `--verbose` obtendremos muchos más comentarios en el fichero ASM generado, lo que nos ayudará a realizar un mejor seguimiento de la traducción de nuestras sentencias BASIC a código ensamblador.
+
+## Librerías
+
+La instalación de BASC contiene un directorio llamado `lib`. Cualquier fichero .BAS puede ser dejado ahí para incluirlo desde cualquiera de nuestros programas con el comando `CHAIN MERGE`.
+
+`CHAIN MERGE` tratará primero de resolver cualquier fichero a incluir contra el directorio local de nuestro código fuente. Si el fichero dado no es un fichero local a nuestro programa, buscará en el directorio `lib` de la instalación de BASC al considerar que se trata de una "librería", un fichero .BAS reusable desde cualquier proyecto. Por ejemplo, podemos probar el fichero `memory.bas` que se distribuye con BASC mediante este simple programa:
+
+``` basic
+CHAIN MERGE "memory.bas"
+
+A$="Hola mundo"
+B$=""
+
+CALL MEMSET(&C000, &4000, 0)
+CALL MEMCOPY(@B$, @A$, LEN(A$)+1)
+PRINT B$
+```
+
+---
 
 # Comandos y sintaxis del lenguaje
 
@@ -601,7 +639,7 @@ PRINT BIN$(16,8)  ' imprimira la cadena de texto "00010000"
 
 ### `BORDER colour1[,colour2]`
 
-Permite espedificar el color del borde. Si se proporcionan dos valores, se produce un parpadeo cuyo tiempo controla el comando `SPEED INK`.
+Comando. Permite espedificar el color del borde. Si se proporcionan dos valores, se produce un parpadeo cuyo tiempo controla el comando `SPEED INK`.
 
 ``` basic
 BORDER 0,1
@@ -634,6 +672,8 @@ Comando. En BASIC, se utiliza para remplazar el programa actual en memoria por o
 ### `CHAIN MERGE string`
 
 Comando. BASC reinterpreta este comando para permitir dividir nuestro código entre varios ficheros. `string` debe ser una ruta a un fichero .BAS alcanzable desde el fichero donde se hace la referencia.
+
+Si `string` no es un fichero local al programa, buscará en el directorio `lib` de la instalación de BASC al considerar que se trata de una "librería", un fichero .BAS reusable desde cualquier proyecto.
 
 ``` basic
 fichero OTRO.BAS
@@ -675,11 +715,11 @@ Comando. Borra la pantalla de gráficos usando el valor actual de `PAPER`. Si `t
 
 ### `CLOSEIN`
 
-Comando. Cierra el fichero abierto actualmente para lectura.
+Comando. Cierra el fichero abierto actualmente para lectura. Ver `OPENIN`.
 
 ### `CLOSEOUT`
 
-Comando. Cierra el fichero abierto actualmente para escritura.
+Comando. Cierra el fichero abierto actualmente para escritura. Ver `OPENOUT`.
 
 ### `CLS [#x]`
 
@@ -689,9 +729,17 @@ Comando. Borra la pantalla usando el color de `PAPER` actual. Es posible indicar
 
 Comando. En el BASIC original permite continuar la ejecución de un programa detenido por las instrucciones `BREAK`, `STOP` o `END`. En un programa compilado no tiene sentido y BASC lo redefine para detener el programa y esperar la pulsación de cualquier tecla antes de continuar, lo que puede ser últil para depurar programas.
 
-### `COPYCHR$()`
+### `COPYCHR$(#canal)`
 
-Función. Devuelve el carácter situado en la posición actual del cursor. Esta función apareció con la versión BASIC 1.1. BASC proporciona una implementación que permite utilizar esta función incluso en programas que se van a ejecutar en un Amstrad CPC 464.
+Función. Devuelve el carácter situado en la posición actual del cursor de texto para el `canal`indicado. Esta función apareció con la versión BASIC 1.1. BASC proporciona una implementación que permite utilizar la función incluso en programas que se van a ejecutar en un Amstrad CPC 464.
+
+``` basic
+MODE 1
+PRINT "HELLO WORLD"
+LOCATE 3,1
+C$ = COPYCHR$(#0)  ' la letra L
+LOCATE 1,2: PRINT C$
+```
 
 ### `COS(x)`
 
@@ -742,7 +790,7 @@ Función. Esta función apareció con la versión 1.1 de BASIC. Permite converti
 PRINT DEC$(15.5, "###.##")
 ```
 
-### DEF FN nombre(parametros)=expresion
+### `DEF FN nombre(parametros)=expresion`
 
 Comando. Permite declarar una función que aplicará la expresión de la derecha a los valores indicados como parámetros en cada llamada. En BASIC 1.0 era la única forma de declarar funciones. BASC soporta `FUNCTION` ... `END FUNCTION` que es un mecanismo mucho más versátil.
 
@@ -859,7 +907,7 @@ Sección tipo 2:
 * Parámetro 1: periodo del tono (entero de 16 bits).
 * Parámetro 2: pausa
 
-### ENV `número de envolvente, secciones`
+### `ENV número de envolvente, secciones`
 
 Comando. Define la variación en volumen de un sonido. Locomotive BASIC permite especificar dos tipos de envolventes de volumen (secciones), una con tres parámetros y otra con dos. Aunque no está documentado, para diferenciarlas, es posible utilizar el símbolo `=` antes del primer número en el segundo caso. BASC no falla si se encuentra dicho carácter, pero utiliza el número de parámetros para saber si nos encontramos en el primer caso o en el segundo. En caso de duda, procederá siempre considerando que estamos usando el primer caso, donde cada envolvente se especifica usando tres valores.
 
@@ -1023,7 +1071,7 @@ result = pow2(2)
 
 La cláusula `ASM`en la declaración de la función permite indicar que todo el cuerpo de la función será código en ensablador (a través del comando ASM), tal y como se explica en la sección `Uso de código ensamblador` del capítulo `Peculiaridades del compilador`.
 
-Se recomienda al programador leer la sección `Soporte para procedimientos` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
+Se recomienda al programador leer la sección `Procedimientos y Funciones` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
 
 ### `GOSUB etiqueta`
 
@@ -1167,12 +1215,12 @@ Función. Lee un valor del `puerto` de Entrada/Salida indicado.
 
 Comando. INPUT es un comando muy versatil con muchas opciones. Por ello, queda fuera de este manual y se aconseja al lector consultar cualquiera de las obras listadas en el capítulo sobre `Referencias`.
 
-### INSTR([posición,]cadena1,cadena2)
+### `INSTR([posición,]cadena1,cadena2)`
 
 Función. Busca en `cadena1` la primera aparición `cadena2`. Si se indica el parámetro opcional `posición`, la búsqueda comenzará desde esa posición; de lo contrario, la búsqueda comienza desde el primer carácter. Las posiciones comienzan en 1 y no en 0.
 
 ``` basic
-POSA = INSTR(0,"AMSTRAD", "A")
+POSA = INSTR(1,"AMSTRAD", "A")
 PRINT POSA
 POSA = INSTR(POSA+1, "AMSTRAD", "A")
 PRINT POSA
@@ -1258,7 +1306,7 @@ Comando. Carga un fichero de disco o cienta en memoria. BASC solo soporta la car
 
 ``` basic
 DIREC = HIMEM
-LOAD "SPRITES.BIN",HIMEM
+LOAD "SPRITES.BIN",DIREC
 ```
 
 ### `LOCATE [#canal,]x,y`
@@ -1381,7 +1429,22 @@ Comando. Desactiva la última sentencia `ON BREAK GOSUB` que se haya emitido. Co
 
 ### `ON ERROR GOTO etiqueta`
 
-Comando. Este comando salta a `etiqueta` cuando se detecta un error en un programa BASIC durante su ejecución. Este mecanismo requiere que el programa sea interpretado, no compilado, así que BASC ignora este comando y emite una alerta si aparece como parte del código a compilar.
+Comando. Este comando salta a `etiqueta` cuando se detecta un error en un programa BASIC durante su ejecución. BASC solo salta a `etiqueta` si el valor de `ERR` es diferente de 0, por ejemplo, porque se ha fijado otro valor mediante el comando `ERROR`.
+
+**NOTE:** Hay que tener cuidado de no salir de un bucle WHILE o FOR usando este comando.
+
+```basic
+ERROR 0
+ON ERROR GOTO errormsg
+ERROR 1
+ON ERROR GOTO errormsg
+PRINT "Sin errores"
+END
+
+LABEL errormsg
+    print "Error", ERR
+END
+```
 
 ### `ON SQ (canal) GOSUB etiqueta`
 
@@ -1600,7 +1663,7 @@ GOTO BUCLE
 
 ### `RESUME`
 
-Comando. Restaura la ejecución de un programa detenido tras un evento de error manejado por `ON ERROR GOTO`. Este mecanismo requiere que el programa sea interpretado, no compilado, así que BASC ignora este comando y emite una alerta si aparece como parte del código a compilar.
+Comando. Restaura la ejecución de un programa detenido tras un evento de error manejado por `ON ERROR GOTO`. Como BASC implementa `ON ERROR GOTO`de forma algo diferente, ignorará este comando y emitirá una alerta si aparece como parte del código a compilar.
 
 ### `RETURN`
 
@@ -1660,7 +1723,7 @@ El resto de parámetros opcionales son:
 MODE 1
 PAPER 3
 CLS
-SAVE "pantalla.bin",B,&C000,&3FFF
+SAVE "pantalla.bin",B,&C000,&4000
 PAPER 0
 CLS
 LOAD "pantalla.bin"
@@ -1753,7 +1816,7 @@ PRINT STRING$(40,250)
 
 Comando. Proveniente de Locomotive BASIC 2 Plus, `SUB` permite declarar procedimientos con parámetros. Debe utilizarse `CALL` para llamar a un procedimiento declarado con `SUB`. El procedimiento debe declararse antes de que aparezca en el código una llamada al mismo. Si se utiliza la cláusula `ASM`, BASC entiende que el cuerpo del procedimiento va a ser mayoritariamente código en ensablador que no va a usar el mecanismo de memoria temporal, por lo que no se encarga de apilarlo y restaruralo después de cada llamada.
 
-Se recomienda al programador leer las secciones `Soporte para procedimientos` y `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad.
+Se recomienda al programador leer las secciones `Procedimientos y Funciones` y `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad.
 
 ``` basic
 SUB miUSING(n,long)
@@ -1832,7 +1895,7 @@ NEXT
 GOTO BUCLE
 ```
 
-### TAGOFF [#canal]
+### `TAGOFF [#canal]`
 
 Comando.Desactiva el uso del cursor gráfico para el canal de texto indicado (#0 por defecto). Ver `TAG`.
 
@@ -1930,7 +1993,7 @@ MODE 1
 PRINT POS(#0), VPOS(#0)
 ```
 
-### `WAIT puerto,mascara[,inversion]
+### `WAIT puerto,mascara[,inversion]`
 
 Comando. Detiene la ejecución hasta que se lee un valor esperado desde el `puerto` de entrada/salida especificado. El comando realiza una operación de **AND** con la `mascara` indicada y una operación de **XOR** con el valor de `inversion` (si se suministra). La ejecución solo continúa si el resultado obtenido es distinto de 0.
 
@@ -2016,7 +2079,7 @@ PRINT XPOS;YPOS
 
 Función. Devuelve la posición en Y del cursor gráfico. Ver `XPOS`.
 
-### ZONE n
+### `ZONE n`
 
 Comando. Cambia la anchura (13 por defecto) de la zona de escritura utilizada por `PRINT` cuando se separan elementos con comas.
 
@@ -2027,69 +2090,91 @@ ZONE 4
 PRINT "A","B"
 ```
 
+---
 
-# Apéndice I: Depurando programas compilados
+# Apéndice I: Depurar programas compilados
 
-Depurar programas generados con un compilador cruzado puede ser una tarea bastante compleja puesto que la máquina con el código es diferente a la máquina donde se ejecuta. Por suerte, los emuladores puedes ayudarnos en la tarea. Por ejemplo, podemos ayudarnos de **WinApe** y **Retro Virtual Machine** para configurar un entorno de depuración bastante eficaz.
+Depurar programas generados por un compilador cruzado puede ser una tarea compleja, ya que la máquina que ejecuta el código es diferente de la máquina donde se desarrolló. Afortunadamente, los emuladores pueden simplificar significativamente este proceso. Por ejemplo, **WinApe** y **Retro Virtual Machine** permiten configurar un entorno de depuración eficaz.
 
-## Comprobar código BASIC
+## Comprobación del código BASIC
 
-**WinApe** permite de forma cómoda "pegar" código en BASIC y ejecutarlo. Esto nos permitirá comparar los resultados entre el intérprete de BASIC y nuestro código compilado. Obviamente, para poder comparar, no podremos hacer uso de las funciones que fueron introducidas en la versión 2.0 (como `FUNCTION`, `SUB`, `IF` multilinea, etc.). Si podremos, en cambio, utilizar los siguientes opciones:
+**WinApe** ofrece una forma conveniente de "pegar" código BASIC y ejecutarlo. Esto nos permite comparar los resultados entre el intérprete de BASIC y nuestro código compilado. Naturalmente, para que nuestro código funcione, no podremos utilizar las opciones provenientes del Locomotive BASIC 2 (como `FUNCTION`, `SUB`, `IF` multilinea, etc.). Sin embargo, sí podremos usar las siguientes características:
 
 * Código sin números de línea
-* Código dividido en varios ficheros
+* Código dividido en varios archivos
 
-Al compilar con BASC, el primer paso lo lleva a cabo el preprocesador. Con la opción `--verbose` activa, generará un fichero intermedio con extesión `.BPP` donde se habrán añadido números de línea y se habrá insertado cualquier fichero adicional referenciado con `CHAIN MERGE`.
+Al compilar con BASC, el primer paso lo realiza el preprocesador. Con la opción `--verbose` activada, genera un archivo intermedio con la extensión `.BPP`, en el que se añaden números de línea y se añade el código proveniente de los archivos adicionales referenciados mediante `CHAIN MERGE`.
 
-Para "pegar" código en **WinApe** seguiremos estos pasos:
+Para pegar código en **WinApe**, sigue estos pasos:
 
-* seleccionamos el código deseado en nuestro editor favorito y elegimos la opción `Copiar`.
-* En **WinApe** vamos al menú `File` y elegimos la opción `Paste`.
-* Si es mucho código podemos hacelerar la copia activando la opción `Settings`, `High Speed`. Hay que acordarse de seleccionar la opción `Normal Speed` una vez acabado el proceso de pegado.
+1. Selecciona el código deseado en tu editor favorito y elige la opción `Copiar`.
+2. En **WinApe**, ve al menú `File` y selecciona `Paste`.
+3. Si estás pegando una gran cantidad de código, activa `Settings > High Speed` para acelerar el proceso. Recuerda volver a `Normal Speed` una vez completado el pegado.
 
-## Depurar nuestro código paso a paso
+## Depuración paso a paso de nuestro código
 
-No es posible depurar nuestro código en BASIC paso a paso, pero sí podemos depurar el código ensamblador producido por el compilador. Como parte del proceso de compilación, BASC genera un fichero intermedio con extensión `.ASM`. Dicho fichero utiliza una sintaxis compatible con **WinApe** y **Retro Virtual Machine 2.0**. En este último emulador podemos activar las herramientas de depuración:
+No es posible depurar código BASIC paso a paso, pero sí podemos depurar el código ensamblador generado por el compilador. Como parte del proceso de compilación, BASC genera un archivo intermedio con extensión `.ASM`. Este archivo utiliza una sintaxis compatible con **WinApe** y **Retro Virtual Machine 2.0**.
 
-* Abrir nuestra máquina Amstrad CPC (464 o 6128).
-* Presionar en el menú de haburguesa de la esquina superior izquierda.
-* Activar la opción `Developer Mode`.
+En **Retro Virtual Machine**, podemos activar las herramientas de depuración siguiendo estos pasos:
 
-Aparecerá en la barra superior de iconos uno con el símbolo de un martillo. Al pinchar sobre él nos parecerá un submenu con otras herramientas. Pincharemos en la última, la consola de **Retro Virtual Machine**. Desde dicha consola podremos movernos por los directorios de nuestra máquina y cargar nuestro código como sigue:
+1. Abrir nuestra máquina Amstrad CPC (464 o 6128).
+2. Presionar en el menú de hamburguesa en la esquina superior izquierda.
+3. Activar la opción `Developer Mode`.
 
-* ls - nos permite listar el contenido del directorio actual.
-* cd - nos permite cambiar de directorio.
-* asm - nos permite `ensamblar` el fichero .ASM especificado.
+Aparecerá en la barra superior de iconos un botón con el símbolo de un martillo. Al hacer clic sobre él, se desplegará un submenú con varias herramientas; seleccionaremos la última, la consola de **Retro Virtual Machine**. Desde esta consola, podremos navegar por los directorios de nuestra máquina y cargar nuestro código de la siguiente manera:
 
-De esta forma, podremos llevar nuestro programa de forma mucho más rápida a un entorno de pruebas que usando ficheros .DSK y el soporte para disco. Una vez tenemos nuestro programa en memoria, podremos ejecutarlo mediante la orden `CALL &170`.
+* `ls` — Lista el contenido del directorio actual.
+* `cd` — Cambia de directorio.
+* `asm` — Ensambla el archivo `.ASM` especificado.
 
-Además, después de haber ensamblado nuestro código con **Retro Virtual Machine**, es posible listar en la consola todos los símbolos (etiquetas de línea, nombres de variables, etc.) con el comando `symbols`. Podremos, entonces, poner un punto de parada (break point) en cualquier posición de la memoria con `break dirección-de-memoria`, consultando la que nos venga mejor de la lista de simbolos mencionada antes. si necesitamos borrar todos los puntos de parada, podremos hacerlo con `break -x`.
+Este método permite cargar nuestro programa en un entorno de prueba mucho más rápido que usando archivos `.DSK` y el soporte de disco. Una vez que el programa está en memoria, se puede ejecutar mediante el comando:
 
-Obviamente, este proceso de depuración requiere cierta familiaridad con el código en ensamblador. En la sección de `Referencias` se incluyen algunas obras que pueden servir muy bien de material de aprendizaje.
+```basic
+CALL &170
+```
 
-Por último, se anima al lector a consular la documentación propia de estos dos emuladores para aprender más sobre las opciones que nos proporcionan para facilitarnos la depuración de nuestros programas.
+Además, después de ensamblar el código con **Retro Virtual Machine**, es posible listar todos los símbolos (etiquetas de línea, nombres de variables, etc.) en la consola con el comando `symbols`. Esto nos permite establecer puntos de parada (breakpoints) en cualquier posición de memoria usando:
+
+```
+break dirección-de-memoria
+```
+
+Para borrar todos los puntos de parada, basta con ejecutar:
+
+```
+break -x
+```
+
+Este proceso de depuración requiere cierta familiaridad con el código ensamblador. En la sección de `Referencias` se incluyen libros y materiales que pueden servir como guía de aprendizaje.
+
+Finalmente, se recomienda al lector consultar la documentación oficial de **WinApe** y **Retro Virtual Machine** para explorar más opciones de depuración y aprovechar al máximo las herramientas que ofrecen estos emuladores.
 
 # Apéndice II: Ampliando el compilador
 
-Una de las ventajas de BASC es que al estar programado en Python es sencillo ampliar las funciones del compilador. El código del mismo se reparte por los siguientes ficheros principales:
+Una de las grandes ventajas de BASC es que, al estar escrito en Python, resulta sencillo **ampliar y modificar sus funciones**. El código fuente se organiza en los siguientes archivos principales:
 
-* basc.py - `Fichero principal`. Procesa las diferentes opciones y ejecuta la compilación paso a paso.
-* baspp.py - `Preprocesador`. Añade números de línea e inserta cualquier fichero de código adicional referenciado por `CHAIN MERGE`. Genera un fichero intermedio con extensión `.BPP` si se usa la opción `--verbose`.
-* baslex.py - `Analizador léxico`. Recorre el código fuente y genera una lista de tokens equivalente. Genera un fichero intermedio con extesión `.LEX` si se usa la opción `--verbose`.
-* basparse.py - `Analizador sintático`. Toma la lista de tokens y comprueba que la sintaxis del programa es correcta, generando en el proceso una representación intermedia del código como Árbol de Sintaxis Abstraco (AST). Genera un fichero intermedio con extensión `.AST` si se usa la opción `--verbose`.
-* emitters/cpcemitter.py - `Generador de código ensablador`. Toma el árbol generado por el analizador sintáctico y produce el código ensamblador equivalente. Genera un fichero con extensión `.ASM` como resultado del proceso. Dicho fichero será ensamblado por **ABASM** para generar el fichero binario final.
-* emitters/cpcrt.py - `Runtime del compilador`. Proporciona rutinas en ensamblador que son llamadas por el código generado por cpcemitter.py
+* **basc.py – Fichero principal:** Gestiona las distintas opciones del compilador y ejecuta la compilación paso a paso.
+* **baspp.py – Preprocesador:** Añade números de línea e inserta cualquier fichero de código adicional referenciado mediante `CHAIN MERGE`. Si se activa la opción `--verbose`, genera un fichero intermedio con extensión `.BPP`.
+* **baslex.py – Analizador léxico:** Recorre el código fuente y genera la lista de tokens correspondiente. Con `--verbose`, produce un fichero intermedio con extensión `.LEX`.
+* **basparse.py – Analizador sintáctico:** Procesa la lista de tokens, verifica la sintaxis del programa y genera una representación intermedia del código en forma de Árbol de Sintaxis Abstracta (AST). Con `--verbose`, se genera un fichero intermedio `.AST`.
+* **emitters/cpcemitter.py – Generador de código ensamblador:** Toma el AST generado por el analizador sintáctico y produce el código ensamblador equivalente. El resultado se guarda en un fichero `.ASM`, que luego será ensamblado por **ABASM** para producir el binario final.
+* **emitters/cpcrt.py – Runtime del compilador:** Contiene rutinas en ensamblador llamadas por el código generado por `cpcemitter.py`.
 
-Siempre que se modifique el código en cualquiera de los ficheros anteriores, se puede comprobar que no se han introducido errores obvios ejecutando los siguientes comandos desde el directorio donde se encuentra nuestro fichero `basc.py`:
+Siempre que se realicen cambios en cualquiera de estos archivos, es recomendable comprobar que no se han introducido errores evidentes. Esto se puede hacer ejecutando los siguientes comandos desde el directorio donde se encuentra `basc.py`:
 
-* Comprobación de tipos:
-```
+* **Comprobación de tipos:**
+
+```bash
 mypy . --explicit-package-bases
 ```
 
-* Pruebas unitarias:
-```
+* **Pruebas unitarias:**
+
+```bash
 python3 -m unittest -b
 ```
 
-Por último, el directorio `examples` incluye varios programas que se pueden compilar y utilizar también para pruebas.
+Finalmente, el directorio `examples` incluye varios programas de ejemplo que pueden compilarse y servir también para realizar pruebas y experimentos con el compilador.
+
+---
+

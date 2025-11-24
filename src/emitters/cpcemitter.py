@@ -2346,9 +2346,19 @@ class CPCEmitter:
         """
         Go to a specified line number in the program on detecting an error. 
         """
-        self._emit_code("; ON ERROR GOTO <linenumber>")
-        self._raise_warning(WL.MEDIUM, "ON ERROR is ignored and has not effect", node)
-        self._emit_code("; IGNORED")
+        # In our case, we jump to the label if ERR variable is <> 0
+        self._emit_code("; ON ERROR GOTO <line number> | <label> ")
+        self._emit_import("rt_error")
+        label = node.args[0]
+        if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
+            self._emit_code("ld      a,(rt_error)")
+            self._emit_code("cp      0")
+            sym = self.symtable.find(str(label.value), SymType.Label, "")
+            if sym is not None:
+                self._emit_code(f"jp      nz,{sym.label}")
+            else:
+                self._raise_error(38, label)
+        self._emit_code(";")
 
     def _emit_ON_SQ(self, node:AST.Command):
         """

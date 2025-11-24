@@ -1685,10 +1685,19 @@ class LocBasParser:
  
     @astnode   
     def _parse_ON_ERROR_GOTO(self) -> AST.Command:
-        """ <ON_ERROR_GOTO> ::= ON ERROR GOTO INT"""
-        self._advance()
-        num = self._expect(TokenType.INT)
-        args: list[AST.Statement] = [AST.Integer(value = cast(int, num.value))]
+        """ <ON_ERROR_GOTO> ::= ON ERROR GOTO (INT|LABEL)"""
+        tk = self._advance()
+        args: list[AST.Statement] = []
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args = [AST.Integer(value = cast(int, num.value))]
+            args[0].set_origin(num.line, num.col)
+        elif self._current_is(TokenType.IDENT):
+            label = self._advance()
+            args = [AST.Label(value = label.lexeme)]
+            args[0].set_origin(label.line, label.col)
+        else:
+            self._raise_error(2, tk, "invalid label")
         return AST.Command(name="ON ERROR GOTO", args=args)
 
     @astnode

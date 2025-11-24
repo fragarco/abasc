@@ -3,6 +3,8 @@ BASC: USER MANUAL
 ==================
 **A BASIC cross compiler for the Amstrad CPC machines**
 
+---
+
 # Introduction
 
 **BASC (BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
@@ -33,6 +35,8 @@ Released in 1987 for the Amstrad PC 1512 and 1640, this version removed the need
 
 Introduced in 1989, this revision added `FUNCTION`, `SUB`, multi-line `IF` statements, and other enhancements aimed at facilitating the development of more structured programs.
 
+---
+
 # References
 
 This manual is **not** intended to be a comprehensive guide to programming in BASIC. For in-depth information on Locomotive BASIC programming, the following texts are recommended:
@@ -50,6 +54,8 @@ To deepen your knowledge of the Amstrad CPC464/CPC6128 firmware, or of Z80 assem
 * *The Amstrad CPC Firmware Guide* (Bob Taylor)
 * *Z80 Assembly Language Programming* (Lance A. Leventhal)
 * *Ready-Made Machine Language Routines for the Amstrad CPC* (Joe Pritchard)
+
+---
 
 # Syntax Supported by BASC
 
@@ -96,6 +102,8 @@ DATA "Rachel", 45, 1980
 DATA "Elvira", 20, 2005
 ```
 
+---
+
 # Using the Compiler
 
 ```
@@ -118,6 +126,8 @@ In addition to the compiler, the development package includes several extra tool
 * `img.py` — Converts images to CPC format and can generate loading screens.
 * `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files.
 * `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files.
+
+---
 
 # Peculiarities of the Compiler
 
@@ -198,23 +208,23 @@ The program above leaves the memory reserved for `A$` in the following layout:
 | 0–10  | Length + content of `name$` | 4, J, u, a, n, 0, 0, 0, 0, 0, 0 |
 | 11–12 | Value of `age`              | 20                              |
 
-## Soporte para procedimientos
+## Functions and Procedures
 
-Tradicionalmente, BASIC permite organizar código reutilizable mediante rutinas invocadas con `GOSUB` y `RETURN` (sin soporte para parámetros) o mediante funciones de una sola línea definidas con `DEF FN`. BASC es plenamente compatible con ambos mecanismos, pero además incorpora una forma más moderna de estructurar el código, introducida en la versión 2 Plus de Locomotive BASIC. La sintaxis es la siguiente:
+Traditionally, BASIC allows reusable code to be organized through routines invoked with `GOSUB` and `RETURN` (without parameter support), or through single-line functions defined with `DEF FN`. BASC is fully compatible with both mechanisms, but it also adds a more modern and structured approach introduced in Locomotive BASIC 2 Plus. The syntax is:
 
 ```basic
-SUB nombre(lista de parámetros)
+SUB name(parameter list)
     ....
 END SUB
 
-FUNCTION nombre(lista de parámetros)
+FUNCTION name(parameter list)
     ....
 END FUNCTION
 ```
 
-Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno.
+Functions defined with `FUNCTION` must include at least one assignment to the function’s own name in their bodies, which serves as the return value.
 
-Las funciones pueden llamarse directamente como parte de una expresion, mientras que las subrutinas deben llamarse con `CALL`, indicando el nombre del procedimiento y los parámetros entre paréntesis separados por comas. 
+Functions can be called directly as part of an expression, while subroutines must be invoked using `CALL`, specifying the procedure name and a comma-separated list of parameters inside parentheses.
 
 ```basic
 function pow2(x)
@@ -232,127 +242,161 @@ label MAIN
 end
 ```
 
-Las variables declaradas dentro del cuerpo de un procedimiento (mediante `DECLARE`, `DIM`, incluyéndolas en la parte izquierda de una asignación o utilizándolas en `INPUT`, `READ` o `LINE INPUT`) son siempre locales y no pueden ser referenciadas desde el exterior. Las variables globales, por su parte, pueden emplearse dentro de un procedimiento, pero solo en modo lectura (por ejemplo, como parte de una expresión o como parámetro de otra función).
+Variables declared inside a procedure—using `DECLARE`, `DIM`, by assigning to them, or by using them in `INPUT`, `READ`, or `LINE INPUT`—are always local and cannot be accessed from outside the procedure. Global variables, on the other hand, may be used inside a procedure but only in read-only mode (for example, as part of an expression or as parameters to another function).
 
-En cuanto a la semántica de paso de parámetros, los enteros se pasan por valor, mientras que las cadenas de texto y los números reales se pasan por referencia (es decir, mediante un puntero a su contenido). Por tanto, en estos dos últimos casos es posible modificar la variable original desde el cuerpo del procedimiento.
+Regarding parameter passing semantics, integers are passed **by value**, while strings and real numbers are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter two cases, the procedure may modify the original variable.
 
-**NOTA SOBRE RECURSIVIDAD:** BASC no permite recursividad. Al igual que ocurre con las variables globales, las variables locales reservan memoria en tiempo de compilación. Debido a ello, el código no es reentrante y no es posible realizar llamadas recursivas.
+**NOTE ON RECURSION:** BASC does not support recursion. As with global variables, local variables reserve memory at compile time. Because of this, the code is not reentrant, making recursive calls impossible.
 
-## Uso de código ensamblador
+## Using Assembly Code
 
-Mediante la sentencia `ASM` es posible incrustar código ensamblador en cualquier parte del programa BASIC. **ABASM**, el ensamblador utilizado por BASC, dispone de su propio manual, donde se describe con detalle la sintaxis y opciones disponibles.
+The `ASM` statement allows you to embed assembly code directly within any part of a BASIC program. **ABASM**, the assembler used by BASC, has its own dedicated manual that describes the supported syntax and available options in detail.
 
-Además, se pueden invocar rutinas escritas en ensamblador utilizando la sentencia `CALL`, tal y como muestra el siguiente ejemplo:
+You can also call assembly routines using the `CALL` statement, as shown in the following example:
 
 ```basic
-ASM "mylabel: ret ; rutina vacía"
+ASM "mylabel: ret ; empty routine"
 
 CALL "mylabel"
 ```
 
-Es posible pasar argumentos a las rutinas ensambladas, aunque esto requiere conocer la convención de llamadas utilizada por BASC. Los parámetros se apilan **en orden**, del primero al último, y la función se invoca con el registro **IX apuntando al último parámetro**.
-La rutina llamada **no** debe desapilar los parámetros; es el llamante quien se encarga de ello tras el retorno.
+It is possible to pass arguments to assembly routines, although this requires understanding BASC’s calling convention. Parameters are **pushed onto the stack in order**, from first to last, and the routine is invoked with the **IX register pointing to the last parameter**.
+The callee **must not** remove parameters from the stack; this is handled by the caller after the routine returns.
 
-Por ejemplo, una rutina que reciba tres parámetros enteros (cada uno de 2 bytes):
+For example, a routine receiving three integer parameters (each 2 bytes long):
 
 ```
-CALL mirutina(param1, param2, param3)
+CALL myroutine(param1, param2, param3)
 ```
 
-Podrá acceder a ellos mediante el siguiente esquema:
+can access them using the following layout:
 
-| Parámetro | Direcciones relativas |
-| --------- | --------------------- |
-| param1    | IX+4, IX+5            |
-| param2    | IX+2, IX+3            |
-| param3    | IX+0, IX+1            |
+| Parameter | Relative Address |
+| --------- | ---------------- |
+| param1    | IX+4, IX+5       |
+| param2    | IX+2, IX+3       |
+| param3    | IX+0, IX+1       |
 
-Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensablador y que el compilador no necesita gestionar la memoria temporal.
+Finally, you can append the `ASM` clause to the declaration of a function or subroutine. This indicates that the entire routine is written in assembly and that the compiler does not need to allocate or manage temporary memory for it.
 
-``` basic
-SUB cpcSetColor(i,c) ASM
-    ' Equivalent to the BASIC call INK
-    ' param 1: is the ink number (0-16) bening 16 the border ink.
-    ' param 2: color in hardware values - &40 (i.e &14 means &54 black)
+```basic
+SUB cpcSetColor(i, c) ASM
+    ' Equivalent to the BASIC INK statement
+    ' param 1: ink number (0–16), with 16 being the border ink
+    ' param 2: hardware color value – &40 (i.e., &14 becomes &54 for black)
+
     ASM "ld      bc,&7F00 ; Gate Array"
     ASM "ld      a,(ix+2) ; ink number"
     ASM "out     (c),a"
     ASM "ld      a,&40"
-    ASM "ld      e,(ix+0) ; HW color"
+    ASM "ld      e,(ix+0) ; hardware color"
     ASM "or      e"
     ASM "out     (c),a"
- 	ASM "ret"
+    ASM "ret"
 END SUB
 
-CALL cpcSetColor(0,&14)
+CALL cpcSetColor(0, &14)
 ```
 
-## Gestión de la memoria
+It's even possible to include other binary or assembly files to our program using `ASM`:
 
-El mapa de memoria de un programa compilado con BASC es el siguiente:
+```basic
+ASM "read 'mylib.asm'    ; extra assembly code"
+ASM "incbin 'assets.bin' ; binary content to append"
+```
 
-| Dirección         | Descripción                                                |
-| ----------------- | ---------------------------------------------------------- |
-| **0x0170**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal |
-| **0x4000**        | Comienzo del área para el código de la aplicación |
-| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables |
-| **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador |
-| **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa |
+## Memory Management
 
-Locomotive BASIC incluye una serie de comandos relacionados con la gestión de memoria: `HIMEM`, `MEMORY`, `FRE` y `SYMBOL AFTER`.
-BASC los soporta, pero su significado varía ligeramente debido al modelo compilado:
+The memory layout of a program compiled with BASC is structured as follows:
 
-| Comando          | Función BASC  |
-| ---------------- | ------------- |
-| **HIMEM**        | Devuelve la dirección de memoria inmediatamente posterior al final del programa. |
-| **MEMORY**       | Establece el la dirección de momria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla. |
-| **SYMBOL AFTER** | BASC reserva memoria para carácteres redefinibles (UDC) igual que Locomotive BASIC. Esta zona forma parte de ***data***. Puede liberarse con `SYMBOL AFTER 256`. |
-| **FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
-| **FRE(1)**       | Devuelve la memoria temporal disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal y devuelve el mismo valor que `FRE(0)`. |
+| Address           | Description                                                                |
+| ----------------- | -------------------------------------------------------------------------- |
+| **0x0170**        | Start of the application-initialization area and temporary memory space    |
+| **0x4000**        | Start of the application’s code segment                                    |
+| ***data***        | Label marking the beginning of the static variable-allocation area         |
+| ***runtime***     | Label marking the beginning of compiler-generated support routines         |
+| ***program_end*** | Label marking the address where the program’s memory usage ends            |
 
-BASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas).
-Después de cada sentencia, la memoria temporal se libera automáticamente. La única excepción ocurre durante una llamada a `FUNCTION` o `SUB`: la memoria temporal previa a la llamada se preserva para poder restaurar el contexto al regresar.
+Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
+BASC supports them as well, but their semantics differ slightly due to the compiled-code model:
 
-## Uso del Firmware
+| Command          | Meaning in BASC                              |
+| ---------------- | -------------------------------------------- |
+| **HIMEM**        | Returns the memory address immediately above the end of the compiled program. |
+| **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.|
+| **SYMBOL AFTER** | BASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
+| **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`). |
+| **FRE(1)**       | Returns the currently available temporary memory. |
+| **FRE("")**      | Forces a cleanup of temporary memory and returns the same value as `FRE(0)`. |
 
-BASC se apoya de manera extensa en las rutinas del **Firmware del Amstrad CPC**, especialmente para el manejo de números reales. Esto significa que, aunque el código compilado es más rápido que el interpretado, puede verse limitado por el rendimiento de dichas rutinas del sistema.
+BASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations).
+After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
-Sin embargo, es posible utilizar la sentencia `ASM` para definir alternativas más eficaces para las llamadas al Firmware (como `CLS`, `INK`, `BORDER`, `PAPER`, etc.). Sin embargo, debe tenerse en cuenta que, si no se deshabilitan las interrupciones, el Firmware seguirá activo y **podría sobrescribir los cambios realizados** sin previo aviso.
+## Using the Firmware
 
-Otra opción es modificar directamente el código ensamblador del programa, ya que BASC genera durante la compilación un fichero con extenisón `.ASM` que contiene todo el código del programa. Esto permite al programador modificarlo o añadir optimizaciones específicas cuando sea necesario, pudiendo usar **ABASM** para obtener el binario correspondiente. Mediante la opción `--verbose` obtendremos muchos más comentarios en el fichero ASM generado, lo que nos ayudará a realizar un mejor seguimiento de la traducción de nuestras sentencias BASIC a código ensamblador.
+BASC makes extensive use of the **Amstrad CPC Firmware** routines, especially for handling floating-point numbers. This means that although compiled code is significantly faster than interpreted BASIC, its performance may still be limited by the speed of these system routines.
 
-# Comandos y sintaxis del lenguaje
+However, you can use the `ASM` statement to provide more efficient replacements for Firmware calls (such as `CLS`, `INK`, `BORDER`, `PAPER`, etc.). Keep in mind, though, that unless interrupts are disabled, the Firmware remains active and **may overwrite your changes** without warning.
 
-## Notación
+Another option is to modify the program’s assembly code directly. During compilation, BASC generates an `.ASM` file containing the full assembly code. This allows the developer to adjust or extend the generated code and apply specific optimizations when needed, using **ABASM** to produce the final binary. When the `--verbose` option is enabled, the generated ASM file includes more detailed comments, making it easier to follow how each BASIC statement is translated into assembly code.
 
-Carácteres especiales:
+Aquí tienes la traducción al inglés del texto:
 
-| carácter | Notas |
-|----------|-------|
-| & o &H   | prefijo para números en hexadecimal |
-| &X 	   | prefijo para números en binario |
-| : 	   | separador de sentencias en la misma línea |
-| # 	   | prefijo para denotar un canal de texto (0-9) |
-| "        | delimitador de cadenas de texto |
-| @        | delante del nombre de una variable indica dirección de memoria apuntada por dicha variable |
-| \|       | delante de un identificador indica llamada a función RSX |
+---
 
-## Listado de comandos y funciones
+## Libraries
+
+The BASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of our programs using the `CHAIN MERGE` command.
+
+`CHAIN MERGE` will first try to resolve any file to include against the local directory of our source code. If the specified file is not local to the program, it will then search in the BASC `lib` directory, treating it as a "library" — a reusable `.BAS` file that can be used in any project. For example, we can test the `memory.bas` file distributed with BASC using this simple program:
+
+```basic
+CHAIN MERGE "memory.bas"
+
+A$="Hello world"
+B$=""
+
+CALL MEMSET(&C000, &4000, 0)
+CALL MEMCOPY(@B$, @A$, LEN(A$)+1)
+PRINT B$
+```
+
+---
+
+# Commands and Language Syntax
+
+The following section provides a concise overview of the notation, commands, and functions supported by the compiler. It is **not** intended to be an exhaustive guide to Locomotive BASIC, but rather to highlight the elements that are specific to the compiler.
+For a more comprehensive understanding of the language, refer to the works listed in the *References* section at the beginning of this manual.
+
+## Notation
+
+Special characters:
+
+| Character   | Notes          |
+| ----------- | -------------- |
+| `&` or `&H` | Prefix for hexadecimal numbers        |
+| `&X`        | Prefix for binary numbers             |
+| `:`         | Separates multiple statements on the same line |
+| `#`         | Prefix used to indicate a text channel (0–9)   |
+| `"`         | String delimiter                               |
+| `@`         | Placed before a variable name to indicate the memory address referenced by that variable |
+| `\|`        | Placed before an identifier to indicate an RSX function call |
+
+## List of Commands and Functions
 
 ### `ABS(<numeric expression>)`
 
-Función. Devuelve el valor absoluto del número proporcionado como parámetro. La expresión numérica puede ser entera o real.
+**Function.** Returns the absolute value of the given numeric expression. The expression can be either integer or floating-point.
 
-### `AFTER delay[,timer] GOSUB etiqueta`
+### `AFTER delay[,timer] GOSUB label`
 
-Comando. Llama a una subrutina indicada tras un retardo. El "delay" se mide con un grano de 1/50 segundos. El segundo parámetro (opcional) indica cuál de los cuatro temporizadores se debe utilizar (0..3). Si no se especifica, se utiliza el valor 0 por defecto. Como etiqueta para la sentencia GOSUB se puede usar tanto un númerod de línea (INT) como un litaral definido por la sentencia `LABEL`.
+**Command.** Calls the specified subroutine after a delay. The `delay` is measured in 1/50 second increments. The optional second parameter specifies which of the four timers to use (0..3). If omitted, timer 0 is used by default. The `GOSUB` label can be either a line number (integer) or a literal defined with the `LABEL` statement.
 
-BASC emplea las funciones del Firmware para la gestión de eventos asíncronos. Las rutinas del usuario son llamadas con la ROM baja activa y, por tanto, el código debería mantenerse breve y no hacer uso de los primeros 16K de memoria. Por ejemplo, las operaciones con números en coma flotante o las operaciones con textos tratarán de reservar memoria temporal en dicho rango y deberían evitarse. Las operaciones con enteros, en cambio, no deberían dar problemas. Este mecanismo también depende de que las interrupciones estén activas (ver `DI`y `EI`).
+BASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
-``` basic
+```basic
 A = 0
-AFTER 50 GOSUB INCR  ' Llama a la rutina INCR después de 1 segundo
+AFTER 50 GOSUB INCR  ' Calls the INCR routine after 1 second
 A = 5
 END
 
@@ -363,151 +407,161 @@ RETURN
 
 ### `ASC(string)`
 
-Función. Devuelve el valor ASCII del primer carácter de la cadena suministrada como parámetro. 
+**Function.** Returns the ASCII value of the first character in the provided string.
 
-``` basic
-PRINT ASC("HOLA") ' imprime 72, el codigo ASCII para la letra H
+```basic
+PRINT ASC("HELLO")  ' prints 72, the ASCII code for H
 ```
 
 ### `ASM string[,string]*`
 
-Comando. Inserta el código contenido de la lista de cadenas de texto como código ensamblador. Cada cadena de la lista se inserta como una nueva línea.
+**Command.** Inserts the contents of the provided string(s) as assembler code. Each string is inserted as a new line.
 
-``` basic
+```basic
 ASM "ld  hl,_my_str", "ld  a,(hl)"
 ```
 
 ### `ATN(x)`
 
-Función. Devuelve la arcotangente (arctan) de `x`. Implica el uso de números reales.
+**Function.** Returns the arctangent of `x`. This function uses floating-point arithmetic.
 
 ### `AUTO linenumber[,increment]`
 
-Comando. BASC ignora este comando y emite un mensaje de alerta sobre su uso, ya que no tiene utilidad para un programa compilado.
+**Command.** Ignored by BASC. The compiler emits a warning because this command has no effect in compiled programs.
 
 ### `BIN$(number,digits)`
 
-Función. Devuelve el valor entero `number` como candea de texto con su representación binaria. Locomotive BASIC permite especificar el número exacto de digitos a utilizar en la representación binaria, pero **BASC solo soporta los valores 8 o 16**.
+**Function.** Returns the integer `number` as a string containing its binary representation. Locomotive BASIC allows specifying the exact number of digits, but **BASC only supports 8 or 16 digits**.
 
-``` basic
-PRINT BIN$(16,8)  ' imprimira la cadena de texto "00010000"
+```basic
+PRINT BIN$(16,8)  ' prints the string "00010000"
 ```
 
 ### `BORDER colour1[,colour2]`
 
-Permite espedificar el color del borde. Si se proporcionan dos valores, se produce un parpadeo cuyo tiempo controla el comando `SPEED INK`.
+**Command**.Sets the border color. If two values are provided, the border will blink according to the timing controlled by the `SPEED INK` command.
 
-``` basic
+```basic
 BORDER 0,1
 ```
 
-### `CALL address[,list of parameters]`
+### `CALL address[, list of parameters]`
 
-Comando. Permite llamar a una rutina existente en memoria indicado su dirección, a una rutina declara con SUB o FUNCTION, o a una etiqueta declarada dentro de un bloque en ensamblador.
+**Command**. Calls an existing routine in memory, either by its memory address, a routine declared with `SUB` or `FUNCTION`, or a label defined inside an assembler block.
 
-``` basic
-SUB nada
-    print "solo imprimo nada"
+```basic
+SUB nothing
+    PRINT "Just printing nothing"
 END SUB
 
-CALL &BC14  ' rutina del firmware para limpiar la pantalla
-CALL nada()
-CALL "bucle_eterno"
-PRINT "aqui no llegaremos"
-ASM "bucle_eterno: jr bucle_eterno"
+CALL &BC14         ' Firmware routine to clear the screen
+CALL nothing()     ' Call a BASIC subroutine
+CALL "infinite_loop" 
+PRINT "We will never reach here"
+ASM "infinite_loop: jr infinite_loop"
 ```
 
 ### `CAT`
 
-Comando. Muesta el contenido del dispositivo de almacenamiento actual. Es posible cambiar el dispositivo a través de llamadas a funciones RSX como `|TAPE`, `|DISC`, `|A` o `|B`. 
+**Command**. Displays the contents of the current storage device. The device can be changed using RSX commands such as `|TAPE`, `|DISC`, `|A`, or `|B`.
 
 ### `CHAIN`
 
-Comando. En BASIC, se utiliza para remplazar el programa actual en memoria por otro. BASC ignora esta instrucción y emite una advertencia si la encuentra en el código.
+**Command**. In BASIC, this replaces the current program in memory with another program. BASC ignores this instruction and issues a warning if it is found.
 
 ### `CHAIN MERGE string`
 
-Comando. BASC reinterpreta este comando para permitir dividir nuestro código entre varios ficheros. `string` debe ser una ruta a un fichero .BAS alcanzable desde el fichero donde se hace la referencia.
+**Command**. Redefined in BASC to allow splitting your code across multiple files. `string` should be the path to a `.BAS` file accessible from the main file location.
 
-``` basic
-fichero OTRO.BAS
-    MYVAR$ = "UNA CADENA MUY UTIL"
+`CHAIN MERGE` cannot find the `string`file relative to our program directory, it will then search in the BASC `lib` directory, treating `string` as a "library" — a reusable `.BAS` file that can be used in any project.
 
-fichero MAIN.BAS
-    CHAIN MERGE "OTRO.BAS"
-    PRINT MYVAR$
-    END
+```basic
+' MORECODE.BAS
+MYVAR$ = "A VERY USEFUL STRING"
+
+' MAIN.BAS
+CHAIN MERGE "MORECODE.BAS"
+PRINT MYVAR$
+END
 ```
 
 ### `CHR$(x)`
 
-Función. Devuelve una cadena de texto con el carácter equivalente indicado por `x` en el rango 0-255.
+**Function**. Returns a string containing the character corresponding to the numeric value `x` (0–255).
 
-``` basic
+```basic
 PRINT CHR$(250)
 ```
 
 ### `CINT(x)`
 
-Función. Devuelve un entero con la conversión redondeada del número real `x`. `x` debe estar dentro del rango -32768..32767 o el valor devuelto será erroneo.
+**Function**. Converts a real number `x` to the nearest integer. `x` must be within the range -32768..32767; otherwise, the result may be incorrect.
 
-``` basic
+```basic
 PRINT CINT(PI)
 ```
 
 ### `CLEAR`
 
-Comando. Originalmente, fijaba todas las variables a 0, limpiaba la zona de memoria para cadenas de texto, cerraba cualquier fichero abierto y volvia a poner el modo para angulos a `RAD`. Con BASC, solo se llevan a cabo las dos últimas acciones indicadas.
+**Command**. Originally in BASIC, this cleared all variables, the text memory area, closed open files, and reset angle mode to `RAD`. In BASC, only the last two actions are performed.
 
 ### `CLEAR INPUT`
 
-Comando. Este comando se introdujo con la versión BASIC 1.1. BASC permite su uso incluso en un Amstrad CPC 464 utilizando la rutina del Firmware `KM RESET` en vez de `KM FLUSH`.
+**Command**. Introduced in BASIC 1.1. BASC supports it even on an Amstrad CPC 464, using the firmware routine `KM RESET` instead of `KM FLUSH`.
 
-### `CLG [tinta]`
+### `CLG [ink]`
 
-Comando. Borra la pantalla de gráficos usando el valor actual de `PAPER`. Si `tinta` está presente, se fija como nuevo valor para `PAPER` antes del borrado.
+**Command**. Clears the graphics screen using the current `PAPER` value. If `ink` is provided, it is assigned as the new `PAPER` value before clearing.
 
 ### `CLOSEIN`
 
-Comando. Cierra el fichero abierto actualmente para lectura.
+**Command**. Closes the currently open file used for reading. See `OPENIN`.
 
 ### `CLOSEOUT`
 
-Comando. Cierra el fichero abierto actualmente para escritura.
+**Command**. Closes the currently open file used for writing. See `OPENOUT`.
 
 ### `CLS [#x]`
 
-Comando. Borra la pantalla usando el color de `PAPER` actual. Es posible indicar un canal con `#x`. Los valores 0-7 están disponibles para definir áreas de la pantalla mediante el comando `WINDOW`, miestras que el valor #8 suele estar asociado a la impresora (no soportado por BASC) y el #9 se asocia con ficheros.
+**Command**. Clears the screen using the current `PAPER` color. A channel may be specified with `#x`. Values 0–7 define screen areas via the `WINDOW` command. `#8` is usually associated with the Printer (not supported in BASC), and `#9` is for files.
 
 ### `CONT`
 
-Comando. En el BASIC original permite continuar la ejecución de un programa detenido por las instrucciones `BREAK`, `STOP` o `END`. En un programa compilado no tiene sentido y BASC lo redefine para detener el programa y esperar la pulsación de cualquier tecla antes de continuar, lo que puede ser últil para depurar programas.
+**Command**. In original BASIC, continues execution after a `BREAK`, `STOP`, or `END`. In a compiled program, BASC redefines it to pause execution and wait for any keypress, may be useful for debugging.
 
-### `COPYCHR$()`
+### `COPYCHR$(#channel)`
 
-Función. Devuelve el carácter situado en la posición actual del cursor. Esta función apareció con la versión BASIC 1.1. BASC proporciona una implementación que permite utilizar esta función incluso en programas que se van a ejecutar en un Amstrad CPC 464.
+**Function**. Returns the character at the current text cursor position for the given `channel`. Introduced in BASIC 1.1, BASC provides support even on programs running on an Amstrad CPC 464.
+
+``` basic
+MODE 1
+PRINT "HELLO WORLD"
+LOCATE 3,1
+C$ = COPYCHR$(#0)  ' L letter
+LOCATE 1,2: PRINT C$
+```
 
 ### `COS(x)`
 
-Función. Devuelve el coseno de `x`. Implica el uso de números reales.
+**Function**. Returns the cosine of `x`. Requires real-number arithmetic.
 
 ### `CREAL(x)`
 
-Función. Convierte `x` (normalmente un número entero) en un número real.
+**Function**. Converts the integer `x` to a real number.
 
-### `CURSOR sistema[,usuario]`
+### `CURSOR system[, user]`
 
-Comando. Incorporado en la versión 1.1 de BASIC. Permite fijar el valor encendido `1` o apagado `0` a los flags de visiblidad del cursor. El cursor solo se mostrará cuando ambos valores (`sistema` y `usuario`) estén a `1`.
+**Command**. Introduced in BASIC 1.1. Controls cursor visibility using two flags. The cursor is shown only if both `system` and `user` are set to `1`. Otherwise, the cursor is hidden.
 
-### `DATA lista-de-constantes`
+### `DATA list-of-constants`
 
-Comando. Permite añadir al programa una serie de valores (números enteros o carácteres) que después pueden leerse en orden mediante la instrucción `READ`.
+**Command**. Allows adding a series of values (integers or characters) to the program, which can later be read sequentially using the `READ` statement.
 
-``` basic
+```basic
 CLS
 FOR I=0 TO 5
-    READ nom$
-    PRINT "Nombre:", nom$
+    READ name$
+    PRINT "Name:", name$
 NEXT
 END
 
@@ -515,100 +569,103 @@ DATA "Xavier","Ross","Gada",
 DATA "Anabel","Rachel","Elvira"
 ```
 
-### `DECLARE variable[$ FIXED longitud]),...`
+### `DECLARE variable[$ FIXED length],...`
 
-Comando. Este comando apareció con la versión 2 de Locomotive BASIC. Permite "dar a conocer" una variable que se va a utilizar posteriormente. Normalmente, solo es necesario declarar los arrays mediante `DIM` ya que las variables quedan declaradas en cuanto se les asigna un valor. Sin embargo, `DECLARE` permite crear cadenas de texto con una longitud máxima menor a los 254 bytes utilizados por defecto o declarar variables enteras con el valor por defecto de 0 reduciendo el código e intrucciones generadas, ya que no es necesaria una asignación inicial.
+**Command**. Introduced in Locomotive BASIC 2, `DECLARE` allows you to "predefine" a variable that will be used later. Typically, only arrays need explicit declaration with `DIM` since scalar variables are automatically declared when assigned. However, `DECLARE` can be used to:
 
-por ejemplo:
+* Create string variables with a maximum length smaller than the default 254 bytes.
+* Declare integer variables initialized to 0 without generating extra assignment instructions.
 
-``` basic
-B$ = ""              ' B$ reserva espacio para 254 carácteres
-DECLARE A$ FIXED 15  ' A$ reserva espacio para 15 carácteres
-B = 0                ' B queda inicializada a 0 generando más código ensamblador
-DECLARE A            ' que A.
+Example:
+
+```basic
+B$ = ""               ' B$ reserves 254 characters by default
+DECLARE A$ FIXED 15   ' A$ reserves 15 characters
+B = 0                 ' B initialized to 0, generating less assembler code
+DECLARE A             ' declares integer A
 ```
 
-### `DEC$(numero,patron)`
+### `DEC$(number, pattern)`
 
-Función. Esta función apareció con la versión 1.1 de BASIC. Permite convertir `numero` en una cadena aplicando un patrón para indicar el número de espacios antes o después del punto decimal. BASC no soporta todavía el uso de estos patrones, por lo que esta llamada se comporta, básicamente, igual que `STR$`.
+**Function**. Introduced in BASIC 1.1, `DEC$` converts `number` to a string using a pattern to define the number of spaces before or after the decimal point. BASC currently ignores the pattern, so this behaves similarly to `STR$`.
 
-``` basic
+```basic
 PRINT DEC$(15.5, "###.##")
 ```
 
-### DEF FN nombre(parametros)=expresion
+### `DEF FN name(parameters) = expression`
 
-Comando. Permite declarar una función que aplicará la expresión de la derecha a los valores indicados como parámetros en cada llamada. En BASIC 1.0 era la única forma de declarar funciones. BASC soporta `FUNCTION` ... `END FUNCTION` que es un mecanismo mucho más versátil.
+**Command**. Declares a single-line function applying the expression on the right to the given parameters. In BASIC 1.0, this was the only way to define functions. BASC supports the more versatile `FUNCTION ... END FUNCTION` syntax.
 
-A diferencia de Locomotive BASIC **las funciones y procedimientos DEBEN declararse antes de su uso**. También es imporante resaltar que debido a la gestión de tipos más extricta, una función que devuelva un valor real debe terminar su nombre obligatoriamente con el sufijo `!`, igual que una que devuelva una cadena de texto debe hacerlo con `$`.
+**Important differences in BASC:** Functions and subroutines **must be declared before use** and type suffixes are mandatory, a function returning a real must end with `!`, and a string function must end with `$`.
 
-```
-DEF FNintere0s!(principal)=principal * 1.14
-PRINT FNinteres!(1000)
+```basic
+DEF FNinterest!(principal) = principal * 1.14
+PRINT FNinterest!(1000)
 ```
 
 ### `DEFINT, DEFSTR, DEFREAL`
 
-Comandos. Originalmente fijaban un rango de letras iniciales para indicar que una variable era de un tipo determinado. Como BASC utiliza un sistema más restrictivo de tipos, estos comandos no tienen ningún efecto. El programador debe emplear obligatoriamente los sufijos `%`, `!` y `$` para indicar el tipo de una variable.
+**Command**. In original BASIC, these defined ranges of initial letters for variable types. BASC uses strict type suffixes (`%`, `!`, `$`) and ignores these commands entirely. Programmers must explicitly use suffixes to define variable types.
 
 ### `DEG`
 
-Comando. Establece que las funciones que trabajan con ángulos devuelvan sus resultados en grados en vez de radianes.
+**Command**. Sets angle-related functions (`SIN`, `COS`, etc.) to interpret input in degrees instead of radians.
 
-``` basic
+```basic
 DEG
-PRINT SIN(90.0)
+PRINT SIN(90.0)  ' prints 1
 RAD
-PRINT SIN(90.0)
+PRINT SIN(90.0)  ' prints 0.8939 (value in radians)
 ```
 
-### `DELETE bajo-alto`
+### `DELETE low-high`
 
-Comando. En Locomotive BASIC este comando borraba un conjunto de líneas del programa en BASIC. En BASC, este funcionamiento no tiene sentido, así que `DELETE` se ha modificado para permitir borrar (llenar con 0s) una región de la memoria. El rango debe proporcionarse como: dirección inicial - dirección final.
+**Command**. In Locomotive BASIC this command was used to delete a range of program lines. In BASC, this behavior does not make sense, so `DELETE` has been redefined to clear (fill with zeros) a memory region. The range must be specified as: starting address - ending address.
 
-``` basic
+```basic
 DELETE &C000-&FFFF
 ```
 
 ### `DERR`
 
-Comando. Introducido en la versión 1.1 de BASIC. Almacenaba el último error producido al trabajar con la unidad de disco. BASC ignora cualquier referencia a este comando y emite una advertencia al respecto si lo encuentra en el código.
+**Command**. Introduced in BASIC 1.1, it stored the last disk-related error. BASC ignores any reference to this command and issues a warning if it appears in the code.
 
 ### `DI`
 
-Comando. Desactiva el mecanismo de interrupciones. Con las interrupciones desactivadas, dejerá de actualizarse el valor devuelto por `TIME` y la gestión de eventos registrados con `AFTER` o `EVERY`. Las interrupciones pueden volverse a activar con el comando `EI`.
+**Command**. Disables the interrupt mechanism. With interrupts disabled, the `TIME` value stops updating, and events scheduled with `AFTER` or `EVERY` are not processed. Interrupts can be re-enabled using the `EI` command.
 
-### `DIM array(indice1, indice2, ...) [FIXED longitud]`
+### `DIM array(index1, index2, ...) [FIXED length]`
 
-Comando. Permite declarar y reservar la memoria a utilizar por un array (vector). El tipo de dato debe indicarse como sufijo al nombre del array (`%`, `!`, `$`). Si no se indica ningún sufijo, los datos serán enteros. En el caso de un array de cadenas de texto, es posible reducir el tamaño máximo reservado para cada cadena usando la cláusula `FIXED` después de la lista de indices.
+**Command**. Declares an array and reserves memory for it. The data type is indicated using a suffix on the array name (`%`, `!`, `$`). If no suffix is specified, the array stores integers. For string arrays, you can reduce the maximum memory allocated for each element using the `FIXED` clause after the index list.
 
-Los indices van desde 0 hasta el número indicado en la declaración.
+Indices start at 0 and go up to the number specified in the declaration.
 
-```
-DIM nom$(3) FIXED 8
+```basic
+DIM name$(3) FIXED 8
 
-nom$(0) = "Juan"
-nom$(1) = "Daniel"
-nom$(2) = "Pepe"
-nom$(3) = "Roberto"
+name$(0) = "Juan"
+name$(1) = "Daniel"
+name$(2) = "Pepe"
+name$(3) = "Roberto"
 
 FOR I=0 TO 3
-    PRINT nom$(I)
+    PRINT name$(I)
 NEXT
 ```
 
-### `DRAW x,y[,i[,modo]]`
+### `DRAW x,y[,i[,mode]]`
 
-Comando. Dibuja una línea desde la posición actual del cursor hasta la posición `x` e `y`. Si se indica un tercer parámetro, este es el color a utilizar. Con la versión 1.1 de BASIC, se añadió un cuarto parámetro soportado por BASC (incluso para programas que correrán en un Amstrad CPC 464). Este cuarto parámetro indica el modo o máscara a aplicar entre cada punto de la línea y el fondo, con los valores que se indican a continuación:
+**Command**. Draws a line from the current cursor position to the coordinates `x` and `y`. The optional third parameter specifies the color. In BASIC 1.1, a fourth parameter was added (supported by BASC even for programs running on an Amstrad CPC 464), which defines the mode or mask applied between each point of the line and the background:
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+| Value | Mode               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (exclusive OR) |
+| 2     | AND                |
+| 3     | OR                 |
 
-``` basic
+```basic
 MODE 1
 DRAW 100,100,1
 DRAW 0,100,2
@@ -616,69 +673,74 @@ DRAW 100,0,3
 DRAW 0,0,2
 ```
 
-### `DRAWR x,y[,i[,modo]]`
+### `DRAWR x,y[,i[,mode]]`
 
-Comando. Al igual que `DRAW` dibuja una línea, aunque los valores de `x` e `y` no son posiciones absolutas de la pantalla sino valores relativos a la posición actual. El resto de parámetros tienen el mismo significado que en la instrucción `DRAW`.
+**Command**. Works similarly to `DRAW`, but the `x` and `y` values are **relative** to the current cursor position rather than absolute screen coordinates. The other parameters function the same way as in `DRAW`.
 
-### `EDIT linea[-linea]`
+### `EDIT line[-line]`
 
-Comando. En Locomotive BASIC permite editar una línea de código. En BASC este comando no tiene sentido y es ignorado si forma parte del código a compilar.
+**Command**. In Locomotive BASIC, this command allows editing a specific line of code. In BASC, it is ignored and has no effect during compilation.
 
 ### `EI`
 
-Comando. Activa las interrupciones. Ver `DI`.
+**Command**. Enables interrupts. See also `DI`.
 
 ### `END`
 
-Comando. Termina la ejecución del programa. Mientras que en el interprete de BASIC esto significa devolver el control al usuario, BASC salta a un bucle infinito. `STOP`, en cambio, fuerza un reincio de la máquina. 
+**Command**. Ends program execution. In the BASIC interpreter, this returns control to the user. In BASC, it jumps to an infinite loop. Note that `STOP` forces a machine restart.
 
 ### `END FUNCTION`
 
-Comando. Termina la declaración de una función. Ver `FUNCTION`.
+**Command**. Marks the end of a function declaration. See `FUNCTION`.
 
 ### `END SUB`
 
-Comando. Termina la declaración de un procedimiento. Ver `SUB`.
+**Command**. Marks the end of a procedure declaration. See `SUB`.
 
-### `ENT numero de envolvente, secciones`
+### `ENT envelope_number, sections`
 
-Comando. Define la variación en tono de un sonido. Locomotive BASIC permite especificar dos tipos de envolventes de tono (secciones), una con tres parámetros y otra con dos. Aunque no está documentado, para diferenciarlas, es posible utilizar el símbolo `=` antes del primer número en el segundo caso. BASC no falla si se encuentra dicho carácter, pero utiliza el número de parámetros para saber si nos encontramos en el primer caso o en el segundo. En caso de duda, procederá siempre considerando que estamos usando el primer caso, donde cada envolvente se especifica usando tres valores.
+**Command.** Defines the pitch variation of a sound. Locomotive BASIC allows specifying two types of pitch envelopes (sections): one with three parameters and another with two. Although not officially documented, to differentiate the second type, the `=` symbol could be placed before the first number. BASC does not fail if this character is present; however, it determines the envelope type based on the number of parameters. If there is any ambiguity, BASC assumes the first type, where each envelope is defined with three values.
 
-Sección tipo 1:
-* Parámetro 1: número de escalores, de 0 a 239.
-* Parámetro 2: tamaño de cada escalón, de -128 a +127.
-* Parámetro 3: pausa
-        
-Sección tipo 2:
-* Parámetro 1: periodo del tono (entero de 16 bits).
-* Parámetro 2: pausa
+**Type 1 Section:**
 
-### ENV `número de envolvente, secciones`
+* Parameter 1: number of steps, from 0 to 239.
+* Parameter 2: step size, from -128 to +127.
+* Parameter 3: pause
 
-Comando. Define la variación en volumen de un sonido. Locomotive BASIC permite especificar dos tipos de envolventes de volumen (secciones), una con tres parámetros y otra con dos. Aunque no está documentado, para diferenciarlas, es posible utilizar el símbolo `=` antes del primer número en el segundo caso. BASC no falla si se encuentra dicho carácter, pero utiliza el número de parámetros para saber si nos encontramos en el primer caso o en el segundo. En caso de duda, procederá siempre considerando que estamos usando el primer caso, donde cada envolvente se especifica usando tres valores.
+**Type 2 Section:**
 
-Sección tipo 1:
-* Parámetro 1: número de escalores, de 0 a 127.
-* Parámetro 2: tamaño de cada escalón, de -128 a +127.
-* Parámetro 3: pausa, rango de 0 a 255.
-        
-Sección tipo 2:
-* Parámetro 1: ID de envolvente según el hardware de sonido.
-* Parámetro 2: periodo de la envolvente. Valor que se manda a los registros.
+* Parameter 1: pitch period (16-bit integer).
+* Parameter 2: pause
 
-``` basic
+### `ENV envelope_number, sections`
+
+**Command.** Defines the volume variation of a sound. Locomotive BASIC supports two types of volume envelopes (sections): one with three parameters and another with two. Similar to `ENT`, the second type can optionally start with the `=` symbol. BASC determines the envelope type based on the number of parameters and assumes the three-parameter type by default.
+
+**Type 1 Section:**
+
+* Parameter 1: number of steps, from 0 to 127.
+* Parameter 2: step size, from -128 to +127.
+* Parameter 3: pause, range 0–255
+
+**Type 2 Section:**
+
+* Parameter 1: envelope ID according to the sound hardware.
+* Parameter 2: envelope period, the value sent directly to the hardware registers.
+
+```basic
 ENV 1,=9,2000
 ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
 ENV 3,=9,9000
 ```
+
 ### `EOF`
 
-Función. Permite saber si el fichero del que se está leyendo ha llegado al final. Devuelve -1 (true) si el final se ha alcanzado o 0 (false) en cualquier otro caso.
+**Function.** Checks whether the file currently being read has reached the end. Returns `-1` (true) if the end of the file has been reached, or `0` (false) otherwise.
 
-``` basic
-OPENIN "DATOS.TXT"
+```basic
+OPENIN "DATA.TXT"
 WHILE NOT EOF
-    LINE INPUT #9,C$
+    LINE INPUT #9, C$
     PRINT C$
 WEND
 CLOSEIN
@@ -686,48 +748,48 @@ CLOSEIN
 
 ### `ERASE arrayname`
 
-Comando. En Locomotive BASIC permite liberar la memoria reservada por un array. BASC reserva el espacio durante la compilación, por lo que este comando no tiene utilidad y es ignorado si forma parte del código compilado.
+**Command.** In Locomotive BASIC, this frees the memory reserved for an array. In BASC, memory is allocated at compile time, so this command has no effect and is ignored in compiled code.
 
 ### `ERL`
 
-Comando. En Locomotive BASIC permite conocer la línea donde se ha producido el último error. En un programa compilado no tiene utilidad y es ignorado si forma parte del código compilado.
+**Command.** In Locomotive BASIC, this returns the line number of the last error. In compiled programs, it has no effect and is ignored.
 
 ### `ERR`
 
-Comando. Permite recuperar un código de error (entero) que se haya establecido antes llamando al comando `ERROR`. También puede almacenar el código de error `31` (File not open) si los comandos `OPENIN` u `OPENOUT` fallan.
+**Command.** Returns the error code (integer) previously set by the `ERROR` command. It can also return code `31` ("File not open") if `OPENIN` or `OPENOUT` failed.
 
-``` basic
+```basic
 ERROR 5
 PRINT ERR
 ```
 
 ### `ERROR integer`
 
-Comando. BASC permite utilizar este comando para fijar un número de error que puede consultarse después con `ERR`.
+**Command.** Sets an error code that can be retrieved later using `ERR`.
 
-### `EVERY tiempo[,temporizador] GOSUB etiqueta`
+## `EVERY time[,timer] GOSUB label`
 
-Comando. Fija el `temporizador` indicado (0..3 - 0 por defecto) para saltar a `etiqueta` cada intervalo de `tiempo`. El tiempo tiene un grano de 1/50 segundos, por lo que un valor de 50 quiere decir llamar a la etiqueta cada segundo.
+**Command**. Sets the specified `timer` (0–3, default 0) to call the subroutine at `label` every `time` ticks. Each tick represents 1/50 of a second, so a value of 50 corresponds to calling the label once per second.
 
-BASC emplea las funciones del Firmware para la gestión de eventos asíncronos. Las rutinas del usuario son llamadas con la ROM baja activa y, por tanto, el código debería mantenerse breve y no hacer uso de los primeros 16K de memoria. Por ejemplo, las operaciones con números en coma flotante o las operaciones con textos tratarán de reservar memoria temporal en dicho rango y deberían evitarse. Las operaciones con enteros, en cambio, no deberían dar problemas. Este mecanismo también depende de que las interrupciones estén activas (ver `DI` y `EI`).
+BASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
-``` basic
-A=0
-EVERY 300 GOSUB INCA ' imprime e incrementa A cada 6 segundos
+```basic
+A = 0
+EVERY 300 GOSUB INCA  ' Prints and increments A every 6 seconds
 END
 
 LABEL INCA
     PRINT A
-    A=A+1
-    RETURN
+    A = A + 1
+RETURN
 ```
 
 ### `EXIT FOR`
 
-Comando. Aunque en Locomotive BASIC era posible abandonar un bucle con una sentencia `GOTO`, en un programa compilado con BASC se producirán errores inesperados durante la ejecución. La forma adecuada de abandonar un bucle `FOR` antes de su terminación es utilizando el comando `EXIT FOR`, que saltará a la siguiente instrucción tras el `NEXT`.  Este comando fue introducido con la versión 2 de Locomotive BASIC.
+**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with BASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2.
 
-``` basic
-FOR I=0 TO 100
+```basic
+FOR I = 0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
 PRINT I
@@ -735,26 +797,26 @@ PRINT I
 
 ### `EXIT WHILE`
 
-Comando. Aunque en Locomotive BASIC era posible abandonar un bucle con una sentencia `GOTO`, en un programa compilado con BASC se producirán errores inesperados durante la ejecución. La forma adecuada de abandonar un bucle `WHILE` antes de su terminación es utilizando el comando `EXIT WHILE`, que saltará a la siguiente instrucción tras el `WEND`. Este comando fue introducido con la versión 2 de Locomotive BASIC.
+**Command**. Using `GOTO` to exit a `WHILE` loop in compiled code can lead to runtime errors. To exit a `WHILE` loop correctly, use `EXIT WHILE`, which jumps to the statement immediately after the corresponding `WEND`. This command was introduced in Locomotive BASIC 2.
 
-``` basic
-I=0
+```basic
+I = 0
 WHILE I < 101
-    IF I=50 THEN EXIT WHILE
-    I=I+1
+    IF I = 50 THEN EXIT WHILE
+    I = I + 1
 WEND
 PRINT I
 ```
 
 ### `EXP(x)`
 
-Función. Calcula E elevado a `x`, siendo E 2.7182818 aproximadamente, el número cuyo logaritmo natural es 1. Implica el uso de números reales.
+**Function**. Returns e raised to the power of `x`, where e ≈ 2.7182818 (the number whose natural logarithm is 1). Requires floating-point support.
 
 ### `FILL`
 
-Comando. Solo disponible para ordenadores Amstrad CPC 664, 6128 o superiores. Rellena un área de la pantalla a partir de la posición actual del cursor gráfico con la tinta activa. Permite rellenar figuras, y aunque BASC ompile el programa adecuadamante, fallará si trata de ejecutarse en un Amstrad CPC 464.
+**Command**. Only available on Amstrad CPC 664, 6128, or higher. Fills an area of the screen starting from the current graphics cursor position using the active pen color. It can fill shapes automatically. While BASC will compile the program, execution on an Amstrad CPC 464 will fail.
 
-``` basic
+```basic
 MODE 0
 GRAPHICS PEN 15
 MOVE 200,0
@@ -765,101 +827,104 @@ FILL 15
 
 ### `FIX(x)`
 
-Función. Convierte a entero el número real `x` truncándolo. Para que el valor devuelto sea correcto, el número real debe estar en el rango -32768 to +32767.
+**Function**. Converts the real number `x` to an integer by truncation. The result is valid only if `x` is within the range -32768 to +32767.
 
-``` basic
-PRINT FIX(PI+0.5), CINT(PI+0.5)
+```basic
+PRINT FIX(PI + 0.5), CINT(PI + 0.5)
 ```
 
-### `FOR variable=inicio TO fin STEP variacion`
+### `FOR variable = start TO end STEP increment`
 
-Comando. Permite especificar un bucle donde `variable` variará de valor desde `inicio` a `fin`. Si no se especifica una `variacion`, el incremento será de 1 en cada pasada del bucle.
+Command. Defines a loop in which `variable` iterates from `start` to `end`. If no `increment` is specified, the loop defaults to a step of 1.
 
-``` basic
+```basic
 CLS
 T! = TIME
-FOR i=1 to 10
-    FOR j=1 to 1000
+FOR i = 1 TO 10
+    FOR j = 1 TO 1000
         s = 1000 + j
     NEXT j
     PRINT ".";
 NEXT i
-PRINT " FIN!"
-PRINT TIME-T!
+PRINT " DONE!"
+PRINT TIME - T!
 ```
+
+**NOTE:** `GOTO` should not be use to leave a FOR LOOP. Instead, use `EXIT FOR`.
 
 ### `FRAME`
 
-Comando. Hace que el programa se detenga hasta la siguiente señal de sincronismo vertical del monitor (50 veces por segundo como máximo).
+**Command**. Pauses program execution until the next vertical sync signal of the monitor (maximum 50 times per second).
 
 ### `FRE(x)`
 
-Función. Según el valor de `x` permite obtener varios valores relacionados con la memoria:
+**Function**. Returns values related to memory depending on the parameter `x`:
 
-| Valor del parámetro | Valor devuelto |
-|**FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
-| **FRE(1)**       | Devuelve la memoria temporal disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal y devuelve el mismo valor que `FRE(0)`. |
+| Parameter   | Return Value |
+| ----------- | ------------ |
+| **FRE(0)**  | Returns the available memory between `_program_end_` and the Firmware area where variables start (`&A6FC`). |
+| **FRE(1)**  | Returns the currently available temporary memory.|
+| **FRE("")** | Forces the release of temporary memory and returns the same value as `FRE(0)`.|
 
-### `FUNCTION nombre(parametros) [ASM]`
+### `FUNCTION name(parameters) [ASM]`
 
-Comando. Introducido con la versión 2 plus de Locomotive BASIC, este comando permite declarar funciones de forma parecida a `DEF FN` pero cuyo cuerpo se extienda por más de una línea.
+**Command**. Introduced in Locomotive BASIC 2 Plus, this command declares a function similar to `DEF FN` but with a multi-line body.
 
-Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno. Las funciones pueden llamarse directamente como parte de una expresion. 
+Functions declared with `FUNCTION` must include at least one assignment to the function’s own name, which will act as the return value. Functions can be called directly as part of an expression.
 
 ```basic
-function pow2(x)
+FUNCTION pow2(x)
     pow2 = x * x
-end function
+END FUNCTION
 
 result = pow2(2)
 ```
 
-La cláusula `ASM`en la declaración de la función permite indicar que todo el cuerpo de la función será código en ensablador (a través del comando ASM), tal y como se explica en la sección `Uso de código ensamblador` del capítulo `Peculiaridades del compilador`.
+The optional `ASM` clause indicates that the function body will consist entirely of assembly code (using the `ASM` command), as described in the section **Using Assembly Code** under **Peculiarities of the Compiler**.
 
-Se recomienda al programador leer la sección `Soporte para procedimientos` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
+Programmers are advised to read the **Functions and Procedures** section for more information about parameter handling and the lack of recursion support, as discussed in the **Peculiarities of the Compiler** chapter.
 
-### `GOSUB etiqueta`
+### `GOSUB label`
 
-Comando. Salta a una etiqueta definida como un número de línea o como un literal decalrado con `LABEL`. Vuelve a la linea posterior al `GOSUB` al encontrar la sentencia `RETURN`.
+**Command**. Jumps to a label, which can be defined either as a line number or as a literal declared with `LABEL`. Execution returns to the line immediately following the `GOSUB` when a `RETURN` statement is encountered.
 
-``` basic
-A=0
-GOSUB incrementar
-GOSUB incrementar
+```basic
+A = 0
+GOSUB increment
+GOSUB increment
 PRINT A
 END
 
-LABEL incrementar
-    A=A+1
+LABEL increment
+    A = A + 1
 RETURN
 ```
 
-### `GOTO etiqueta`
+### `GOTO label`
 
-Comando. Salta a una etiqueta definida como un número de línea o como un literal decalrado con `LABEL`.
+**Command**. Jumps to a label, which can be defined either as a line number or as a literal declared with `LABEL`.
 
-### `GRAPHICS PAPER tinta`
+### `GRAPHICS PAPER ink`
 
-Comando. Establece el valor de `tinta` (0..15) a utilizar como color de fondo para los carácteres escritos si se ha utilizado previamente la sentencia `TAG`. También como color al borrar la ventana mediante las llamadas a `CLG`.
+**Command**. Sets the `ink` value (0–15) to be used as the background color for text characters if a `TAG` statement has been used. It also determines the background color when clearing a graphics window via `CLG`.
 
-``` basic
+```basic
 MODE 0
 MASK 15
 GRAPHICS PAPER 3
 DRAW 640,0
 ```
 
-### `GRAPHICS PEN tinta,modo`
+### `GRAPHICS PEN ink, mode`
 
-Comando. Introducido en la versión 1.1 de BASIC. Establece el valor de `tinta` (un valor entre 0 y 15) como color para las instrucciones de dibujo de líneas y puntos. El `modo` se refiere a como debe combinarse el dibujo con el fondo.
+**Command**. Introduced in BASIC 1.1. Sets the `ink` value (0–15) to be used for line and point drawing commands. The `mode` parameter determines how the drawing is combined with the background:
 
-* 0: Fondo opaco.
-* 1: Fondo transparente.
+* 0: Opaque background.
+* 1: Transparent background.
 
-El valor de fondo solo puede utilizarse si el programa va a ejecutarse sobre máquinas CPC 664 o superiores, ya que en el Amstrad CPC 464 no está soportado y su uso acarreará efectos indefinidos.
+The background color can only be used on CPC 664 or higher models. On an Amstrad CPC 464, this feature is unsupported and may produce undefined behavior.
 
-``` basic
+```basic
 MODE 0
 GRAPHICS PEN 15
 MOVE 200,0
@@ -868,9 +933,9 @@ MOVE 639,0
 FILL 15
 ```
 
-### `HEX$(x,digitos)`
+### `HEX$(x, digits)`
 
-Función. Devuelve una cedena de texto con la conversión de `x` a número hexadecimal. Locomotive BASIC permite especificar cualquier número de dígitos. BASC solo soporta 2 o 4.
+**Function**. Returns a string representing the hexadecimal conversion of `x`. Locomotive BASIC allows any number of digits, but BASC only supports 2 or 4 digits.
 
 ```basic
 PRINT HEX$(255,2)
@@ -879,42 +944,44 @@ PRINT HEX$(2048,4)
 
 ### `HIMEM`
 
-Función. Devuelve la dirección de memoria inmediatamente posterior al final del programa compilado por BASC. Puede ser muy útil con el comando `LOAD` para cargar otros binarios en una zona libre de la memoria.
+**Function**. Returns the memory address immediately following the end of the program compiled by BASC. This can be particularly useful with the `LOAD` command to load other binaries into free memory space.
 
-``` basic
-PRINT "Limite de la memoria consumida", HIMEM
-PRINT "Memoria libre antes de las variables del Firmware", FRE(0)
-``` 
+```basic
+PRINT "Memory used limit:", HIMEM
+PRINT "Free memory before firmware variables:", FRE(0)
+```
 
 ### `IF expression THEN expression ELSE expression END IF`
 
-Comando. BASC soporta la estructura tradicional de `IF .. THEN .. ELSE` en una línea de Locomotive BASIC 1.0 y 1.1. Además, añade soporte para la sintaxis introducida en Locomotive BASIC 2 Plus, que permite definir el cuerpo de las sentencias THEN y ELSE en varias líneas. No es posible combinar los dos variantes en una misma sentencia IF, si se usa la forma multilinea en el cuerpo del THEN, también debe hacerse así en el cuerpo del ELSE (si está presente) y terminar la sentencia con `END IF`.
+**Command**. BASC supports the traditional one-line `IF ... THEN ... ELSE` structure from Locomotive BASIC 1.0 and 1.1. It also supports the multi-line syntax introduced in Locomotive BASIC 2 Plus, which allows the `THEN` and `ELSE` blocks to span multiple lines.
 
-``` basic
-PAS$="Por favor"
-LABEL PREGUNTA
-    PRINT "DAME LA CONTRASEÑA:";
+You cannot mix single-line and multi-line formats in the same `IF` statement. If the `THEN` block uses the multi-line format, the `ELSE` block (if present) must also use it, and the statement must end with `END IF`.
+
+```basic
+PAS$ = "Please"
+LABEL QUESTION
+    PRINT "ENTER THE PASSWORD:";
     INPUT C$
-IF C$=PAS$ THEN
-    PRINT "ADELANTE!"
+IF C$ = PAS$ THEN
+    PRINT "ACCESS GRANTED!"
 ELSE
-    PRINT "PRUEBA OTRA VEZ"
-    GOTO PREGUNTA
+    PRINT "TRY AGAIN"
+    GOTO QUESTION
 END IF
 END
 ```
 
-### `INK tinta,color1[,color2]`
+### `INK ink, color1[, color2]`
 
-Comando. Asigna `color1` a `tinta`. Si se da un segundo color, la tinta parpadeara entre `color1`y `color2`. En número de tintas disponibles varía con el modo de la pantalla:
+**Command**. Assigns `color1` to the specified `ink`. If a second color is provided, the ink will alternate (blink) between `color1` and `color2`. The number of available inks depends on the screen mode:
 
-* Modo 2: 2 tintas  (0 y 1)
-* Modo 1: 4 tintas  (0..3)
-* Modo 0: 16 tintas (0..15)
+* Mode 2: 2 inks (0 and 1)
+* Mode 1: 4 inks (0–3)
+* Mode 0: 16 inks (0–15)
 
-El rango de colores va de 0 (negro) al 26 (blanco brillante).
+The color range is from 0 (black) to 26 (bright white).
 
-``` basic
+```basic
 MODE 1
 BORDER 0
 INK 0,0: INK 1,26: INK 2,26,0
@@ -922,387 +989,415 @@ PRINT "READY"
 PEN 2: PRINT "_"
 ```
 
-### `INKEY(tecla)`
+### `INKEY(key)`
 
-Función. Esta función analiza el teclado para determinar qué teclas se están pulsando. El escaneo se realiza 50 veces por segundo. Las teclas [MAYÚS] y [CTRL] se identifican de la siguiente manera:
+**Function**. Checks the keyboard to determine which keys are currently pressed. The keyboard is scanned 50 times per second. The [SHIFT] and [CTRL] keys are identified as follows:
 
-| Valor devuelto | [MAYÚS] | [CTRL] |Tecla especificada |
-|----------------|---------|--------|-------------------|
-|      -1        |   N/A   |   N/A  |   Sin pulsar      |
-|       0        | Sin pulsar | Sin pulsar | Pulsada    |
-|      32        | Pulsada | Sin pulsar | Pulsada       |
-|     128        | Sin pulsar | Pulsada | Pulsada       |
-|     160        | Pulsada | Pulsada | Pulsada          |
+| Return Value | [SHIFT]     | [CTRL]      | Specified Key |
+| ------------ | ----------- | ----------- | ------------- |
+| -1           | N/A         | N/A         | Not pressed   |
+| 0            | Not pressed | Not pressed | Pressed       |
+| 32           | Pressed     | Not pressed | Pressed       |
+| 128          | Not pressed | Pressed     | Pressed       |
+| 160          | Pressed     | Pressed     | Pressed       |
 
-``` basic
+```basic
 CLS
-LABEL BUCLE
-    IF INKEY(55)=32 THEN PRINT "V + mayusculas": END
-GOTO BUCLE
+LABEL LOOP
+    IF INKEY(55) = 32 THEN PRINT "V + SHIFT"; END
+GOTO LOOP
 ```
 
 ### `INKEY$`
 
-Función. Devuelve una cadena de texto con la tecla pulsada. Si no hay ninguna tecla pulsada, devuelve la cadena vacía "".
+**Function**. Returns a string containing the key currently pressed. If no key is pressed, it returns an empty string `""`.
 
-``` basic
+```basic
 MODE 1
-LABEL BUCLE
+LABEL LOOP
     k$ = INKEY$
-    if K$ <> "" THEN PRINT K$;
-GOTO BUCLE
+    IF k$ <> "" THEN PRINT k$;
+GOTO LOOP
 ```
 
-### `INP(puerto)`
+### `INP(port)`
 
-Función. Lee un valor del `puerto` de Entrada/Salida indicado.
+**Function**. Reads a value from the specified input/output `port`.
 
-### `INPUT [#canal,]["mesnaje"][;]variable1,variable2...`
+### `INPUT [#channel,] "prompt"[;] variable1, variable2,...`
 
-Comando. INPUT es un comando muy versatil con muchas opciones. Por ello, queda fuera de este manual y se aconseja al lector consultar cualquiera de las obras listadas en el capítulo sobre `Referencias`.
+**Command**. `INPUT` is a versatile command with many options. Its full usage is beyond the scope of this manual. Users are advised to consult the references listed in the `References` section.
 
-### INSTR([posición,]cadena1,cadena2)
+### `INSTR([start_position,] string1, string2)`
 
-Función. Busca en `cadena1` la primera aparición `cadena2`. Si se indica el parámetro opcional `posición`, la búsqueda comenzará desde esa posición; de lo contrario, la búsqueda comienza desde el primer carácter. Las posiciones comienzan en 1 y no en 0.
+**Function**. Searches `string1` for the first occurrence of `string2`. If the optional `start_position` parameter is provided, the search begins at that position; otherwise, it starts at the first character. Positions are 1-based, not 0-based.
 
-``` basic
-POSA = INSTR(0,"AMSTRAD", "A")
-PRINT POSA
-POSA = INSTR(POSA+1, "AMSTRAD", "A")
-PRINT POSA
-POSA = INSTR(POSA+1, "AMSTRAD", "A")
-PRINT POSA
+```basic
+posA = INSTR(1, "AMSTRAD", "A")
+PRINT posA
+posA = INSTR(posA + 1, "AMSTRAD", "A")
+PRINT posA
+posA = INSTR(posA + 1, "AMSTRAD", "A")
+PRINT posA
 ```
 
 ### `INT(x)`
 
-Función. Con números positivos se comporta como `FIX`. Con números negativos devuelve un negativo superior a `FIX`.
+**Function**. For positive numbers, it behaves like `FIX`, truncating the decimal part. For negative numbers, it returns the smallest integer greater than or equal to `x` (i.e., rounding toward minus infinity), which may differ from `FIX`.
 
 ### `JOY(joystick)`
 
-Función. Similar a `INKEY`, pero para joysticks. El valor `joystick` debe ser 0 o 1, pues los Amstrad CPC solo soportan dos joysticks simultáneos. Si no hay ninguna dirección o botón del joystick en uso, devuelve 0. En cualquier otro caso, develve un entero que codifica el estado como sigue:
+**Function**. Works similarly to `INKEY`, but for joysticks. The `joystick` parameter must be 0 or 1, as Amstrad CPC computers support a maximum of two joysticks simultaneously. If no direction or button is pressed, it returns 0. Otherwise, it returns an integer encoding the joystick state as follows:
 
-|Bit 	| Decimal 	| Función   |
-|-------|-----------|-----------|
-|0 	    |1 	        | Arriba    |
-|1 	    |2 	        | Abajo     |
-|2 	    |4 	        | Izquierda |
-|3 	    |8 	        | Derecha   |
-|4 	    |16         | Fuego 2   |
-|5 	    |32         | Fuego 1   |
+| Bit | Decimal | Function |
+| --- | ------- | -------- |
+| 0   | 1       | Up       |
+| 1   | 2       | Down     |
+| 2   | 4       | Left     |
+| 3   | 8       | Right    |
+| 4   | 16      | Fire 2   |
+| 5   | 32      | Fire 1   |
 
-### `KEY tecla,cadena`
+### `KEY key, string`
 
-Comando. Asocia una `cadena` de texto a una `tecla` de función. BASC no soporta este comando y emite un warning si lo encuentra como parte del código a compilar.
+**Command**. Assigns a text `string` to a function `key`. BASC does **not** support this command and will issue a warning if it is encountered in the code.
 
-### `KEY DEF tecla,repetir[,<normal>[,<mayus>[,<control>]]]`
+### `KEY DEF key, repeat[,<normal>[,<shift>[,<ctrl>]]]`
 
-Comando. Redefine que devuelve la pulsación de `tecla`. BASC no soporta este comando y emite un warning si lo encuentra como parte del código a compilar.
+**Command**. Redefines the behavior of a key press. BASC does **not** support this command and will issue a warning if it appears in the code.
 
-### `LABEL etiqueta`
+### `LABEL label`
 
-Comando. Define una etiqueta a la que se puede saltar con `GOTO` o `GOSUB`. `etiqueta` es un identificador y no una cadena de texto, por lo que no debe enmarcarse entre dobles comillas. Las etiquetas no tienen en cuenta la diferencia entre mayúsculas o minúsculas.
+**Command**. Defines a label that can be used as a target for `GOTO` or `GOSUB`. The `label` is an identifier, **not** a string, so it should **not** be enclosed in quotation marks. Labels are case-insensitive.
 
-``` basic
-LABEL main
-    PRINT "HOLA MUNDO"
+```basic
+LABEL MAIN
+    PRINT "HELLO WORLD"
 GOTO MAIN
 ```
 
-### `LEFT$(cadena,n)`
+### `LEFT$(string, n)`
 
-Función. Devuelve los primeros `n` carácteres de la izquierda de `cadena`.
+**Function**. Returns the first `n` characters from the left of `string`.
 
-``` basic
-PRINT LEFT$("AMSTRAD", 3)
+```basic
+PRINT LEFT$("AMSTRAD", 3)  ' Output: "AMS"
 ```
 
-### `LEN(cadena)`
+### `LEN(string)`
 
-Función. Devuelve la longitud en carácteres de `cadena`
+**Function**. Returns the length of `string` in characters.
 
-``` basic
-PRINT LEN("AMSTRAD")
+```basic
+PRINT LEN("AMSTRAD")  ' Output: 7
 ```
 
-### `LET variable=expression`
+### `LET variable = expression`
 
-Comando. Un vestigio de las primeras especificaciones de BASIC. No es necesario emplear este comando para realizar asignaciones en Locomotive BASIC, aunque se soporta su uso por compatibilidad.
+**Command**. A legacy from early BASIC specifications. It is **not required** to use `LET` for assignments in Locomotive BASIC, but it is supported for compatibility purposes.
 
-### `LINE INPUT [#canal,][;][cadena;]<variable>`
+### `LINE INPUT [#channel,][;][string;]<variable>`
 
-Comando. Acepta una línea de texto del canal indicado (#0 por defecto). El canal #9 se utiliza para leer del fichero de entrada abierto. Para el resto de canales #0-#8 se comporta, practicamente, como el comando `INPUT`.
+**Command**. Reads a line of text from the specified input channel (#0 by default). Channel #9 is used to read from an open input file. For channels #0–#8, it behaves similarly to the `INPUT` command.
 
-``` basic
+```basic
 OPENIN "DATOS.TXT"
 WHILE NOT EOF
-    LINE INPUT #9,C$
+    LINE INPUT #9, C$
     PRINT C$
 WEND
 CLOSEIN
 ```
 
-### `LIST [rango de líneas][,#canal]`
+### `LIST [line range][, #channel]`
 
-Comando. BASC ignora este comando y emite una advertencia si lo encuentra como parte del código a compilar.
+**Command**. Ignored by BASC. If encountered in the code, a warning is issued.
 
-### `LOAD fichero[,dirección]`
+### `LOAD filename[,address]`
 
-Comando. Carga un fichero de disco o cienta en memoria. BASC solo soporta la carga de binarios. Si se proporciona el segundo parámetro, cargará el programa en la dirección indicada.
+**Command**. Loads a file from disk or tape into memory. BASC **only supports loading binary files**. If a memory address is provided as the second parameter, the binary content will be loaded at that location.
 
-``` basic
-DIREC = HIMEM
-LOAD "SPRITES.BIN",HIMEM
+```basic
+ENDDIR = HIMEM
+LOAD "SPRITES.BIN", ENDDIR
 ```
 
-### `LOCATE [#canal,]x,y`
+### `LOCATE [#channel,] x, y`
 
-Comando. Posiciona el cursor de texto en la posición `x` e `y`. Las posiciones empiezan en 1 y el tamaño en x depende del modo gráfico (0 = 20, 1 = 40, 2 = 80). Si se indica un `#canal` los límites dependerán de las dimensiones especificadas con `WINDOW`.
+**Command**. Moves the text cursor to the position `x`, `y`. Coordinates start at 1. The maximum `x` value depends on the current graphics mode:
 
-``` basic
+* Mode 0 → 20 columns
+* Mode 1 → 40 columns
+* Mode 2 → 80 columns
+
+If a `#channel` is specified, the limits depend on the dimensions defined with `WINDOW`.
+
+```basic
 CLS
 LABEL MAIN
     FRAME
-    FOR x=2 TO 39:
-        LOCATE x-1,10: PRINT " "
-        LOCATE x,10: PRINT CHR$(250)
+    FOR x = 2 TO 39
+        LOCATE x-1, 10: PRINT " "
+        LOCATE x, 10: PRINT CHR$(250)
     NEXT
 GOTO MAIN
 ```
 
 ### `LOG(x)`
 
-Función. Devuelve el logaritmo natural de `x`. Implica el uso de números reales.
+**Function**. Returns the natural logarithm (base e) of `x`. Requires floating-point numbers.
 
 ### `LOG10(x)`
 
-Función. Devuelve el logaritmo en base 10 de `x`. Implica el uso de números reales.
+**Function**. Returns the base-10 logarithm of `x`. Requires floating-point numbers.
 
-### `LOWER$(cadena)`
+### `LOWER$(string)`
 
-Función. Devuelve `cadena`con todos sus carácteres pasados a minúsculas.
+**Function**. Returns `string` with all characters converted to lowercase.
 
-``` basic
-C$="AmsTRaD"
-PRINT LOWER$(C$)
-PRINT UPPER$(C$)
+```basic
+C$ = "AmsTRaD"
+PRINT LOWER$(C$)  ' Output: "amstrad"
+PRINT UPPER$(C$)  ' Output: "AMSTRAD"
 ```
 
-### `MASK mascara[,puntoinicial]`
+### `MASK mask[,startPoint]`
 
-Comando. Solo disponible a partir de BASIC 1.1. Cualquier programa compilado usando este comando solo funcionará en ordenadores Amstrad CPC664 y CPC6128. Establece la máscara o plantilla que se utilizará al dibujar líneas. El valor binario `mascara` debe estar en el rango de 0 a 255. Su significado es activar (1) o desactivar (0) los bits de cada grupo adyacente de 8 píxeles. `puntoinicial` determina si el primer punto de la línea se debe dibujar (1) o no (0).
+**Command**. Available only from BASIC 1.1 onward. Programs compiled using this command will only run on Amstrad CPC 664 or CPC 6128 computers.
 
-``` basic
+Defines the mask or pattern to use when drawing lines. The binary value `mask` must be between 0 and 255. Each bit in `mask` determines whether a group of 8 consecutive pixels is drawn (1) or skipped (0). The optional parameter `startPoint` specifies whether the first pixel of the line should be drawn (1) or not (0).
+
+```basic
 MODE 0
-MASK 15   ' mascara = 00001111
+MASK 15   ' mask = 00001111
 GRAPHICS PAPER 3
 DRAW 640,0
 ```
 
-### `MAX(a,b[,c,d,e...])`
+### `MAX(a, b[, c, d, e...])`
 
-Función. Devuelve el máximo valor de entre los proporcionados como parámetros. BASC soporta tanto el uso de números enteros como reales.
+**Function**. Returns the maximum value among the parameters provided. Supports both integer and floating-point numbers.
 
-### MEMORY maxdir
+### `MEMORY maxAddress`
 
-Comando. Establece `maxdir` como la dirección máxima en memoria que puede llegar a ocupar el binario generado por el porgrama compilado. Si se supera, la compilación falla.
+**Command**. Sets `maxAddress` as the maximum memory address that the compiled binary can occupy. If the program exceeds this limit during compilation, the compilation will fail.
 
-``` basic
-MEMORY &A6FB  ' En &A6FC comienzan las variables del Firmware/AMSDOS
+```basic
+MEMORY &A6FB  ' The Firmware/AMSDOS variables start at &A6FC
 ```
 
-### `MERGE fichero`
+### `MERGE filename`
 
-Comando. Lee `fichero` de disco o cinta y remplaza el programa en memoria. BASC no soporta este comando y producirá un error si lo encuentra como parte del código del programa. Para añadir otros binarios (o remplazarlos tras su uso) se recomienda utilizar el comando `LOAD`.
+**Command**. Reads `filename` from disk or tape and replaces the program currently in memory. BASC **does not support** this command and will produce an error if it is found in the source code. To add or replace other binaries, it is recommended to use the `LOAD` command instead.
 
-### `MID$(cadena,inicio[,n])`
+### `MID$(string, start[, n])`
 
-Functión y Comando. Como función en una expresión, devuelve el número de carácteres `n` desde la posición `inicio`. Como comando, puede utilizarse para remplazar una parte de la cadena. La escritura en memoria siempre es delicada y el programador debe tener cuidado de no sobrepasar los límites de almacenamiento de la cadena o el programa se comportará de manera inesperada.
+**Function and Command**. As a function, it returns a substring of length `n` starting at position `start` from `string`. As a command, It can be used to replace part of the string in memory. Writing directly to string memory is delicate, and the programmer must ensure not to exceed the allocated length of the string; otherwise, the program may behave unpredictably.
 
-``` basic
-C$="AMSTRAD"
-PRINT MID$(C$,3,3)
-MID$(C$,3,3) = "BBB"
-PRINT C$
+```basic
+C$ = "AMSTRAD"
+PRINT MID$(C$, 3, 3)       ' Output: "STR"
+MID$(C$, 3, 3) = "BBB"
+PRINT C$                   ' Output: "AMBBBAD"
 ```
 
-### `MIN(a,b[,c,d,e,f...]`
+### `MIN(a, b[, c, d, e, f...])`
 
-Función. Devuelve el mínimo valor de entre los proporcionados como parámetros. BASC soporta tanto el uso de números enteros como reales.
+**Function**. Returns the minimum value among the parameters provided. Supports both integer and floating-point numbers.
 
 ### `MODE n`
 
-Comando. Cambia el modo de pantalla a 0, 1 o 2.
+**Command**. Changes the screen mode. Valid values are 0, 1, or 2.
 
-### `MOVE x,y[tinta[,modo]]`
+### `MOVE x, y[, ink[, mode]]`
 
-Comando. Mueve el cursor gráfico a la posición `x` e `y`. Si proporciona un tercer parámetro, este indica la `tinta`con el color a usar a partir de ese momento. El cuarto parámetro indica el modo o máscara a aplicar entre cada punto de las líneas y el fondo, con los valores que se indican a continuación:
+**Command**. Moves the graphics cursor to the absolute position `(x, y)`.
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+* Optional parameter `ink` sets the drawing color from that point onward.
+* Optional parameter `mode` defines how each point of the line is combined with the background, with the following values:
 
-### `MOVER x,y[,tinta[,modo]]`
+| Value | Mode               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (exclusive OR) |
+| 2     | AND                |
+| 3     | OR                 |
 
-Comando. Igual que `MOVE`, pero siendo `x` e `y` valores relativos a la posición actual en vez de posiciones absolutas.
+### `MOVER x, y[, ink[, mode]]`
+
+**Command**. Works like `MOVE`, but the `x` and `y` coordinates are **relative** to the current cursor position instead of absolute screen coordinates.
 
 ### `NEW`
 
-Comando. En Locomotive BASIC borra el programa actual y sus variables de la memoria. BASC emite código para reiniciar la máquina (CALL 0).
+**Command**. In Locomotive BASIC, this clears the current program and all its variables from memory. BASC generates code to reset the machine (`CALL 0`).
 
 ### `NEXT variable`
 
-Comando. Delimita un bucle `FOR`.
+**Command**. Marks the end of a `FOR` loop.
 
-### `ON n GOSUB lista de etiquetas`
+### `ON n GOSUB list_of_labels`
 
-Comando. Salta a la etiqueta de la lista indicada por `n` y regresa tras encontrar un `RETURN`. Las etiquetas empiezan en 1. Pueden ser números de línea o identificadores declarados con `LABEL`.
+**Command**. Jumps to the label in the list indicated by `n` and returns after encountering a `RETURN`. Labels are 1-based. They can be either line numbers or identifiers declared with `LABEL`.
 
-### `ON n GOTO lista de etiquetas`
+### `ON n GOTO list_of_labels`
 
-Comando. Salta a la etiqueta de la lista indicada por `n`. Las etiquetas empiezan en 1. Pueden ser números de línea o identificadores declarados con `LABEL`.
+**Command**. Jumps to the label in the list indicated by `n`. Labels are 1-based and can be either line numbers or identifiers declared with `LABEL`.
 
-### `ON BREAK GOSUB etiqueta`
+### `ON BREAK GOSUB label`
 
-Comando. Este comando salta a `etiqueta` cuando un programa se interrumpe por una pulsación doble de la tecla `ESC`. Los programas compilados por BASC no pueden detenerse de esta manera por lo que este comando es ignorado y se emite una alerta si aparece como parte del código a compilar.
+**Command**. In Locomotive BASIC, this jumps to `label` when a program is interrupted by a double press of the `ESC` key. Compiled BASC programs cannot be interrupted in this way, so this command is ignored and a warning is issued if it appears in the code.
 
 ### `ON BREAK STOP`
 
-Comando. Desactiva la última sentencia `ON BREAK GOSUB` que se haya emitido. Como Los programas compilados por BASC ignoran la sentencia anterior, este comando también es ignorado y se emite una alerta si aparece como parte del código a compilar.
+**Command**. Cancels the last `ON BREAK GOSUB` statement issued. Since compiled BASC programs ignore the previous statement, this command is also ignored, and a warning is issued if it appears in the code.
 
-### `ON ERROR GOTO etiqueta`
+### `ON ERROR GOTO label`
 
-Comando. Este comando salta a `etiqueta` cuando se detecta un error en un programa BASIC durante su ejecución. Este mecanismo requiere que el programa sea interpretado, no compilado, así que BASC ignora este comando y emite una alerta si aparece como parte del código a compilar.
+**Command**. In interpreted BASIC, this jumps to `label` when an error is detected during program execution. This mechanism does not apply to compiled programs, so BASC jumps to the label **only** if `ERR` is different from 0 (for example, after changing the value with the `ERROR` command).
 
-### `ON SQ (canal) GOSUB etiqueta`
+**NOTE:** Be careful not to leave a WHILE or FOR bucle using this command as it may cause an undefined behaviour.
 
-Comando. Registra el salto a una etiqueta como una interrupción que debe ejecutarse cuando hay un "slot" libre en la cola de sonido indicada por `canal`. El valor de `canal` debe ser un valor de entre los de la siguiente lista:
-* 1 = canal A
-* 2 = canal B
-* 4 = canal C
+```basic
+ERROR 0
+ON ERROR GOTO errormsg
+ERROR 1
+ON ERROR GOTO errormsg
+PRINT "No errors"
+END
 
-``` basic
-ON SQ(2) GOSUB INSERTAenB
+LABEL errormsg
+    print "Error", ERR
+END
 ```
 
-### `OPENIN fichero`
+### `ON SQ(channel) GOSUB label`
 
-Comando. Abre el fichero indicado por `fichero` para lectura. Se puede consultar un ejemplo en el apartado sobre la función `EOF`. En caso de error produce el código 31 que puede ser consultado con `ERR`. Solo un fichero puede estar abierto a la vez para lectura.
+**Command**. Registers a jump to a label as an interrupt to be executed when there is a free "slot" in the sound queue of the specified `channel`. The `channel` value must be one of the following:
 
-### `OPENOUT fichero`
+* 1 = channel A
+* 2 = channel B
+* 4 = channel C
 
-Comando. Abre el fichero indicado por `fichero` para escritura. En caso de error produce el código 31 que puede ser consultado con `ERR`. Solo un fichero puede estar abierto a la vez para escritura.
-
-### `ORIGIN x,y[,izq,der,arriba,abajo]`
-
-Comando. Establece la posición actual del cursor gráfico. Es posible, además, establecer las dimensiones de la ventana para gráficos, si se proporcionan las coordenadas opcionales `izq`, `der`, `arr` y `abajo`. Una llamada a `MODE` restablece las dimensiones.
-
-``` basic
-CLS:BORDER 13 
-LABEL BUCLE
-    ORIGIN 0,0,50,590,350,50  
-    DRAW 540,350 
-GOTO BUCLE
+```basic
+ON SQ(2) GOSUB InsertInB
 ```
 
-### `OUT puerto,n`
+### `OPENIN file`
 
-Comando. Envía el valor `n` al puerto hardware indicado por `puerto`.
+**Command**. Opens the specified `file` for reading. See the `EOF` function section for an example. If an error occurs, error code 31 is generated, which can be retrieved using `ERR`. Only one file can be open for reading at a time.
 
-### `PAPER [#canal,]tinta`
+### `OPENOUT file`
 
-Comando. Fija la tinta a utilizar como color de fondo. Si no se indica un `canal` se aplica sobre el canal #0. **Ver nota en `PEN`.**
+**Command**. Opens the specified `file` for writing. If an error occurs, error code 31 is generated, which can be retrieved using `ERR`. Only one file can be open for writing at a time.
 
-``` basic
+### `ORIGIN x,y[,left,right,top,bottom]`
+
+**Command**. Sets the current position of the graphics cursor. Optionally, you can define the dimensions of the graphics window by providing `left`, `right`, `top`, and `bottom` coordinates. Calling `MODE` will reset the window dimensions.
+
+```basic
+CLS: BORDER 13
+LABEL LOOP
+    ORIGIN 0,0,50,590,350,50
+    DRAW 540,350
+GOTO LOOP
+```
+
+## `OUT port,n`
+
+**Command.** Sends the value `n` to the specified hardware `port`.
+
+### `PAPER [#channel,]ink`
+
+**Command.** Sets the background color for text. If no `channel` is specified, the command applies to channel #0. **See note under `PEN`.**
+
+```basic
 MODE 1
-INK 1,3  ' color rojo
+INK 1,3  ' red color
 PAPER 1
 CLS
 ```
 
-### `PEEK(direccion)`
+### `PEEK(address)`
 
-Función. Devuelve el contenido del byte de memoria en `dirección`.
+**Function.** Returns the content of the memory byte at the specified `address`.
 
-``` basic
-' Imprime los 5 bytes de un numero real
+```basic
+' Print the 5 bytes of a real number
 N! = PI
-FOR I=0 TO 4
+FOR I = 0 TO 4
     PRINT HEX$(PEEK(@N!+I),2);" ";
 NEXT
 ```
-### `PEN [#canal,]tinta`
 
-Comando. Fija `tinta` como el color de dibujo para el canal indicado (#0 por defecto).
+### `PEN [#channel,]ink`
 
-``` basic
+**Command.** Sets `ink` as the drawing color for the specified channel (#0 by default).
+
+```basic
 MODE 1
-INK 2,3  ' color rojo
+INK 2,3  ' red color
 PEN 2
-PRINT "HOLA MUNDO"
+PRINT "HELLO WORLD"
 ```
 
-**NOTA:** Los valores de `PAPER` y `PEN` no se aplican de inmediato, se almacenan en las variables del Firmware y se mandan desde la rutina llamada por las interrupciones al hardware una vez por "frame". Si se cambian estos valores desde una rutina llamada por `EVERY` o `AFTER` muy probablemnte no surta efecto.
+**NOTE:** The `PAPER` and `PEN` values are not applied immediately. They are stored in firmware variables and sent to the hardware once per frame via the routine called by the interrupts. If these values are changed inside a routine triggered by `EVERY` or `AFTER`, it is very likely that the change will have no effect.
 
 ### `PI`
 
-Función. Devuelve el valor real 3.14159265
+**Function.** Returns the real number 3.14159265.
 
-### `PLOT x,y[,tinta[,modo]]`
+### `PLOT x,y[,ink[,mode]]`
 
-Comando. Desplaza el cursor gráfico a la posición `x` e `y` y dibuja un punto. Si se indica una `tinta` queda establecida como el color activo. Moves graphics cursor and plots colour from current position. El cuarto parámetro indica el modo o máscara a aplicar entre cada punto de la línea y el fondo, con los valores que se indican a continuación:
+**Command.** Moves the graphics cursor to position `x`,`y` and plots a point. If an `ink` value is specified, it becomes the active drawing color. The fourth parameter defines the drawing mode or mask applied between each point and the background:
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+| Value | Mode               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (exclusive OR) |
+| 2     | AND                |
+| 3     | OR                 |
 
-### `PLOTR x,y[,tinta[,modo]]`
+### `PLOTR x,y[,ink[,mode]]`
 
-Comando. Su funcionamiento es igual a `PLOT`salvo porque `x` e `y` son posiciones relavivas a la posición actual del cursor gráfico y no posiciones absolutas.
+**Command.** Works like `PLOT` but with `x` and `y` interpreted as relative coordinates from the current graphics cursor position rather than absolute coordinates.
 
-### `POKE dirección,n`
+### `POKE address,n`
 
-Comando. Escribe en la posición de memoria `dirección` el valor (byte) `n`. Si `n` es mayor que 255 el valor se trunca.
+**Command.** Writes the value `n` (a byte) into the memory location `address`. If `n` is greater than 255, the value is truncated.
 
-``` basic
+```basic
 CLS
-SUB MEMCOPY(org, dest, n)
-    FOR I=0 TO n
+SUB MEMCOPY(org,dest,n)
+    FOR I = 0 TO n
         byte = PEEK(org+I)
         POKE dest+I,byte
     NEXT
 END SUB
 
-A$ = "HOLA MUNDO"
+A$ = "HELLO WORLD"
 B$ = ""
-CALL MEMCOPY(@A$,@B$,11) ' 10 carácteres mas byte de longitud
+CALL MEMCOPY(@A$, @B$, 11)  ' 10 characters plus length byte
 PRINT B$
 ```
 
-### `POS(#canal)`
+### `POS(#channel)`
 
-Función. Devuelve la posición actual en X del cursor de texto para el `canal` indicado (#0 por defecto).
+**Function.** Returns the current X position of the text cursor for the specified `channel` (#0 by default).
 
-``` basic
+```basic
 MODE 1
 PRINT POS(#0), VPOS(#0)
 ```
 
-### `PRINT [#canal,][lista de elementos]`
+### `PRINT [#channel,][list of items]`
 
-Comando. `PRINT` es un comando muy versatil y con múltiples opciones. Por ello, queda fuera del alcance de este documento y se invita al lector a consultar las obras listadas en el capítulo sobre `Referencias`. En cualquier caso, BASC **no soporta el uso de patrones de formato mediante USING**.
+**Command.** `PRINT` is a highly versatile command with many options. Its full details are beyond the scope of this manual, so the reader is encouraged to consult the references listed in the `References` chapter. **Note:** BASC does **not** support formatted output using `USING`.
 
 ### `RAD`
 
-Comando. Establece que las funciones que devuelven grados den los resultados en radianes. Es el comando contrapuesto a `DEG`.
+**Command.** Sets trigonometric functions to return results in radians. It is the counterpart to `DEG`.
 
-``` basic
+```basic
 DEG
 PRINT SIN(90.0)
 RAD
@@ -1311,24 +1406,24 @@ PRINT SIN(90.0)
 
 ### `RANDOMIZE [n]`
 
-Comando. La implementación soportada por BASC difiere un poco del comportamiento habitual de este comando en Locomotive BASIC. Si se usa `RANDOMIZE` sin parámetros, BASC lo interpreta como si se hubiera usado `RANDOMIZE TIME`. El uso de `RANDOMIZE` y `RND` implica el uso de números reales.
+**Command.** The BASC implementation differs slightly from the usual behavior in Locomotive BASIC. If `RANDOMIZE` is used without parameters, BASC treats it as if `RANDOMIZE TIME` had been used. Both `RANDOMIZE` and `RND` require the use of real numbers.
 
-``` basic
+```basic
 RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
 NEXT
 ```
 
-### `READ lista-de-variables`
+### `READ variable-list`
 
-Comando. Lee el siguiente dato de los declarados con `DATA` y lo asigna a la variable correspondiente de su lista. El programador es el responsable de que el tipo de dato actual y el tipo de la variable coincidan.
+**Command.** Reads the next datum from those declared using `DATA` and assigns it to the corresponding variable in the list. It is the programmer’s responsibility to ensure that the data type matches the type of the target variable.
 
-``` basic
+```basic
 CLS
 FOR I=0 TO 5
-    READ nom$
-    PRINT "Nombre:", nom$
+    READ name$
+    PRINT "Name:", name$
 NEXT
 END
 
@@ -1336,83 +1431,83 @@ DATA "Xavier","Ross","Gada",
 DATA "Anabel","Rachel","Elvira"
 ```
 
-### `READIN lista-de-variables`
+### `READIN variable-list`
 
-Comando. Es equivalente a `INPUT #9`, es decir, lee datos del fichero de entrada abierto y los asigna a la lista de variables. Actualmente, BASC no soporta variables reales en este comando.
+**Command.** Equivalent to `INPUT #9`; that is, it reads data from the currently open input file and assigns them to the variables in the list. At present, BASC does not support real variables with this command.
 
-### `RECORD nombre;lista-de-variables`
+### `RECORD name;variable-list`
 
-Comando. Permite declarar un registro que puede aplicarse a variables de tipo cadena (`$`) para crear estructuras de datos. Se invita al lector a consultar el apartado sobre `Estructuras con RECORD` en la sección `Tipos y variables` del capítulo `Peculiaridades del compilador`.
-
-```basic
-DECLARE A$ FIXED 13  ' No es obligatorio, pero reduce el consumo de memoria
-RECORD persona; nom$ FIXED 10, edad ' Requiere 13 bytes de memoria
-
-A$.persona.nom$ = "Juan"
-A$.persona.edad = 20
-```
-
-### `RELEASE canal`
-
-Comando. Los sonidos encolados en un determinado `canal`pueden contener un estado de `espera`. Este comando libera dichos sonidos. `canal` es un número entero que indica los canales afectados:
-
-* 1 = canal A
-* 2 = canal B
-* 4 = canal C
-
-``` basic
-RELEASE 7 'libera los sonidos en los tres canales
-```
-
-### `REM texto`
-
-Comando. Permite añadir comentarios al texto. Un alias es el symbolo `'`.
-
-### `REMAIN(temporizador)`
-
-Función. Desactiva el evento asignado a `temporizador`(en el rango 0..3) y devuelve cuantos "ticks" quedaban para su activación. Dichos eventos se registran con `AFTER` o `EVERY`.
-
-### `RENUM nueva-linea, linea-origen, incremento`
-
-Comando. En Locomotive BASIC permite renumerar las líneas de código de un programa en BASIC. En un programa compilado no tiene sentido. BASC ignora este comando y emite una advertencia si lo encuentra en el código a compilar.
-
-### `RESTORE [etiqueta]`
-
-Comando. Establece que el siguiente dato a leer con `READ` sea el primer valor declarado con `DATA` encontrado tras la `etiqueta` indicada, sea esta un número de línea o un identificador declarado con `LABEL`. Si no se especifica ninguna `etiqueta` el comando establece el primer dato declarado con `DATA` encontrado en el programa.
+**Command.** Declares a record structure that can be applied to string (`$`) variables in order to create data structures. See the section *Record Structures with `RECORD`* in the chapter *Compiler Specifics* for more details.
 
 ```basic
-LABEL BUCLE
+DECLARE A$ FIXED 13   ' Optional, but reduces memory usage
+RECORD person; name$ FIXED 10, age   ' Requires 13 bytes of memory
+
+A$.person.name$ = "Juan"
+A$.person.age = 20
+```
+
+### `RELEASE channel`
+
+**Command.** Sounds queued on a given `channel` may enter a *hold* state. This command releases those sounds. `channel` is an integer that specifies the affected channels:
+
+* 1 = channel A
+* 2 = channel B
+* 4 = channel C
+
+```basic
+RELEASE 7   ' releases sounds on all three channels
+```
+
+### `REM text`
+
+**Command.** Inserts a comment in the program. The symbol `'` is an alias for this command.
+
+### `REMAIN(timer)`
+
+**Function.** Disables the event associated with `timer` (in the range 0–3) and returns the number of ticks remaining before it would have been triggered. Such events are registered using `AFTER` or `EVERY`.
+
+### `RENUM new-line, origin-line, step`
+
+**Command.** In Locomotive BASIC, this command renumbers the program’s line numbers. In a compiled program this has no meaning. BASC ignores this command and issues a warning if it appears in the source code.
+
+### `RESTORE [label]`
+
+**Command.** Sets the next value to be read by `READ` to the first `DATA` item found after the specified `label`, which may be either a line number or an identifier declared using `LABEL`. If no `label` is given, the next `READ` will fetch the very first `DATA` item in the program.
+
+```basic
+LABEL LOOP
 FOR N=1 TO 5 
     READ A$ 
     PRINT A$;" "; 
-    DATA datos,"a leer",una,"y otra",vez   
+    DATA data,"to read",again,and,again   
 NEXT 
 PRINT 
 RESTORE 
-GOTO BUCLE
+GOTO LOOP
 ```
 
 ### `RESUME`
 
-Comando. Restaura la ejecución de un programa detenido tras un evento de error manejado por `ON ERROR GOTO`. Este mecanismo requiere que el programa sea interpretado, no compilado, así que BASC ignora este comando y emite una alerta si aparece como parte del código a compilar.
+**Command.** Resumes execution after an error event handled by `ON ERROR GOTO`. This mechanism only works in interpreted BASIC. BASC implements 'ON ERROR GOTO' in a different way so it ignores `RESUME` and issues a warning if it appears in the code.
 
 ### `RETURN`
 
-Comando. Continua la ejecución del programa en la siguiente instrucción al último `GOSUB` ejecutado.
+**Command.** Continues execution at the instruction immediately following the most recent `GOSUB`.
 
-### `RIGHT$(cadena,n)`
+### `RIGHT$(string, n)`
 
-Función. Devuelve los primeros `n` carácteres comenzando la cuenta por la derecha de `cadena`.
+**Function.** Returns the rightmost `n` characters from `string`.
 
-``` basic
+```basic
 PRINT RIGHT$("AMSTRAD", 3)
 ```
 
 ### `RND[(0)]`
 
-Función. Devuelve un número pseudoaleatorio en el rango [0.0 - 1.0]. Si se llama con el parámetro 0 (`RND(0)`) devuelve, de nuevo, el último número que se generó. El uso de `RANDOMIZE` y `RND` implica el uso de números reales.
+**Function.** Returns a pseudo-random number in the range [0.0–1.0]. When called with the parameter `0` (`RND(0)`), it returns the **last** generated random number. The use of `RANDOMIZE` and `RND` implies the use of real numbers.
 
-``` basic
+```basic
 RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
@@ -1421,40 +1516,40 @@ NEXT
 
 ### `ROUND(x[,n])`
 
-Función. Redondea el número real `x` a la posición decimal indicada por `n` (0 por defecto).
+**Function.** Rounds the real number `x` to `n` decimal places (`n = 0` by default).
 
-``` basic
+```basic
 FOR I=0 TO 4
     PRINT ROUND(PI, I)
 NEXT
-PRINT ROUND(PI,-3)
+PRINT ROUND(PI, -3)
 ```
 
-### `RUN etiqueta o fichero`
+### `RUN label or file`
 
-Comando. En BASIC este comando permite ejecutar un programa en memoria desde la `etiqueta` indicada o carga el programa desde `fichero` y lo ejecuta desde el principio. BASC solo soporta la primera de las versiones, haciendo que el programa salte a `etiqueta` como si se tratara de un `GOTO`.
+**Command.** In Locomotive BASIC, this command runs the program already in memory starting at the specified `label`, or loads a program from `file` and executes it from the beginning. BASC only supports the first form: it simply jumps to `label` as if executing a `GOTO`.
 
-### `SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`
+### `SAVE file[,type][,address,size[,entry]]`
 
-Comando. En BASIC permite grabar un programa a disco o cassette. BASC solo permite grabar una región de memoria como fichero binario. Por tanto, el `tipo` del fichero siempre se considera (y debe indicarse así si se van a utilizar el resto de parámetros) B. Como referencia, los tipos permitidos por la instrucción en BASIC son:
+**Command.** In Locomotive BASIC, this instruction saves a program to disk or tape. BASC, however, only allows saving a memory region as a binary file. Therefore, the file `type` must be always **B** (Binary), and must be specified as such if any of the following parameters are used. For reference, the file types supported in Locomotive BASIC are:
 
-* A - Texto (ASCII)
-* P - Fichero protegido
-* B - Binario
+* **A** – ASCII text
+* **P** – Protected file
+* **B** – Binary
 
-El resto de parámetros opcionales son:
+The additional optional parameters are:
 
-| Parámetro | Función      |
-|-----------|--------------|
-|dirección  | Dirección de memoria desde donde comenzar el volcado. |
-| tamaño    | Total de bytes que se deben volcar al fichero. |
-| entrada   | Dirección donde empezar la ejecución del binario si se carga con `RUN`.|
+| Parameter | Description                                             |
+| --------- | ------------------------------------------------------- |
+| `address` | Starting memory address for the dump.                   |
+| `size`    | Total number of bytes to write to the file.             |
+| `entry`   | Execution address when the binary is loaded with `RUN`. |
 
-``` basic
+```basic
 MODE 1
 PAPER 3
 CLS
-SAVE "pantalla.bin",B,&C000,&3FFF
+SAVE "pantalla.bin",B,&C000,&4000
 PAPER 0
 CLS
 LOAD "pantalla.bin"
@@ -1462,21 +1557,23 @@ LOAD "pantalla.bin"
 
 ### `SGN(x)`
 
-Función. Devuelve -1 si `x` es menor que 0, devuelve 0 si `x`es igual a 0 o devuelve 1 si `x` es mayor que cero.
+**Function.** Returns **–1** if `x` is less than 0, **0** if `x` is exactly 0, and **1** if `x` is greater than 0.
 
-``` basic
+```basic
 PRINT SGN(PI)
 ```
 
 ### `SIN(x)`
 
-Función. Devuelve el seno de `x`. Implica el uso de números reales.
+**Function.** Returns the sine of `x`. Requires the use of real numbers.
 
-### `SOUND canal,perido-tono,duracion,volumen,env,ent,ruido`
+### `SOUND channel,period,duration,volume,env,ent,noise`
 
-Comando. `SOUND` es uno de los principales puntos fuertes de Locomotive BASIC comparado con el resto de las versiones BASIC de la época. Es un comando muy versátil que proporcina un acceso muy amplio al chip de audio de los Amstrad CPC. Por tanto, el lector hará bien en recurrir a los libros de la sección `Referencias` para aprender todos los entresijos de este comando.
+**Command.**
+`SOUND` is one of the strongest features of Locomotive BASIC compared to other BASIC dialects of the era. It is extremely flexible and provides extensive access to the Amstrad CPC's sound chip.
+Given its complexity, readers are encouraged to study the books listed in the **References** chapter for full details.
 
-``` basic
+```basic
 ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
 SOUND 1,1000,0,12,2
 SOUND 2,900,0,12,2
@@ -1484,96 +1581,108 @@ SOUND 2,900,0,12,2
 
 ### `SPACE$(n)`
 
-Función. Devuelve una cadena de texto con tantos espacios en blanco como los indicados por `n`.
+**Function.** Returns a string containing `n` space characters.
 
 ### `SPEED INK t1,t2`
 
-Comando. `INK` y `BORDER` permiten especificar dos colores entre los que se alternará. `SPEED INK` permite especificar cuanto tiempo estará visible cada uno de los dos colores. Los tiempos `t1` y `t2` se indican en "frames" (50 por segundo).
+**Command.** The `INK` and `BORDER` commands can assign two alternating colors. `SPEED INK` specifies how long each color remains visible. `t1` and `t2` represent durations in **frames** (50 per second).
 
-``` basic
-SPEED INK 150,50 ' 3 segundos y 1 segundo
+```basic
+SPEED INK 150,50 ' 3 seconds and 1 second
 BORDER 0,1
 ```
 
-### `SPEED KEY espera,repetición`
+### `SPEED KEY delay,repeat`
 
-Comando. Si se mantiene pulsada una tecla, esta comenzará a repetirse cuando se supera su tiempo de `espera`, cada vez que venza el tiempo de `repetición`. Los tiempos deben darse en "frames" (50 por segundo) en un rango de 1 a 255.
+**Command.** When a key is held down, it begins repeating after the specified `delay`, then repeats again every `repeat` frames. Times must be in the range **1 to 255 frames** (50 per second).
 
 ### `SPEED WRITE n`
 
-Comando. Cambia la velocidad (en baudios) a la que se escribe en cassette. `n`puede ser 1 (2000 baudios) o 0 (1000 baudios).
+**Command.** Changes the tape output speed (in baud). `n` can be:
 
-### SQ canal
+* **1** → 2000 baud
+* **0** → 1000 baud
 
-Función. Permite comprobar el número de entradas libres en la cola para el `canal` indicado (1,2 o 4). Determina si dicho canal está activo y, en caso contrario, por qué la entrada activa de la cola (si la hay) está en espera. El resultado es un entero que codifica la información como sigue:
+### `SQ channel`
 
-* Los bits 0, 1 y 2 indican el número de huecos libres en la cola.
-* Los bits 3, 4 y 5 indican el estado de socronización de la primera nota en la cola.
-* El bit 6 se activa si la primera nota está en espera.
-* El bit 7 se activa si el canal está activo ahora mismo.
+**Function.** Returns the number of free entries in the queue for the specified `channel` (1, 2, or 4).
+It also determines whether that channel is currently active and, if not, why the first entry in the queue (if present) is waiting.
 
-``` basic
+The result is an integer whose bits encode the information as follows:
+
+* **Bits 0, 1, 2** – Number of free slots in the queue.
+* **Bits 3, 4, 5** – Synchronization status of the first note in the queue.
+* **Bit 6** – Set if the first note is waiting.
+* **Bit 7** – Set if the channel is currently active.
+
+```basic
 SOUND 65,100,100
-PRINT BIN$(SQ(1),8) ' debe imprimir 01000011
+PRINT BIN$(SQ(1),8) ' should print 01000011
 ```
 
 ### `SQR(x)`
 
-Función. Devuelve la raíz cuadrada de `x`. Implica el uso de números reales.
+**Function.** Returns the square root of `x`. Requires real-number support.
 
 ### `STOP`
 
-Comando. En Locomotive BASIC detiene la ejecución del programa y devuelve el control al interprete. El usuario puede retomar la ejecución con `CONT`. Puesto que no tiene mucho uso en un programa compilado, BASC reutiliza esta instrucción para formar un reinicio de la máquina (CALL 0).
+**Command.** In Locomotive BASIC, this stops program execution and returns control to the interpreter.
+Execution may be resumed with `CONT`. Since this is of little use in a compiled program, BASC repurposes this instruction to perform a machine reset (`CALL 0`).
 
 ### `STR$(x)`
 
-Función. Devuelve una cadena con el número `x` convertido en texto.
+**Function.** Converts the number `x` to a string.
 
-``` basic
+```basic
 PRINT "PI = " + STR$(PI)
 ```
 
-### `STRING$(n,carácter)`
+### `STRING$(n,character)`
 
-Función. Devuelve una cadena de texto con el carácter indicado repetido `n` veces.
+**Function.** Returns a string composed of the specified `character` repeated `n` times.
 
-``` basic
+```basic
 MODE 1
 LOCATE 1,10
 PRINT STRING$(40,250)
 ```
 
-### `SUB [(parámetros)] [ASM]`
+### `SUB [(parameters)] [ASM]`
 
-Comando. Proveniente de Locomotive BASIC 2 Plus, `SUB` permite declarar procedimientos con parámetros. Debe utilizarse `CALL` para llamar a un procedimiento declarado con `SUB`. El procedimiento debe declararse antes de que aparezca en el código una llamada al mismo. Si se utiliza la cláusula `ASM`, BASC entiende que el cuerpo del procedimiento va a ser mayoritariamente código en ensablador que no va a usar el mecanismo de memoria temporal, por lo que no se encarga de apilarlo y restaruralo después de cada llamada.
+**Command.** Imported from **Locomotive BASIC 2 Plus**, `SUB` defines procedures with parameters.
+You must use `CALL` to invoke a procedure declared with `SUB`. Procedures must be declared **before** any call to them appears in the code.
 
-Se recomienda al programador leer las secciones `Soporte para procedimientos` y `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad.
+If the `ASM` clause is specified, BASC assumes that the body of the procedure will consist mostly of assembly code that does **not** rely on the temporary-memory mechanism.
 
-``` basic
-SUB miUSING(n,long)
-    ' Imprime el número N con una LONG fija, rellenando
-    ' con 0 los espacios sobrantes a la izquerda.
+Programmers are encouraged to read the sections **Functions and Procedures** and **Using Assembly Code** in the chapter **“Compiler Peculiarities”** for details on parameter handling and recursion support.
+
+```basic
+SUB myUSING(n,long)
+    ' Prints number N using a fixed LONG width,
+    ' padding the left side with zeroes.
     n$ = STR$(n)
-    text$ = STRING$(long,48)  ' rellena con 0
-    digitos = LEN(n$)
-    inicio = long - LEN(n$) + 1
-    MID$(text$,inicio,digitos)=n$
+    text$ = STRING$(long,48)  ' fill with ASCII 0
+    digits = LEN(n$)
+    ini = long - LEN(n$) + 1
+    MID$(text$,ini,digits)=n$
     PRINT text$
 END SUB
 
 num=1234
-CALL miUSING(num,8)
+CALL myUSING(num,8)
 ```
 
-### `SYMBOL carácter,valor1,valor2,...,valor8`
+### `SYMBOL character,value1,value2,...,value8`
 
-Comando. Redefine el símbolo indicado por el número `carácter`. Dicho número debe estar disponible para redefinirse (ver `SYMBOL AFTER`). Cada caracter viene representado por una matriz de 8x8 píxeles. Los siguientes 8 valores definen cada fila del carácter. El valor es la suma de píxeles de esa línea que deben pintarse con el color de la tinta actual. Cada pixel de la línea tiene un valor númerico tal y como sigue:
+**Command.** Redefines the symbol identified by the numeric code `character`. This code must correspond to a redefinable character slot (see `SYMBOL AFTER`).
 
-| pixel 1 | pixel 2 | pixel 3 | pixel 4 | pixel 5 | pixel 6 | pixel 7 | pixel 8 |
-|---------|---------|---------|---------|---------|---------|---------|---------|
-|  128    |    64   |   32    |    16   |    8    |    4    |    2    |    1    |
+Each character is represented by an **8×8 pixel matrix**. The eight values following the character code define each row of the matrix. Each value is the sum of the bits corresponding to the pixels that should be lit using the current pen color. The bit values for each pixel position are:
 
-``` basic
+| Pixel 1 | Pixel 2 | Pixel 3 | Pixel 4 | Pixel 5 | Pixel 6 | Pixel 7 | Pixel 8 |
+| ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| 128     | 64      | 32      | 16      | 8       | 4       | 2       | 1       |
+
+```basic
 SYMBOL AFTER 240
 SYMBOL 240,&00,&00,&74,&7E,&6C,&70,&7C,&30
 SYMBOL 241,&7E,&FD,&80,&80,&80,&80,&40,&00
@@ -1586,63 +1695,72 @@ SYMBOL 247,&FC,&FC,&EC,&CC,&CC,&CC,&00,&00
 SYMBOL 248,&00,&00,&00,&00,&00,&00,&EE,&EE
 
 MODE 0
-PRINT CHR$(22)+CHR$(1)  ' Modo transparente de escritura ON
+PRINT CHR$(22)+CHR$(1)  ' Transparent printing ON
 LOCATE 5,2:PEN 11:PRINT CHR$(240);
-LOCATE 5,2:PEN 1:PRINT CHR$(241);
-LOCATE 5,2:PEN 8:PRINT CHR$(242);
-LOCATE 5,2:PEN 3:PRINT CHR$(243);
+LOCATE 5,2:PEN 1: PRINT CHR$(241);
+LOCATE 5,2:PEN 8: PRINT CHR$(242);
+LOCATE 5,2:PEN 3: PRINT CHR$(243);
 LOCATE 5,3:PEN 10:PRINT CHR$(244);
-LOCATE 5,3:PEN 6:PRINT CHR$(245);
+LOCATE 5,3:PEN 6: PRINT CHR$(245);
 LOCATE 5,3:PEN 11:PRINT CHR$(246);
-LOCATE 5,4:PEN 9:PRINT CHR$(247);
-LOCATE 5,4:PEN 3:PRINT CHR$(248);
-PRINT CHR$(22)+CHR$(0)  ' Modo transparente de escritura OFF
+LOCATE 5,4:PEN 9: PRINT CHR$(247);
+LOCATE 5,4:PEN 3: PRINT CHR$(248);
+PRINT CHR$(22)+CHR$(0)  ' Transparent printing OFF
 ```
 
 ### `SYMBOL AFTER n`
 
-Comando. Fija el número del carácter a partir del cuál se pueden redefinir. `n` debe ser un valor entre 1 y 256. Por defecto, los programas tienen disponibles los carácteres desde el valor 240 al 255. El valor disponible en un programa compilado será el valor más bajo de los utilizados en `SYMBOL AFTER` si existen múltiples llamadas.
+**Command.** Sets the character code from which redefinitions are allowed. `n` must be between **1 and 256**. By default, programs may redefine characters **240–255**.
 
-BASC reserva 8 bytes por cada carácter que puede redefinirse. Si no se va a utilizar esta capacidad es recomendable comenzar el programa con `SYMBOL AFTER 256`, lo que evitará que se reserve memoria. Para un ejemplo, ver `SYMBOL`.
+In a compiled program, the effective available range is the **lowest** value used across all `SYMBOL AFTER` statements.
 
-### `TAG [#canal]`
+BASC reserves **8 bytes per redefinable character**. If custom symbols are not needed, it is recommended to begin the program with:
 
-Comando. Redirige la salida de texto asociada a `canal` (#0 por defecto) para utilizar como el cursor gráfico en vez del cursor de texto. Esto permite mezclar texto con gráficos o desplazar el texto por píxeles en vez de por bloques de 8x8.
+```basic
+SYMBOL AFTER 256
+```
 
-``` basic
+This prevents memory from being reserved. See the `SYMBOL` section for an example.
+
+### `TAG [#channel]`
+
+**Command.** Redirects the text output of the specified `channel` (#0 by default) so that it uses the **graphics cursor** instead of the text cursor. This allows mixing text with graphics or moving the printed text pixel-by-pixel instead of in 8×8 character blocks.
+
+```basic
 MODE 2
 BORDER 9
-INK 0,12: INK 1,0
+INK 0,12 : INK 1,0
 LABEL BUCLE
 TAG
-FOR n=1 TO 100
-    MOVE 200+n,320+n
-    IF n<70 THEN
-        PRINT"Hola";
+FOR n = 1 TO 100
+    MOVE 200+n, 320+n
+    IF n < 70 THEN
+        PRINT "Hola";
     ELSE
-        PRINT"Adios";
+        PRINT "Adios";
     END IF
 NEXT
 GOTO BUCLE
 ```
 
-### TAGOFF [#canal]
+### `TAGOFF [#channel]`
 
-Comando.Desactiva el uso del cursor gráfico para el canal de texto indicado (#0 por defecto). Ver `TAG`.
+**Command.** Disables the use of the graphics cursor for the specified text channel (#0 by default).
+See `TAG` for details.
 
 ### `TAN(x)`
 
-Función. Devuelve la tangente del ángulo `x`. Implica el uso de números reales.
+**Function.** Returns the tangent of angle `x`. Uses real-number arithmetic.
 
-``` basic
+```basic
 PRINT TAN(45)
 ```
 
 ### `TEST(x,y)`
 
-Función. Devuelve el valor de la tinta en la posición de pantalla `x` e `y`.
+**Function.** Returns the ink value of the pixel located at screen coordinates `(x, y)`.
 
-``` basic
+```basic
 MODE 1
 PRINT TEST(320,200)
 PLOT 320,200,1
@@ -1651,161 +1769,272 @@ PRINT TEST(320,200)
 
 ### `TESTR(x,y)`
 
-Función. Igual que `TEST` pero siendo `x` e `y` posiciones relativas y no absolutas.
+**Function.** Equivalent to `TEST`, but interprets `x` and `y` as **relative** rather than absolute positions.
 
-### `TIME`
+### `TIME[(n)]`
 
-Función. Devuelve el tiempo transcurrido desde el encendido de la máquina. Mide el tiempo en pasos de 1/300 segundos. Requiere que las interrupciones estén activas, por lo que `DI` y ciertas operaciones de disco/cinta harán que deje de contarse el tiempo. El valor devuelto es un número real.
+**Function.** Returns the time elapsed since the machine was powered on. The measurement is done in units of 1/300 of a second. It requires interrupts to be enabled; therefore, `DI` and certain disk/tape operations will prevent the timer from advancing. The returned value is a real number.
+
+BASC provides an additional usage mode in which `TIME` behaves as a **command**. In this form, you may supply an integer value in parentheses, and that value becomes the new `TIME` counter.
 
 ```basic
 CLS
-T! = TIME
-FOR i=1 to 10
-    FOR j=1 to 1000
+T! = TIME      ' TIME(0) could be used instead
+FOR i = 1 TO 10
+    FOR j = 1 TO 1000
         s = 1000 + j
     NEXT j
     PRINT ".";
 NEXT i
 PRINT " FIN!"
-PRINT "Tiempo="; (TIME-T!)/300.0; "s"
+PRINT "Tiempo ="; (TIME - T!) / 300.0; "s"   ' If TIME(0) was used, subtracting is unnecessary
+```
+
+Finally, if BASC detects that the value returned by `TIME` is being converted to an integer, it applies an optimization that avoids using real numbers. However, the programmer should be cautious when using `TIME` in this way, since the value wraps around every 3 seconds due to the lower precision of integers.
+
+```basic
+TIME(0)
+FOR I = 0 TO 20
+    FRAME
+    PRINT CINT(TIME)
+NEXT
 ```
 
 ### `TROFF`
 
-Comando. Desactiva la impresión de trazas. BASC ignora este comando si lo encuentra como parte del código y emite una advertencia. Ver `TRON`.
+**Command.** Disables trace printing. BASC ignores this command when compiling and emits a warning.
+See also `TRON`.
 
 ### `TRON`
 
-Comando. En Locomotive BASIC permite emitir trazas según se interpreta un programa. BASC ignora este comando si lo encuentra como parte del código y emite una advertencia.
+**Command.** In Locomotive BASIC, enables execution tracing during program interpretation. BASC ignores this command when compiling and emits a warning.
 
 ### `UNT(n)`
 
-Comando. Convierte un valor sin signo (como una dirección de memoria) en el rango 0..65535 en un entero con signo en el rango -32768..+32767.
+**Command.** Converts an unsigned value (such as a memory address) in the range 0..65535 into a signed integer in the range -32768..+32767.
 
-``` basic
-PRINT UNT(&FF66) ' debe imprimir el valor -154
+```basic
+PRINT UNT(&FF66)  ' Outputs: -154
 ```
 
 ### `UPPER$(cadena)`
 
-Función. Devuelve `cadena`con todos sus carácteres pasados a mayúsculas.
+**Function.** Returns `cadena` with all characters converted to uppercase.
 
-``` basic
-C$="AmsTRaD"
+```basic
+C$ = "AmsTRaD"
 PRINT LOWER$(C$)
 PRINT UPPER$(C$)
 ```
 
 ### `VAL(cadena)`
 
-Función. Devuelve el primer **número entero** encontrado en `cadena`. Por tanto, y a diferencia del intérprete de BASIC en las máquinas Amstrad CPC, `VAL` no se puede usar para extraer un número real de una cadena de texto. 
+**Function.** Returns the first **integer** found in `cadena`. Unlike the BASIC interpreter on Amstrad CPC machines, `VAL` **cannot** extract a real number from a string.
 
 ```basic
-PRINT VAL("15") + 15
+PRINT VAL("15") + 15  ' Outputs: 30
 ```
 
-### `VPOS(#canal)`
+### `VPOS([#canal])`
 
-Función. Devuelve la posición actual en Y del cursor de texto para el `canal` indicado (#0 por defecto).
+**Function.** Returns the current Y position of the text cursor for the specified `canal` (#0 by default).
 
-``` basic
+```basic
 MODE 1
 PRINT POS(#0), VPOS(#0)
 ```
 
-### `WAIT puerto,mascara[,inversion]
+### `WAIT puerto,mascara[,inversion]`
 
-Comando. Detiene la ejecución hasta que se lee un valor esperado desde el `puerto` de entrada/salida especificado. El comando realiza una operación de **AND** con la `mascara` indicada y una operación de **XOR** con el valor de `inversion` (si se suministra). La ejecución solo continúa si el resultado obtenido es distinto de 0.
+**Command.** Pauses execution until a specified value is read from the given I/O `puerto`. The command performs an **AND** with the `mascara` and an optional **XOR** with `inversion` (if provided). Execution resumes only if the result is nonzero.
 
 ```basic
-WAIT &FF34,20,25
+WAIT &FF34, 20, 25
 ```
 
 ### `WEND`
 
-Comando. Marca el final de un buclo `WHILE`.
+**Command.** Marks the end of a `WHILE` loop.
 
 ### `WHILE condición`
 
-Comando. Marca el inicio de un bucle del que solo se sale cuando `condición` es cierta.
+**Command.** Marks the beginning of a loop that continues executing as long as `condición` is true.
 
-``` basic
+```basic
 CLS
-PRINT "Espera de 10 segundos": T! = TIME + 3000
-WHILE TIME<T!
-    SOUND 1,0,100,15
+PRINT "Waiting 10 seconds": T! = TIME + 3000
+WHILE TIME < T!
+    SOUND 1, 0, 100, 15
 WEND
-SOUND 129,40,30,15
+SOUND 129, 40, 30, 15
 ```
 
 ### `WIDTH n`
 
-Comando. Especifica el ancho en caracteres máximo a soportar por la impresora. BASC no soporta este comando y emitirá una advertencia si lo encuentra en el código a compilar.
+**Command.** Specifies the maximum character width for the printer. BASC does **not** support this command and will issue a warning if it appears in the code to be compiled.
 
-### `WINDOW [#canal,]izq,derecha,arriba,abajo`
+### `WINDOW [#channel,]left,right,top,bottom`
 
-Comando. Define una nueva ventana de texto asociada a `canal` que debe estar en el rango #0..#7 (#0 por defecto).
+**Command.** Defines a new text window for the specified `channel` (#0 by default, valid range #0..#7).
 
-``` basic
+```basic
 MODE 1
-WINDOW #1,1,40,20,25
-WINDOW #2,2,39,21,24
+WINDOW #1, 1, 40, 20, 25
+WINDOW #2, 2, 39, 21, 24
 PAPER 0
-PAPER #1,1
-PAPER #2,2
+PAPER #1, 1
+PAPER #2, 2
 CLS#0
 CLS#1
 CLS#2
 ```
 
-### `WINDOW SWAP canal1,canal2`
+### `WINDOW SWAP channel1,channel2`
 
-Comando. Intercambia las características de las ventanas de texto indicadas por `canal1` y `canal2`.
+**Command.** Swaps the settings of the text windows associated with `channel1` and `channel2`.
 
-``` basic
+```basic
 MODE 1
-WINDOW #1,1,40,20,25
+WINDOW #1, 1, 40, 20, 25
 PAPER 0
-PAPER #1,2
+PAPER #1, 2
 CLS#0
 CLS#1
-WINDOW SWAP 0,1
-PRINT "VENTANA 0"
+WINDOW SWAP 0, 1
+PRINT "WINDOW 0"
 ```
-### `WRITE [#canal],dato1,dato2,...`
 
-Comando. En Locomotive BASIC escribe los valores proporcionados en el canal indicado (#0 por defecto). BASC ignora el valor del canal y siempre lo considera #9, el canal para operaciones con ficheros. Por tanto, `WRITE` se puede utilizar para escribir en un fichero mientras que `READIN` serviría para leer los datos de vuelta. Los números reales no están soportados, solo se pueden escribir datos enteros o cadenas de texto.
+### `WRITE [#channel,]data1,data2,...`
 
-``` basic
-A=15
-NOM$="Juan"
-OPENOUT "DATOS.TXT"
-WRITE #9,NOM$,A
+**Command.** In Locomotive BASIC, writes the specified values to the indicated channel (#0 by default). BASC ignores the channel parameter and always uses #9, the channel for file operations. Therefore, `WRITE` can be used to save data to a file, while `READIN` can be used to read it back. Real numbers are **not supported**; only integers or text strings can be written.
+
+```basic
+A = 15
+NOM$ = "Juan"
+OPENOUT "DATA.TXT"
+WRITE #9, NOM$, A
 CLOSEOUT
 ```
 
 ### `XPOS`
 
-Función. Devuelve la posición en X del cursor gráfico.
+**Function.** Returns the current **X** position of the graphics cursor.
 
-``` basic
+```basic
 MODE 1
-PRINT XPOS;YPOS
-MOVE 320,200
-PRINT XPOS;YPOS
+PRINT XPOS; YPOS
+MOVE 320, 200
+PRINT XPOS; YPOS
 ```
 
 ### `YPOS`
 
-Función. Devuelve la posición en Y del cursor gráfico. Ver `XPOS`.
+**Function.** Returns the current **Y** position of the graphics cursor. See `XPOS`.
 
-### ZONE n
+### `ZONE n`
 
-Comando. Cambia la anchura (13 por defecto) de la zona de escritura utilizada por `PRINT` cuando se separan elementos con comas.
+**Command.** Changes the width (default is 13) of the print zone used by `PRINT` when items are separated with commas.
 
-``` basic
+```basic
 CLS
-PRINT "A","B"
+PRINT "A", "B"
 ZONE 4
-PRINT "A","B"
+PRINT "A", "B"
 ```
+
+---
+
+# Appendix I: Debugging Compiled Programs
+
+Debugging programs generated by a cross-compiler can be a challenging task, as the machine running the code is different from the machine where it was developed. Fortunately, emulators can significantly simplify this process. For example, **WinApe** and **Retro Virtual Machine** allow us to set up an effective debugging environment.
+
+## Verifying BASIC Code
+
+**WinApe** provides a convenient way to "paste" BASIC code and run it. This allows us to compare results between the BASIC interpreter and our compiled code. Naturally, to make a fair comparison, we cannot use features introduced in Locomotive BASIC 2.0 (such as `FUNCTION`, `SUB`, multiline `IF`, etc.). However, we **can** use the following options:
+
+* Code without line numbers
+* Code split across multiple files
+
+When compiling with BASC, the first step is handled by the preprocessor. With the `--verbose` option enabled, it generates an intermediate file with the `.BPP` extension, where line numbers are added and any additional files referenced with `CHAIN MERGE` are included.
+
+To paste code into **WinApe**, follow these steps:
+
+1. Select the desired code in your preferred editor and choose the `Copy` option.
+2. In **WinApe**, go to the `File` menu and select `Paste`.
+3. If you are pasting a large amount of code, enable `Settings > High Speed` to accelerate the process. Remember to switch back to `Normal Speed` once the paste is complete.
+
+## Debugging our Code
+
+It is not possible to debug BASIC code step by step, but we **can** debug the assembly code generated by the compiler. As part of the compilation process, BASC produces an intermediate file with the `.ASM` extension. This file uses a syntax compatible with **WinApe** and **Retro Virtual Machine 2.0**.
+
+In **Retro Virtual Machine**, we can enable debugging tools by following these steps:
+
+1. Open our Amstrad CPC machine (464 or 6128).
+2. Click on the hamburger menu in the top-left corner.
+3. Enable the `Developer Mode` option.
+
+An icon with a hammer will appear in the top toolbar. Clicking on it will display a submenu with various tools; we select the last one, the **Retro Virtual Machine** console. From this console, we can navigate through the machine’s directories and load our code as follows:
+
+* `ls` — Lists the contents of the current directory.
+* `cd` — Changes the current directory.
+* `asm` — Assembles the specified `.ASM` file.
+
+This method allows us to load our program into a test environment much faster than using `.DSK` files and disk support. Once the program is in memory, it can be executed with the command:
+
+```basic
+CALL &170
+```
+
+Additionally, after assembling our code with **Retro Virtual Machine**, it is possible to list all symbols (line labels, variable names, etc.) in the console using the command:
+
+```
+symbols
+```
+
+This allows us to set breakpoints at any memory location with:
+
+```
+break memory-address
+```
+
+To clear all breakpoints, simply execute:
+
+```
+break -x
+```
+
+This debugging process requires some familiarity with assembly code. The `References` section includes books and resources that can serve as useful learning material.
+
+Finally, readers are encouraged to consult the official documentation for **WinApe** and **Retro Virtual Machine** to explore additional debugging options and fully leverage the tools provided by these emulators.
+
+---
+
+# Appendix II: Extending the Compiler
+
+One of the major advantages of BASC is that, being written in Python, it is easy to **extend and modify its functionality**. The source code is organized across the following main files:
+
+* **basc.py – Main file:** Handles the compiler options and executes the compilation process step by step.
+* **baspp.py – Preprocessor:** Adds line numbers and inserts any additional code files referenced via `CHAIN MERGE`. If the `--verbose` option is enabled, it generates an intermediate file with the `.BPP` extension.
+* **baslex.py – Lexical Analyzer:** Scans the source code and generates the corresponding list of tokens. With `--verbose`, it produces an intermediate `.LEX` file.
+* **basparse.py – Syntax Analyzer:** Processes the token list, checks the program’s syntax, and generates an intermediate representation of the code in the form of an Abstract Syntax Tree (AST). With `--verbose`, an intermediate `.AST` file is generated.
+* **emitters/cpcemitter.py – Assembler Code Generator:** Takes the AST produced by the syntax analyzer and outputs the equivalent assembly code. The result is saved as a `.ASM` file, which is then assembled by **ABASM** to produce the final binary.
+* **emitters/cpcrt.py – Compiler Runtime:** Contains assembly routines called by the code generated by `cpcemitter.py`.
+
+Whenever changes are made to any of these files, it is recommended to check for obvious errors. This can be done by running the following commands from the directory containing `basc.py`:
+
+* **Type checking:**
+
+```bash
+mypy . --explicit-package-bases
+```
+
+* **Unit testing:**
+
+```bash
+python3 -m unittest -b
+```
+
+Finally, the `examples` directory contains several sample programs that can be compiled and also used for testing and experimenting with the compiler.
+
+---
+
