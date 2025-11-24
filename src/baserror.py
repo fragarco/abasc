@@ -153,7 +153,7 @@ _ERRORCODES = {
     "030": "Unexpected WEND",
     "031": "File not open",
     "032": "Broken in",
-    # -------- Custom error codes used by BASC ---------
+    # -------- Custom error codes used by ABASC ---------
     "033": "File doesn't exist",
     "034": "Line number already exists",
     "035": "END IF missing",

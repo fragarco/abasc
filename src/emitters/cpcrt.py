@@ -1,5 +1,5 @@
 """
-BASC compiler z80 runtime functions
+ABASC compiler z80 runtime functions
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -320,7 +320,7 @@ rt_error: db 0
 ; a header of 3 bytes defines the string as follows:
 ; <1: string len><2-3: string address> -> "string"
 ; Inputs:
-;     HL address to a regular BASC string
+;     HL address to a regular ABASC string
 ;     DE address to one of the RSX string placeholders
 ; Outputs:
 ;     HL address to the filled placeholder

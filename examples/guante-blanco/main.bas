@@ -6,7 +6,7 @@
 50 INK 4,14:INK 5,24,12:INK 6,0:INK 7,0:INK 8,0:PAPER #1,7
 60 retardo=200
 70 DIM objx(5,20),objy(5,20),joyax(5,20),joyay(5,20)
-71 ' BASC require arrays to be declared before used
+71 ' ABASC require arrays to be declared before used
 72 DIM minx(10),miny(10),maxx(10),maxy(10)
 73 DIM dir(10,10),puerta$(10),conm$(2,1),vent$(10)
 74 DIM obj(10),luces(10),joyas(10)

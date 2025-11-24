@@ -45,7 +45,7 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
-    parser.add_argument('--version', action='version', version=f' Basc (Locomotive BASIC Compiler) Version {__version__}', help = "Shows program's version and exits")
+    parser.add_argument('--version', action='version', version=f' ABASC (Locomotive BASIC Cross Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
     return args

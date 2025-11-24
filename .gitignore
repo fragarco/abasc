@@ -163,7 +163,7 @@ cython_debug/
 extras/
 .vscode
 
-# basc intermediate files
+# abasc intermediate files
 *.bpp
 *.ast
 *.irc

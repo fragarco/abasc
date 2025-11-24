@@ -1,5 +1,5 @@
 <!-- omit in toc -->
-BASC: USER MANUAL
+ABASC: USER MANUAL
 ==================
 **A BASIC cross compiler for the Amstrad CPC machines**
 
@@ -7,15 +7,15 @@ BASC: USER MANUAL
 
 # Introduction
 
-**BASC (BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
+**ABASC (BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
 
 It is designed to support the dialect of BASIC created by **Locomotive Software** for the Amstrad CPC microcomputers, ensuring that all existing documentation for this language remains fully relevant and useful.
 
-Furthermore, as a cross-compiler running on modern systems, BASC incorporates several features from **Locomotive BASIC 2 Plus**, providing a development experience closer to modern programming languages while preserving the classic style of the original BASIC.
+Furthermore, as a cross-compiler running on modern systems, ABASC incorporates several features from **Locomotive BASIC 2 Plus**, providing a development experience closer to modern programming languages while preserving the classic style of the original BASIC.
 
 ## Influences
 
-BASC owes its existence to the **CPCBasic** compiler: [https://cpcbasic.webcindario.com/CPCBasicSp.html](https://cpcbasic.webcindario.com/CPCBasicSp.html). BASC would likely not exist if that project was still active and its source code publicly available.
+ABASC owes its existence to the **CPCBasic** compiler: [https://cpcbasic.webcindario.com/CPCBasicSp.html](https://cpcbasic.webcindario.com/CPCBasicSp.html). ABASC would likely not exist if that project was still active and its source code publicly available.
 
 ## A Brief Overview of the Locomotive BASIC Versions
 
@@ -57,7 +57,7 @@ To deepen your knowledge of the Amstrad CPC464/CPC6128 firmware, or of Z80 assem
 
 ---
 
-# Syntax Supported by BASC
+# Syntax Supported by ABASC
 
 1. Line numbers are not required.
 2. Labels for jumps can be defined using `LABEL`.
@@ -107,7 +107,7 @@ DATA "Elvira", 20, 2005
 # Using the Compiler
 
 ```
-python basc.py [options] file.bas [-o output]
+python abasc.py [options] file.bas [-o output]
 ```
 
 ### Options
@@ -131,11 +131,11 @@ In addition to the compiler, the development package includes several extra tool
 
 # Peculiarities of the Compiler
 
-Although BASC aims to compile programs written for BASIC 1.0 and 1.1 with little or no modification, the very nature of a compiler versus an interpreter naturally introduces certain differences. This section explains those particular behaviors that may surprise programmers accustomed to the traditional BASIC interpreter.
+Although ABASC aims to compile programs written for BASIC 1.0 and 1.1 with little or no modification, the very nature of a compiler versus an interpreter naturally introduces certain differences. This section explains those particular behaviors that may surprise programmers accustomed to the traditional BASIC interpreter.
 
 ## Types and Variables
 
-BASC uses a somewhat stricter type system than the original Locomotive BASIC interpreter. By default, **all variables are integers**, unless a suffix is used to indicate a different data type.
+ABASC uses a somewhat stricter type system than the original Locomotive BASIC interpreter. By default, **all variables are integers**, unless a suffix is used to indicate a different data type.
 
 | Type    | Suffix       | Notes                                                            |
 | ------- | ------------ | ---------------------------------------------------------------- |
@@ -152,24 +152,24 @@ In the original Locomotive BASIC, strings used a **double-indirection** structur
 
 The maximum length was 255 characters.
 
-In BASC, string data is stored **directly after the length byte**, reserving **up to 255 bytes for the entire structure**. Therefore, **the maximum string length is 254 characters**.
+In ABASC, string data is stored **directly after the length byte**, reserving **up to 255 bytes for the entire structure**. Therefore, **the maximum string length is 254 characters**.
 
-The only exception is **RSX calls**, for which BASC preserves the original Locomotive BASIC string structure to ensure compatibility. Thus, RSX routines will always receive strings in the 3-byte indirection format:
+The only exception is **RSX calls**, for which ABASC preserves the original Locomotive BASIC string structure to ensure compatibility. Thus, RSX routines will always receive strings in the 3-byte indirection format:
 
 * 1 byte: length
 * 2 bytes: pointer to content
 
-In addition, programmers may not always want to reserve the full 254 bytes for every string. BASC therefore includes two statements from Locomotive BASIC 2: **`FIXED`** and **`DECLARE`**, which allow specifying the exact buffer size:
+In addition, programmers may not always want to reserve the full 254 bytes for every string. ABASC therefore includes two statements from Locomotive BASIC 2: **`FIXED`** and **`DECLARE`**, which allow specifying the exact buffer size:
 
 ```basic
 DECLARE A$ FIXED 10  ' A$ may contain up to 10 characters
 ```
 
-The above sentence reserves 11 bytes total (1 length byte + 10 characters). It is important to note that BASC does **not perform runtime bounds checking**—unlike an interpreter—so writing more characters than the space allocated for `A$` will lead to unpredictable behavior.
+The above sentence reserves 11 bytes total (1 length byte + 10 characters). It is important to note that ABASC does **not perform runtime bounds checking**—unlike an interpreter—so writing more characters than the space allocated for `A$` will lead to unpredictable behavior.
 
 ### Arrays
 
-In Locomotive BASIC, an array that has not been explicitly declared with `DIM` is assumed to contain 10 elements. BASC is stricter: compilation will fail if the program attempts to use an array that has not been declared explicitly with `DIM`.
+In Locomotive BASIC, an array that has not been explicitly declared with `DIM` is assumed to contain 10 elements. ABASC is stricter: compilation will fail if the program attempts to use an array that has not been declared explicitly with `DIM`.
 
 Furthermore, a string array immediately allocates memory for **all its elements**. By default, each string occupies 255 bytes (1 length + 254 content), which can quickly exhaust available memory. As with individual strings, the `FIXED` clause may be used:
 
@@ -179,7 +179,7 @@ DIM A$(5) FIXED 10   ' Total memory = 11 bytes × 5 elements
 
 ### RECORD Structures
 
-BASC supports organizing data into more complex structures known as **records** as it was introduced by Locomotive BASIC version 2 Plus. Internally, a record is simply a structured way of subdividing and labeling the memory reserved by a string. To use records, their layout must first be defined using the `RECORD` statement:
+ABASC supports organizing data into more complex structures known as **records** as it was introduced by Locomotive BASIC version 2 Plus. Internally, a record is simply a structured way of subdividing and labeling the memory reserved by a string. To use records, their layout must first be defined using the `RECORD` statement:
 
 ```
 RECORD name; field list
@@ -210,7 +210,7 @@ The program above leaves the memory reserved for `A$` in the following layout:
 
 ## Functions and Procedures
 
-Traditionally, BASIC allows reusable code to be organized through routines invoked with `GOSUB` and `RETURN` (without parameter support), or through single-line functions defined with `DEF FN`. BASC is fully compatible with both mechanisms, but it also adds a more modern and structured approach introduced in Locomotive BASIC 2 Plus. The syntax is:
+Traditionally, BASIC allows reusable code to be organized through routines invoked with `GOSUB` and `RETURN` (without parameter support), or through single-line functions defined with `DEF FN`. ABASC is fully compatible with both mechanisms, but it also adds a more modern and structured approach introduced in Locomotive BASIC 2 Plus. The syntax is:
 
 ```basic
 SUB name(parameter list)
@@ -246,11 +246,11 @@ Variables declared inside a procedure—using `DECLARE`, `DIM`, by assigning to 
 
 Regarding parameter passing semantics, integers are passed **by value**, while strings and real numbers are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter two cases, the procedure may modify the original variable.
 
-**NOTE ON RECURSION:** BASC does not support recursion. As with global variables, local variables reserve memory at compile time. Because of this, the code is not reentrant, making recursive calls impossible.
+**NOTE ON RECURSION:** ABASC does not support recursion. As with global variables, local variables reserve memory at compile time. Because of this, the code is not reentrant, making recursive calls impossible.
 
 ## Using Assembly Code
 
-The `ASM` statement allows you to embed assembly code directly within any part of a BASIC program. **ABASM**, the assembler used by BASC, has its own dedicated manual that describes the supported syntax and available options in detail.
+The `ASM` statement allows you to embed assembly code directly within any part of a BASIC program. **ABASM**, the assembler used by ABASC, has its own dedicated manual that describes the supported syntax and available options in detail.
 
 You can also call assembly routines using the `CALL` statement, as shown in the following example:
 
@@ -260,7 +260,7 @@ ASM "mylabel: ret ; empty routine"
 CALL "mylabel"
 ```
 
-It is possible to pass arguments to assembly routines, although this requires understanding BASC’s calling convention. Parameters are **pushed onto the stack in order**, from first to last, and the routine is invoked with the **IX register pointing to the last parameter**.
+It is possible to pass arguments to assembly routines, although this requires understanding ABASC’s calling convention. Parameters are **pushed onto the stack in order**, from first to last, and the routine is invoked with the **IX register pointing to the last parameter**.
 The callee **must not** remove parameters from the stack; this is handled by the caller after the routine returns.
 
 For example, a routine receiving three integer parameters (each 2 bytes long):
@@ -307,7 +307,7 @@ ASM "incbin 'assets.bin' ; binary content to append"
 
 ## Memory Management
 
-The memory layout of a program compiled with BASC is structured as follows:
+The memory layout of a program compiled with ABASC is structured as follows:
 
 | Address           | Description                                                                |
 | ----------------- | -------------------------------------------------------------------------- |
@@ -318,27 +318,27 @@ The memory layout of a program compiled with BASC is structured as follows:
 | ***program_end*** | Label marking the address where the program’s memory usage ends            |
 
 Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
-BASC supports them as well, but their semantics differ slightly due to the compiled-code model:
+ABASC supports them as well, but their semantics differ slightly due to the compiled-code model:
 
-| Command          | Meaning in BASC                              |
+| Command          | Meaning in ABASC                              |
 | ---------------- | -------------------------------------------- |
 | **HIMEM**        | Returns the memory address immediately above the end of the compiled program. |
 | **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.|
-| **SYMBOL AFTER** | BASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
+| **SYMBOL AFTER** | ABASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
 | **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`). |
 | **FRE(1)**       | Returns the currently available temporary memory. |
 | **FRE("")**      | Forces a cleanup of temporary memory and returns the same value as `FRE(0)`. |
 
-BASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations).
+ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations).
 After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
 ## Using the Firmware
 
-BASC makes extensive use of the **Amstrad CPC Firmware** routines, especially for handling floating-point numbers. This means that although compiled code is significantly faster than interpreted BASIC, its performance may still be limited by the speed of these system routines.
+ABASC makes extensive use of the **Amstrad CPC Firmware** routines, especially for handling floating-point numbers. This means that although compiled code is significantly faster than interpreted BASIC, its performance may still be limited by the speed of these system routines.
 
 However, you can use the `ASM` statement to provide more efficient replacements for Firmware calls (such as `CLS`, `INK`, `BORDER`, `PAPER`, etc.). Keep in mind, though, that unless interrupts are disabled, the Firmware remains active and **may overwrite your changes** without warning.
 
-Another option is to modify the program’s assembly code directly. During compilation, BASC generates an `.ASM` file containing the full assembly code. This allows the developer to adjust or extend the generated code and apply specific optimizations when needed, using **ABASM** to produce the final binary. When the `--verbose` option is enabled, the generated ASM file includes more detailed comments, making it easier to follow how each BASIC statement is translated into assembly code.
+Another option is to modify the program’s assembly code directly. During compilation, ABASC generates an `.ASM` file containing the full assembly code. This allows the developer to adjust or extend the generated code and apply specific optimizations when needed, using **ABASM** to produce the final binary. When the `--verbose` option is enabled, the generated ASM file includes more detailed comments, making it easier to follow how each BASIC statement is translated into assembly code.
 
 Aquí tienes la traducción al inglés del texto:
 
@@ -346,9 +346,9 @@ Aquí tienes la traducción al inglés del texto:
 
 ## Libraries
 
-The BASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of our programs using the `CHAIN MERGE` command.
+The ABASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of our programs using the `CHAIN MERGE` command.
 
-`CHAIN MERGE` will first try to resolve any file to include against the local directory of our source code. If the specified file is not local to the program, it will then search in the BASC `lib` directory, treating it as a "library" — a reusable `.BAS` file that can be used in any project. For example, we can test the `memory.bas` file distributed with BASC using this simple program:
+`CHAIN MERGE` will first try to resolve any file to include against the local directory of our source code. If the specified file is not local to the program, it will then search in the ABASC `lib` directory, treating it as a "library" — a reusable `.BAS` file that can be used in any project. For example, we can test the `memory.bas` file distributed with ABASC using this simple program:
 
 ```basic
 CHAIN MERGE "memory.bas"
@@ -392,7 +392,7 @@ Special characters:
 
 **Command.** Calls the specified subroutine after a delay. The `delay` is measured in 1/50 second increments. The optional second parameter specifies which of the four timers to use (0..3). If omitted, timer 0 is used by default. The `GOSUB` label can be either a line number (integer) or a literal defined with the `LABEL` statement.
 
-BASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
 ```basic
 A = 0
@@ -427,11 +427,11 @@ ASM "ld  hl,_my_str", "ld  a,(hl)"
 
 ### `AUTO linenumber[,increment]`
 
-**Command.** Ignored by BASC. The compiler emits a warning because this command has no effect in compiled programs.
+**Command.** Ignored by ABASC. The compiler emits a warning because this command has no effect in compiled programs.
 
 ### `BIN$(number,digits)`
 
-**Function.** Returns the integer `number` as a string containing its binary representation. Locomotive BASIC allows specifying the exact number of digits, but **BASC only supports 8 or 16 digits**.
+**Function.** Returns the integer `number` as a string containing its binary representation. Locomotive BASIC allows specifying the exact number of digits, but **ABASC only supports 8 or 16 digits**.
 
 ```basic
 PRINT BIN$(16,8)  ' prints the string "00010000"
@@ -467,13 +467,13 @@ ASM "infinite_loop: jr infinite_loop"
 
 ### `CHAIN`
 
-**Command**. In BASIC, this replaces the current program in memory with another program. BASC ignores this instruction and issues a warning if it is found.
+**Command**. In BASIC, this replaces the current program in memory with another program. ABASC ignores this instruction and issues a warning if it is found.
 
 ### `CHAIN MERGE string`
 
-**Command**. Redefined in BASC to allow splitting your code across multiple files. `string` should be the path to a `.BAS` file accessible from the main file location.
+**Command**. Redefined in ABASC to allow splitting your code across multiple files. `string` should be the path to a `.BAS` file accessible from the main file location.
 
-`CHAIN MERGE` cannot find the `string`file relative to our program directory, it will then search in the BASC `lib` directory, treating `string` as a "library" — a reusable `.BAS` file that can be used in any project.
+`CHAIN MERGE` cannot find the `string`file relative to our program directory, it will then search in the ABASC `lib` directory, treating `string` as a "library" — a reusable `.BAS` file that can be used in any project.
 
 ```basic
 ' MORECODE.BAS
@@ -503,11 +503,11 @@ PRINT CINT(PI)
 
 ### `CLEAR`
 
-**Command**. Originally in BASIC, this cleared all variables, the text memory area, closed open files, and reset angle mode to `RAD`. In BASC, only the last two actions are performed.
+**Command**. Originally in BASIC, this cleared all variables, the text memory area, closed open files, and reset angle mode to `RAD`. In ABASC, only the last two actions are performed.
 
 ### `CLEAR INPUT`
 
-**Command**. Introduced in BASIC 1.1. BASC supports it even on an Amstrad CPC 464, using the firmware routine `KM RESET` instead of `KM FLUSH`.
+**Command**. Introduced in BASIC 1.1. ABASC supports it even on an Amstrad CPC 464, using the firmware routine `KM RESET` instead of `KM FLUSH`.
 
 ### `CLG [ink]`
 
@@ -523,15 +523,15 @@ PRINT CINT(PI)
 
 ### `CLS [#x]`
 
-**Command**. Clears the screen using the current `PAPER` color. A channel may be specified with `#x`. Values 0–7 define screen areas via the `WINDOW` command. `#8` is usually associated with the Printer (not supported in BASC), and `#9` is for files.
+**Command**. Clears the screen using the current `PAPER` color. A channel may be specified with `#x`. Values 0–7 define screen areas via the `WINDOW` command. `#8` is usually associated with the Printer (not supported in ABASC), and `#9` is for files.
 
 ### `CONT`
 
-**Command**. In original BASIC, continues execution after a `BREAK`, `STOP`, or `END`. In a compiled program, BASC redefines it to pause execution and wait for any keypress, may be useful for debugging.
+**Command**. In original BASIC, continues execution after a `BREAK`, `STOP`, or `END`. In a compiled program, ABASC redefines it to pause execution and wait for any keypress, may be useful for debugging.
 
 ### `COPYCHR$(#channel)`
 
-**Function**. Returns the character at the current text cursor position for the given `channel`. Introduced in BASIC 1.1, BASC provides support even on programs running on an Amstrad CPC 464.
+**Function**. Returns the character at the current text cursor position for the given `channel`. Introduced in BASIC 1.1, ABASC provides support even on programs running on an Amstrad CPC 464.
 
 ``` basic
 MODE 1
@@ -587,7 +587,7 @@ DECLARE A             ' declares integer A
 
 ### `DEC$(number, pattern)`
 
-**Function**. Introduced in BASIC 1.1, `DEC$` converts `number` to a string using a pattern to define the number of spaces before or after the decimal point. BASC currently ignores the pattern, so this behaves similarly to `STR$`.
+**Function**. Introduced in BASIC 1.1, `DEC$` converts `number` to a string using a pattern to define the number of spaces before or after the decimal point. ABASC currently ignores the pattern, so this behaves similarly to `STR$`.
 
 ```basic
 PRINT DEC$(15.5, "###.##")
@@ -595,9 +595,9 @@ PRINT DEC$(15.5, "###.##")
 
 ### `DEF FN name(parameters) = expression`
 
-**Command**. Declares a single-line function applying the expression on the right to the given parameters. In BASIC 1.0, this was the only way to define functions. BASC supports the more versatile `FUNCTION ... END FUNCTION` syntax.
+**Command**. Declares a single-line function applying the expression on the right to the given parameters. In BASIC 1.0, this was the only way to define functions. ABASC supports the more versatile `FUNCTION ... END FUNCTION` syntax.
 
-**Important differences in BASC:** Functions and subroutines **must be declared before use** and type suffixes are mandatory, a function returning a real must end with `!`, and a string function must end with `$`.
+**Important differences in ABASC:** Functions and subroutines **must be declared before use** and type suffixes are mandatory, a function returning a real must end with `!`, and a string function must end with `$`.
 
 ```basic
 DEF FNinterest!(principal) = principal * 1.14
@@ -606,7 +606,7 @@ PRINT FNinterest!(1000)
 
 ### `DEFINT, DEFSTR, DEFREAL`
 
-**Command**. In original BASIC, these defined ranges of initial letters for variable types. BASC uses strict type suffixes (`%`, `!`, `$`) and ignores these commands entirely. Programmers must explicitly use suffixes to define variable types.
+**Command**. In original BASIC, these defined ranges of initial letters for variable types. ABASC uses strict type suffixes (`%`, `!`, `$`) and ignores these commands entirely. Programmers must explicitly use suffixes to define variable types.
 
 ### `DEG`
 
@@ -621,7 +621,7 @@ PRINT SIN(90.0)  ' prints 0.8939 (value in radians)
 
 ### `DELETE low-high`
 
-**Command**. In Locomotive BASIC this command was used to delete a range of program lines. In BASC, this behavior does not make sense, so `DELETE` has been redefined to clear (fill with zeros) a memory region. The range must be specified as: starting address - ending address.
+**Command**. In Locomotive BASIC this command was used to delete a range of program lines. In ABASC, this behavior does not make sense, so `DELETE` has been redefined to clear (fill with zeros) a memory region. The range must be specified as: starting address - ending address.
 
 ```basic
 DELETE &C000-&FFFF
@@ -629,7 +629,7 @@ DELETE &C000-&FFFF
 
 ### `DERR`
 
-**Command**. Introduced in BASIC 1.1, it stored the last disk-related error. BASC ignores any reference to this command and issues a warning if it appears in the code.
+**Command**. Introduced in BASIC 1.1, it stored the last disk-related error. ABASC ignores any reference to this command and issues a warning if it appears in the code.
 
 ### `DI`
 
@@ -656,7 +656,7 @@ NEXT
 
 ### `DRAW x,y[,i[,mode]]`
 
-**Command**. Draws a line from the current cursor position to the coordinates `x` and `y`. The optional third parameter specifies the color. In BASIC 1.1, a fourth parameter was added (supported by BASC even for programs running on an Amstrad CPC 464), which defines the mode or mask applied between each point of the line and the background:
+**Command**. Draws a line from the current cursor position to the coordinates `x` and `y`. The optional third parameter specifies the color. In BASIC 1.1, a fourth parameter was added (supported by ABASC even for programs running on an Amstrad CPC 464), which defines the mode or mask applied between each point of the line and the background:
 
 | Value | Mode               |
 | ----- | ------------------ |
@@ -679,7 +679,7 @@ DRAW 0,0,2
 
 ### `EDIT line[-line]`
 
-**Command**. In Locomotive BASIC, this command allows editing a specific line of code. In BASC, it is ignored and has no effect during compilation.
+**Command**. In Locomotive BASIC, this command allows editing a specific line of code. In ABASC, it is ignored and has no effect during compilation.
 
 ### `EI`
 
@@ -687,7 +687,7 @@ DRAW 0,0,2
 
 ### `END`
 
-**Command**. Ends program execution. In the BASIC interpreter, this returns control to the user. In BASC, it jumps to an infinite loop. Note that `STOP` forces a machine restart.
+**Command**. Ends program execution. In the BASIC interpreter, this returns control to the user. In ABASC, it jumps to an infinite loop. Note that `STOP` forces a machine restart.
 
 ### `END FUNCTION`
 
@@ -699,7 +699,7 @@ DRAW 0,0,2
 
 ### `ENT envelope_number, sections`
 
-**Command.** Defines the pitch variation of a sound. Locomotive BASIC allows specifying two types of pitch envelopes (sections): one with three parameters and another with two. Although not officially documented, to differentiate the second type, the `=` symbol could be placed before the first number. BASC does not fail if this character is present; however, it determines the envelope type based on the number of parameters. If there is any ambiguity, BASC assumes the first type, where each envelope is defined with three values.
+**Command.** Defines the pitch variation of a sound. Locomotive BASIC allows specifying two types of pitch envelopes (sections): one with three parameters and another with two. Although not officially documented, to differentiate the second type, the `=` symbol could be placed before the first number. ABASC does not fail if this character is present; however, it determines the envelope type based on the number of parameters. If there is any ambiguity, ABASC assumes the first type, where each envelope is defined with three values.
 
 **Type 1 Section:**
 
@@ -714,7 +714,7 @@ DRAW 0,0,2
 
 ### `ENV envelope_number, sections`
 
-**Command.** Defines the volume variation of a sound. Locomotive BASIC supports two types of volume envelopes (sections): one with three parameters and another with two. Similar to `ENT`, the second type can optionally start with the `=` symbol. BASC determines the envelope type based on the number of parameters and assumes the three-parameter type by default.
+**Command.** Defines the volume variation of a sound. Locomotive BASIC supports two types of volume envelopes (sections): one with three parameters and another with two. Similar to `ENT`, the second type can optionally start with the `=` symbol. ABASC determines the envelope type based on the number of parameters and assumes the three-parameter type by default.
 
 **Type 1 Section:**
 
@@ -748,7 +748,7 @@ CLOSEIN
 
 ### `ERASE arrayname`
 
-**Command.** In Locomotive BASIC, this frees the memory reserved for an array. In BASC, memory is allocated at compile time, so this command has no effect and is ignored in compiled code.
+**Command.** In Locomotive BASIC, this frees the memory reserved for an array. In ABASC, memory is allocated at compile time, so this command has no effect and is ignored in compiled code.
 
 ### `ERL`
 
@@ -771,7 +771,7 @@ PRINT ERR
 
 **Command**. Sets the specified `timer` (0–3, default 0) to call the subroutine at `label` every `time` ticks. Each tick represents 1/50 of a second, so a value of 50 corresponds to calling the label once per second.
 
-BASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
 ```basic
 A = 0
@@ -786,7 +786,7 @@ RETURN
 
 ### `EXIT FOR`
 
-**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with BASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2.
+**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with ABASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2.
 
 ```basic
 FOR I = 0 TO 100
@@ -814,7 +814,7 @@ PRINT I
 
 ### `FILL`
 
-**Command**. Only available on Amstrad CPC 664, 6128, or higher. Fills an area of the screen starting from the current graphics cursor position using the active pen color. It can fill shapes automatically. While BASC will compile the program, execution on an Amstrad CPC 464 will fail.
+**Command**. Only available on Amstrad CPC 664, 6128, or higher. Fills an area of the screen starting from the current graphics cursor position using the active pen color. It can fill shapes automatically. While ABASC will compile the program, execution on an Amstrad CPC 464 will fail.
 
 ```basic
 MODE 0
@@ -935,7 +935,7 @@ FILL 15
 
 ### `HEX$(x, digits)`
 
-**Function**. Returns a string representing the hexadecimal conversion of `x`. Locomotive BASIC allows any number of digits, but BASC only supports 2 or 4 digits.
+**Function**. Returns a string representing the hexadecimal conversion of `x`. Locomotive BASIC allows any number of digits, but ABASC only supports 2 or 4 digits.
 
 ```basic
 PRINT HEX$(255,2)
@@ -944,7 +944,7 @@ PRINT HEX$(2048,4)
 
 ### `HIMEM`
 
-**Function**. Returns the memory address immediately following the end of the program compiled by BASC. This can be particularly useful with the `LOAD` command to load other binaries into free memory space.
+**Function**. Returns the memory address immediately following the end of the program compiled by ABASC. This can be particularly useful with the `LOAD` command to load other binaries into free memory space.
 
 ```basic
 PRINT "Memory used limit:", HIMEM
@@ -953,7 +953,7 @@ PRINT "Free memory before firmware variables:", FRE(0)
 
 ### `IF expression THEN expression ELSE expression END IF`
 
-**Command**. BASC supports the traditional one-line `IF ... THEN ... ELSE` structure from Locomotive BASIC 1.0 and 1.1. It also supports the multi-line syntax introduced in Locomotive BASIC 2 Plus, which allows the `THEN` and `ELSE` blocks to span multiple lines.
+**Command**. ABASC supports the traditional one-line `IF ... THEN ... ELSE` structure from Locomotive BASIC 1.0 and 1.1. It also supports the multi-line syntax introduced in Locomotive BASIC 2 Plus, which allows the `THEN` and `ELSE` blocks to span multiple lines.
 
 You cannot mix single-line and multi-line formats in the same `IF` statement. If the `THEN` block uses the multi-line format, the `ELSE` block (if present) must also use it, and the statement must end with `END IF`.
 
@@ -1060,11 +1060,11 @@ PRINT posA
 
 ### `KEY key, string`
 
-**Command**. Assigns a text `string` to a function `key`. BASC does **not** support this command and will issue a warning if it is encountered in the code.
+**Command**. Assigns a text `string` to a function `key`. ABASC does **not** support this command and will issue a warning if it is encountered in the code.
 
 ### `KEY DEF key, repeat[,<normal>[,<shift>[,<ctrl>]]]`
 
-**Command**. Redefines the behavior of a key press. BASC does **not** support this command and will issue a warning if it appears in the code.
+**Command**. Redefines the behavior of a key press. ABASC does **not** support this command and will issue a warning if it appears in the code.
 
 ### `LABEL label`
 
@@ -1111,11 +1111,11 @@ CLOSEIN
 
 ### `LIST [line range][, #channel]`
 
-**Command**. Ignored by BASC. If encountered in the code, a warning is issued.
+**Command**. Ignored by ABASC. If encountered in the code, a warning is issued.
 
 ### `LOAD filename[,address]`
 
-**Command**. Loads a file from disk or tape into memory. BASC **only supports loading binary files**. If a memory address is provided as the second parameter, the binary content will be loaded at that location.
+**Command**. Loads a file from disk or tape into memory. ABASC **only supports loading binary files**. If a memory address is provided as the second parameter, the binary content will be loaded at that location.
 
 ```basic
 ENDDIR = HIMEM
@@ -1188,7 +1188,7 @@ MEMORY &A6FB  ' The Firmware/AMSDOS variables start at &A6FC
 
 ### `MERGE filename`
 
-**Command**. Reads `filename` from disk or tape and replaces the program currently in memory. BASC **does not support** this command and will produce an error if it is found in the source code. To add or replace other binaries, it is recommended to use the `LOAD` command instead.
+**Command**. Reads `filename` from disk or tape and replaces the program currently in memory. ABASC **does not support** this command and will produce an error if it is found in the source code. To add or replace other binaries, it is recommended to use the `LOAD` command instead.
 
 ### `MID$(string, start[, n])`
 
@@ -1229,7 +1229,7 @@ PRINT C$                   ' Output: "AMBBBAD"
 
 ### `NEW`
 
-**Command**. In Locomotive BASIC, this clears the current program and all its variables from memory. BASC generates code to reset the machine (`CALL 0`).
+**Command**. In Locomotive BASIC, this clears the current program and all its variables from memory. ABASC generates code to reset the machine (`CALL 0`).
 
 ### `NEXT variable`
 
@@ -1245,15 +1245,15 @@ PRINT C$                   ' Output: "AMBBBAD"
 
 ### `ON BREAK GOSUB label`
 
-**Command**. In Locomotive BASIC, this jumps to `label` when a program is interrupted by a double press of the `ESC` key. Compiled BASC programs cannot be interrupted in this way, so this command is ignored and a warning is issued if it appears in the code.
+**Command**. In Locomotive BASIC, this jumps to `label` when a program is interrupted by a double press of the `ESC` key. Compiled ABASC programs cannot be interrupted in this way, so this command is ignored and a warning is issued if it appears in the code.
 
 ### `ON BREAK STOP`
 
-**Command**. Cancels the last `ON BREAK GOSUB` statement issued. Since compiled BASC programs ignore the previous statement, this command is also ignored, and a warning is issued if it appears in the code.
+**Command**. Cancels the last `ON BREAK GOSUB` statement issued. Since compiled ABASC programs ignore the previous statement, this command is also ignored, and a warning is issued if it appears in the code.
 
 ### `ON ERROR GOTO label`
 
-**Command**. In interpreted BASIC, this jumps to `label` when an error is detected during program execution. This mechanism does not apply to compiled programs, so BASC jumps to the label **only** if `ERR` is different from 0 (for example, after changing the value with the `ERROR` command).
+**Command**. In interpreted BASIC, this jumps to `label` when an error is detected during program execution. This mechanism does not apply to compiled programs, so ABASC jumps to the label **only** if `ERR` is different from 0 (for example, after changing the value with the `ERROR` command).
 
 **NOTE:** Be careful not to leave a WHILE or FOR bucle using this command as it may cause an undefined behaviour.
 
@@ -1391,7 +1391,7 @@ PRINT POS(#0), VPOS(#0)
 
 ### `PRINT [#channel,][list of items]`
 
-**Command.** `PRINT` is a highly versatile command with many options. Its full details are beyond the scope of this manual, so the reader is encouraged to consult the references listed in the `References` chapter. **Note:** BASC does **not** support formatted output using `USING`.
+**Command.** `PRINT` is a highly versatile command with many options. Its full details are beyond the scope of this manual, so the reader is encouraged to consult the references listed in the `References` chapter. **Note:** ABASC does **not** support formatted output using `USING`.
 
 ### `RAD`
 
@@ -1406,7 +1406,7 @@ PRINT SIN(90.0)
 
 ### `RANDOMIZE [n]`
 
-**Command.** The BASC implementation differs slightly from the usual behavior in Locomotive BASIC. If `RANDOMIZE` is used without parameters, BASC treats it as if `RANDOMIZE TIME` had been used. Both `RANDOMIZE` and `RND` require the use of real numbers.
+**Command.** The ABASC implementation differs slightly from the usual behavior in Locomotive BASIC. If `RANDOMIZE` is used without parameters, ABASC treats it as if `RANDOMIZE TIME` had been used. Both `RANDOMIZE` and `RND` require the use of real numbers.
 
 ```basic
 RANDOMIZE
@@ -1433,7 +1433,7 @@ DATA "Anabel","Rachel","Elvira"
 
 ### `READIN variable-list`
 
-**Command.** Equivalent to `INPUT #9`; that is, it reads data from the currently open input file and assigns them to the variables in the list. At present, BASC does not support real variables with this command.
+**Command.** Equivalent to `INPUT #9`; that is, it reads data from the currently open input file and assigns them to the variables in the list. At present, ABASC does not support real variables with this command.
 
 ### `RECORD name;variable-list`
 
@@ -1469,7 +1469,7 @@ RELEASE 7   ' releases sounds on all three channels
 
 ### `RENUM new-line, origin-line, step`
 
-**Command.** In Locomotive BASIC, this command renumbers the program’s line numbers. In a compiled program this has no meaning. BASC ignores this command and issues a warning if it appears in the source code.
+**Command.** In Locomotive BASIC, this command renumbers the program’s line numbers. In a compiled program this has no meaning. ABASC ignores this command and issues a warning if it appears in the source code.
 
 ### `RESTORE [label]`
 
@@ -1489,7 +1489,7 @@ GOTO LOOP
 
 ### `RESUME`
 
-**Command.** Resumes execution after an error event handled by `ON ERROR GOTO`. This mechanism only works in interpreted BASIC. BASC implements 'ON ERROR GOTO' in a different way so it ignores `RESUME` and issues a warning if it appears in the code.
+**Command.** Resumes execution after an error event handled by `ON ERROR GOTO`. This mechanism only works in interpreted BASIC. ABASC implements 'ON ERROR GOTO' in a different way so it ignores `RESUME` and issues a warning if it appears in the code.
 
 ### `RETURN`
 
@@ -1527,11 +1527,11 @@ PRINT ROUND(PI, -3)
 
 ### `RUN label or file`
 
-**Command.** In Locomotive BASIC, this command runs the program already in memory starting at the specified `label`, or loads a program from `file` and executes it from the beginning. BASC only supports the first form: it simply jumps to `label` as if executing a `GOTO`.
+**Command.** In Locomotive BASIC, this command runs the program already in memory starting at the specified `label`, or loads a program from `file` and executes it from the beginning. ABASC only supports the first form: it simply jumps to `label` as if executing a `GOTO`.
 
 ### `SAVE file[,type][,address,size[,entry]]`
 
-**Command.** In Locomotive BASIC, this instruction saves a program to disk or tape. BASC, however, only allows saving a memory region as a binary file. Therefore, the file `type` must be always **B** (Binary), and must be specified as such if any of the following parameters are used. For reference, the file types supported in Locomotive BASIC are:
+**Command.** In Locomotive BASIC, this instruction saves a program to disk or tape. ABASC, however, only allows saving a memory region as a binary file. Therefore, the file `type` must be always **B** (Binary), and must be specified as such if any of the following parameters are used. For reference, the file types supported in Locomotive BASIC are:
 
 * **A** – ASCII text
 * **P** – Protected file
@@ -1627,7 +1627,7 @@ PRINT BIN$(SQ(1),8) ' should print 01000011
 ### `STOP`
 
 **Command.** In Locomotive BASIC, this stops program execution and returns control to the interpreter.
-Execution may be resumed with `CONT`. Since this is of little use in a compiled program, BASC repurposes this instruction to perform a machine reset (`CALL 0`).
+Execution may be resumed with `CONT`. Since this is of little use in a compiled program, ABASC repurposes this instruction to perform a machine reset (`CALL 0`).
 
 ### `STR$(x)`
 
@@ -1652,7 +1652,7 @@ PRINT STRING$(40,250)
 **Command.** Imported from **Locomotive BASIC 2 Plus**, `SUB` defines procedures with parameters.
 You must use `CALL` to invoke a procedure declared with `SUB`. Procedures must be declared **before** any call to them appears in the code.
 
-If the `ASM` clause is specified, BASC assumes that the body of the procedure will consist mostly of assembly code that does **not** rely on the temporary-memory mechanism.
+If the `ASM` clause is specified, ABASC assumes that the body of the procedure will consist mostly of assembly code that does **not** rely on the temporary-memory mechanism.
 
 Programmers are encouraged to read the sections **Functions and Procedures** and **Using Assembly Code** in the chapter **“Compiler Peculiarities”** for details on parameter handling and recursion support.
 
@@ -1714,7 +1714,7 @@ PRINT CHR$(22)+CHR$(0)  ' Transparent printing OFF
 
 In a compiled program, the effective available range is the **lowest** value used across all `SYMBOL AFTER` statements.
 
-BASC reserves **8 bytes per redefinable character**. If custom symbols are not needed, it is recommended to begin the program with:
+ABASC reserves **8 bytes per redefinable character**. If custom symbols are not needed, it is recommended to begin the program with:
 
 ```basic
 SYMBOL AFTER 256
@@ -1775,7 +1775,7 @@ PRINT TEST(320,200)
 
 **Function.** Returns the time elapsed since the machine was powered on. The measurement is done in units of 1/300 of a second. It requires interrupts to be enabled; therefore, `DI` and certain disk/tape operations will prevent the timer from advancing. The returned value is a real number.
 
-BASC provides an additional usage mode in which `TIME` behaves as a **command**. In this form, you may supply an integer value in parentheses, and that value becomes the new `TIME` counter.
+ABASC provides an additional usage mode in which `TIME` behaves as a **command**. In this form, you may supply an integer value in parentheses, and that value becomes the new `TIME` counter.
 
 ```basic
 CLS
@@ -1790,7 +1790,7 @@ PRINT " FIN!"
 PRINT "Tiempo ="; (TIME - T!) / 300.0; "s"   ' If TIME(0) was used, subtracting is unnecessary
 ```
 
-Finally, if BASC detects that the value returned by `TIME` is being converted to an integer, it applies an optimization that avoids using real numbers. However, the programmer should be cautious when using `TIME` in this way, since the value wraps around every 3 seconds due to the lower precision of integers.
+Finally, if ABASC detects that the value returned by `TIME` is being converted to an integer, it applies an optimization that avoids using real numbers. However, the programmer should be cautious when using `TIME` in this way, since the value wraps around every 3 seconds due to the lower precision of integers.
 
 ```basic
 TIME(0)
@@ -1802,12 +1802,12 @@ NEXT
 
 ### `TROFF`
 
-**Command.** Disables trace printing. BASC ignores this command when compiling and emits a warning.
+**Command.** Disables trace printing. ABASC ignores this command when compiling and emits a warning.
 See also `TRON`.
 
 ### `TRON`
 
-**Command.** In Locomotive BASIC, enables execution tracing during program interpretation. BASC ignores this command when compiling and emits a warning.
+**Command.** In Locomotive BASIC, enables execution tracing during program interpretation. ABASC ignores this command when compiling and emits a warning.
 
 ### `UNT(n)`
 
@@ -1871,7 +1871,7 @@ SOUND 129, 40, 30, 15
 
 ### `WIDTH n`
 
-**Command.** Specifies the maximum character width for the printer. BASC does **not** support this command and will issue a warning if it appears in the code to be compiled.
+**Command.** Specifies the maximum character width for the printer. ABASC does **not** support this command and will issue a warning if it appears in the code to be compiled.
 
 ### `WINDOW [#channel,]left,right,top,bottom`
 
@@ -1906,7 +1906,7 @@ PRINT "WINDOW 0"
 
 ### `WRITE [#channel,]data1,data2,...`
 
-**Command.** In Locomotive BASIC, writes the specified values to the indicated channel (#0 by default). BASC ignores the channel parameter and always uses #9, the channel for file operations. Therefore, `WRITE` can be used to save data to a file, while `READIN` can be used to read it back. Real numbers are **not supported**; only integers or text strings can be written.
+**Command.** In Locomotive BASIC, writes the specified values to the indicated channel (#0 by default). ABASC ignores the channel parameter and always uses #9, the channel for file operations. Therefore, `WRITE` can be used to save data to a file, while `READIN` can be used to read it back. Real numbers are **not supported**; only integers or text strings can be written.
 
 ```basic
 A = 15
@@ -1955,7 +1955,7 @@ Debugging programs generated by a cross-compiler can be a challenging task, as t
 * Code without line numbers
 * Code split across multiple files
 
-When compiling with BASC, the first step is handled by the preprocessor. With the `--verbose` option enabled, it generates an intermediate file with the `.BPP` extension, where line numbers are added and any additional files referenced with `CHAIN MERGE` are included.
+When compiling with ABASC, the first step is handled by the preprocessor. With the `--verbose` option enabled, it generates an intermediate file with the `.BPP` extension, where line numbers are added and any additional files referenced with `CHAIN MERGE` are included.
 
 To paste code into **WinApe**, follow these steps:
 
@@ -1965,7 +1965,7 @@ To paste code into **WinApe**, follow these steps:
 
 ## Debugging our Code
 
-It is not possible to debug BASIC code step by step, but we **can** debug the assembly code generated by the compiler. As part of the compilation process, BASC produces an intermediate file with the `.ASM` extension. This file uses a syntax compatible with **WinApe** and **Retro Virtual Machine 2.0**.
+It is not possible to debug BASIC code step by step, but we **can** debug the assembly code generated by the compiler. As part of the compilation process, ABASC produces an intermediate file with the `.ASM` extension. This file uses a syntax compatible with **WinApe** and **Retro Virtual Machine 2.0**.
 
 In **Retro Virtual Machine**, we can enable debugging tools by following these steps:
 
@@ -2011,16 +2011,16 @@ Finally, readers are encouraged to consult the official documentation for **WinA
 
 # Appendix II: Extending the Compiler
 
-One of the major advantages of BASC is that, being written in Python, it is easy to **extend and modify its functionality**. The source code is organized across the following main files:
+One of the major advantages of ABASC is that, being written in Python, it is easy to **extend and modify its functionality**. The source code is organized across the following main files:
 
-* **basc.py – Main file:** Handles the compiler options and executes the compilation process step by step.
+* **abasc.py – Main file:** Handles the compiler options and executes the compilation process step by step.
 * **baspp.py – Preprocessor:** Adds line numbers and inserts any additional code files referenced via `CHAIN MERGE`. If the `--verbose` option is enabled, it generates an intermediate file with the `.BPP` extension.
 * **baslex.py – Lexical Analyzer:** Scans the source code and generates the corresponding list of tokens. With `--verbose`, it produces an intermediate `.LEX` file.
 * **basparse.py – Syntax Analyzer:** Processes the token list, checks the program’s syntax, and generates an intermediate representation of the code in the form of an Abstract Syntax Tree (AST). With `--verbose`, an intermediate `.AST` file is generated.
 * **emitters/cpcemitter.py – Assembler Code Generator:** Takes the AST produced by the syntax analyzer and outputs the equivalent assembly code. The result is saved as a `.ASM` file, which is then assembled by **ABASM** to produce the final binary.
 * **emitters/cpcrt.py – Compiler Runtime:** Contains assembly routines called by the code generated by `cpcemitter.py`.
 
-Whenever changes are made to any of these files, it is recommended to check for obvious errors. This can be done by running the following commands from the directory containing `basc.py`:
+Whenever changes are made to any of these files, it is recommended to check for obvious errors. This can be done by running the following commands from the directory containing `abasc.py`:
 
 * **Type checking:**
 

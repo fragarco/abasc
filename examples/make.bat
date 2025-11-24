@@ -1,7 +1,7 @@
 @echo off
 
 REM *
-REM * This file is just an example of how BASC and DSK/CDT utilities can be called to compile programs
+REM * This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
 REM * and generate files that can be used directly in Amstrad CPC emulators like WinAPE or RetroVirtualMachine
 REM *
 REM * USAGE: make [clear][dsk]
