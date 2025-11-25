@@ -124,8 +124,10 @@ class AsmContext:
         self.listingfile = None
         self.origin = 0x4000
         self.limit  = 64*1024
+        self.libpaths = []
         self.modulename = ""
         self.modules = []
+        self.include_files = []
         self.include_stack = []
         self.symboltable = {}
         self.lettable = {}
@@ -153,7 +155,14 @@ class AsmContext:
         self.applying_macro = None
         self.list_instruction = True
         self.tolerance = 0
-    
+
+    def resolve_include(self, fname):
+        for libpath in self.libpaths:
+            filename = os.path.join(libpath, fname)
+            if os.path.exists(filename):
+                return filename
+        return os.path.join(os.path.dirname(self.currentfile), fname)
+
     def parse_logic_expr(self, expr):
         """
         Resolves an expression that can be reduced to 0 = FALSE or !0 = TRUE.
@@ -448,8 +457,10 @@ class AsmContext:
 
     def read_srcfile(self, inputfile):
         try:
-            fd = open(inputfile, 'r', encoding='utf-8')
-            content = fd.readlines()
+            fd = open(inputfile, 'rb')
+            content = []
+            for line in fd.readlines():
+                content.append(line.decode('utf-8', 'ignore'))
             content.insert(0, '') # prepend blank so line numbers are 1-based
             fd.close()
             return content
@@ -506,6 +517,7 @@ class AsmContext:
             abort(f"file {self.modulename} was already assembled")
         else:
             self.modules.append(self.modulename)
+            self.include_files.append(inputfile)
 
     def assembler_pass(self, p, inputfile):
         self.set_module(inputfile)
@@ -544,6 +556,7 @@ class AsmContext:
         for p in [1, 2]:
             self.origin = startaddr
             self.include_stack = []
+            self.include_files = []
             self.modules = []
             self.macros_stack = []
             self.macros_applied = 0
@@ -1024,8 +1037,10 @@ def op_READ(p, opargs):
     path = re.search(r'(?<=["\'])(.*?)(?=["\'])', opargs)
     if path == None:
         abort("wrong path specified in the READ directive")
+    filename = g_context.resolve_include(path.group(0))
+    if filename in g_context.include_files:
+        return 0
     g_context.include_stack.append((g_context.currentfile, g_context.linenumber))
-    filename = os.path.join(os.path.dirname(g_context.currentfile), path.group(0))
     if not os.path.exists(filename):
         abort("couldn't access to the file " + filename)
     if p == 1: print("[abasm] including", filename)
@@ -1737,7 +1752,7 @@ def create_opdict():
         if 'op_' == sym[0:3]:
             g_opcode_functions[sym] = fun
 
-def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000, tolerance = 0):
+def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000, tolerance = 0, libpaths=[]):
     create_opdict()
     if (outputfile == None):
         outputfile = os.path.splitext(inputfile)[0] + ".bin"
@@ -1745,6 +1760,7 @@ def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x400
     g_context.reset()
     g_context.outputfile = outputfile
     g_context.tolerance = tolerance
+    g_context.libpaths = libpaths
     for sym in predefsymbols:
         sym[0] = sym[0].upper()
         try:

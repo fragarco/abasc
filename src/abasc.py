@@ -117,7 +117,12 @@ def assemble(infile: str, outfile: str, asmcode: str):
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w", encoding="utf-8") as fd:
             fd.write(asmcode)
-    ABASM.assemble(asmfile, outfile)
+    # library path for read 'asmfile' directive
+    basepath = os.path.dirname(os.path.abspath(__file__))
+    libpaths = [
+        os.path.join(basepath, "lib"),
+    ]
+    ABASM.assemble(asmfile, outfile, libpaths=libpaths)
 
 def main() -> None:
     start_t = time.process_time()
