@@ -300,10 +300,10 @@ RT = {
 #
 # RUNTIME VARIABLES
 #
-    "rt_tmp_memory": ([],
+    "rt_heap_memory": ([],
 """
-rt_memory_next: dw rt_memory_start
-rt_memory_start:
+rt_heapmem_next: dw rt_heapmem_start
+rt_heapmem_start:
 """
 ),
     "rt_error": ([],
@@ -347,7 +347,7 @@ rt_rsx_setstring:
     "rt_malloc": (["rt_free_all"],
 """
 ; RT_MALLOC
-; Returns in HL the address to a temporal free memory block
+; Returns in HL the address to a heap free memory block
 ; reserving as many bytes as indicated by BC
 ; Inputs:
 ;     BC number of bytes to allocate
@@ -355,10 +355,10 @@ rt_rsx_setstring:
 ;     HL address to the new reserved memory
 ;     HL and Flags are modified
 rt_malloc:
-    ld      hl,(rt_memory_next)
+    ld      hl,(rt_heapmem_next)
     push    hl
     add     hl,bc
-    ld      (rt_memory_next),hl
+    ld      (rt_heapmem_next),hl
     pop     hl
     ret
 """
@@ -366,7 +366,7 @@ rt_malloc:
     "rt_malloc_de": (["rt_free_all"],
 """
 ; RT_MALLOC_DE
-; Returns in DE the address to a temporal free memory block
+; Returns in DE the address to a heap free memory block
 ; reserving as many bytes as indicated by BC
 ; Inputs:
 ;     BC number of bytes to allocate
@@ -374,11 +374,11 @@ rt_malloc:
 ;     DE address to the new reserved memory
 ;     DE and Flags are modified
 rt_malloc_de:
-    ld      de,(rt_memory_next)
+    ld      de,(rt_heapmem_next)
     push    de
     ex      de,hl
     add     hl,bc
-    ld      (rt_memory_next),hl
+    ld      (rt_heapmem_next),hl
     ex      de,hl
     pop     de
     ret
@@ -387,7 +387,7 @@ rt_malloc_de:
     "rt_free_all": ([],
 """
 ; RT_FREE_ALL
-; Resets the position of the next available temporal memory block
+; Resets the position of the next available heap memory block
 ; to its initial position
 ; Inputs:
 ;     None
@@ -395,8 +395,8 @@ rt_malloc_de:
 ;     None
 ;     DE gets modified
 rt_free_all:
-    ld      de,rt_memory_start
-    ld      (rt_memory_next),de
+    ld      de,rt_heapmem_start
+    ld      (rt_heapmem_next),de
     ret
 """
 ),

@@ -484,7 +484,7 @@ Podrá acceder a ellos mediante el siguiente esquema:
 | param2    | IX+2, IX+3            |
 | param3    | IX+0, IX+1            |
 
-Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensablador y que el compilador no necesita gestionar la memoria temporal.
+Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensablador y que el compilador no necesita gestionar la memoria temporal (montículo).
 
 ``` basic
 SUB cpcSetColor(i,c) ASM
@@ -517,7 +517,7 @@ El mapa de memoria de un programa compilado con ABASC es el siguiente:
 
 | Dirección         | Descripción                                                |
 | ----------------- | ---------------------------------------------------------- |
-| **0x0170**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal |
+| **0x0170**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo)|
 | **0x4000**        | Comienzo del área para el código de la aplicación |
 | **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables |
 | **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador |
@@ -532,10 +532,10 @@ ABASC los soporta, pero su significado varía ligeramente debido al modelo compi
 | **MEMORY**       | Establece el la dirección de momria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla. |
 | **SYMBOL AFTER** | ABASC reserva memoria para carácteres redefinibles (UDC) igual que Locomotive BASIC. Esta zona forma parte de ***data***. Puede liberarse con `SYMBOL AFTER 256`. |
 | **FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
-| **FRE(1)**       | Devuelve la memoria temporal disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal y devuelve el mismo valor que `FRE(0)`. |
+| **FRE(1)**       | Devuelve la memoria temporal (montículo) disponible en ese instante. |
+| **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
 
-ABASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas).
+ABASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas). Esta memoría se reserva en el montículo o "heap". Dicho montículo comienza en la zona baja de la memoría (al rededor de la dirección 0x0177) y crece hacia la dirección 0x4000 donde empieza el código del programa.
 Después de cada sentencia, la memoria temporal se libera automáticamente. La única excepción ocurre durante una llamada a `FUNCTION` o `SUB`: la memoria temporal previa a la llamada se preserva para poder restaurar el contexto al regresar.
 
 ## Uso del Firmware
@@ -1054,7 +1054,7 @@ Función. Según el valor de `x` permite obtener varios valores relacionados con
 | Valor del parámetro | Valor devuelto |
 |**FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
 | **FRE(1)**       | Devuelve la memoria temporal disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal y devuelve el mismo valor que `FRE(0)`. |
+| **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
 
 ### `FUNCTION nombre(parametros) [ASM]`
 

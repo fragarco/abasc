@@ -481,7 +481,7 @@ can access them using the following layout:
 | param2    | IX+2, IX+3       |
 | param3    | IX+0, IX+1       |
 
-Finally, you can append the `ASM` clause to the declaration of a function or subroutine. This indicates that the entire routine is written in assembly and that the compiler does not need to allocate or manage temporary memory for it.
+Finally, you can append the `ASM` clause to the declaration of a function or subroutine. This indicates that the entire routine is written in assembly and that the compiler does not need to allocate or manage temporary memory (heap) for it.
 
 ```basic
 SUB cpcSetColor(i, c) ASM
@@ -515,7 +515,7 @@ The memory layout of a program compiled with ABASC is structured as follows:
 
 | Address           | Description                                                                |
 | ----------------- | -------------------------------------------------------------------------- |
-| **0x0170**        | Start of the application-initialization area and temporary memory space    |
+| **0x0170**        | Start of the application-initialization area and temporary memory space (heap)|
 | **0x4000**        | Start of the application’s code segment                                    |
 | ***data***        | Label marking the beginning of the static variable-allocation area         |
 | ***runtime***     | Label marking the beginning of compiler-generated support routines         |
@@ -530,10 +530,10 @@ ABASC supports them as well, but their semantics differ slightly due to the comp
 | **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.|
 | **SYMBOL AFTER** | ABASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
 | **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`). |
-| **FRE(1)**       | Returns the currently available temporary memory. |
-| **FRE("")**      | Forces a cleanup of temporary memory and returns the same value as `FRE(0)`. |
+| **FRE(1)**       | Returns the currently available temporary memory (heap). |
+| **FRE("")**      | Forces a cleanup of temporary memory (heap) and returns the same value as `FRE(0)`. |
 
-ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations).
+ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x0177 and grows towards the address 0x4000 where the program's code starts.
 After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
 ## Using the Firmware
@@ -596,7 +596,7 @@ Special characters:
 
 **Command.** Calls the specified subroutine after a delay. The `delay` is measured in 1/50 second increments. The optional second parameter specifies which of the four timers to use (0..3). If omitted, timer 0 is used by default. The `GOSUB` label can be either a line number (integer) or a literal defined with the `LABEL` statement.
 
-ABASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area (the heap) and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
 ```basic
 A = 0
@@ -975,7 +975,7 @@ PRINT ERR
 
 **Command**. Sets the specified `timer` (0–3, default 0) to call the subroutine at `label` every `time` ticks. Each tick represents 1/50 of a second, so a value of 50 corresponds to calling the label once per second.
 
-ABASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range (the heap) and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
 
 ```basic
 A = 0
@@ -1067,8 +1067,8 @@ PRINT TIME - T!
 | Parameter   | Return Value |
 | ----------- | ------------ |
 | **FRE(0)**  | Returns the available memory between `_program_end_` and the Firmware area where variables start (`&A6FC`). |
-| **FRE(1)**  | Returns the currently available temporary memory.|
-| **FRE("")** | Forces the release of temporary memory and returns the same value as `FRE(0)`.|
+| **FRE(1)**  | Returns the currently available temporary memory (heap).|
+| **FRE("")** | Forces the release of temporary memory (heap) and returns the same value as `FRE(0)`.|
 
 ### `FUNCTION name(parameters) [ASM]`
 

@@ -1,3 +1,8 @@
+' MODULE MEMORY
+
+' Functions and Procedures:
+' MEMCOPY(destination, source, number of bytes)
+' MEMSET(destination, number of bytes, value to write)
 
 SUB MEMCOPY(dest, src, size) ASM
     ' Copies size bytes from src into dest

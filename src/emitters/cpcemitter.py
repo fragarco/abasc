@@ -57,9 +57,10 @@ class CPCEmitter:
         self.rtcode: str = ""
         self.runtime: list[str] = []
         self.constants: int = 0
-        self.issued_constants: dict[str,str] = {}
-        self.free_tmp_memory: bool = False
-        self.reserved_tmp_memory: int = 0
+        self.issued_str_constants: dict[str,str] = {}
+        self.issued_real_constants: dict[str,str] = {}
+        self.free_heap_memory: bool = False
+        self.reserved_heap_memory: int = 0
         self.org = 0x4000
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
@@ -109,46 +110,46 @@ class CPCEmitter:
         return False
 
     def _emit_push_memheap(self) -> None:      
-        self.memstacks.append((self.free_tmp_memory, self.reserved_tmp_memory))
-        self._emit_code("ld      hl,(rt_memory_start)")
-        self._emit_code("push    hl", info="store current tmp memory start address")
-        self._emit_code("ld      hl,(rt_memory_next)")
-        self._emit_code("ld      (rt_memory_start),hl")
+        self.memstacks.append((self.free_heap_memory, self.reserved_heap_memory))
+        self._emit_code("ld      hl,(rt_heapmem_start)")
+        self._emit_code("push    hl", info="store current heap memory start address")
+        self._emit_code("ld      hl,(rt_heapmem_next)")
+        self._emit_code("ld      (rt_heapmem_start),hl")
 
     def _emit_pop_memheap(self) -> None:
-        self._emit_free_mem()
+        self._emit_free_heapmem()
         self._emit_code("pop     hl")
-        self._emit_code("ld      (rt_memory_start),hl")
-        self.free_tmp_memory, self.reserved_tmp_memory = self.memstacks.pop()
+        self._emit_code("ld      (rt_heapmem_start),hl")
+        self.free_heap_memory, self.reserved_heap_memory = self.memstacks.pop()
 
-    def _emit_free_mem(self) -> None:
-        if self.free_tmp_memory:
-            self._emit_code("call    rt_free_all", info=f"free ({self.reserved_tmp_memory} bytes of tmp memory")
-            self.free_tmp_memory = False
-            self.reserved_tmp_memory = 0
+    def _emit_free_heapmem(self) -> None:
+        if self.free_heap_memory:
+            self._emit_code("call    rt_free_all", info=f"free ({self.reserved_heap_memory} bytes of heap memory")
+            self.free_heap_memory = False
+            self.reserved_heap_memory = 0
 
-    def _reserve_memory(self, nbytes: int, node: AST.ASTNode):
+    def _reserve_heapmem(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
-        self._emit_code("call    rt_malloc", info="HL points to tmp memory")
-        self.free_tmp_memory = True
-        self.reserved_tmp_memory += nbytes
-        self._check_tmp_memory(node)
+        self._emit_code("call    rt_malloc", info="HL points to heap memory")
+        self.free_heap_memory = True
+        self.reserved_heap_memory += nbytes
+        self._check_heapmem(node)
 
-    def _reserve_memory_de(self, nbytes: int, node: AST.ASTNode):
+    def _reserve_heapmem_de(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc_de")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
-        self._emit_code("call    rt_malloc_de", info="DE points to tmp memory")
-        self.free_tmp_memory = True
-        self.reserved_tmp_memory += nbytes
-        self._check_tmp_memory(node)
+        self._emit_code("call    rt_malloc_de", info="DE points to heap memory")
+        self.free_heap_memory = True
+        self.reserved_heap_memory += nbytes
+        self._check_heapmem(node)
 
-    def _check_tmp_memory(self, node):
-        totaltmp = self.reserved_tmp_memory
+    def _check_heapmem(self, node):
+        totaltmp = self.reserved_heap_memory
         for _, reservedtmp in self.memstacks:
             totaltmp += reservedtmp
         if totaltmp > 2048:
-            self._raise_warning(WL.HIGH, "reserved temporal memory exceeds 2K", node)
+            self._raise_warning(WL.HIGH, "reserved heap memory exceeds 2K", node)
 
     def _emit_pushcontext(self):
         if self.context != "":
@@ -170,14 +171,14 @@ class CPCEmitter:
         self._emit_code("ld      de,rt_math_accum2")
         self._emit_code("call    rt_move_real", info="REAL to rt_math_accum2")
 
-    def _moveflo_temp(self, node: AST.ASTNode):
+    def _moveflo_heap(self, node: AST.ASTNode):
         """ 
         Copies the current float number pointed by HL to a new
-        temporal memory location. Returns in Hl that address. 
+        temporal memory location (heap). Returns in Hl that address. 
         """
         self._emit_import("rt_move_real")
-        self._reserve_memory_de(5, node)
-        self._emit_code("call    rt_move_real", info="REAL to tmp memory")
+        self._reserve_heapmem_de(5, node)
+        self._emit_code("call    rt_move_real", info="REAL to heap memory")
 
     def _emit_preamble(self):
         self._emit_head("; FILE GENERATED BY ABASC COMPILER", 0)
@@ -190,7 +191,7 @@ class CPCEmitter:
         self._emit_head("jp      _program_main_", 0)
         self._emit_head()
         self._emit_head("; DYNAMIC MEMORY AREA, USED BY MALLOC AND FREE",0)
-        self._emit_head(RT["rt_tmp_memory"][1], 0)
+        self._emit_head(RT["rt_heap_memory"][1], 0)
         self._emit_head()
         self._emit_head("; PROGRAM MAIN", 0)
         self._emit_head(f"_program_main_: org &{hex(self.org)[2:]}", 0)
@@ -364,7 +365,7 @@ class CPCEmitter:
             self._emit_code("jr      nc,$+8")
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
             self._emit_code("call    rt_math_call")
-            self._moveflo_temp(node)
+            self._moveflo_heap(node)
             self._emit_popcontext()
         else:
             self._emit_code("call    rt_abs")
@@ -445,7 +446,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_ARCTANGENT}", info="MATH_REAL_ARCTANGENT")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -476,7 +477,7 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
         self._emit_code("ex      de,hl", info="number to convert")
-        self._reserve_memory(17, node)
+        self._reserve_heapmem(17, node)
         self._emit_code("pop     bc", info="number of characters")
         self._emit_code("ld      a,c", info="only 8 or 16 are valid")
         self._emit_code("call    rt_int2bin")
@@ -587,7 +588,7 @@ class CPCEmitter:
         self._emit_code("; CHR$(<integer expression>)") 
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
-        self._reserve_memory(2, node)
+        self._reserve_heapmem(2, node)
         self._emit_code("ld      (hl),1")
         self._emit_code("inc     hl")
         self._emit_code("ld      (hl),a")
@@ -707,7 +708,7 @@ class CPCEmitter:
         self._emit_code("; COPYCHR$(#<stream expression>)")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
-        self._reserve_memory(2, node)
+        self._reserve_heapmem(2, node)
         self._emit_code("call    rt_copychrs")
         self._emit_code(";")
 
@@ -723,7 +724,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_COSINE}", info="MATH_REAL_COSINE")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -737,7 +738,7 @@ class CPCEmitter:
         if node.args[0].etype == AST.ExpType.Integer:
             self._emit_pushcontext()
             self._emit_code("call    rt_int2real", info="REAL in rt_math_accum1")
-            self._moveflo_temp(node)
+            self._moveflo_heap(node)
             self._emit_popcontext()
         else:
             self._emit_code("; already REAL so no action taken")
@@ -778,6 +779,7 @@ class CPCEmitter:
         invoking it. A DATA statement may appear anywhere in a program. 
         """
         self._emit_code("; DATA <list of constant>")
+        self._emit_import("rt_datablock")
         dataline = "db "
         for a in node.args:
             if isinstance(a, AST.String):
@@ -827,7 +829,7 @@ class CPCEmitter:
         if arg.etype == AST.ExpType.Integer:
             self._emit_import("rt_int2str")
             self._emit_code("call    rt_int2str")
-            self._reserve_memory_de(8, node)
+            self._reserve_heapmem_de(8, node)
             self._emit_code("push    de")
             self._emit_code("ldir")
             self._emit_code("pop     hl")
@@ -836,7 +838,7 @@ class CPCEmitter:
             self._emit_import("rt_strzcopy")
             self._emit_pushcontext()
             self._emit_code("call    rt_real2strz")
-            self._reserve_memory(12, node)
+            self._reserve_heapmem(12, node)
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
             self._emit_popcontext()
@@ -893,7 +895,7 @@ class CPCEmitter:
         self.context = node.name
         currentcode = self.code  # keep current generated code
         self.code = ""           # capture only the code that will be generated now
-        heapused = self.reserved_tmp_memory
+        heapused = self.reserved_heap_memory
         self._emit_expression(node.body)
         self._emit_code("ret")
         fcode = self.code
@@ -906,9 +908,9 @@ class CPCEmitter:
         # we keep track of that now because it has to be freed after every call
         entry = self.symtable.find(node.name, SymType.Function)
         if entry is not None:
-            entry.heapused = self.reserved_tmp_memory - heapused
-            self.reserved_tmp_memory = heapused
-            self.free_tmp_memory = heapused > 0
+            entry.heapused = self.reserved_heap_memory - heapused
+            self.reserved_heap_memory = heapused
+            self.free_heap_memory = heapused > 0
         self._emit_code(";")
 
     def _emit_DEG(self, node:AST.Statement):
@@ -1281,7 +1283,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_EXP}", info="MATH_REAL_EXP")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -1341,7 +1343,7 @@ class CPCEmitter:
                 self._emit_expression(node.step) # type: ignore [arg-type]
                 self._emit_code("push    hl")           
             # clear temporal memory used by the expressions
-            self._emit_free_mem()
+            self._emit_free_heapmem()
 
             self._emit_code("; FOR condition check")
             self._emit_code(startlab, 0)
@@ -1394,8 +1396,8 @@ class CPCEmitter:
         if arg.etype == AST.ExpType.String:
             # Free memory between the high limit and our program binary end
             # Free temporal memory too
-            self.free_tmp_memory = True
-            self._emit_free_mem()
+            self.free_heap_memory = True
+            self._emit_free_heapmem()
             self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
             self._emit_code("ld      de,_program_end_")
         if isinstance(arg, AST.Integer):
@@ -1514,7 +1516,7 @@ class CPCEmitter:
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
         self._emit_code("ex      de,hl", info="number to convert")
-        self._reserve_memory(5, node)
+        self._reserve_heapmem(5, node)
         self._emit_code("pop     bc", info="number of characters")
         self._emit_code("ld      a,c", info="only 2 or 4 are valid")
         self._emit_code("call    rt_int2hex")
@@ -1545,7 +1547,7 @@ class CPCEmitter:
         self._emit_expression(node.condition)
         # clear temporal memory if used by the condition expression before
         # jumping. Modifies DE
-        self._emit_free_mem()
+        self._emit_free_heapmem()
         self._emit_code("ld      a,h")
         self._emit_code("or      l")
         if node.has_else:
@@ -1577,7 +1579,7 @@ class CPCEmitter:
         """
         if len(self.codestack) == 0:
             self._raise_error(41, node)
-        # Restore pointer to tmp free memory
+        # Restore pointer to heap free memory
         if not node.args[0].asm:        # type: ignore [attr-defined]
             self._emit_pop_memheap()
             fretvar = self.context[3:]
@@ -1692,7 +1694,7 @@ class CPCEmitter:
         """
         self._emit_code("; INKEY$")
         self._emit_import("rt_inkeys")
-        self._reserve_memory(2, node)
+        self._reserve_heapmem(2, node)
         self._emit_code("call    rt_inkeys")
         self._emit_code(";")
 
@@ -1908,7 +1910,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strleft")
         self._emit_code(";")
@@ -2039,7 +2041,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG}", info="MATH_REAL_LOG")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2054,7 +2056,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_LOG_10}", info="MATH_REAL_LOG_10")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2067,7 +2069,7 @@ class CPCEmitter:
         self._emit_import("rt_lower")
         self._emit_code("; LOWER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
@@ -2118,7 +2120,7 @@ class CPCEmitter:
                 self._moveflo_accum2()
                 self._emit_code("call    rt_maxreal")
             self._emit_code("ld      hl,rt_math_accum1")
-            self._moveflo_temp(node)
+            self._moveflo_heap(node)
         self._emit_code(";")
 
     def _emit_MEMORY(self, node:AST.Command):
@@ -2160,7 +2162,7 @@ class CPCEmitter:
             self._emit_code("ld      b,l")
             self._emit_code("push    bc")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_substr")
         self._emit_code(";")
@@ -2188,7 +2190,7 @@ class CPCEmitter:
                 self._moveflo_accum1()
                 self._emit_code("call    rt_maxreal")
             self._emit_code("ld      hl,rt_math_accum2")
-            self._moveflo_temp(node)
+            self._moveflo_heap(node)
         self._emit_code(";")
 
     def _emit_MODE(self, node:AST.Command):
@@ -2537,7 +2539,7 @@ class CPCEmitter:
         self._emit_code("ld      hl,rt_math_accum1")
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_PI}", info="MATH_REAL_PI")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
     
@@ -2940,7 +2942,7 @@ class CPCEmitter:
             if self.context == "":
                 self._raise_error(3, node)
             self._emit_expression(node.args[0])
-            self._emit_free_mem()
+            self._emit_free_heapmem()
         self._emit_code("ret")
         self._emit_code(";")
 
@@ -2955,7 +2957,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strright")
         self._emit_code(";")
@@ -2975,7 +2977,7 @@ class CPCEmitter:
         else:
             self._emit_expression(node.args[0])
             self._emit_code("call    rt_rnd0")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -2999,7 +3001,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("pop     bc")
         self._emit_code("call    rt_real_round")
-        self._moveflo_temp(node)   
+        self._moveflo_heap(node)   
         self._emit_code(";")
 
     def _emit_RUN(self, node:AST.Command):
@@ -3080,7 +3082,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SINE}", info="MATH_REAL_SINE")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3123,7 +3125,7 @@ class CPCEmitter:
         self._emit_import("rt_strfill")
         self._emit_code("; SPACE$(<integer expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("ld      c,32")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
@@ -3225,7 +3227,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SQR}", info="MATH_REAL_SQR")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3250,7 +3252,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("push    hl")
         self._emit_expression(node.args[1])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         if node.args[1].etype == AST.ExpType.String:
             self._emit_code("inc     hl")
             self._emit_code("ld      c,(hl)", info="first character")
@@ -3271,7 +3273,7 @@ class CPCEmitter:
         if arg.etype == AST.ExpType.Integer:
             self._emit_import("rt_int2str")
             self._emit_code("call    rt_int2str")
-            self._reserve_memory_de(8, node)
+            self._reserve_heapmem_de(8, node)
             self._emit_code("push    de")
             self._emit_code("ldir")
             self._emit_code("pop     hl")
@@ -3281,7 +3283,7 @@ class CPCEmitter:
             self._emit_import("rt_strzcopy")
             self._emit_pushcontext()
             self._emit_code("call    rt_real2strz")
-            self._reserve_memory(12, node)
+            self._reserve_heapmem(12, node)
             self._emit_code("ld      de,rt_real2strz_buf")
             self._emit_code("call    rt_strzcopy")
             self._emit_popcontext()
@@ -3430,7 +3432,7 @@ class CPCEmitter:
         self._moveflo_accum1()
         self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_TANGENT}", info="MATH_REAL_TANGENT")
         self._emit_code("call    rt_math_call")
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
         self._emit_code(";")
 
@@ -3485,7 +3487,7 @@ class CPCEmitter:
             self._emit_import("rt_gettime")
             self._emit_pushcontext()
             self._emit_code("call    rt_gettime")
-            self._moveflo_temp(node)
+            self._moveflo_heap(node)
             self._emit_popcontext()
         self._emit_code(";")
 
@@ -3526,7 +3528,7 @@ class CPCEmitter:
         self._emit_import("rt_upper")
         self._emit_code("; UPPER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_memory_de(255, node)
+        self._reserve_heapmem_de(255, node)
         self._emit_code("call    rt_upper")
         self._emit_code(";")
 
@@ -3639,7 +3641,7 @@ class CPCEmitter:
         self._emit_expression(node.condition)
         # clear temporal memory if used by the condition before
         # jumping. Modifies DE
-        self._emit_free_mem()
+        self._emit_free_heapmem()
         self._emit_code("ld      a,h")
         self._emit_code("or      l")
         self._emit_code(f"jp      z,{end}")
@@ -3791,7 +3793,7 @@ class CPCEmitter:
             self._raise_error(2, node, 'expression not supported yet')
 
     def _emit_const_str(self, node: AST.String):
-        if node.value not in self.issued_constants:
+        if node.value not in self.issued_str_constants:
             label = self._get_conststr_label()
             values = ""
             for c in node.value:
@@ -3800,14 +3802,14 @@ class CPCEmitter:
                 self._emit_data(f'{label}: db {len(node.value)},{values[:-1]}', info=repr(node.value), section=DataSec.CONST)
             else:
                 self._emit_data(f'{label}: db 0', section=DataSec.CONST)
-            self.issued_constants[node.value] = label
+            self.issued_str_constants[node.value] = label
         else:
-            label = self.issued_constants[node.value]
+            label = self.issued_str_constants[node.value]
         self._emit_code(f"ld      hl,{label}")
 
     def _emit_const_real(self, node: AST.Real):
         vstr = str(node.value)
-        if vstr not in self.issued_constants:
+        if vstr not in self.issued_real_constants:
             label = self._get_constreal_label()
             cpcreal = self._real(node.value)
             values = ""
@@ -3815,9 +3817,9 @@ class CPCEmitter:
                 values = values + f'&{b:02X},'
             # send code without last ','
             self._emit_data(f'{label}: db {values[:-1]}', info=f'{node.value}', section=DataSec.CONST)
-            self.issued_constants[vstr] = label
+            self.issued_real_constants[vstr] = label
         else:
-            label = self.issued_constants[vstr]
+            label = self.issued_real_constants[vstr]
         self._emit_code(f"ld      hl,{label}")
 
     def _emit_record(self, node: AST.Variable):
@@ -4012,7 +4014,7 @@ class CPCEmitter:
                 self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
                 self._emit_code("call    rt_math_call")
                 self._emit_popcontext()
-                self._moveflo_temp(node)
+                self._moveflo_heap(node)
         else:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
 
@@ -4068,7 +4070,7 @@ class CPCEmitter:
             self._emit_import("rt_strcat")
             self._emit_code("push    de")
             self._emit_code("ex      de,hl")
-            self._reserve_memory(255, node)
+            self._reserve_heapmem(255, node)
             self._emit_code("call    rt_strcopy", info="(HL) <- (DE)")
             self._emit_code("pop     de")
             self._emit_code("call    rt_strcat", info="(HL) <- (HL) + (DE)")
@@ -4104,7 +4106,7 @@ class CPCEmitter:
             self._emit_code("call    rt_math_call")
         else:
             self._raise_error(2, node, f'unknown "{op}" REAL op')
-        self._moveflo_temp(node)
+        self._moveflo_heap(node)
         self._emit_popcontext()
 
     def _emit_comparation(self, node: AST.BinaryOp):
@@ -4401,9 +4403,9 @@ class CPCEmitter:
             # tracked here so we can call freemem if needed
             entry = self.symtable.find(node.name, SymType.Function)
             if entry is not None and entry.heapused > 0:
-                self.reserved_tmp_memory += entry.heapused
-                self.free_tmp_memory = True
-                self._check_tmp_memory(node)
+                self.reserved_heap_memory += entry.heapused
+                self.free_heap_memory = True
+                self._check_heapmem(node)
         self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):
@@ -4471,7 +4473,7 @@ class CPCEmitter:
             self._emit_RSX(stmt)
         else:
             self._raise_error(2, stmt, "unexpected statement")
-        self._emit_free_mem()
+        self._emit_free_heapmem()
 
     def _emit_line(self, line: AST.Line):
         self._emit_line_label(line)
