@@ -1941,7 +1941,7 @@ NEXT i
 PRINT " FIN!"
 PRINT "Tiempo="; (TIME-T!)/300.0; "s" ' Si se uso TIME(0) no hace falta restar
 ```
- Por último, si ABASC detecta que se está combirtiendo el valor devuelto por TIME a un entero, ejecuta una optimización en la llamada para evitar el uso de números reales. Sin embargo, el programador debería tener cuidado al usar TIME de este modo, ya que el valor da una vuelta entera cada 3 segundos debido a la menor precisión de los números enteros.
+ Por último, si ABASC detecta que se está convirtiendo el valor devuelto por TIME a un entero, ejecuta una optimización en la llamada para evitar el uso de números reales. Sin embargo, el programador debería tener cuidado al usar TIME de este modo, ya que el valor da una vuelta entera cada 3 segundos debido a la menor precisión de los números enteros.
 
  ``` basic
  TIME(0)
