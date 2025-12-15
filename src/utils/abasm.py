@@ -148,6 +148,7 @@ class AsmContext:
         self.currentinst = ""
         self.linenumber = 0
         self.lstcode = ""
+        self.assembled_code = []
         self.macros = {}
         self.macros_stack = []
         self.macros_applied = 0
@@ -398,6 +399,13 @@ class AsmContext:
             self.listingfile = open(os.path.splitext(self.outputfile)[0] + '.lst', "wt")
         self.listingfile.write(line + "\n")
 
+    def save_assembledcode(self, filename):
+        if self.memory_bytes > 0:
+            filename = filename.lower().replace('.bin', '.s')
+            with open(filename, "w") as fd:
+                code = '\n'.join(self.assembled_code)
+                fd.write(code)
+
     def save_binfile(self, filename):
         if self.memory_bytes > 0:
             # something has been assembled
@@ -471,7 +479,8 @@ class AsmContext:
     @staticmethod
     def split_line(instr, sep):
         # Here we deal with splitting a text line by a separator symbol but
-        # we ignore that symbol if it is between quoted colons
+        # we ignore ':' symbol if it is between quoted colons
+        # the same happens if we find the comment symbol ';'
         result = []
         start = 0
         current = 0
@@ -482,14 +491,17 @@ class AsmContext:
                 start = current + 1
             elif instr[current] == '"':
                 quoted = not quoted
+            elif instr[current] == ';' and not quoted:
+                # we found a comment
+                result.append(instr[start: current])
+                return result
             current = current + 1
         # add trail
         result.append(instr[start:])
         return result
 
     def get_statements(self, codeline):
-        # remove comments
-        codeline = codeline.strip().split(';')[0]
+        codeline = codeline.strip()
         # basic sanity checks
         statements = []
         index = 0
@@ -524,6 +536,7 @@ class AsmContext:
         self.currentfile = ""
         self.currentline = ""
         self.linenumber = 0
+        self.list_instruction = False
         srccode = self.read_srcfile(inputfile)
         while self.linenumber < len(srccode):
             self.currentline = srccode[self.linenumber].replace("\t", "  ")
@@ -541,6 +554,7 @@ class AsmContext:
                     lstout = "%-13s %06d  %04X  %-16s\t%s" % (fname, self.linenumber, self.origin, self.lstcode, self.currentinst)
                     self.lstcode = ""
                     self.write_listinfo(lstout)
+                    self.assembled_code.append(self.currentinst)
                 self.origin = self.origin + incbytes
                 if self.origin > self.limit:
                     abort(f"memory full. Current limit is set to {self.limit}")
@@ -560,6 +574,7 @@ class AsmContext:
             self.modules = []
             self.macros_stack = []
             self.macros_applied = 0
+            self.assembled_code = []
             self.assembler_pass(p, inputfile)
 
         if self.listingfile != None:
@@ -582,7 +597,6 @@ class AsmContext:
         if self.defining_macro is not None:
             print("[abasm] Error: missing ENDM directive for macro", self.defining_macro.name)
             sys.exit(1)
-
         self.save_binfile(outputfile)
 
 
@@ -1039,6 +1053,7 @@ def op_READ(p, opargs):
         abort("wrong path specified in the READ directive")
     filename = g_context.resolve_include(path.group(0))
     if filename in g_context.include_files:
+        g_context.list_instruction = False
         return 0
     g_context.include_stack.append((g_context.currentfile, g_context.linenumber))
     if not os.path.exists(filename):
@@ -1046,6 +1061,7 @@ def op_READ(p, opargs):
     if p == 1: print("[abasm] including", filename)
     g_context.assembler_pass(p, filename)
     g_context.currentfile, g_context.linenumber = g_context.include_stack.pop()
+    g_context.list_instruction = False
     return 0
 
 def op_INCBIN(p, opargs):
@@ -1772,6 +1788,9 @@ def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x400
 
     g_context.assemble(inputfile, outputfile, startaddr)
 
+def dump_assembledcode():
+    g_context.save_assembledcode(g_context.outputfile)
+
 def aux_int(param):
     """
     By default, int params are converted assuming base 10.
@@ -1795,6 +1814,8 @@ def process_args():
                         help = 'Sets the tolerance level for deviations from strictly correct syntax (WinApe performs relatively lenient syntax checks). Accepted values: 0, 1, and 2. The default value is 0, indicating the strictest level of syntax enforcement.')
     parser.add_argument('-v', '--version', action='version', version=f' Abasm Assembler Version {__version__}',
                         help = "Shows program's version and exits")
+    parser.add_argument('-s', '--sfile', action='store_true',
+                        help='Generates an output file with .s extension that contains all assembled code in one file, including the code imported from other files.')
     parser.add_argument('--verbose', action='store_true',
                         help = 'Prints all source code lines as they are assembled')
     args = parser.parse_args()
@@ -1804,7 +1825,11 @@ def main():
     global g_context
     args = process_args()
     g_context.verbose = args.verbose
-    assemble(args.inputfile, args.output, args.define, args.start, args.tolerance)
+    libpath = os.path.dirname(os.path.abspath(__file__))
+    libpath = os.path.join(libpath, "lib")
+    assemble(args.inputfile, args.output, args.define, args.start, args.tolerance, libpaths=[libpath])
+    if args.sfile:
+        dump_assembledcode()
     sys.exit(0)
 
 if __name__ == "__main__":
