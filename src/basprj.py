@@ -1,0 +1,256 @@
+#!/usr/bin/env python3
+"""
+BASPRJ.PY by Javier Garcia
+
+BASPRJ is a simple utility to generate a simple ABASC project.
+It creates a make.bat or make.sh file and a main.bas source file.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation in its version 3.
+
+This program is distributed in the hope that it will be useful
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+"""
+
+__author__='Javier "Dwayne Hicks" Garcia'
+__version__= "0.99 beta"
+
+import argparse
+import os
+import platform
+import stat
+import re
+import sys
+from typing import Tuple
+
+WINDOWS_TEMPLATE: str = r"""@echo off
+
+REM *
+REM * This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
+REM * and generate files that can be used in emulators or real hardware for the Amstrad CPC
+REM *
+REM * USAGE: make [clear]
+
+@setlocal
+
+set BASC=python3 "{BASC}"
+set DSK=python3 "{DSK}"
+
+set SOURCE=main
+set TARGET={TARGET}
+
+set RUNBAS=%BASC% %SOURCE%.bas
+set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
+
+IF "%1"=="clear" (
+    IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
+    IF EXIST "%SOURCE%.lex" del "%SOURCE%.lex"
+    IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
+    IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
+    IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
+    IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
+    IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
+    IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"
+    IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
+    IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
+) ELSE (
+    call %RUNBAS% %2 %3 && call %RUNDSK%
+)
+
+@endlocal
+@echo on
+"""
+
+UNIX_TEMPLATE: str = """#!/bin/sh
+
+#
+# This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
+# and generate files that can be used in emulators or real  hardware for the Amstrad CPC
+#
+# USAGE: ./make.sh [clear]
+#
+
+BASC="python3 {BASC}"
+DSK="python3 {DSK}"
+
+SOURCE=main
+TARGET={TARGET}
+
+RUNBAS="$BASC $SOURCE.bas"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr 0x170 --start-addr 0x4000"
+
+if [ "$1" = "clear" ]; then
+    rm -f "$SOURCE.bpp"
+    rm -f "$SOURCE.lex"
+    rm -f "$SOURCE.ast"
+    rm -f "$SOURCE.sym"
+    rm -f "$SOURCE.asm"
+    rm -f "$SOURCE.lst"
+    rm -f "$SOURCE.map"
+    rm -f "$SOURCE.bin"
+    rm -f "$TARGET.dsk"
+else
+    $RUNBAS && $RUNDSK
+fi
+"""
+
+MAIN_BAS: str = """' Simple generated main file
+
+MODE 1
+LABEL mainloop
+    PRINT "Hello World!"
+    GOTO mainloop
+"""
+
+def script_tools_paths() -> Tuple[str, str]:
+    script_dir: str = os.path.dirname(os.path.abspath(__file__))
+    return (
+        os.path.join(script_dir, "abasc.py"),
+        os.path.join(script_dir, "utils", "dsk.py"),
+    )
+
+def target_name_from_dir(path: str) -> str:
+    return os.path.basename(os.path.normpath(path))
+
+def update_project_win(content: str, basc_path: str, dsk_path: str) -> str:
+    """
+    We have to use lamda functions to avoid the problem with Windows paths and re.sub calls
+    raising errors like 're.error: bad escape'
+    """
+    content = re.sub(
+        r'^set BASC=.*$',
+        lambda _: f'set BASC=python3 "{basc_path}"',
+        content,
+        flags=re.MULTILINE,
+    )
+
+    content = re.sub(
+        r'^set DSK=.*$',
+        lambda _: f'set DSK=python3 "{dsk_path}"',
+        content,
+        flags=re.MULTILINE,
+    )
+    return content
+
+def update_project_unix(content: str, basc_path: str, dsk_path: str) -> str:
+    """ 
+    Linux shouldn't have the same problem than Windows with bars in the path, but
+    lets use the lambda workaround just in case.
+    """
+    content = re.sub(
+        r'^BASC=.*$',
+        lambda _: f'BASC="python3 {basc_path}"',
+        content,
+        flags=re.MULTILINE,
+    )
+
+    content = re.sub(
+        r'^DSK=.*$',
+        lambda _: f'DSK="python3 {dsk_path}"',
+        content,
+        flags=re.MULTILINE,
+    )
+    return content
+
+def update_project(target_dir: str, is_windows: bool) -> None:
+    make_name: str = "make.bat" if is_windows else "make.sh"
+    make_path: str = os.path.join(target_dir, make_name)
+
+    if not os.path.isfile(make_path):
+        print(f"{make_name} was not found in {target_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    basc_path, dsk_path = script_tools_paths()
+
+    with open(make_path, "r", encoding="utf-8") as f:
+        content: str = f.read()
+    if is_windows:
+        content = update_project_win(content, basc_path, dsk_path)
+    else:
+        content = update_project_unix(content, basc_path, dsk_path)
+    with open(make_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+    print(f"{make_name} was sucessfully updated")
+
+def create_project(target_dir: str, is_windows: bool) -> None:
+    target_name: str = target_name_from_dir(target_dir)
+    basc_path, dsk_path = script_tools_paths()
+
+    if is_windows:
+        make_name: str = "make.bat"
+        make_content: str = WINDOWS_TEMPLATE.format(
+            BASC=basc_path,
+            DSK=dsk_path,
+            TARGET=target_name,
+        )
+    else:
+        make_name = "make.sh"
+        make_content = UNIX_TEMPLATE.format(
+            BASC=basc_path,
+            DSK=dsk_path,
+            TARGET=target_name,
+        )
+        
+    make_path: str = os.path.join(target_dir, make_name)
+    with open(make_path, "w", newline="\n") as f:
+        f.write(make_content)
+
+    if not is_windows:
+        st = os.stat(make_path)
+        os.chmod(make_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    print(f"Project initialized: {target_dir}")
+    print(f"- {make_name} created")
+    main_bas_path: str = os.path.join(target_dir, "main.bas")
+    if not os.path.exists(main_bas_path):
+        with open(main_bas_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(MAIN_BAS)
+        print(f"- main.bas created")
+
+def create_argv_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Creates or updates an ABASC project skeleton"
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-n", "--new", metavar="TARGET DIRECTORY",
+        help="Generates a new project folder with a make file (use '.' for current directory)",
+    )
+    group.add_argument(
+        "-u", "--update", metavar="TARGET DIRECTORY",
+        help="Updates paths to ABASC and DSK tools",
+    )
+    parser.add_argument(
+        "-v", "--version", action='version', version=f' Basprj Version {__version__}',
+        help = "Shows program's version and exits")
+    return parser
+
+def main() -> None:
+    parser = create_argv_parser()
+    args = parser.parse_args()
+    is_windows: bool = platform.system().lower().startswith("win")
+
+    if args.update is not None:
+        target_dir: str = (
+            os.getcwd() if args.update == "." else os.path.abspath(args.update)
+        )
+        update_project(target_dir, is_windows)
+        sys.exit(0)
+
+    if args.new == ".":
+        target_dir = os.getcwd()
+    else:
+        target_dir = os.path.abspath(args.new)
+        os.makedirs(target_dir, exist_ok=True)
+    create_project(target_dir, is_windows)
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
