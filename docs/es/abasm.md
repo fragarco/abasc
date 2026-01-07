@@ -8,6 +8,7 @@ ABASM: MANUAL DEL USUARIO
 - [Cómo se usa](#cómo-se-usa)
   - [Opciones disponibles](#opciones-disponibles)
   - [Ejemplos de uso](#ejemplos-de-uso)
+  - [Creación de un proyecto usando ASMPRJ](#creación-de-un-proyecto-usando-asmprj)
 - [Productos del ensamblado](#productos-del-ensamblado)
   - [El archivo binario](#el-archivo-binario)
   - [Listado del programa](#listado-del-programa)
@@ -16,6 +17,7 @@ ABASM: MANUAL DEL USUARIO
   - [Comentarios](#comentarios)
   - [Etiquetas](#etiquetas)
   - [Instrucciones](#instrucciones)
+  - [Bibliotecas](#bibliotecas)
   - [Directivas del Ensamblador](#directivas-del-ensamblador)
     - [ALIGN](#align)
     - [ASSERT](#assert)
@@ -24,6 +26,7 @@ ABASM: MANUAL DEL USUARIO
     - [DW, DEFW](#dw-defw)
     - [EQU](#equ)
     - [IF](#if)
+    - [IFNOT](#ifnot)
     - [INCBIN](#incbin)
     - [MACRO](#macro)
     - [LET](#let)
@@ -36,12 +39,15 @@ ABASM: MANUAL DEL USUARIO
     - [STOP](#stop)
     - [WHILE](#while)
   - [Expresiones y Caracteres Especiales](#expresiones-y-caracteres-especiales)
+- [Bibliotecas incluidas en ABASM](#bibliotecas-incluidas-en-abasm)
+  - [CPCRSLIB](#cpcrslib)
+  - [CPCTELERA](#cpctelera)
 - [Conjunto de instrucciones del Z80](#conjunto-de-instrucciones-del-z80)
 - [Historial de cambios](#historial-de-cambios)
 
 # Introducción
 
-ABASM es un ensamblador cruzado diseñado específicamente para la plataforma Amstrad CPC y su CPU Z80. Desarrollado en Python 3, su principal objetivo es proporcionar una herramienta ligera y altamente portable para programadores interesados en crear código ensamblador para esta clásica plataforma de 8 bits. Al no depender de librerías externas ni herramientas de terceros, ABASM puede ejecutarse en cualquier sistema que cuente con un intérprete de Python 3. Además, el proyecto incluye otras herramientas, también programadas en Python y sin dependencias, para empaquetar el resultado del ensamblador en archivos DSK o CDT.
+ABASM es un ensamblador cruzado diseñado específicamente para la plataforma Amstrad CPC y su CPU Z80. Desarrollado en Python 3, su principal objetivo es proporcionar una herramienta ligera y altamente portable para programadores interesados en crear código ensamblador para esta clásica plataforma de 8 bits. Al no depender de librerías externas ni herramientas de terceros, ABASM puede ejecutarse en cualquier sistema que cuente con un intérprete de Python 3. Además, el proyecto incluye otras herramientas, también programadas en Python y sin dependencias, por ejemplo, para empaquetar el resultado del ensamblador en archivos DSK o CDT incluye DSK.py y CDT.py. Para la creación de una estructura básica de proyecto, incluye la herramienta ASMPRJ.py.
 
 ABASM está basado en el fantástico proyecto pyZ80, creado inicialmente por Andrew Collier y modificado posteriormente por Simon Owen.
 
@@ -70,6 +76,7 @@ Este comando ensamblará el archivo `program.asm` y generará un fichero binario
 - `-d` o `--define`: Permite definir pares `SÍMBOLO=VALOR`. Dichos símbolos pueden utilizarse en el código como constantes o etiquetas. Esta opción se puede emplear múltiples veces para definir varios símbolos.
 - `--start`: Define la dirección de memoria que se tomará como punto de inicio para la carga del programa. Por defecto, esta dirección es `0x4000`, aunque también puede establecerse directamente dentro del código usando la directiva `ORG`.
 - `-t` o `--tolerance`: Fija el nivel de tolerancia ante alternativas a los opcodes soportados y ante otros pequeños errores. WinApe es bastante laxo en la comprobación de la sintaxis, así que puede ser necesario utilizar esta opción si se está trabajando con código proveniente de este programa. Por defecto, su valor es 0, el modo más estricto y menos permisivo. Los valores 1 y 2 incrementan progresivamente el nivel de tolerancia.
+- `s` o `--sfile`: Genera un único fichero .s con todo el código ensablado, incluyendo el código importado de otros ficheros.
 - `-o` o `--output`: Especifica el nombre del archivo binario de salida. Si no se utiliza esta opción, se empleará el nombre del archivo de entrada cambiando su extensión por `.bin`.
 - `-v` o `--version`: Muestra el número de versión de ABASM.
 - `--verbose`: Imprime mucha más información por consola durante el proceso de ensamblado. 
@@ -94,7 +101,22 @@ Establecer la dirección de inicio en memoria que debe considerarse para el cál
 python3 ABASM.py program.asm --start 0x2000
 ```
 
-¡Claro! Aquí tienes el texto original en español con las correcciones ortográficas y gramaticales realizadas para mejorar el estilo:
+## Creación de un proyecto usando ASMPRJ
+
+En `ABASM`, la gestión de un proyecto es sencilla. Basta con crear un fichero principal en ensamblador que importe cualquier otro archivo necesario mediante la directiva `READ`. Tras ejecutar `ABASM`, se generará el fichero binario ensamblado. A continuación, solo será necesaria una llamada adicional a las herramientas `DSK` o `CDT` para empaquetar el resultado y poder utilizarlo en emuladores o en hardware real (por ejemplo, mediante dispositivos como Gotek, M4 o DDI-Revival).
+
+```bash
+python3 abasm.py main.asm
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x4000 --load-addr=0x4000
+```
+
+Además, es posible generar rápidamente la estructura básica de un proyecto utilizando la herramienta `ASMPRJ`. Esta utilidad crea automáticamente un script de construcción con todo lo necesario para comenzar a trabajar: en Windows se generará un fichero `make.bat`, mientras que en Linux y macOS se creará un fichero `make.sh`. Asimismo, se incluirá un archivo `main.asm` con código de ejemplo listo para ser ensamblado y probado.
+
+```bash
+python3 asmprj.py -n myproject
+```
+
+Para conocer todas las opciones disponibles, se recomienda consultar la documentación específica de `ASMPRJ`.
 
 # Productos del ensamblado
 
@@ -145,7 +167,7 @@ El nombre del archivo origen aparece en la primera columna, mientras que la segu
 
 ## Archivo de símbolos
 
-ABASM también genera un listado de todos los símbolos globales encontrados y su valor asociado. La mayoría de ellos serán etiquetas utilizadas para marcar posiciones de salto o ubicaciones de memoria donde se han almacenado ciertos datos. Los símbolos locales son aquellos que comienzan con el caracter '.'.
+ABASM también genera un listado de todos los símbolos globales encontrados y su valor asociado. La mayoría de ellos serán etiquetas utilizadas para marcar posiciones de salto o ubicaciones de memoria donde se han almacenado ciertos datos. Los símbolos locales son aquellos que comienzan con el caracter '!'.
 
 La extensión del fichero de símbolos es `.MAP` y su formato es el de un diccionario de Python. Esto permite emplear el archivo en otras utilidades (como los empaquetadores DSK y CDT) y utilizar los símbolos en lugar de sus valores. En la documentación sobre las utilidades DSK y CDT se puede encontrar un ejemplo de uso de este archivo.
 
@@ -174,14 +196,14 @@ Un aspecto importante y común a los cuatro elementos es que ABASM no discrimina
 main              ; define la etiqueta global 'main'
     ld a,32       ; primer código de letra ASCII en el acumulador
 
-.loop             ; define la etiqueta local 'loop'
+!loop             ; define la etiqueta local 'loop'
     call &BB5A    ; LLAMA a txt_output, la rutina de salida del firmware
     inc  a        ; pasa al siguiente carácter
     cp   128      ; ¿hemos terminado con todos?
-    jr   c,.loop  ; no - regresa para procesar el siguiente
+    jr   c,!loop  ; no - regresa para procesar el siguiente
 
 .end  
-    jp   .end     ; bucle infinito usado como punto final del programa
+    jp   end      ; bucle infinito usado como punto final del programa
 
 ```
 
@@ -262,6 +284,12 @@ En español, se pueden consultar los siguientes enlaces:
 - [Resumen sobre el procesador Z80](https://ia801404.us.archive.org/7/items/z80-cpu-manual/ES%20-%20Z80%20CPU%20Manual.pdf): Un documento de 19 páginas con un buen resumen del procesador Z80 y su juego de instrucciones.
 - [Juego de instrucciones del microprocesador Z80](https://www.infor.uva.es/~bastida/OC/Tablas%20Z80%20SPARC%20y%20ASCII.pdf): Otro buen documento centrado en las instrucciones soportadas por el procesador Z80.
 - [Dominando el ensamblador Z80 (DEZ80) de la Universidad de Alicante](https://www.cpcwiki.eu/index.php/DEZ80): Serie de librosCurso de programación en ensamblador para el Amstrad CPC impartido por el profesor Francisco Gallego y en formato de vídeos.
+
+## Bibliotecas
+
+La directiva `read` permite incluir archivos adicionales desde un archivo principal. Estos archivos pueden ser locales o residir dentro de la carpeta `lib` de la instalación. De esta manera, es posible crear bibliotecas reutilizables entre proyectos.
+
+Como ejemplo, la distribución de **ABASM** incluye una versión reducida de la biblioteca **CPCRSLIB** y una versión completa de la biblioteca **CPCTELERA**. Para obtener más detalles, puedes consultar los ejemplos disponibles en la carpeta `examples/cpcrslib` y `examples/cpctelera`.
 
 ## Directivas del Ensamblador
 
@@ -383,6 +411,13 @@ Los operadores básicos que se pueden usar en estar expresiones son:
  - *<*, *>* : menor que o mayor que.  
  - *<=*, *>=*: menor o igual que, mayor o igual que.  
 
+
+### IFNOT
+
+- IFNOT condición [ELSEIF condición | ELSE] ENDIF
+
+La directiva IFNOT permite que ciertas partes del código se incluyan o se ignoren, dependiendo del valor de una expresión lógica, de igual forma a como se comporta la directiva `IF`. Sin embargo, el ensamblador procesará las líneas que siguen a la directiva IFNOT solo cuando dicha expresión sea falsa (igual a cero).
+
 ### INCBIN
 
 - INCBIN "fichero binario"
@@ -419,6 +454,10 @@ macro decnz_a
 mend
 ```
 
+WinApe utiliza el símbolo '@' para identificar **etiquetas de macro locales**, pero ese símbolo lo utiliza ABASM como la dirección actual en memoria para el código ensamblado. Por tanto, ABASM no es compatible con WinApe en este aspecto.
+
+Si una misma macro se define una segunda vez, la segunda definición pasa a ser la valida desde ese momento. Sin embargo, también es posible emplear la directiva `MDELETE símbolo` para eliminar una definición existente.
+
 ### LET
 
 - LET símbolo=valor
@@ -448,7 +487,7 @@ LD A,&FF      ; esta linea causará un error
 
 - READ "fichero de código fuente"
 
-Esta directiva inserta el contenido del fichero especificado entre comillas dobles y lo ensambla. La ruta del fichero debe ser relativa a la ubicación del fichero que lo incluye. Todos los símbolos definidos en el fichero insertado son globales, por lo que deben ser únicos y no repetirse en el fichero principal ni en ningún otro fichero incluido mediante este método.
+Esta directiva inserta el contenido del fichero especificado entre comillas dobles o siemples y lo ensambla. La ruta del fichero debe ser relativa a la ubicación del fichero que lo incluye. Todos los símbolos definidos en el fichero insertado son globales, por lo que deben ser únicos y no repetirse en el fichero principal ni en ningún otro fichero incluido mediante este método. Si un mismo fichero se incluye varias veces, ABASM lo detectará y solo lo incluirá una vez.
 
 ```
 READ "./lib/keyboard.asm"
@@ -458,7 +497,7 @@ READ "./lib/keyboard.asm"
 
 - REPEAT expresión numérica `bloque de código` REND
 
-Repite un bloque de código tantas veces como el valor indicado por la expresión numérica.
+Repite un bloque de código tantas veces como el valor indicado por la expresión numérica. No puede utilizarse dentro de la definición de una macro.
 
 ```
 EQU ENTITIES, 10
@@ -481,7 +520,7 @@ Especifica la dirección de memoria que debe considerarse como la actual a parti
 ORG 0x4000
 ```
 
-Nada impide incluir más de una ocurrencia de esta directiva en el código fuente, aunque hay que tener presente que cualquier zona de memoria "vacia" que quede entre la dirección de memoria inicial del programa y la dirección más alta será rellenada con 0, aumentando el tamaño del fichero `bin` resultante. Para evitarlo, si un programa necesita tener partes cargadas en diferentes áreas de la memoria, es aconsejable generar un fichero binario independiente para cada área y empaquetarlos todos dentro del mismo DSK o CDT, junto con un cargador programado en BASIC (por ejemplo).
+Nada impide incluir más de una ocurrencia de esta directiva en el código fuente, aunque hay que tener presente que cualquier zona de memoria "vacia" que quede entre la dirección de memoria inicial del programa y la dirección más alta será rellenada con 0s, aumentando el tamaño del fichero `bin` resultante. Para evitarlo, si un programa necesita tener partes cargadas en diferentes áreas de la memoria, es aconsejable generar un fichero binario independiente para cada área y empaquetarlos todos dentro del mismo DSK o CDT, junto con un cargador programado en BASIC (por ejemplo).
 
 ### PRINT
 
@@ -514,7 +553,7 @@ Detiene inmediatamente el proceso de ensamblado mostrando un error.
 
 - WHILE expresión lógica `bloque de código` WEND
 
-Permite ensamblar repetidamente un bloque de código mientras se cumpla la condición especificada. Si la condición nunca llega a ser falsa, esta directiva puede generar un bucle infinito.
+Permite ensamblar repetidamente un bloque de código mientras se cumpla la condición especificada. Si la condición nunca llega a ser falsa, esta directiva puede generar un bucle infinito. No puede utilizarse dentro de la definición de una macro.
 
 ```
 LET OBJECTS = 32
@@ -547,6 +586,34 @@ Cuando una instrucción o directiva requiere un número como parámetro, se pued
 - **>>** es el operador *desplazamiento* a la derecha.
   
 (1) Un único carácter entre comillas dobles puede usarse para representar el valor ASCII de ese carácter en expresiones numéricas. Ni las comillas dobles ni las simples pueden aparecer dentro de una cadena de texto.
+
+# Bibliotecas incluidas en ABASM
+
+`ABASM` incluye dos bibliotecas listas para uso.. Ambas con un gran recurso para aprender más sobre los entresijos del Amstrad CPC, incluyendo su preculiar organización de la memoria de vídeo.
+
+## CPCRSLIB
+
+CPCRSlib es una biblioteca en C que proporciona rutinas y funciones para la gestión de sprites y mapas de tiles en el Amstrad CPC. La biblioteca está diseñada para su uso con los compiladores Z88DK o SDCC. CPCRSlib también incluye rutinas de teclado para la redefinición y detección de teclas, así como rutinas de propósito general para cambiar el modo de pantalla y los colores.
+
+Además, CPCRSLIB incorpora un reproductor de música y efectos de sonido desarrollado por WYZ, capaz de reproducir música creada con WYZTracker.
+
+* Una explicación detallada de cada función y rutina se puede consultar aquí:
+  [http://www.amstrad.es/programacion/cpcrslib.html](http://www.amstrad.es/programacion/cpcrslib.html)
+* La última versión oficial de la biblioteca original puede descargarse desde:
+  [http://sourceforge/cpcrslib](http://sourceforge/cpcrslib)
+
+La versión incluida con `ABASM` no incorpora soporte para el desplazamiento de tilemaps. Adicionalmente, algunas rutinas han sido renombradas para mejorar la claridad y la coherencia. Consulta los ejemplos ubicados en `examples/cpcrslib` para aprender más sobre el uso de esta biblioteca dentro de `ABASM`.
+
+## CPCTELERA
+
+CPCtelera es un framework multiplataforma para el desarrollo de videojuegos y software multimedia para el Amstrad CPC. Funciona en Linux, macOS y Windows (mediante Cygwin) y facilita el desarrollo de software para Amstrad CPC tanto en lenguaje C como en ensamblador. CPCtelera requiere el uso del compilador SDCC y el ensamblador que incluye.
+
+CPCtelera está ampliamente documentada, dispone de un completo manual de referencia y su código fuente está profusamente comentado. Todos los detalles y la documentación pueden consultarse en:
+
+* [https://lronaldo.github.io/cpctelera/](https://lronaldo.github.io/cpctelera/)
+* [https://lronaldo.github.io/cpctelera/files/readme-txt.html](https://lronaldo.github.io/cpctelera/files/readme-txt.html)
+
+El port incluido en `ABASM` cubre todas las rutinas disponibles en la versión 1.5-dev de CPCtelera. La principal diferencia es que el sufijo `_asm` ha sido eliminado de los nombres de las rutinas, ya que en este contexto no existe ambigüedad entre código C y ensamblador. Para aprender más sobre el uso de esta biblioteca dentro de `ABASM` pueden consultarse los ejemplos incluidos en `examples/cpctelera`.
 
 # Conjunto de instrucciones del Z80
 
@@ -1206,6 +1273,30 @@ FD AE hh    	XOR   (IY+d)    5 Realiza una OR exclusiva entre el valor en (IY+d)
 **[2]** Todas las instrucciones RST del Z80, excepto una, han sido reservadas para uso del sistema. De RST 1 a RST 5 (&08-&28) se utilizan para extender el conjunto de instrucciones añadiendo instrucciones específicas de llamada y salto que habilitan y deshabilitan los ROMs. RST 6 (&30) está disponible para el usuario. Se puede obtener más información sobre el uso de la instrucción RST aquí: [ROMs. RAM and Restart Instructions.](https://www.cpcwiki.eu/imgs/f/f6/S968se02.pdf)
 
 # Historial de cambios
+
+- Versión 1.4.0 - 07/01/2026
+  * Añadida la directiva IFNOT
+  * Añadida la herramienta `IMG`
+
+- Versión 1.3.1 - 28/12/2025
+  * Los ejemplos de CPCTELERA no estaban funcionando desde el DSK.
+  * Arreglo en los finales de línea de los ficheros ASCII añadidos a ficheros DSK o CDT.
+  * Se ha añadido un Make.sh en todos los ejemplos para su uso en Linux o macOS.
+
+- Versión 1.3.0 - 27/12/2025
+  * Nueva directiva MDELETE para eliminar la definición de una macro.
+  * Arreglado un problema con el uso de macros sin parámetros.
+  * Abasm muestra el mensaje de error adecuado si se usan las directivas REPEAT o WHILE dentro de una macro.
+  * Port de la biblioteca CPCTELERA como nuevo ejemplo de bibliotecas en ABASM.
+  * Nueva herramientas ASMPRJ para crear una estructura básica de proyecto.
+
+- Versión 1.2.0 - 15/12/2025
+  * Soporte para el uso de bibliotecas, ficheros .asm situados dentro del directorio `lib` de la distribución ABASM.
+  * Port de parte de la biblioteca CPCRSLIB como ejemplo del nuevo soporte a bibliotecas. Se pueden ver varios ejemplos de su uso en `examples/cpcrslib`.
+  * Nuevo flag `-s` `--sfile` que genera un único fichero .s con todo el código ensamblado, incluyendo el código importando de otros ficheros.
+  * Mejora en la gestión de múltiples directivas ORG
+  * Importa solo una vez un mismo fichero .ASM referenciado multiples veces por READ o INCLUDE
+  * Otras pequeñas mejoras.
 
 - Version 1.1.3 - 16/04/2025
   * Se ha añadido la utilidad bindiff para comparar binarios.

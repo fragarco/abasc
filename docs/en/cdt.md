@@ -1,3 +1,6 @@
+CDT: USER MANUAL
+================
+
 # Description
 `cdt.py` is a simple Python 3.X-based tool for creating and managing CDT files used in simulators and tape emulators for Amstrad CPC computers. It can perform various operations to work with these files, with its main focus on aiding in packaging programs developed on modern computers.
 

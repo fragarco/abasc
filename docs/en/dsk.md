@@ -1,3 +1,6 @@
+DSK: USER MANUAL
+================
+
 # Description
 
 `dsk.py` is a simple Python 3.X-based tool for creating and managing DSK files, as used in simulators and disk drive emulators for Amstrad CPC computers. It can perform various operations to work with these files, with its main focus on aiding to package programs developed on modern computers.

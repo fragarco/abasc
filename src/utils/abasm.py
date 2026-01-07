@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-BASM.PY by Javier Garcia
+ABASM.PY by Javier Garcia
 
-BASM is a Z80 assembler focused on the Amstrad CPC. It's based on pyz80,
+ABASM is a Z80 assembler focused on the Amstrad CPC. It's based on pyz80,
 originally crafted by Andrew Collier and later on modified by Simon Owen
 
 This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.2.0'
+__version__='1.4.0'
 
 import sys, os
 import re
@@ -336,12 +336,16 @@ class AsmContext:
                 self.check_symbol(label, type='label')
                 self.set_symbol(label, self.origin, is_label = True, type='label')
             elif self.get_symbol(label) != self.origin:
-                warning(f'label address redefinition: {hex(self.get_symbol(label)).upper()} != {hex(self.origin).upper()}', TLEVEL_LENIENT)
+                warning(f'{label} label address redefinition: {hex(self.get_symbol(label)).upper()} != {hex(self.origin).upper()}', TLEVEL_LENIENT)
 
     def process_macro(self, macro, args):
-        argv = args.replace(' ', '').split(',')
+        argv = []
+        if args.strip() != '':
+            argv = args.replace(' ', '').split(',')
         code = self.macros[macro].code
         params = self.macros[macro].argv
+        if len(argv) != len(params):
+            abort(f"macro arguments mismatch {len(argv)} <> {len(params)}")
         macrocode = [f"_MACRO_ENTER_ {macro}"]
         for line in code:
             for i,arg in enumerate(argv):
@@ -921,18 +925,20 @@ def op_BRK(p, opargs):
     return 0
 
 def op_PRINT(p, opargs):
+    sufix = "(pass 1)"
     if p == 2:
-        text = []
-        for expr in opargs.split(","):
-            if expr.strip().startswith('"'):
-                text.append(expr.strip().rstrip()[1:-1])
+        sufix = "(pass 2)"
+    text = []
+    for expr in opargs.split(","):
+        if expr.strip().startswith('"'):
+            text.append(expr.strip().rstrip()[1:-1])
+        else:
+            a = g_context.parse_expression(expr, allowundef=1)
+            if a != None:
+                text.append(str(a))
             else:
-                a = g_context.parse_expression(expr, allowundef=1)
-                if a != None:
-                    text.append(str(a))
-                else:
-                    text.append("?")
-        print("[abasm]", os.path.basename(g_context.currentfile) + ":", "PRINT ", ",".join(text))
+                text.append("?")
+    print(f"[abasm] {os.path.basename(g_context.currentfile)}: PRINT{sufix} {','.join(text)}")
     return 0
 
 def op_EQU(p, opargs):
@@ -1086,6 +1092,8 @@ def op_INCBIN(p, opargs):
     return len(content)
 
 def op_WHILE(p, opargs):
+    if g_context.applying_macro != None:
+        abort("macro definitions don't support WHILE loops")
     do = g_context.parse_expression(opargs)
     if do != 0:
         if g_context.whileline != None and g_context.whileline != g_context.linenumber:
@@ -1109,6 +1117,8 @@ def op_WEND(p, opargs):
     return 0
 
 def op_REPEAT(p, opargs):
+    if g_context.applying_macro != None:
+        abort("macro definitions don't support REPEAT loops")
     value = 0
     if g_context.repeatloop != None:
         line, value = g_context.repeatloop
@@ -1689,6 +1699,23 @@ def op_IF(p, opargs):
         g_context.ifstate = IFSTATE_FIND_END
     return 0
 
+def op_IFNOT(p, opargs):
+    check_args(opargs, 1)
+    # WinAPE supports = as equal sym in IF directive while we need ==
+    if '=' in opargs and '==' not in opargs and '!=' not in opargs:
+        opargs = opargs.replace('=','==')
+    g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
+    if g_context.ifstate < IFSTATE_DISCART:
+        # This is just the oposite as a regular IF
+        cond = g_context.parse_expression(opargs)
+        if cond:
+            g_context.ifstate = IFSTATE_DISCART
+        else:
+            g_context.ifstate = IFSTATE_ASSEMBLE
+    else:
+        g_context.ifstate = IFSTATE_FIND_END
+    return 0
+
 def op_ELSE(p, opargs):
     if g_context.ifstate == IFSTATE_ASSEMBLE or g_context.ifstate == IFSTATE_FIND_END:
         g_context.ifstate = IFSTATE_FIND_END
@@ -1730,12 +1757,23 @@ def op_MACRO(p, opargs):
     name, args = g_context.parse_instruction(opargs)
     if g_context.verbose and p==1: print(f" adding macro {name} to the macros table")
     g_context.check_symbol(name, 'macro')
+    argv = []
     if len(args) > 0:
         argv = args.split(',')
 
     macro = AsmMacro(name, argv)
     g_context.macros[name] = macro
     g_context.defining_macro = macro
+    return 0
+
+def op_MDELETE(p, opargs):
+    # Macros can contain calls to other macros but can delete macro definitions
+    if g_context.applying_macro != None:
+        abort("macro deletion cannot be used inside a macro definition")
+    check_args(opargs, 1)    
+    args = opargs.split(',', 1)
+    if args[0] in g_context.macros:
+        del g_context.macros[args[0]]
     return 0
 
 def op_ENDM(p, opargs):

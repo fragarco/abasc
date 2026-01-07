@@ -7,7 +7,8 @@ ABASM: USER MANUAL
   - [Why Another Assembler for Amstrad?](#why-another-assembler-for-amstrad)
 - [Basic Usage](#basic-usage)
   - [Available Options](#available-options)
-  - [\*\*Usage Examples](#usage-examples)
+  - [Usage Examples](#usage-examples)
+  - [Creating a Project Using ASMPRJ](#creating-a-project-using-asmprj)
 - [Assembly Output](#assembly-output)
   - [The Binary File](#the-binary-file)
   - [Program Listing](#program-listing)
@@ -16,6 +17,7 @@ ABASM: USER MANUAL
   - [Comments](#comments)
   - [Labels](#labels)
   - [Instructions](#instructions)
+  - [Libraries](#libraries)
   - [Assembler Directives](#assembler-directives)
     - [ALIGN](#align)
     - [ASSERT](#assert)
@@ -24,6 +26,7 @@ ABASM: USER MANUAL
     - [DW, DEFW](#dw-defw)
     - [EQU](#equ)
     - [IF](#if)
+    - [IFNOT](#ifnot)
     - [INCBIN](#incbin)
     - [MACRO](#macro)
     - [LIMIT](#limit)
@@ -36,12 +39,15 @@ ABASM: USER MANUAL
     - [STOP](#stop)
     - [WHILE](#while)
   - [Expressions and Special Characters](#expressions-and-special-characters)
+- [Libraries included in ABASM](#libraries-included-in-abasm)
+  - [CPCRSLIB](#cpcrslib)
+  - [CPCTELERA](#cpctelera)
 - [The Z80 instruction set](#the-z80-instruction-set)
 - [Changelog](#changelog)
 
 # Introduction
 
-ABASM is a cross-assembler specifically designed for the Amstrad CPC platform and its Z80 CPU. Developed in Python 3, its main goal is to provide a lightweight and highly portable tool for programmers interested in writing assembly code for this classic 8-bit platform. With no external libraries or third-party tools required, ABASM can run on any system with a Python 3 interpreter. Additionally, the project includes other tools, also written in Python and with no dependencies, to package the assembler’s output into DSK or CDT files.
+ABASM is a cross-assembler specifically designed for the Amstrad CPC platform and its Z80 CPU. Developed in Python 3, its main goal is to provide a lightweight and highly portable tool for programmers interested in writing assembly code for this classic 8-bit platform. With no external libraries or third-party tools required, ABASM can run on any system with a Python 3 interpreter. Additionally, the project includes other tools, also written in Python and with no dependencies, to package the assembler’s output into DSK or CDT files for example, o to create a basic project structure (ASMPRJ).
 
 ABASM is based on the fantastic pyZ80 project, initially created by Andrew Collier and later modified by Simon Owen.
 
@@ -70,11 +76,12 @@ This command will assemble the `program.asm` file and generate a binary file wit
 - `-d` or `--define`: Allows defining `SYMBOL=VALUE` pairs. These symbols can be used in the code as constants or labels. This option can be used multiple times to define several symbols.
 - `--start`: Defines the memory address that will be used as the starting point for loading the program. By default, this address is `0x4000`, but it can also be set directly in the code using the `ORG` directive.
 - `--tolerance`: Sets the tolerance level for deviations from strictly correct syntax (WinApe performs relatively lenient syntax checks). Accepted values: 0, 1, and 2. The default value is 0, indicating the strictest level of syntax enforcement.
+- `-s` or `--sfile`: Generates a new .s file with all assembled code in one file, including the code imported from other files.
 - `-o` or `--output`: Specifies the name of the output binary file. If this option is not used, the name of the input file will be used, with its extension changed to `.bin`.
 - `v` or `--output`: Shows program's version and exits.
 - `--verbose`: Prints more information in the console as the assemble progresses.
   
-## **Usage Examples
+## Usage Examples
 
 Define a constant used in the code:
 
@@ -93,6 +100,23 @@ Set the starting memory address for calculating jumps and other relative referen
 ```
 python3 abasm.py program.asm --start 0x2000
 ```
+
+## Creating a Project Using ASMPRJ
+
+In `ABASM`, project management is straightforward. It is sufficient to create a main assembly source file that imports any additional required files using the `READ` directive. After running `ABASM`, the assembled binary file will be generated. A subsequent call to the `DSK` or `CDT` tools is then enough to package the result for use in emulators or on real hardware (for example, via devices such as Gotek, M4, or DDI-Revival).
+
+```bash
+python3 abasm.py main.asm
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x4000 --load-addr=0x4000
+```
+
+It is also possible to quickly generate a basic project structure using the `ASMPRJ` tool. This utility automatically creates a build script with everything needed to get started: on Windows, a `make.bat` file is generated, while on Linux and macOS a `make.sh` file is created. In addition, a `main.asm` file containing ready-to-use example code is included.
+
+```bash
+python3 asmprj.py -n myproject
+```
+
+For more detailed information, please refer to the specific `ASMPRJ` documentation.
 
 # Assembly Output
 
@@ -172,14 +196,14 @@ An important aspect of all four elements is that ABASM is case-insensitive. Ther
 main              ; defines the global label 'main'
     ld a,32       ; first ASCII letter code in accumulator
 
-.loop             ; defines the local label 'loop'
+!loop             ; defines the local label 'loop'
     call &BB5A    ; CALL txt_output, the firmware output routine
     inc  a        ; move to next character
     cp   128      ; have we done them all?
-    jr   c,.loop  ; no - go back for another one
+    jr   c,!loop  ; no - go back for another one
 
 .end  
-    jp   .end     ; infinite loop used as the program's end point
+    jp   end      ; infinite loop used as the program's end point
 
 ```
 
@@ -254,6 +278,12 @@ To learn more about each instruction, a short list can be consulted in the `Z80 
 - [@ClrHome Z80 Table of Instructions](https://clrhome.org/table/): A well-organized table that provides a concise summary of all Z80 instructions.
 - [Zilog's Official Documentation for the Z80 Processor](https://www.zilog.com/docs/z80/um0080.pdf): Especially useful are the last two sections titled *Z80 CPU Instructions* and *Z80 Instruction Set*.
 - [Z80 Heaven](http://z80-heaven.wikidot.com/): A web with a detailed information for each instruction.
+
+## Libraries
+
+The `read` directive allows additional files to be included from a main file. These files can be local or located within the installation’s `lib` directory. In this way, it is possible to create libraries that can be shared across projects.
+
+As an example, the **ABASM** distribution includes a small version of the **CPCRSLIB** library and a complete port of **CPCTELERA**. For more information, you can consult the examples available in the `examples/cpcrslib` and `examples/cpctelera` directories.
 
 ## Assembler Directives
 
@@ -375,6 +405,12 @@ The basic logic operators are:
  - *<*, *>* : minor than.  
  - *<=*, *>=*: major than. 
 
+### IFNOT
+
+- IFNOT condition [ELSEIF condition | ELSE] ENDIF
+
+The IFNOT directive behaves in the same way that the directive `IF`, but the assembler will process the lines following the IFNOT directive when the logical expression is false (equal to zero). If the logical expression is true (non-zero), those lines will be ignored.
+
 ### INCBIN
 
 - INCBIN "binary file"
@@ -412,6 +448,8 @@ mend
 ```
 
 WinApe uses the symbol '@' to mark **macro local labels** but that symbol is used by ABASM to represent the current instruction's memory address too. As a result, ABASM departs from WinApe in this point.
+
+If a macro is defined twice, ABASM uses the latest processed definition. However, it is also possible to use the directive `MDELETE symbol` to ensure that a current macro definition is not longer available.
 
 ### LIMIT
 
@@ -452,7 +490,7 @@ READ "./lib/keyboard.asm"
 
 - REPEAT numeric expression `code block` REND
 
-Repeats a block of code as many times as the value specified by the numeric expression.
+Repeats a block of code as many times as the value specified by the numeric expression. REPEAT directive cannot be used in the body of a macro definition.
 
 ```
 EQU ENTITIES, 10
@@ -509,7 +547,7 @@ Stops the assembly process issuing an error.
 
 - WHILE logic expression `code block` WEND
 
-It allows a block of code to be assembled repeatedly as long as the specified condition is met. If the condition never becomes false, this directive can result in an infinite loop.
+It allows a block of code to be assembled repeatedly as long as the specified condition is met. If the condition never becomes false, this directive can result in an infinite loop. WHILE directive cannot be used in the body of a macro definition.
 
 ```
 LET OBJECTS = 32
@@ -541,6 +579,34 @@ When an instruction or directive requires a number as a parameter, you can use a
 - **>>** represents the shift right operator.
   
 (1) A single character enclosed in double quotes will be converted to its ASCII value in numerical expressions. Double and single quotes can be used to enclose strings but neither can appear in the string body.
+
+# Libraries included in ABASM
+
+`ABASM` includes two libraries ready to use in MAXAM assembler style. They are a terrific knowledge source for the Amstrad CPC specifics, specially regarding their video memory organization.
+
+## CPCRSLIB
+
+CPCRSlib is a C library that provides routines and functions for handling sprites and tile maps on the Amstrad CPC. The library is designed to be used with the Z88DK compiler or with the SDCC compiler. CPCRSlib also includes keyboard routines for key redefinition and detection, as well as general-purpose routines for changing screen modes and colours.
+
+Additionally, CPCRSLIB features a music and sound effects player developed by WYZ, capable of playing music created with WYZTracker.
+
+* A detailed explanation of each function and routine can be found here:
+  [http://www.amstrad.es/programacion/cpcrslib.html](http://www.amstrad.es/programacion/cpcrslib.html)
+* The original and latest official release of the library can be downloaded from:
+  [http://sourceforge/cpcrslib](http://sourceforge/cpcrslib)
+
+The version shipped with `ABASM` does not include support for tile map scrolling. Additionally, some routines have been renamed for clarity and consistency. Please refer to the examples located in `examples/cpcrslib` to learn more about how to use this library within `ABASM`.
+
+## CPCTELERA
+
+CPCtelera is a multiplatform framework for developing games and multimedia software for the Amstrad CPC. It runs on Linux, macOS, and Windows (via Cygwin), and simplifies the process of developing Amstrad CPC software in either C or assembly language. CPCtelera requires the use of the SDCC compiler and its bundled assembler.
+
+CPCtelera is thoroughly documented, featuring a complete reference manual, and its source code is extensively commented. Full details and documentation can be found at:
+
+* [https://lronaldo.github.io/cpctelera/](https://lronaldo.github.io/cpctelera/)
+* [https://lronaldo.github.io/cpctelera/files/readme-txt.html](https://lronaldo.github.io/cpctelera/files/readme-txt.html)
+
+The port included in `ABASM` covers all routines available in CPCtelera version 1.5-dev. The main difference is that the `_asm` suffix has been removed from routine names, as there is no ambiguity between C and assembly in this context. To learn more about how to use this library within `ABASM`, programmers can check the examples located in `examples/cpctelera`.
 
 # The Z80 instruction set
 
@@ -1198,6 +1264,30 @@ FD AE hh    	XOR   (IY+d)    5 Exclusive OR value at location in IY+d and accumu
 **[2]** All the Z80 restart instructions, except for one, have been reserved for system use. RST 1 to RST 5 (&08-&28) are used to extend the instruction set by implementing special call and jump instructions that enable and disable ROMs. RST 6 (&30) is available to the user. More information can be obtained here: [ROMs. RAM and Restart Instructions.](https://www.cpcwiki.eu/imgs/f/f6/S968se02.pdf)
 
 # Changelog
+
+- Version 1.4.0 - 07/01/2026
+  * New directive IFNOT
+  * New tool `IMG`
+
+- Version 1.3.1 - 28/12/2025
+  * CPCTELERA examples were not working from the DSK.
+  * Fix EOL in ASCII files added to DSK or CDT files.
+  * Make.sh scripts added in all examples (Linux and macOS).
+ 
+- Version 1.3.0 - 27/12/2025
+  * New directive MDELETE to delete an already defined macro.
+  * Macros without arguments were not working as expected.
+  * Abasm shows the correct error messages if REPEAT or WHILE directives are used inside a macro body.
+  * Port of CPCTELERA library.
+  * New tool `asmprj` that allows users to create of basic project structure.
+
+- Version 1.2.0 - 15/12/2025
+  * Support for libraries, asm files placed inside the `lib` directory.
+  * Port of a section of CPCRSLIB as an example of a library in ABASM.
+  * new flag `-s` `--sfile` that generated a new .s file with all assembled code in one file, including the code imported from other files.
+  * Better handle of multiple ORG occurrences.
+  * Only import once a given ASM file if it's referenced by multiple READ directives.
+  * Some other minor fixes and improvements.
 
 - Version 1.1.3 - 16/04/2025
   * Utility bindiff added to the set.

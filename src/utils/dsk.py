@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.01'
+__version__='1.4.0'
 
 import sys
 import os
@@ -879,6 +879,10 @@ def run_put_asciifile(args, disk):
     # includes it.
     if content[len(content)-1] != CPM_TEXT_EOF and len(content) % CPM_PAGE_BYTES != 0:
         content.extend(CPM_TEXT_EOF.to_bytes(1, 'little'))
+    # ASCII files in Amstrad CPC must end their lines in \r\n and not only \n
+    # so let's check here and fix it if the input file only uses \n
+    if b'\r\n' not in content:
+        content = content.replace(b'\n', b'\r\n')
     run_put_file(args.put_ascii, args.dskfile, disk, content)
 
 def run_put_binfile(args, disk, infile):
