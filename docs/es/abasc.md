@@ -14,9 +14,10 @@ ABASC: MANUAL DEL USUARIO
 - [Sintaxis soportada por ABASC](#sintaxis-soportada-por-abasc)
     - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
     - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
+- [Herramientas adicionales](#herramientas-adicionales)
 - [Uso del compilador](#uso-del-compilador)
     - [Opciones](#opciones)
-- [Herramientas adicionales](#herramientas-adicionales)
+  - [Creación de un proyecto usando BASPRJ](#creación-de-un-proyecto-usando-basprj)
 - [Peculiaridades del compilador](#peculiaridades-del-compilador)
   - [Tipos y variables](#tipos-y-variables)
     - [Cadenas de texto](#cadenas-de-texto)
@@ -308,20 +309,6 @@ DATA "Elvira", 20, 2005
 
 ---
 
-# Uso del compilador
-
-    python abasc.py [opciones] archivo.bas [-o archivo]
-
-### Opciones
-
--   `--version` --- muestra la versión del compilador.
--   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
--   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
--   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
--   `-o`, `--out` --- nombre de salida sin extensión.\
-
----
-
 # Herramientas adicionales
 
 Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes. 
@@ -330,6 +317,40 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 -   `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga.\
 -   `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales.\
 -   `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales.\
+-   `basprj` --- crea una estructura básica de proyecto para comenzar a trabajar.
+
+---
+
+# Uso del compilador
+
+    python abasc.py [opciones] archivo.bas [-o archivo]
+
+### Opciones
+
+-   `--version` --- muestra la versión del compilador.
+-   `--code` --- dirección de memoria inicial para el código, el punto de inicio del programa. Por defecto, su valor es 0x4000, asegurando que se puedan llamar a las rutinas del Firmware sin peligro.
+-   `--heap` --- dirección de inicio del area para gestionar el montículo (heap). Por defecto es 0x0170, de forma que se superponga lo máximo posible con el área ocupada por la ROM del Firmware. Su valor debe ser menor a la dirección de código, ya que también se usa como la dirección de carga inicial para nuestro programa.
+-   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
+-   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
+-   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
+-   `-o`, `--out` --- nombre de salida sin extensión.\
+
+## Creación de un proyecto usando BASPRJ
+
+En `ABASC`, la gestión de un proyecto es sencilla. Basta con crear un fichero principal en Locomotive BASIC 2 que importe cualquier otro archivo necesario mediante el comando `CHAIN MERGE`. Tras ejecutar `ABASC`, se generará un fichero binario compilado. A continuación, solo será necesaria una llamada adicional a las herramientas `DSK` o `CDT` para empaquetar el resultado y poder utilizarlo en emuladores o en hardware real (por ejemplo, mediante dispositivos como Gotek, M4 o DDI-Revival).
+
+```bash
+python3 abasc.py main.bas
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x4000 --load-addr=0x0170
+```
+
+sin embargo, también es posible generar rápidamente la estructura básica de un proyecto utilizando la herramienta `BASPRJ`. Esta utilidad crea automáticamente un script de construcción con todo lo necesario para comenzar a trabajar: en Windows se generará un fichero `make.bat`, mientras que en Linux y macOS se creará un fichero `make.sh`. Asimismo, se incluirá un archivo `main.bas` con código de ejemplo listo para ser compilado y probado.
+
+```bash
+python3 basprj.py -n myproject
+```
+
+Para conocer todas las opciones disponibles, se recomienda consultar la documentación específica de `BASPRJ`.
 
 ---
 

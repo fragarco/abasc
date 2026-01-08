@@ -14,9 +14,10 @@ ABASC: USER MANUAL
 - [Syntax Supported by ABASC](#syntax-supported-by-abasc)
     - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
     - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
+- [Additional Tools](#additional-tools)
 - [Using the Compiler](#using-the-compiler)
     - [Options](#options)
-- [Additional Tools](#additional-tools)
+  - [Creating a Project Using BASPRJ](#creating-a-project-using-basprj)
 - [Peculiarities of the Compiler](#peculiarities-of-the-compiler)
   - [Types and Variables](#types-and-variables)
     - [String Handling](#string-handling)
@@ -211,7 +212,7 @@ ABASC: USER MANUAL
 
 # Introduction
 
-**ABASC (BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
+**ABASC (Amstrad BASic Compiler)** is a cross-compiler written entirely in Python and without external dependencies, making it highly portable to any system that includes a standard **Python 3** installation.
 
 It is designed to support the dialect of BASIC created by **Locomotive Software** for the Amstrad CPC microcomputers, ensuring that all existing documentation for this language remains fully relevant and useful.
 
@@ -308,6 +309,17 @@ DATA "Elvira", 20, 2005
 
 ---
 
+# Additional Tools
+
+In addition to the compiler, the development package includes several extra tools that cover the entire workflow from generating the binary to package it for distribution. Each tool has its own manual distributed alongside the compiler documentation. All utilities are fully independent and can be used on their own.
+
+* `abasm.py` — Assembler compatible with WinAPE and RVM syntax.
+* `basprj.py` — Creates a basic project structure to use with `ABASC`.
+* `img.py` — Converts images to CPC format and can generate loading screens.
+* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files.
+* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files.
+
+
 # Using the Compiler
 
 ```
@@ -317,19 +329,29 @@ python abasc.py [options] file.bas [-o output]
 ### Options
 
 * `--version` — Displays the compiler version.
+* `--code` — Initial address for our code (starting address for our program). By default is 0x4000 so Firmware routines can be called safely.
+* `--heap` — Initial address for the heap memory area. Also our initial load address. This value must be lower than code address. By default is 0x0170 so it overlaps as much as possible with the Firmware area. 
 * `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
 * `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
 * `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
 * `-o`, `--out` — Output file name (without extension).
 
-# Additional Tools
+## Creating a Project Using BASPRJ
 
-In addition to the compiler, the development package includes several extra tools that cover the entire workflow from generating the binary to package it for distribution. Each tool has its own manual distributed alongside the compiler documentation. All utilities are fully independent and can be used on their own.
+In `ABASC`, project management is straightforward. It is sufficient to create a main source file that imports any additional required files using the `CHAIN MERGE` command. After running `ABASC`, a compiled binary file will be generated. A subsequent call to the `DSK` or `CDT` tools is then enough to package the result for use in emulators or on real hardware (for example, via devices such as Gotek, M4, or DDI-Revival).
 
-* `abasm.py` — Assembler compatible with WinAPE and RVM syntax.
-* `img.py` — Converts images to CPC format and can generate loading screens.
-* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files.
-* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files.
+```bash
+python3 abasc.py main.bas
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x0170 --load-addr=0x4000
+```
+
+However, it is also possible to quickly generate a basic project structure using the `BASPRJ` tool. This utility automatically creates a build script with everything needed to get started: on Windows, a `make.bat` file is generated, while on Linux and macOS a `make.sh` file is created. In addition, a `main.bas` file containing ready-to-use example code is included.
+
+```bash
+python3 basprj.py -n myproject
+```
+
+For more detailed information, please refer to the specific `BASPRJ` documentation.
 
 ---
 

@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, codeaddr=0x4000, heapaddr=0x0170):
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -61,7 +61,8 @@ class CPCEmitter:
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
-        self.org = 0x4000
+        self.codeaddr = codeaddr
+        self.heapaddr = heapaddr
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
@@ -185,16 +186,17 @@ class CPCEmitter:
         self._emit_head("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
         self._emit_head(";", 0)
         self._emit_head("$LIMIT$", 0)
-        self._emit_head(f"org     {FWCALL.LOW_LIMIT}", 0)
-        self._emit_head("xor     a", 0, info="Set stream to its default value (#0)")
-        self._emit_head(f"call    {FWCALL.TXT_STR_SELECT}", 0, info="TXT_STR_SELECT")
+        self._emit_head(f"org     {self.heapaddr}", 0)
         self._emit_head("jp      _program_main_", 0)
         self._emit_head()
-        self._emit_head("; DYNAMIC MEMORY AREA, USED BY MALLOC AND FREE",0)
+        self._emit_head("; DYNAMIC MEMORY AREA, USED BY MALLOC AND FREE", 0)
         self._emit_head(RT["rt_heap_memory"][1], 0)
         self._emit_head()
         self._emit_head("; PROGRAM MAIN", 0)
-        self._emit_head(f"_program_main_: org &{hex(self.org)[2:]}", 0)
+        self._emit_head(f"org     &{hex(self.codeaddr)[2:]}", 0)
+        self._emit_head(f"_program_main_:", 0)
+        self._emit_head("xor     a", 0, info="Set stream to its default value (#0)")
+        self._emit_head(f"call    {FWCALL.TXT_STR_SELECT}", 0, info="TXT_STR_SELECT")
 
     def _emit_code_end(self):
         self._emit_code()
@@ -1092,7 +1094,6 @@ class CPCEmitter:
         # In our version, we call FULL RESET after any key is pressed
         self._emit_code("; END")
         self._emit_code(f"jp      _code_end_")
-        self._emit_code("call    0")
 
     def _emit_ENT(self, node:AST.Command):
         """

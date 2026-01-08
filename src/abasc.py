@@ -35,12 +35,21 @@ __author__='Javier "Dwayne Hicks" Garcia'
 __version__= "0.99 beta"
 
 
+def aux_int(param):
+    """
+    By default, int params are converted assuming base 10.
+    To allow hex values we need to 'auto' detect the base.
+    """
+    return int(param, 0)
+
 def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='basc.py',
         description='A Locomotive BASIC compiler for the Amstrad CPC'
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
+    parser.add_argument('--code', type = aux_int, default = 0x4000, help = 'Program starting address. By default is 0x4000 so Firmware routines can be called safely.')
+    parser.add_argument('--heap', type = aux_int, default = 0x0170, help = 'Heap starting address. By default is 0x0170 so it overlaps with the Firmware area.')
     parser.add_argument('-O', type=int, default=2, help="Sets the level of optimization (0-disabled, 1-peephole, 2-all). It's set to 2 by default.")
     parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
@@ -48,6 +57,9 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('--version', action='version', version=f' ABASC (Locomotive BASIC Cross Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
+    if args.code <= args.heap:
+        print("Error: heap starting address must be inferior to code starting address")
+        sys.exit(1)
     return args
 
 def clear(sourcefile: str):
@@ -109,8 +121,8 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL) -> str:
-    emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose)
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL, codeaddr: int, heapaddr: int) -> str:
+    emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose, codeaddr, heapaddr)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str):
@@ -142,10 +154,12 @@ def main() -> None:
         optimizer = BasOptimizer()
         if optlevel > 1:
             ast, symtable = optimizer.optimize_ast(ast, symtable)
-        asmcode = emit(codelines, ast, symtable, args.verbose, wlevel)
+        asmcode = emit(codelines, ast, symtable, args.verbose, wlevel, args.code, args.heap)
         if optlevel > 0:
             asmcode = optimizer.optimize_peephole(asmcode)
         assemble(infile, outfile, asmcode)
+        if args.verbose:
+            ABASM.dump_assembledcode()
     except Exception as e:
         print(str(e))
         if args.debug:
