@@ -36,7 +36,7 @@ REM *
 REM * This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
 REM * and generate files that can be used in emulators or real hardware for the Amstrad CPC
 REM *
-REM * USAGE: make [clear]
+REM * USAGE: make [clear | dsk]
 
 @setlocal
 
@@ -46,8 +46,11 @@ set DSK=python3 "{DSK}"
 set SOURCE=main
 set TARGET={TARGET}
 
-set RUNBAS=%BASC% %SOURCE%.bas
-set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
+set HEAPADDR=0x0170
+set CODEADDR=0x4000
+
+set RUNBAS=%BASC% %SOURCE%.bas --code %CODEADDR% --heap %HEAPADDR%
+set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %HEAPADDR% --start-addr %CODEADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -55,13 +58,16 @@ IF "%1"=="clear" (
     IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
     IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
     IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
+    IF EXIST "%SOURCE%.asm" del "%SOURCE%.s"
     IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
     IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
     IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"
     IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
     IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
+) ELSE IF "%1"=="dsk" (
+    call %RUNBAS% %2 %3 && call %RUNDSK% 
 ) ELSE (
-    call %RUNBAS% %2 %3 && call %RUNDSK%
+    call %RUNBAS% %*
 )
 
 @endlocal
@@ -74,7 +80,7 @@ UNIX_TEMPLATE: str = """#!/bin/sh
 # This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
 # and generate files that can be used in emulators or real  hardware for the Amstrad CPC
 #
-# USAGE: ./make.sh [clear]
+# USAGE: ./make.sh [clear | dsk]
 #
 
 BASC="python3 {BASC}"
@@ -83,8 +89,11 @@ DSK="python3 {DSK}"
 SOURCE=main
 TARGET={TARGET}
 
-RUNBAS="$BASC $SOURCE.bas"
-RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr 0x170 --start-addr 0x4000"
+HEAPADDR=0x0170
+CODEADDR=0x4000
+
+RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $HEAPADDR"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $HEAPADDR --start-addr $CODEADDR"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -92,12 +101,15 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.ast"
     rm -f "$SOURCE.sym"
     rm -f "$SOURCE.asm"
+    rm -f "$SOURCE.s"
     rm -f "$SOURCE.lst"
     rm -f "$SOURCE.map"
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
-else
+elif [ "$1" = "dsk" ]; then
     $RUNBAS && $RUNDSK
+else
+    $RUNBAS $@
 fi
 """
 
