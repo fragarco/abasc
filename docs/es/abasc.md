@@ -538,8 +538,8 @@ El mapa de memoria de un programa compilado con ABASC es el siguiente:
 
 | Dirección         | Descripción                                                |
 | ----------------- | ---------------------------------------------------------- |
-| **0x0170**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo)|
-| **0x4000**        | Comienzo del área para el código de la aplicación |
+| **0x0170**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo). Se puede modificar mediante el flag `--heap`|
+| **0x4000**        | Comienzo del área para el código de la aplicación. Se puede modificar mediante el flag `--code`. |
 | **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables |
 | **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador |
 | **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa |
@@ -550,8 +550,8 @@ ABASC los soporta, pero su significado varía ligeramente debido al modelo compi
 | Comando          | Función ABASC  |
 | ---------------- | ------------- |
 | **HIMEM**        | Devuelve la dirección de memoria inmediatamente posterior al final del programa. |
-| **MEMORY**       | Establece el la dirección de momria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla. |
-| **SYMBOL AFTER** | ABASC reserva memoria para carácteres redefinibles (UDC) igual que Locomotive BASIC. Esta zona forma parte de ***data***. Puede liberarse con `SYMBOL AFTER 256`. |
+| **MEMORY**       | Establece la dirección de memoria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla. |
+| **SYMBOL AFTER** | ABASC reserva memoria para carácteres redefinibles (UDC) igual que Locomotive BASIC. Esta zona forma parte de **data**. Puede liberarse con `SYMBOL AFTER 256`. |
 | **FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
 | **FRE(1)**       | Devuelve la memoria temporal (montículo) disponible en ese instante. |
 | **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |

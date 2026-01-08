@@ -342,7 +342,7 @@ In `ABASC`, project management is straightforward. It is sufficient to create a 
 
 ```bash
 python3 abasc.py main.bas
-python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x0170 --load-addr=0x4000
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x4000 --load-addr=0x0170
 ```
 
 However, it is also possible to quickly generate a basic project structure using the `BASPRJ` tool. This utility automatically creates a build script with everything needed to get started: on Windows, a `make.bat` file is generated, while on Linux and macOS a `make.sh` file is created. In addition, a `main.bas` file containing ready-to-use example code is included.
@@ -537,8 +537,8 @@ The memory layout of a program compiled with ABASC is structured as follows:
 
 | Address           | Description                                                                |
 | ----------------- | -------------------------------------------------------------------------- |
-| **0x0170**        | Start of the application-initialization area and temporary memory space (heap)|
-| **0x4000**        | Start of the application’s code segment                                    |
+| **0x0170**        | Start of the application-initialization area and temporary memory space (heap). This adddress can be modified using the flag `--heap`.|
+| **0x4000**        | Start of the application’s code  segment. This address can be modified using the flag `--code`.|
 | ***data***        | Label marking the beginning of the static variable-allocation area         |
 | ***runtime***     | Label marking the beginning of compiler-generated support routines         |
 | ***program_end*** | Label marking the address where the program’s memory usage ends            |
