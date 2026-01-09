@@ -11,8 +11,11 @@ REM * USAGE: make [clear][dsk]
 set SOURCE=main
 set TARGET=real
 
+set LOADADDR=0x0040
+set CODEADDR=0x4000
+
 set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin
+set RUNDSK=python3 ../../src/utils/dsk.py %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %CODEADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"

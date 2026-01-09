@@ -294,26 +294,26 @@ class FWCALL:
 
 #
 # RUNTIME rutines
-# "rutine id": (([], """rutine code],[]),([], """dependencies],[]))
+# "rutine id": ([], "variables for data area", """routine code"""),...
 # 
 RT = {
 #
 # RUNTIME VARIABLES
 #
-    "rt_heap_memory": ([],
+    "rt_heap_memory": ([],"",
 """
 rt_heapmem_next:  dw rt_heapmem_start   ; pointer to free memory for dynamic allocation
 rt_heapmem_start: defs 1024*2           ; reserve 2K area for dynamic allocated memory
 """
 ),
-    "rt_error": ([],
+    "rt_error": ([],"",
 """
 ; RT_ERROR
 ; Variable, can be set by ERROR and read by ERR
 rt_error: db 0
 """
 ),
-    "rt_rsx_setstring": ([],
+    "rt_rsx_setstring": ([],"",
 """
 ; RT_RSX_SETSTRING
 ; RSX commands expect strings in a specific format where
@@ -344,7 +344,7 @@ rt_rsx_setstring:
 #
 # MEM AND CALLS
 # 
-    "rt_malloc": (["rt_free_all"],
+    "rt_malloc": (["rt_free_all"],"",
 """
 ; RT_MALLOC
 ; Returns in HL the address to a heap free memory block
@@ -363,7 +363,7 @@ rt_malloc:
     ret
 """
 ),
-    "rt_malloc_de": (["rt_free_all"],
+    "rt_malloc_de": (["rt_free_all"],"",
 """
 ; RT_MALLOC_DE
 ; Returns in DE the address to a heap free memory block
@@ -384,7 +384,7 @@ rt_malloc_de:
     ret
 """
 ),
-    "rt_free_all": ([],
+    "rt_free_all": ([],"",
 """
 ; RT_FREE_ALL
 ; Resets the position of the next available heap memory block
@@ -400,7 +400,7 @@ rt_free_all:
     ret
 """
 ),
-    "rt_call": ([],
+    "rt_call": ([],"",
 """
 ; RT_CALL
 ; Jumps to the address passed in HL and uses the RET from the
@@ -415,7 +415,7 @@ rt_call:
     jp      (hl)
 """
 ),
-    "rt_math_call": ([],
+    "rt_math_call": ([],"",
 f"""
 ; RT_MATH_CALL
 ; Jumps to the address passed in DE but it adjusts the address
@@ -452,7 +452,7 @@ rt_math_setoffset:
     ret
 """
 ),
-    "rt_move_real": ([],
+    "rt_move_real": ([],"",
 """
 ; RT_MOVE_REAL
 ; Copies the real number 5 bytes pointed by HL into de
@@ -474,7 +474,7 @@ rt_move_real:
     ret
 """
 ),
-    "rt_scratch_pad": ([],
+    "rt_scratch_pad": ([],"",
 """
 ; Free memory for temporal use
 rt_scratch_pad:  defs  255
@@ -483,7 +483,7 @@ rt_scratch_pad:  defs  255
 #
 # STRINGS
 #      
-    "rt_stradd_len": ([],
+    "rt_stradd_len": ([],"",
 """
 ; RT_STRADD_LEN
 ; Returns the addition of two string lenghts.
@@ -506,7 +506,7 @@ __addlen_crop:
     ret
 """
 ),
-    "rt_strcopy": ([],
+    "rt_strcopy": ([],"",
 """
 ; RT_STRCOPY
 ; Strings length is limited to 254 characters
@@ -529,7 +529,7 @@ rt_strcopy:
     ret
 """
 ),
-    "rt_strzcopy": ([],
+    "rt_strzcopy": ([],"",
 """
 ; RT_STRZCOPY
 ; Copies a null-terminated string into a regular string which
@@ -558,7 +558,7 @@ __strzcopy_end:
     ret
 """
 ),
-    "rt_strcat": (["rt_stradd_len"],
+    "rt_strcat": (["rt_stradd_len"],"",
 """
 ; RT_STRCAT
 ; DE string gets append to the end of HL string
@@ -592,7 +592,7 @@ __strcat_loop:
     ret
 """
 ),
-    "rt_strcmp": ([],
+    "rt_strcmp": ([],"",
 """
 ; RT_STRCMP
 ; Compares two strings pointed by HL and DE and sets ZF and CF:
@@ -630,7 +630,7 @@ __strcmp_end:
     ret\
 """
 ),
-    "rt_strreplace": ([],
+    "rt_strreplace": ([],"",
 """
 ; RT_STRREPLACE
 ; Replaces part of the string pointed by HL with the substring
@@ -670,7 +670,7 @@ ___replace_end:
     ret
 """
 ),
-    "rt_int2str": (["rt_div16_by10"],
+    "rt_int2str": (["rt_div16_by10"],"",
 """
 ; RT_INT2STR
 ; HL starts containing the number to convert to string
@@ -727,7 +727,7 @@ __int2str_loop2:
     ret
 """
 ),
-    "rt_long2str": (["rt_div32_by10"],
+    "rt_long2str": (["rt_div32_by10"],"",
 """
 ; RT_LONG2STR
 ; HL points to the number (32 bits) to convert to string
@@ -772,7 +772,7 @@ __long2str_loop2:
     ret
 """
 ),
-    "rt_real2strz": (["rt_math_call", "rt_div32_by10", "rt_udiv8"],
+    "rt_real2strz": (["rt_math_call", "rt_div32_by10", "rt_udiv8"],"",
 f"""
 ; RT_REAL2STRZ
 ; Converts a 5-bytes floating point number into a string
@@ -935,7 +935,7 @@ __float_remove_decimal_char:
     ret
 """
 ),
-    "rt_strz2num": ([],
+    "rt_strz2num": ([],"",
 """
 ; RT_STRZ2NUM
 ; Converts a string with an integer, hexadecimal or binary number to
@@ -1081,7 +1081,7 @@ __str2bin_next:
     jr      __str2bin_next
 """
 ),
-    "rt_int2hex": ([],
+    "rt_int2hex": ([],"",
 """
 ; RT_INT2HEX"
 ; Converts a two-bytes integer in an string with its hexadecimal
@@ -1136,7 +1136,7 @@ __a2hex_store:
     ret
 """
 ),
-    "rt_int2bin": ([],
+    "rt_int2bin": ([],"",
 """
     ; RT_INT2BIN"
     ; Converts a two-bytes integer in an string with its binary
@@ -1178,7 +1178,7 @@ __a2bin_loop:
     ret
 """
 ),
-    "rt_strz2real": ([],
+    "rt_strz2real": ([],"",
 f"""
 ; RT_STRZ2REAL
 ; DE address to the null-terminated string, ends pointing to first
@@ -1268,7 +1268,7 @@ __strz2real_end:
     jp      rt_math_call
 """
 ),
-    "rt_copychrs": ([],
+    "rt_copychrs": ([],"",
 f"""
 ; RT_COPYCHRS
 ; Returns the character in the current cursor position for the
@@ -1298,7 +1298,7 @@ __copychrs_end:
     ret
 """
 ),
-    "rt_findstr": ([],
+    "rt_findstr": ([],"",
 """
 ; RT_FINDSTR
 ; Search the string pointed by HL looking for
@@ -1360,7 +1360,7 @@ __findstr_match:
     ret
 """
 ),
-    "rt_substr": ([],
+    "rt_substr": ([],"",
 """
 ; RT_SUBSTR
 ; Returns part of a string (a substring) of the string pointed by HL
@@ -1403,7 +1403,7 @@ rt_substr:
     ret
 """
 ),
-    "rt_strleft": ([], 
+    "rt_strleft": ([],"", 
 """
 ; RT_STRLEFT
 ; Extracts characters to the left of the string pointed by HL
@@ -1430,7 +1430,7 @@ rt_strleft:
     ret
 """
 ),
-    "rt_strright": ([],
+    "rt_strright": ([],"",
 """
 ; RT_STRRIGHT
 ; Extracts characters to the right of the string pointed by HL
@@ -1461,7 +1461,7 @@ rt_strright:
     ret
 """
 ),
-    "rt_strfill": ([],
+    "rt_strfill": ([],"",
 """
 ; RT_STRFILL
 ; Fills the string pointed by DE with the character in C
@@ -1486,7 +1486,7 @@ rt_strfill:
     ret
 """
 ),
-    "rt_upper": ([],
+    "rt_upper": ([],"",
 """
 ; RT_UPPER
 ; Copies to address in DE a new string the same as the input string
@@ -1523,7 +1523,7 @@ __upper_next:
     ret  
 """
 ),
-        "rt_lower": ([],
+        "rt_lower": ([],"",
 """
 ; RT_LOWER
 ; Copies to address in DE a new string the same as the input string
@@ -1563,12 +1563,12 @@ __lower_next:
 #
 # DATA BLOCKS
 # 
-    "rt_datablock": ([],
+    "rt_datablock": ([],"",
 """
 rt_data_ptr: dw  _data_datablock_
 """
 ),
-    "rt_read_int": (["rt_datablock"],
+    "rt_read_int": (["rt_datablock"],"",
 """
 ; RT_READ_INT
 ; Copies into HL the next INTEGER in the DATA block
@@ -1592,7 +1592,7 @@ rt_read_int:
     ret
 """
 ),
-    "rt_read_real": (["rt_datablock"],
+    "rt_read_real": (["rt_datablock"],"",
 """
 ; RT_READ_REAL
 ; Copies into the real pointed by HL the next REAL in the DATA block
@@ -1613,7 +1613,7 @@ rt_read_int:
     ret
 """
 ),
-    "rt_read_str": (["rt_datablock"],
+    "rt_read_str": (["rt_datablock"],"",
 """
 ; RT_READ_STR
 ; Copies into the string pointed by HL the next STRING in DATA block
@@ -1638,14 +1638,14 @@ rt_read_str:
 #
 # INPUT/OUTPUT
 #
-    "rt_print_zone": ([],
+    "rt_print_zone": ([],"",
 """
 ; RT_PRINT_ZONE
 ; Variable that stores the zone size (13 by default)
 rt_print_zone: db 13
 """
 ),
-    "rt_print_nextzone": (["rt_print_zone"],
+    "rt_print_nextzone": (["rt_print_zone"],"",
 f"""
 ; RT_PRINT_NEXTZONE
 ; Moves the text cursor to the start of the next zone
@@ -1668,7 +1668,7 @@ __nextzone_end:
     jp      {FWCALL.TXT_SET_CURSOR}  ; TXT_SET_CURSOR
 """
 ),
-    "rt_print_nl": ([],
+    "rt_print_nl": ([],"",
 f"""
 ; RT_PRINT_NL
 ; Prints an EOL which in Amstrad is composed
@@ -1685,7 +1685,7 @@ rt_print_nl:
     jp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
 """
 ),
-    "rt_print_spc": ([],
+    "rt_print_spc": ([],"",
 f"""
 ; RT_PRINT_SPC
 ; L indicates the number of spaces to print
@@ -1708,7 +1708,7 @@ __print_spc_loop:"
     ret
 """
 ),
-    "rt_print_str": ([],
+    "rt_print_str": ([],"",
 f"""
 ; RT_PRINT_STR
 ; Prints in the screen the string pointed by HL
@@ -1730,7 +1730,7 @@ __print_str_loop:
     ret
 """
 ),
-    "rt_print_strz": ([],
+    "rt_print_strz": ([],"",
 f"""
 ; RT_PRINT_STRZ
 ; Prints in the screen the null-terminated string pointed by HL
@@ -1750,7 +1750,7 @@ rt_print_strz:
     ret
 """
 ),
-    "rt_print_int": (["rt_print_str", "rt_int2str"],
+    "rt_print_int": (["rt_print_str", "rt_int2str"],"",
 f"""
 ; RT_PRINT_INT
 ; Prints an Integer number which in Amstrad is composed
@@ -1772,7 +1772,7 @@ rt_print_int:
     jp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
 """
 ),
-    "rt_print_real": (["rt_math_call", "rt_real2strz", "rt_print_strz"],
+    "rt_print_real": (["rt_math_call", "rt_real2strz", "rt_print_strz"],"",
 """
 ; RT_PRINT_REAL
 ; Prints a Real number which in Amstrad is a
@@ -1788,7 +1788,7 @@ rt_print_real:
     jp      rt_print_strz
 """
 ),
-    "rt_count_substrz": ([],
+    "rt_count_substrz": ([],"",
 """
 ; RT_COUNT_SUBSTRZ
 ; Returns the number of existing substrings separated
@@ -1817,7 +1817,7 @@ __count_quote:
     jr      __count_loop
 """
 ),
-    "rt_extract_substrz": (["rt_scratch_pad"],
+    "rt_extract_substrz": (["rt_scratch_pad"],"",
 """
 ; RT_EXTRACT_SUBSTRZ
 ; Returns the number of existing substrings separated
@@ -1870,7 +1870,7 @@ __extract_end:
     ret
 """
 ),
-    "rt_strz_lstrip": ([],
+    "rt_strz_lstrip": ([],"",
 """
 ; RT_STRZ_LSTRIP
 ; Scans the zero-terminated string pointed by HL from the left
@@ -1889,7 +1889,7 @@ rt_strz_lstrip:
     jr      rt_strz_lstrip
 """
 ),
-    "rt_strz_rstrip": ([],
+    "rt_strz_rstrip": ([],"",
 """
 ; RT_STRZ_RSTRIP
 ; Scans the zero-terminated string pointed by HL from the right
@@ -1909,7 +1909,8 @@ rt_strz_rstrip:
     jr      rt_strz_rstrip
 """
 ),
-    "rt_remove_quotes": ([], """
+    "rt_remove_quotes": ([],"",
+"""
 ; RT_REMOVE_QUOTES
 ; Scans the zero-terminated string pointed by HL and
 ; returs the substring between quotes. Assumes that first
@@ -1935,7 +1936,7 @@ __remove_quotes_loop:
     jr      __remove_quotes_loop
 """
 ),
-    "rt_extract_num": (["rt_strz2num"],
+    "rt_extract_num": (["rt_strz2num"],"",
 """
 ; RT_EXTRACT_NUM
 ; Converts and string with an integer or hexadecimal number
@@ -1952,7 +1953,7 @@ rt_extract_num:
     jp      rt_strz2hex
 """
 ),
-    "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],
+    "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],"",
 f"""
 ; RT_INPUT
 ; Camptures the keyboard input in a null-terminated string
@@ -2006,7 +2007,7 @@ __input_end:
     jp      rt_count_substrz      
 """
 ),
-    "rt_writestr": ([],
+    "rt_writestr": ([],"",
 f"""
 ; RT_WRITESTR
 ; Writes a quoted string to an already open file (with OPENIN)
@@ -2027,7 +2028,7 @@ rt_writestr:
     jp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
 """
 ),
-    "rt_writeint": (["rt_int2str"],
+    "rt_writeint": (["rt_int2str"],"",
 f"""
 ; RT_WRITEINT
 ; Writes the integer hold in HL to an already open file (with OPENIN)
@@ -2046,7 +2047,7 @@ rt_writeint:
     ret     
 """
 ),
-    "rt_writenl": (["rt_int2str"],
+    "rt_writenl": (["rt_int2str"],"",
 f"""
 ; RT_WRITENL
 ; Writes an EOL to an already open file (with OPENIN)
@@ -2061,7 +2062,7 @@ rt_writenl:
     jp      {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
 """
 ),
-    "rt_readstr": (["rt_readnext"],
+    "rt_readstr": (["rt_readnext"],"",
 f"""
 ; RT_READSTR
 ; Reads a quoted string from an already open file (with OPENIN).
@@ -2093,8 +2094,8 @@ __readstr_end:
     jp      rt_readnext   ; consume comma or new-line
 """
 ),
-    "rt_readint": (["rt_strz2num", "rt_readnext"],
-"""
+    "rt_readint": (["rt_strz2num", "rt_readnext"],"",
+f"""
 ; RT_READINT
 ; Reads an integer from an already open file (with OPENIN).
 ; It consumes any comma used to separate values.
@@ -2128,7 +2129,7 @@ __readint_end:
     jp      rt_readnext
 """
 ),
-    "rt_readnext": ([],
+    "rt_readnext": ([],"",
 f"""
 ; RT_READNEXT
 ; Consume chars until it consumes a comma or a new-line
@@ -2149,7 +2150,7 @@ rt_readnext:
     jp      {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
 """
 ),
-    "rt_freadstr": ([],
+    "rt_freadstr": ([],"",
 f"""
 ; RT_FREADSTR
 ; Reads a string from an already open file (with OPENIN).
@@ -2186,7 +2187,7 @@ __freadstr_end:
 #
 # MATH
 # 
-    "rt_umul16": ([],
+    "rt_umul16": ([],"",
 """
 ; RT_UMULT16"
 ; 16x16 unsigned multplication
@@ -2216,7 +2217,7 @@ __mul1_unsigned:
     ret
 """
 ),
-    "rt_udiv16": ([],
+    "rt_udiv16": ([],"",
 """
 ; RT_UDIV16
 ; 16/16 unsigned division
@@ -2257,7 +2258,7 @@ rt_udiv16:
     ret
 """
 ),
-    "rt_compute_sign": ([],
+    "rt_compute_sign": ([],"",
 """
 ; RT_COMPUTE_SIGN
 ; Computes resulting sign between HL and DE integers
@@ -2275,7 +2276,7 @@ rt_compute_sign:
     ret
 """
 ),
-    "rt_abs": ([],
+    "rt_abs": ([],"",
 """   
 ; RT_ABS 
 ; Strips sign from HL
@@ -2298,7 +2299,7 @@ rt_abs:
     ret
 """
 ),
-    "rt_sign_strip": ([],
+    "rt_sign_strip": ([],"",
 """   
 ; RT_SIGN_STRIP 
 ; Strips signs from HL and DE
@@ -2334,7 +2335,7 @@ __sign_strip_neghl:
     ret
 """
 ),
-    "rt_mul16": (["rt_compute_sign", "rt_sign_strip", "rt_umul16"],
+    "rt_mul16": (["rt_compute_sign", "rt_sign_strip", "rt_umul16"],"",
 """
 ; RT_MUL16
 ; 15x15 signed multiplication
@@ -2355,7 +2356,7 @@ rt_mul16:
     jr      __sign_strip_neghl
 """
 ),
-    "rt_div16": (["rt_compute_sign", "rt_sign_strip", "rt_udiv16"],
+    "rt_div16": (["rt_compute_sign", "rt_sign_strip", "rt_udiv16"],"",
 """
 ; RT_DIV16
 ; 15/15 signed division
@@ -2378,7 +2379,7 @@ rt_div16:
     jr      __sign_strip_neghl
 """
 ),
-    "rt_comp16": ([],
+    "rt_comp16": ([],"",
 """
 ; RT_COMP16
 ; Signed comparison HL-DE, set Z and C flags,
@@ -2401,7 +2402,7 @@ __comp16_cs1:
     ret
 """
 ),
-    "rt_ucomp16": ([],
+    "rt_ucomp16": ([],"",
 """
 ; RT_UCOMP16
 ; Unsigned comparison HL-DE, set ZF and CF flags,
@@ -2418,7 +2419,7 @@ rt_cuomp16:
     ret
 """
 ),
-    "rt_div32_by10": ([],
+    "rt_div32_by10": ([],"",
 """
 ; RT_DIV32_BY10
 ; Fast integer (32 bits) division by 10
@@ -2457,7 +2458,7 @@ rt_div32_by10:
     ret
 """
 ),
-    "rt_div16_by10": ([],
+    "rt_div16_by10": ([],"",
 """
 ; RT_DIV16_BY10
 ; Fast integer division by 10
@@ -2489,7 +2490,7 @@ rt_div16_by10:
     ret
 """
 ),
-    "rt_udiv8": ([],
+    "rt_udiv8": ([],"",
 """
 ; RT_UDIV8
 ; 8/8 unsigned integer division,
@@ -2511,7 +2512,7 @@ __div8_end:
     ret
 """
 ),
-    "rt_mul16_255": ([],
+    "rt_mul16_255": ([],"",
 """
 ; RT_MUL16_255
 ; Multiplies HL by 255 and leaves the result in HL
@@ -2532,7 +2533,7 @@ rt_mul16_255:
     ret
 """
 ),
-    "rt_mul16_A": ([],
+    "rt_mul16_A": ([],"",
 """
 ; RT_MUL16_A
 ; Multiplies HL by A and leaves the result in HL
@@ -2560,7 +2561,7 @@ __mult16_a_loop:
 #
 # runtime for BASIC commands support
 #
-    "rt_real2int": (["rt_math_call"], 
+    "rt_real2int": (["rt_math_call"],"", 
 f"""
 ; RT_REAL2INT
 ; Converts a 5-bytes float value into a 16-bits integer
@@ -2580,7 +2581,7 @@ rt_real2int:
     ret
 """
 ),
-    "rt_int2real": (["rt_math_call"],
+    "rt_int2real": (["rt_math_call"],"",
 f"""
 ; RT_INT2REAL
 ; Converts a 16-bits integer in a 5-bytes floating point number
@@ -2602,7 +2603,7 @@ rt_int2real:
     jp      rt_math_call
 """
 ),
-    "rt_real2fix": (["rt_math_call", "rt_real2int"],
+    "rt_real2fix": (["rt_math_call", "rt_real2int"],"",
 f"""
 ; RT_REAL2FIX
 ; Removes the decimal part of a floating point number rounding
@@ -2621,7 +2622,7 @@ rt_real2fix:
     jp      rt_real2int
 """
 ),
-    "rt_real_int": (["rt_math_call", "rt_real2int"],
+    "rt_real_int": (["rt_math_call", "rt_real2int"],"",
 f"""
 ; RT_REAL_INT
 ; Removes the decimal part of a floating point number rounding
@@ -2641,7 +2642,7 @@ rt_real_int:
     jp      rt_real2int
 """
 ),
-    "rt_real_round": (["rt_math_call", "rt_move_real"],
+    "rt_real_round": (["rt_math_call", "rt_move_real"],"",
 f"""
 ; RT_REAL_ROUND
 ; Rounds the real value pointed by HL to de number of decimal places
@@ -2686,7 +2687,7 @@ __real_round_toint:
     jp      rt_math_call
 """
 ),
-    "rt_timer": ([],
+    "rt_timer": ([],"",
 """
 ; RT_TIMER_GET
 ; Retrieves a AFTER/EVERY data block (tick block). Each tick block has
@@ -2706,7 +2707,7 @@ __timerget_loop:
     ret
 """
 ),
-    "rt_fill": ([],
+    "rt_fill": ([],"",
 f"""
 ; RT_FILL
 ; Wrapper for the GRA FILL firmware call in the 664 and 6128
@@ -2724,7 +2725,7 @@ rt_fill:
     jp      {FWCALL.GRA_FILL}  ; GRA_FILL
 """
 ),
-    "rt_inkey": ([],
+    "rt_inkey": ([],"",
 f"""
 ; RT_INKEY
 ; Wrapper for the KEY TEST firmware call
@@ -2743,7 +2744,7 @@ rt_inkey:
     ret
 """
 ),
-    "rt_inkeys": ([],
+    "rt_inkeys": ([],"",
 f"""
 ; RT_INKEYS
 ; Wrapper for the READ CHAR firmware call
@@ -2763,7 +2764,7 @@ rt_inkeys:
     ret
 """
 ),
-    "rt_gettime": (["rt_math_call"],
+    "rt_gettime": (["rt_math_call"],"",
 f"""
 ; RT_GETTIME
 ; Wrapper for the KL TIME PLEASE firmware call
@@ -2787,7 +2788,7 @@ rt_gettime:
     jp      rt_math_call
 """
 ),
-    "rt_settime": ([],
+    "rt_settime": ([],"",
 f"""
 ; RT_SETTIME
 ; Wrapper for the KL TIME SET firmware call
@@ -2803,7 +2804,7 @@ rt_settime:
     jp      {FWCALL.KL_TIME_SET}  ; KL_TIME_SET
 """
 ),
-    "rt_randomize": ([],
+    "rt_randomize": ([],"",
 """
 ; RT_RANDOMIZE
 ; Sets rt_rnd_seed1 and rt_rnd_seed2 which are used by rt_rnd
@@ -2832,7 +2833,7 @@ rt_randomize:
     ret
 """
 ),
-    "rt_rnd": (["rt_randomize"],
+    "rt_rnd": (["rt_randomize"],"",
 f"""
 ; RT_RND
 ; This is a very fast, quality pseudo-random number generator.
@@ -2893,19 +2894,19 @@ rt_rnd0:
     jr      rt_rnd
 """
 ),
-    "rt_fileinbuf": (["rt_error", "rt_restoreroms"],
+    "rt_fileinbuf": (["rt_error", "rt_restoreroms"],"",
 """
 ; Buffer for content read from files through OPENIN
 rt_fileinbuf: defs 2048
 """
 ),
-    "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],
+    "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],"",
 """
 ; Buffer for content written to files through OPENOUT
 rt_fileoutbuf: defs 2048
 """
 ),
-    "rt_sound": (["rt_error"],
+    "rt_sound": (["rt_error"],"",
 f"""
 ; Adds a new sound to one of the available Amstrad CPC
 ; sound queues. The data must be kept in a buffer placed
@@ -2921,7 +2922,7 @@ rt_sound:
     jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
 """
 ),
-    "rt_load": (["rt_restoreroms"],
+    "rt_load": (["rt_restoreroms"],"",
 f"""
 ; RT_LOAD
 ; Reads an AMSDOS file (with header) and extracts length and
@@ -2942,7 +2943,7 @@ rt_load:
     jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
 """
 ),
-    "rt_loadaddr": (["rt_restoreroms"],
+    "rt_loadaddr": (["rt_restoreroms"],"",
 f"""
 ; RT_LOADADDR
 ; Reads an AMSDOS file (with header) and extracts its length.
@@ -2965,7 +2966,7 @@ rt_loadaddr:
     jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
 """
 ),
-    "rt_save": (["rt_restoreroms"],
+    "rt_save": (["rt_restoreroms"],"",
 f"""
 ; RT_SAVE
 ; Dumps a memory region as an AMSDOS binary file (with header)
@@ -2995,7 +2996,7 @@ rt_save:
     jp      {FWCALL.CAS_OUT_CLOSE}  ; CAS_OUT_CLOSE
 """
 ),
-    "rt_onjump": ([],
+    "rt_onjump": ([],"",
 """
 ; RT_ONJUMP
 ; Given a number in A, this routine jumps to the corresponding
@@ -3025,7 +3026,7 @@ rt_onjump:
     jp      (hl)
 """
 ),
-    "rt_speedwrite": ([],
+    "rt_speedwrite": ([],"",
 f"""
 ; RT_SPEEDWRITE
 ; HL must be 0 or 1 and indicates the desired speed.
@@ -3047,7 +3048,7 @@ __speedwrite_1
     jp      {FWCALL.CAS_SET_SPEED}
 """
 ),
-    "rt_restoreroms": ([],
+    "rt_restoreroms": ([],"",
 f"""
 ; RT_RESTOREROMS
 ; Based on https://www.cpcmania.com/Docs/Programming/Ficheros.htm
@@ -3074,7 +3075,7 @@ __restore_drive:
     jp      _restoreroms_end       ; jump back without a ret as the stack is empty
 """
 ),
-    "rt_onsq": ([],
+    "rt_onsq": ([],"",
 f"""
 ; RT_ONSQ
 ; This rutine calls the Firmware to duplicate the effect of the BASIC
@@ -3094,7 +3095,7 @@ rt_onsq:
     jp      {FWCALL.SOUND_ARM_EVENT}  ; SOUND_ARM_EVENT
 """
 ),
-    "rt_max": ([],
+    "rt_max": ([],"",
 """
 ; RT_MAX
 ; This rutine checks HL and DE and returns in HL the max number
@@ -3118,7 +3119,7 @@ __max_de:
     ret
 """
 ),
-    "rt_maxreal": (["rt_math_call"],
+    "rt_maxreal": (["rt_math_call"],"",
 f"""
 ; RT_MAXREAL
 ; This rutine checks REAL numbers in accum1 and accum2 and
@@ -3150,7 +3151,7 @@ rt_maxreal:
     ret
 """
 ),
-    "rt_intsgn": ([],
+    "rt_intsgn": ([],"",
 """
 ; RT_INTSGN
 ; Checks the sign of the integer in HL and returns
@@ -3174,7 +3175,7 @@ rt_intsgn:
     ret
 """
 ),
-    "rt_realsgn": (["rt_math_call"],
+    "rt_realsgn": (["rt_math_call"],"",
 f"""
 ; RT_INTSGN
 ; Checks the sign of the float pointed by accum1 and returns

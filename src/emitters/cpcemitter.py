@@ -57,6 +57,7 @@ class CPCEmitter:
             DataSec.CONST: ""
         }
         self.rtcode: str = ""
+        self.rtvars: str = ""
         self.runtime: list[str] = []
         self.constants: int = 0
         self.issued_str_constants: dict[str,str] = {}
@@ -113,10 +114,11 @@ class CPCEmitter:
     def _emit_import(self, fname: str) -> bool:
         if fname not in self.runtime:
             self.runtime.append(fname)
-            depends, fcode = RT[fname]
+            depends, datavars, fcode = RT[fname]
             for dep in depends:
                 self._emit_import(dep)
-            self.rtcode = self.rtcode + fcode + '\n'
+            self.rtcode = self.rtcode + fcode
+            self.rtvars = self.rtvars + datavars
             return True
         return False
 
@@ -201,7 +203,7 @@ class CPCEmitter:
         self._emit_head()
 
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
-        self._emit_heap(RT["rt_heap_memory"][1], 0)
+        self._emit_heap(RT["rt_heap_memory"][2], 0)
 
         self._emit_startup("; PROGRAM MAIN", 0)
         self._emit_startup(f"org     &{hex(self.codeaddr)[2:]}", 0)
@@ -4519,6 +4521,8 @@ class CPCEmitter:
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
         program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
+        if self.rtvars != "":
+            program = program + "_data_runtime_vars_:\n" + self.rtvars + "\n"
         program = program + "_data_end_:\n"
         program = program + self._emit_runtime()
         return program + "_program_end_:\n"
