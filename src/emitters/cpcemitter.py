@@ -46,6 +46,8 @@ class CPCEmitter:
         self.verbose=verbose
         self.context = ""
         self.head = ""
+        self.startupcode = ""
+        self.heapcode = ""
         self.code = ""
         self.codestack: list[str] = []
         self.data: dict[DataSec,str] = {
@@ -81,6 +83,14 @@ class CPCEmitter:
     def _emit_head(self, line: str="", indent: int=4, info: str=""):
         line = self._emit_prepare_line(line, indent, info)
         self.head = self.head + line + "\n"
+
+    def _emit_startup(self, line: str="", indent: int=4, info: str=""):
+        line = self._emit_prepare_line(line, indent, info)
+        self.startupcode = self.startupcode + line + "\n"
+
+    def _emit_heap(self, line: str="", indent: int=4, info: str=""):
+        line = self._emit_prepare_line(line, indent, info)
+        self.heapcode = self.heapcode + line + "\n"
 
     def _emit_code(self, line: str="", indent: int=4, info: str=""):
         """ Pure comments are added only if we are in verbose mode """
@@ -186,21 +196,25 @@ class CPCEmitter:
         self._emit_head("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
         self._emit_head(";", 0)
         self._emit_head("$LIMIT$", 0)
-        self._emit_head(f"org     {self.heapaddr}", 0)
-        self._emit_head("jp      _program_main_", 0)
+        self._emit_head(f"org     &{hex(self.heapaddr)[2:]}", 0)
+        self._emit_head("jp      _startup_", 0)
         self._emit_head()
-        self._emit_head("; DYNAMIC MEMORY AREA, USED BY MALLOC AND FREE", 0)
-        self._emit_head(RT["rt_heap_memory"][1], 0)
-        self._emit_head()
-        self._emit_head("; PROGRAM MAIN", 0)
-        self._emit_head(f"org     &{hex(self.codeaddr)[2:]}", 0)
-        self._emit_head(f"_program_main_:", 0)
-        self._emit_head("xor     a", 0, info="Set stream to its default value (#0)")
-        self._emit_head(f"call    {FWCALL.TXT_STR_SELECT}", 0, info="TXT_STR_SELECT")
+
+        self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
+        self._emit_heap(RT["rt_heap_memory"][1], 0)
+
+        self._emit_startup("; PROGRAM MAIN", 0)
+        self._emit_startup(f"org     &{hex(self.codeaddr)[2:]}", 0)
+        self._emit_startup(f"_startup_:", 0)
 
     def _emit_code_end(self):
         self._emit_code()
         self._emit_code("_code_end_: jr _code_end_", info="infinite end loop", indent=0)
+
+    def _emit_amsdos_support(self):
+        if "rt_restoreroms" in self.runtime:
+            self._emit_startup("call    rt_restoreroms")
+            self._emit_startup("_restoreroms_end:", 0)
 
     def _emit_symbols(self, syms: dict[str, SymEntry]):
         for sym in syms:
@@ -232,12 +246,16 @@ class CPCEmitter:
         self._emit_data(f"{entry.label}: defs {memsz}", section=DataSec.VARS)
 
     def _emit_runtime(self) -> str:
-        return "_runtime_:\n\n" + self.rtcode + '\n'
+        return "_runtime_:\n\n" + self.rtcode + '\n' + "_runtime_end_:\n\n"
     
     def _emit_symbol_table(self) -> None:
         # 240 is the BASIC default if no SYMBOL AFTER is used
         if self.symbolafter == 9999:
+            # Default SYMBOL AFTER of 240 if this command has not been used
             self.symbolafter = 240
+            self._emit_startup("ld      de,240")
+            self._emit_startup("ld      hl,_symbols_table")
+            self._emit_startup(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
         self._emit_data()
         self._emit_data("; Table for symbols defined with SYMBOL keyword")
         self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes")
@@ -3919,6 +3937,7 @@ class CPCEmitter:
         if "$." in node.name:
             varname, record = node.name.split("$.")
             varname = varname + "$"
+            vartype = AST.ExpType.String
         var = self.symtable.find(varname, SymType.Array, context=self.context)
         if var is None:
             self._raise_error(38, node)
@@ -3943,13 +3962,13 @@ class CPCEmitter:
             self._emit_code("add     hl,hl", info="index * 2 bytes")
         elif vartype == AST.ExpType.String:
             self._emit_import("rt_mul16_A")
-            self._emit_code(f"ld      a,{var.datasz}")  #type: ignore [union-attr]
+            self._emit_code(f"ld      a,{var.datasz}", info="string length")  #type: ignore [union-attr]
             self._emit_code("call    rt_mul16_A", info="index * length bytes")
             if record != "":
                 # this is a record so we have to apply the final offset
                 entry = self.symtable.find(record, SymType.Record, context=self.context)
                 if entry is not None:
-                    self._emit_code(f"ld      de,{entry.memoff}")
+                    self._emit_code(f"ld      de,{entry.memoff}", info="record memory offset")
                     self._emit_code("add     hl,de", info="apply record attribute offset")
         elif vartype == AST.ExpType.Real:
             self._emit_code("ld      d,h")
@@ -4483,21 +4502,26 @@ class CPCEmitter:
 
     def _compose_program(self) -> str:
         program = ""
-        # First code after _code_ label
-        if "rt_restoreroms" in self.runtime:
-            self._emit_head("call    rt_restoreroms")
-        if "rt_math_call" in self.runtime:
-            self._emit_head("call    rt_math_setoffset")
-        # Add initial LIMIT directive for ABASM if set    
+        # Add initial LIMIT directive for ABASM if required   
         if self.memlimit < 99999:
             program = self.head.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
         else:
             program = self.head.replace("$LIMIT$", "")
-        program = program + "_code_:\n" + self.code + "\n"
+        
+        program = program + self.heapcode + "\n"
+        program = program + self.startupcode + "_startup_end_:\n"
+        program = program + "_code_:\n"
+        
+        # Fix floating point calls depending on the CPC machine
+        if "rt_math_call" in self.runtime:
+            program = program + "    call    rt_math_setoffset\n"
+
+        program = program + self.code + "\n"
         program = program + "_data_:\n" + self.data[DataSec.GEN] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
         program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
+        program = program + "_data_end_:\n"
         program = program + self._emit_runtime()
         return program + "_program_end_:\n"
 
@@ -4508,6 +4532,7 @@ class CPCEmitter:
         for line in self.program.lines:
             self._emit_line(line)
         self._emit_code_end()
+        self._emit_amsdos_support()
         self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
         return self._compose_program()

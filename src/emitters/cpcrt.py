@@ -302,8 +302,8 @@ RT = {
 #
     "rt_heap_memory": ([],
 """
-rt_heapmem_next: dw rt_heapmem_start
-rt_heapmem_start:
+rt_heapmem_next:  dw rt_heapmem_start   ; pointer to free memory for dynamic allocation
+rt_heapmem_start: defs 1024*2           ; reserve 2K area for dynamic allocated memory
 """
 ),
     "rt_error": ([],
@@ -3071,7 +3071,7 @@ __restore_drive:
     ld      a, &00                 ; restore the drive number
     ld      hl,(&be7d)             ; because when eneabling AMSDOS the drive
     ld      (hl),a                 ; reverts to 0
-    jp      _code_                 ; jump back without a ret as the stack is empty
+    jp      _restoreroms_end       ; jump back without a ret as the stack is empty
 """
 ),
     "rt_onsq": ([],
