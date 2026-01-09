@@ -45,10 +45,10 @@ class CPCEmitter:
         self.warning_level = warning_level
         self.verbose=verbose
         self.context = ""
-        self.head = ""
+        self.headcode = ""
         self.startupcode = ""
         self.heapcode = ""
-        self.code = ""
+        self.srccode = ""
         self.codestack: list[str] = []
         self.data: dict[DataSec,str] = {
             DataSec.GEN: "",
@@ -82,7 +82,7 @@ class CPCEmitter:
 
     def _emit_head(self, line: str="", indent: int=4, info: str=""):
         line = self._emit_prepare_line(line, indent, info)
-        self.head = self.head + line + "\n"
+        self.headcode = self.headcode + line + "\n"
 
     def _emit_startup(self, line: str="", indent: int=4, info: str=""):
         line = self._emit_prepare_line(line, indent, info)
@@ -96,7 +96,7 @@ class CPCEmitter:
         """ Pure comments are added only if we are in verbose mode """
         if self.verbose or line == "" or line[0] != ";":
             line = self._emit_prepare_line(line, indent, info)
-            self.code = self.code + line + "\n"
+            self.srccode = self.srccode + line + "\n"
 
     def _emit_data(self, line: str="", indent: int=4, info: str="", section: DataSec=DataSec.GEN):
         line = self._emit_prepare_line(line,indent, info)
@@ -913,13 +913,13 @@ class CPCEmitter:
         """
         self._emit_code("; DEF FN <name> [(<formal parameters>)]=<general expression>")
         self.context = node.name
-        currentcode = self.code  # keep current generated code
-        self.code = ""           # capture only the code that will be generated now
+        currentcode = self.srccode  # keep current generated code
+        self.srccode = ""           # capture only the code that will be generated now
         heapused = self.reserved_heap_memory
         self._emit_expression(node.body)
         self._emit_code("ret")
-        fcode = self.code
-        self.code = currentcode  # restore previous generated code
+        fcode = self.srccode
+        self.srccode = currentcode  # restore previous generated code
         self.context=""
         flabel = self._get_userfun_label(node.name)
         self._emit_data(f"{flabel}:", 0)
@@ -1445,8 +1445,8 @@ class CPCEmitter:
         self._emit_code(";")
         self.context = node.name
         flabel = self._get_userfun_label(node.name)
-        self.codestack.append(str(self.code))  # store current generated code
-        self.code = ""                         # so we generate now sub body only
+        self.codestack.append(str(self.srccode))  # store current generated code
+        self.srccode = ""                         # so we generate now sub body only
         self._emit_code(f"{flabel}:", 0)
         if not node.asm:
             # procedures decorated with ASM in the declaration doesn't need
@@ -1617,8 +1617,8 @@ class CPCEmitter:
             else:
                 self._raise_error(2, node, info="no return value in FUNCTION")
             self._emit_code("ret")
-        subfun = str(self.code)
-        self.code = self.codestack.pop()
+        subfun = str(self.srccode)
+        self.srccode = self.codestack.pop()
         # we only really emit this code if the function was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Function)
         if entry and entry.calls > 0:
@@ -1644,8 +1644,8 @@ class CPCEmitter:
         if not node.args[0].asm:        # type: ignore [attr-defined]
             self._emit_pop_memheap()
             self._emit_code("ret")
-        subfun = str(self.code)
-        self.code = self.codestack.pop()
+        subfun = str(self.srccode)
+        self.srccode = self.codestack.pop()
         # we only really emit this code if the subrutine was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Procedure)
         if entry and entry.calls > 0:
@@ -3318,8 +3318,8 @@ class CPCEmitter:
         """
         self._emit_code("; SUB <name> [(<formal parameters>)]=<general expression>")
         self._emit_code(";")
-        self.codestack.append(str(self.code)) # store current generated code
-        self.code = ""                        # so we generate now sub body only
+        self.codestack.append(str(self.srccode)) # store current generated code
+        self.srccode = ""                        # so we generate now sub body only
         self.context = node.name
         self._emit_code(f"{self._get_userfun_label(node.name)}:", 0)
         if not node.asm:
@@ -4504,19 +4504,17 @@ class CPCEmitter:
         program = ""
         # Add initial LIMIT directive for ABASM if required   
         if self.memlimit < 99999:
-            program = self.head.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
+            program = self.headcode.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
         else:
-            program = self.head.replace("$LIMIT$", "")
-        
+            program = self.headcode.replace("$LIMIT$", "")
+        # Fix floating point calls depending on the CPC machine
+        if "rt_math_call" in self.runtime:
+            self._emit_startup("call    rt_math_setoffset")
         program = program + self.heapcode + "\n"
         program = program + self.startupcode + "_startup_end_:\n"
         program = program + "_code_:\n"
-        
-        # Fix floating point calls depending on the CPC machine
-        if "rt_math_call" in self.runtime:
-            program = program + "    call    rt_math_setoffset\n"
 
-        program = program + self.code + "\n"
+        program = program + self.srccode + "\n"
         program = program + "_data_:\n" + self.data[DataSec.GEN] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
