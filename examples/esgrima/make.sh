@@ -13,11 +13,11 @@ DSK="python3 ../../src/utils/dsk.py"
 SOURCE=main
 TARGET=esgrima
 
-HEAPADDR=0x0170
+LOADADDR=0x0040
 CODEADDR=0x4000
 
-RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $HEAPADDR"
-RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $HEAPADDR --start-addr $CODEADDR"
+RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $LOADADDR"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
