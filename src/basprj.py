@@ -46,11 +46,11 @@ set DSK=python3 "{DSK}"
 set SOURCE=main
 set TARGET={TARGET}
 
-set HEAPADDR=0x0170
 set CODEADDR=0x4000
+set LOADADDR=0x0040
 
-set RUNBAS=%BASC% %SOURCE%.bas --code %CODEADDR% --heap %HEAPADDR%
-set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %HEAPADDR% --start-addr %CODEADDR%
+set RUNBAS=%BASC% %SOURCE%.bas --code %CODEADDR% --heap %LOADADDR%
+set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -89,11 +89,11 @@ DSK="python3 {DSK}"
 SOURCE=main
 TARGET={TARGET}
 
-HEAPADDR=0x0170
+LOADADDR=0x0040
 CODEADDR=0x4000
 
-RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $HEAPADDR"
-RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $HEAPADDR --start-addr $CODEADDR"
+RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $LOADADDR"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"

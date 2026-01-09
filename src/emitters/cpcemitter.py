@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, codeaddr=0x4000, heapaddr=0x0170):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, codeaddr=0x4000, heapaddr=0x0040):
         self.source = code
         self.program = program
         self.symtable = symtable

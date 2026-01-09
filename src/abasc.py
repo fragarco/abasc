@@ -49,7 +49,7 @@ def process_args() -> argparse.Namespace:
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
     parser.add_argument('--code', type = aux_int, default = 0x4000, help = 'Program starting address. By default is 0x4000 so Firmware routines can be called safely.')
-    parser.add_argument('--heap', type = aux_int, default = 0x0170, help = 'Heap starting address. By default is 0x0170 so it overlaps with the Firmware area.')
+    parser.add_argument('--heap', type = aux_int, default = 0x0040, help = 'Heap starting address. By default is 0x0040 so it overlaps with the Firmware area.')
     parser.add_argument('-O', type=int, default=2, help="Sets the level of optimization (0-disabled, 1-peephole, 2-all). It's set to 2 by default.")
     parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
