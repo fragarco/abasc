@@ -415,7 +415,12 @@ rt_call:
     jp      (hl)
 """
 ),
-    "rt_math_call": ([],"",
+    "rt_math_call": ([],
+"""
+rt_math_accum1: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
+rt_math_accum2: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
+rt_math_offset: dw  0
+""",
 f"""
 ; RT_MATH_CALL
 ; Jumps to the address passed in DE but it adjusts the address
@@ -438,9 +443,6 @@ rt_math_call:
 ; Outputs:
 ;     None
 ;     AF, BC and DE are directly modified
-rt_math_accum1: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
-rt_math_accum2: db  0,0,0,0,0  ; float values to use with firmware call must be over first 4k
-rt_math_offset: dw  0
 rt_math_setoffset:
     ld      c,0     ; ROM select address
     call    {FWCALL.KL_PROBE_ROM}   ; KL_PROBE_ROM
@@ -474,11 +476,12 @@ rt_move_real:
     ret
 """
 ),
-    "rt_scratch_pad": ([],"",
+    "rt_scratch_pad": ([],
 """
 ; Free memory for temporal use
 rt_scratch_pad:  defs  255
-"""
+""",
+""
 ),
 #
 # STRINGS
@@ -670,7 +673,10 @@ ___replace_end:
     ret
 """
 ),
-    "rt_int2str": (["rt_div16_by10"],"",
+    "rt_int2str": (["rt_div16_by10"],
+"""
+rt_int2str_buf: defs 8
+""",
 """
 ; RT_INT2STR
 ; HL starts containing the number to convert to string
@@ -683,7 +689,6 @@ ___replace_end:
 ;     HL points to the temporal address in memory with the string
 ;      C indicates if the number is negative (C=1) or positive (C=0)
 ;     HL, BC, DE, AF are modified
-rt_int2str_buf: defs 8
 rt_int2str:
     ld      de,rt_int2str_buf
     inc     de     ; first byte stores string length
@@ -772,7 +777,11 @@ __long2str_loop2:
     ret
 """
 ),
-    "rt_real2strz": (["rt_math_call", "rt_div32_by10", "rt_udiv8"],"",
+    "rt_real2strz": (["rt_math_call", "rt_div32_by10", "rt_udiv8"],
+"""
+rt_r2str_conv_buf: defs 10
+rt_real2strz_buf: defs 12
+""",
 f"""
 ; RT_REAL2STRZ
 ; Converts a 5-bytes floating point number into a string
@@ -781,8 +790,6 @@ f"""
 ;  Outputs
 ;   Leaves the converted string in the rt_real2strz_buf memory area
 ;   AF, BC, DE, HL and IX are modified
-__r2str_conv_buf: defs 10
-rt_real2strz_buf: defs 12
 rt_real2strz:
     ld      ix,{FWCALL.MATH_REAL_PREPARE}  ; MATH_REAL_PREPARE
     call    rt_math_call
@@ -806,7 +813,7 @@ __r2str_calculate_digits
     ld      d,(ix+3)
     ld      b,9      ; lets calculate the actual digits diving by 10 9 times
     ld      c,9      ; lets store in C the significant digits (no trailing 0s)
-    ld      ix,__r2str_conv_buf+8 ; digits are stored here from back to front
+    ld      ix,rt_r2str_conv_buf+8 ; digits are stored here from back to front
 __r2str_calculate_digits_loop:
     push    bc
     call    rt_div32_by10
@@ -834,7 +841,7 @@ __r2str_calculate_digits_next:
     inc     hl
 __float_check_exp:
     ld      b,0      ; total number of written digits
-    ld      ix,__r2str_conv_buf+5 ; position for E notation
+    ld      ix,rt_r2str_conv_buf+5 ; position for E notation
     ld      a,e
     add     9        ; restore decimal position
     cp      &80      ; EXP > 0? is a big number else small one
@@ -896,7 +903,7 @@ __put_leading_0s_loop:
 ; In B we have the digits already written
 ; In C we have the decimal position
 __float_copy_numbers:
-    ld      de,__r2str_conv_buf
+    ld      de,rt_r2str_conv_buf
     ld      a,9
     sub     b   
     ld      b,a      ; B = max number of digits that we can still print
@@ -1953,7 +1960,12 @@ rt_extract_num:
     jp      rt_strz2hex
 """
 ),
-    "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],"",
+    "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],
+"""
+rt_input_question: db 2,"? "
+rt_input_redo:     db 16,"?Redo from start "
+rt_input_buf:      defs 255
+""",
 f"""
 ; RT_INPUT
 ; Camptures the keyboard input in a null-terminated string
@@ -1966,9 +1978,6 @@ f"""
 ;      B stores the total number substrings (separated by commas)
 ;      C total number of quote characters found
 ;     AF, HL and BC are modified
-rt_input_question: db 2,"? "
-rt_input_redo:     db 16,"?Redo from start "
-rt_input_buf:      defs 255
 rt_input:
     call    {FWCALL.TXT_CUR_ENABLE} ; TXT_CUR_ENABLE
     call    {FWCALL.TXT_CUR_ON} ; TXT_CUR_ON

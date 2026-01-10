@@ -211,6 +211,7 @@ class CPCEmitter:
         self._emit_data(f"if ($ < &{hex(self.dataaddr)[2:]})", 0)
         self._emit_data(f"org  &{hex(self.dataaddr)[2:]}")
         self._emit_data("endif", 0)
+        self._emit_data("_data_:", 0) 
 
     def _emit_code_end(self):
         self._emit_code()
@@ -4521,7 +4522,7 @@ class CPCEmitter:
         program = program + self.srccode + "\n"
         program = program + self._emit_runtime()
 
-        program = program + "_data_:\n" + self.data[DataSec.GEN] + "\n"
+        program = program + self.data[DataSec.GEN] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
         program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
