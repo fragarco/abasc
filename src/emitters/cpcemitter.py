@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, heapsz=2048):
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -64,7 +64,7 @@ class CPCEmitter:
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
-        self.max_heap_memory: int = 2*1024
+        self.max_heap_memory: int = heapsz
         self.max_heap_used: int = 0
         self.dataaddr = 0x4000
         self.startaddr = 0x040

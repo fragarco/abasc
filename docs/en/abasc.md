@@ -329,8 +329,7 @@ python abasc.py [options] file.bas [-o output]
 ### Options
 
 * `--version` — Displays the compiler version.
-* `--code` — Initial address for our code (starting address for our program). By default is 0x4000 so Firmware routines can be called safely.
-* `--heap` — Initial address for the heap memory area. Also our initial load address. This value must be lower than code address. By default is 0x0170 so it overlaps as much as possible with the Firmware area. 
+* `--heap` — Heap memory size. By default its value is 2K. ABASC prints the maximun size calculated during the compilation process so the value can be used to ajust this parameter.
 * `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
 * `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
 * `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
@@ -342,7 +341,7 @@ In `ABASC`, project management is straightforward. It is sufficient to create a 
 
 ```bash
 python3 abasc.py main.bas
-python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x4000 --load-addr=0x0170
+python3 dsk.py -n main.dsk --put-bin main.bin --start-addr=0x0040 --load-addr=0x0040
 ```
 
 However, it is also possible to quickly generate a basic project structure using the `BASPRJ` tool. This utility automatically creates a build script with everything needed to get started: on Windows, a `make.bat` file is generated, while on Linux and macOS a `make.sh` file is created. In addition, a `main.bas` file containing ready-to-use example code is included.
@@ -533,29 +532,29 @@ ASM "incbin 'assets.bin' ; binary content to append"
 
 ## Memory Management
 
-The memory layout of a program compiled with ABASC is structured as follows:
+The memory map for a program compiled with ABASC is structured as follows:
 
-| Address           | Description                                                                |
-| ----------------- | -------------------------------------------------------------------------- |
-| **0x0170**        | Start of the application-initialization area and temporary memory space (heap). This adddress can be modified using the flag `--heap`.|
-| **0x4000**        | Start of the application’s code  segment. This address can be modified using the flag `--code`.|
-| ***data***        | Label marking the beginning of the static variable-allocation area         |
-| ***runtime***     | Label marking the beginning of compiler-generated support routines         |
-| ***program_end*** | Label marking the address where the program’s memory usage ends            |
+| Address             | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| **0x0040**          | Start of the application-initialization area and temporary memory space (heap). By default, the heap reserves 2K of memory but this can be modified through the flag `--heap`.|
+| **\_code\_**        | Program source code. Starts just after the heap and the startup code       |
+| **\_runtime\_**     | Label marking the beginning of compiler-generated support routines         |
+| **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware.  |
+| **\_program_end\_** | Label marking the address where the program’s memory usage ends            |
 
 Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
 ABASC supports them as well, but their semantics differ slightly due to the compiled-code model:
 
 | Command          | Meaning in ABASC                              |
 | ---------------- | -------------------------------------------- |
-| **HIMEM**        | Returns the memory address immediately above the end of the compiled program. |
+| **HIMEM**        | Returns the memory address immediately above the end of the compiled program (_program_end_ address). |
 | **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.|
 | **SYMBOL AFTER** | ABASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
 | **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`). |
 | **FRE(1)**       | Returns the currently available temporary memory (heap). |
 | **FRE("")**      | Forces a cleanup of temporary memory (heap) and returns the same value as `FRE(0)`. |
 
-ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x0177 and grows towards the address 0x4000 where the program's code starts.
+ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x040 and grows towards its maximun size (2k by default or the value set by --heap flag).
 After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
 ## Using the Firmware
@@ -566,13 +565,9 @@ However, you can use the `ASM` statement to provide more efficient replacements 
 
 Another option is to modify the program’s assembly code directly. During compilation, ABASC generates an `.ASM` file containing the full assembly code. This allows the developer to adjust or extend the generated code and apply specific optimizations when needed, using **ABASM** to produce the final binary. When the `--verbose` option is enabled, the generated ASM file includes more detailed comments, making it easier to follow how each BASIC statement is translated into assembly code.
 
-Aquí tienes la traducción al inglés del texto:
-
----
-
 ## Libraries
 
-The ABASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of our programs using the `CHAIN MERGE` command.
+The ABASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of your programs using the `CHAIN MERGE` command.
 
 `CHAIN MERGE` will first try to resolve any file to include against the local directory of our source code. If the specified file is not local to the program, it will then search in the ABASC `lib` directory, treating it as a "library" — a reusable `.BAS` file that can be used in any project. For example, we can test the `memory.bas` file distributed with ABASC using this simple program:
 

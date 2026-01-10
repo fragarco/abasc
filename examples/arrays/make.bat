@@ -12,8 +12,9 @@ set SOURCE=main
 set TARGET=arrays
 
 set LOADADDR=0x0040
+set HEAPSIZE=32
 
-set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
+set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas --heap %HEAPSIZE%
 set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr=%LOADADDR% --start-addr=%LOADADDR%
 
 IF "%1"=="clear" (

@@ -52,6 +52,7 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
+    parser.add_argument('--heap', type=int, default=2048, help="heap memory size. 2K by default.")
     parser.add_argument('--version', action='version', version=f' ABASC (Locomotive BASIC Cross Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
@@ -116,8 +117,8 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL) -> tuple[str,int]:
-    emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose)
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL, heapsz: int) -> tuple[str,int]:
+    emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose, heapsz)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str):
@@ -149,7 +150,7 @@ def main() -> None:
         optimizer = BasOptimizer()
         if optlevel > 1:
             ast, symtable = optimizer.optimize_ast(ast, symtable)
-        asmcode, heapused = emit(codelines, ast, symtable, args.verbose, wlevel)
+        asmcode, heapused = emit(codelines, ast, symtable, args.verbose, wlevel, args.heap)
         if optlevel > 0:
             asmcode = optimizer.optimize_peephole(asmcode)
         assemble(infile, outfile, asmcode)
