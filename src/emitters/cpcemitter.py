@@ -1432,10 +1432,10 @@ class CPCEmitter:
             self._emit_free_heapmem()
             self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
             self._emit_code("ld      de,_program_end_")
-        if isinstance(arg, AST.Integer):
+        else: # should be isinstance(arg, AST.Integer)
             if arg.value == 1:
-                # Free temporal memory
-                self._emit_code("ld      hl,&4000")
+                # Current free temporal memory
+                self._emit_code("ld      hl,_startup_")
                 self._emit_code("ld      de,(_memory_next)")
             else:
                 # Free memory between the high limit and our program binary end
