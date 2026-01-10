@@ -25,7 +25,7 @@ print E
 E$ = "STRING1" + "STRING2"
 print E$
 E! = (1 MOD 2.2) * 2
-for i=0 to 5
+for i=0 to 4
     print hex$(peek(@E!+i),2)
 next
 E% = 5.2 \ 2.2
