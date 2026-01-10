@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, codeaddr=0x4000, heapaddr=0x0040):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -64,8 +64,8 @@ class CPCEmitter:
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
-        self.codeaddr = codeaddr
-        self.heapaddr = heapaddr
+        self.dataaddr = 0x4000
+        self.startaddr = 0x040
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
@@ -198,16 +198,19 @@ class CPCEmitter:
         self._emit_head("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
         self._emit_head(";", 0)
         self._emit_head("$LIMIT$", 0)
-        self._emit_head(f"org     &{hex(self.heapaddr)[2:]}", 0)
-        self._emit_head("jp      _startup_", 0)
+        self._emit_head(f"org  &{hex(self.startaddr)[2:]}", 0)
         self._emit_head()
 
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
         self._emit_heap(RT["rt_heap_memory"][2], 0)
 
         self._emit_startup("; PROGRAM MAIN", 0)
-        self._emit_startup(f"org     &{hex(self.codeaddr)[2:]}", 0)
         self._emit_startup(f"_startup_:", 0)
+
+        self._emit_data("; DATA must be allocated outside of Firmware memory area", 0)
+        self._emit_data(f"if ($ < &{hex(self.dataaddr)[2:]})", 0)
+        self._emit_data(f"org  &{hex(self.dataaddr)[2:]}")
+        self._emit_data("endif", 0)
 
     def _emit_code_end(self):
         self._emit_code()
@@ -259,9 +262,9 @@ class CPCEmitter:
             self._emit_startup("ld      hl,_symbols_table")
             self._emit_startup(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
         self._emit_data()
-        self._emit_data("; Table for symbols defined with SYMBOL keyword")
-        self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes")
-        self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}")
+        self._emit_data("; Table for symbols defined with SYMBOL keyword", 0)
+        self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes", 0)
+        self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}", 0)
 
 
     def _real(self, n: float) -> bytearray:
@@ -4512,11 +4515,12 @@ class CPCEmitter:
         # Fix floating point calls depending on the CPC machine
         if "rt_math_call" in self.runtime:
             self._emit_startup("call    rt_math_setoffset")
-        program = program + self.heapcode + "\n"
+
         program = program + self.startupcode + "_startup_end_:\n"
         program = program + "_code_:\n"
-
         program = program + self.srccode + "\n"
+        program = program + self._emit_runtime()
+
         program = program + "_data_:\n" + self.data[DataSec.GEN] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
@@ -4524,7 +4528,7 @@ class CPCEmitter:
         if self.rtvars != "":
             program = program + "_data_runtime_vars_:\n" + self.rtvars + "\n"
         program = program + "_data_end_:\n"
-        program = program + self._emit_runtime()
+        program = program + self.heapcode + "\n"    
         return program + "_program_end_:\n"
 
     def emit_program(self) -> str:
