@@ -11,8 +11,11 @@ REM * USAGE: make [clear][dsk]
 set SOURCE=main
 set TARGET=bomber
 
-set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr 0x170 --start-addr 0x4000
+set LOADADDR=0x0040
+set HEAPSIZE=32
+
+set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas --heap %HEAPSIZE%
+set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -20,6 +23,7 @@ IF "%1"=="clear" (
     IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
     IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
     IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
+    IF EXIST "%SOURCE%.s"   del "%SOURCE%.s"
     IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
     IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
     IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"

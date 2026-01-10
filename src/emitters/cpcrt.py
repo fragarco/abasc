@@ -2807,7 +2807,13 @@ rt_settime:
     jp      {FWCALL.KL_TIME_SET}  ; KL_TIME_SET
 """
 ),
-    "rt_randomize": ([],"",
+    "rt_randomize": ([],
+"""
+rt_rnd_seed1: db &6c,&07       ; some initial value just in case
+rt_rnd_seed2: db &70,&c6
+rt_old_seed1: db &6c,&07       ; to retrieve again last number
+rt_old_seed2: db &07,&6c
+""",
 """
 ; RT_RANDOMIZE
 ; Sets rt_rnd_seed1 and rt_rnd_seed2 which are used by rt_rnd
@@ -2817,10 +2823,6 @@ rt_settime:
 ;   rt_rnd_seed1 gets the value of HL
 ;   rt_rnd_seed2 gets the value of DE
 ;   HL is modified
-rt_rnd_seed1: db &6c,&07       ; some initial value just in case
-rt_rnd_seed2: db &70,&c6
-rt_old_seed1: db &6c,&07       ; to retrieve again last number
-rt_old_seed2: db &07,&6c
 rt_randomize:
     ld      a,(hl)
     ld      (rt_rnd_seed1),a
@@ -2836,7 +2838,10 @@ rt_randomize:
     ret
 """
 ),
-    "rt_rnd": (["rt_randomize"],"",
+    "rt_rnd": (["rt_randomize"],
+"""
+rt_rnd_32767: db &00,&00,&FE,&7F,&8F
+""",
 f"""
 ; RT_RND
 ; This is a very fast, quality pseudo-random number generator.
@@ -2850,7 +2855,6 @@ f"""
 ;   HL address to the REAL result
 ;   BC is the result of the LCG, so not that great of quality
 ;   AF, BC, HL, DE, and IX are modified
-rt_rnd_32767: db &00,&00,&FE,&7F,&8F
 rt_rnd:
     ld      hl,(rt_rnd_seed1)
     ld      (rt_old_seed1),hl
@@ -2903,13 +2907,17 @@ rt_rnd0:
 rt_fileinbuf: defs 2048
 """
 ),
-    "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],"",
+    "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],
 """
 ; Buffer for content written to files through OPENOUT
 rt_fileoutbuf: defs 2048
-"""
+""",
+""
 ),
-    "rt_sound": (["rt_error"],"",
+    "rt_sound": (["rt_error"],
+"""
+rt_sound_buf: defs 9
+""",
 f"""
 ; Adds a new sound to one of the available Amstrad CPC
 ; sound queues. The data must be kept in a buffer placed
@@ -2919,7 +2927,6 @@ f"""
 ; Outputs:
 ;   CF if sound was added to the queue.
 ;   AF, BC, DE, IX and HL are modified.
-rt_sound_buf: defs 9
 rt_sound:
     ld      hl,rt_sound_buf
     jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
@@ -3078,7 +3085,10 @@ __restore_drive:
     jp      _restoreroms_end       ; jump back without a ret as the stack is empty
 """
 ),
-    "rt_onsq": ([],"",
+    "rt_onsq": ([],
+"""
+rt_onsq_event: defs 7
+""",
 f"""
 ; RT_ONSQ
 ; This rutine calls the Firmware to duplicate the effect of the BASIC
@@ -3089,12 +3099,11 @@ f"""
 ; Outputs:
 ;   None
 ;   AF, HL, DE and BC are modified
-__onsq_event: defs 7
 rt_onsq:
     ld      b,&81
-    ld      hl,__onsq_event
+    ld      hl,rt_onsq_event
     call    {FWCALL.KL_INIT_EVENT}  ; HL_INIT_EVENT
-    ld      hl,__onsq_event
+    ld      hl,rt_onsq_event
     jp      {FWCALL.SOUND_ARM_EVENT}  ; SOUND_ARM_EVENT
 """
 ),
@@ -3122,7 +3131,10 @@ __max_de:
     ret
 """
 ),
-    "rt_maxreal": (["rt_math_call"],"",
+    "rt_maxreal": (["rt_math_call"],
+"""
+rt_maxreal_buf: defs 5
+""",
 f"""
 ; RT_MAXREAL
 ; This rutine checks REAL numbers in accum1 and accum2 and
@@ -3132,7 +3144,6 @@ f"""
 ; Outputs:
 ;   accum1 contains the mayor number and accum2 the minor
 ;   AF, HL, DE, BC and IX are modified
-rt_maxreal_buf: defs 5
 rt_maxreal:
     ld      hl,rt_math_accum1
     ld      de,rt_math_accum2
