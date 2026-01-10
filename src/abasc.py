@@ -116,7 +116,7 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL) -> str:
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL) -> tuple[str,int]:
     emitter = CPCEmitter(codelines, ast, symtable, wlevel, verbose)
     return emitter.emit_program()
     
@@ -149,7 +149,7 @@ def main() -> None:
         optimizer = BasOptimizer()
         if optlevel > 1:
             ast, symtable = optimizer.optimize_ast(ast, symtable)
-        asmcode = emit(codelines, ast, symtable, args.verbose, wlevel)
+        asmcode, heapused = emit(codelines, ast, symtable, args.verbose, wlevel)
         if optlevel > 0:
             asmcode = optimizer.optimize_peephole(asmcode)
         assemble(infile, outfile, asmcode)
@@ -160,7 +160,7 @@ def main() -> None:
         if args.debug:
             print(traceback.format_exc())
         sys.exit(1)
-    print(f"Done in {time.process_time()-start_t:.2f} seconds")
+    print(f"Done in {time.process_time()-start_t:.2f} seconds ({heapused} bytes of heap memory used)")
 
 if __name__ == "__main__":
     main()

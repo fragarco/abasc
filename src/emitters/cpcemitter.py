@@ -64,6 +64,8 @@ class CPCEmitter:
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
+        self.max_heap_memory: int = 2*1024
+        self.max_heap_used: int = 0
         self.dataaddr = 0x4000
         self.startaddr = 0x040
         self.forloops: list[AST.ForLoop] = []
@@ -161,8 +163,10 @@ class CPCEmitter:
         totaltmp = self.reserved_heap_memory
         for _, reservedtmp in self.memstacks:
             totaltmp += reservedtmp
-        if totaltmp > 2048:
-            self._raise_warning(WL.HIGH, "reserved heap memory exceeds 2K", node)
+        if totaltmp > self.max_heap_memory:
+            self._raise_error(7, node, info="heap memory exhausted")
+        if totaltmp > self.max_heap_used:
+            self.max_heap_used = totaltmp
 
     def _emit_pushcontext(self):
         if self.context != "":
@@ -199,10 +203,13 @@ class CPCEmitter:
         self._emit_head(";", 0)
         self._emit_head("$LIMIT$", 0)
         self._emit_head(f"org  &{hex(self.startaddr)[2:]}", 0)
+        self._emit_head("jp   _startup_", 0)
         self._emit_head()
-
+    
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
-        self._emit_heap(RT["rt_heap_memory"][2], 0)
+        self._emit_heap("rt_heapmem_next:  dw rt_heapmem_start ", 0, info="pointer to free memory for dynamic allocation")
+        self._emit_heap(f"rt_heapmem_start: defs {self.max_heap_memory}", 0, info="reserved area for dynamic allocated memory")
+        self._emit_heap()
 
         self._emit_startup("; PROGRAM MAIN", 0)
         self._emit_startup(f"_startup_:", 0)
@@ -4513,6 +4520,7 @@ class CPCEmitter:
             program = self.headcode.replace("$LIMIT$", f"limit   &{hex(self.memlimit)[2:]}")
         else:
             program = self.headcode.replace("$LIMIT$", "")
+        program = program + self.heapcode + "\n" 
         # Fix floating point calls depending on the CPC machine
         if "rt_math_call" in self.runtime:
             self._emit_startup("call    rt_math_setoffset")
@@ -4528,11 +4536,10 @@ class CPCEmitter:
         program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
         if self.rtvars != "":
             program = program + "_data_runtime_vars_:\n" + self.rtvars + "\n"
-        program = program + "_data_end_:\n"
-        program = program + self.heapcode + "\n"    
+        program = program + "_data_end_:\n"   
         return program + "_program_end_:\n"
 
-    def emit_program(self) -> str:
+    def emit_program(self) -> tuple[str, int]:
         print("Generating assembly code...")
         self.asm = ""
         self._emit_preamble()
@@ -4542,4 +4549,4 @@ class CPCEmitter:
         self._emit_amsdos_support()
         self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
-        return self._compose_program()
+        return self._compose_program(), self.max_heap_used

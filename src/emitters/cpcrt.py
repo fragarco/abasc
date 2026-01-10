@@ -300,12 +300,6 @@ RT = {
 #
 # RUNTIME VARIABLES
 #
-    "rt_heap_memory": ([],"",
-"""
-rt_heapmem_next:  dw rt_heapmem_start   ; pointer to free memory for dynamic allocation
-rt_heapmem_start: defs 1024*2           ; reserve 2K area for dynamic allocated memory
-"""
-),
     "rt_error": ([],"",
 """
 ; RT_ERROR
