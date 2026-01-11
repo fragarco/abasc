@@ -329,7 +329,6 @@ python abasc.py [options] file.bas [-o output]
 ### Options
 
 * `--version` — Displays the compiler version.
-* `--heap` — Heap memory size. By default its value is 2K. ABASC prints the maximun size calculated during the compilation process so the value can be used to ajust this parameter.
 * `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
 * `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
 * `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
@@ -536,11 +535,11 @@ The memory map for a program compiled with ABASC is structured as follows:
 
 | Address             | Description                                                                |
 | ------------------- | -------------------------------------------------------------------------- |
-| **0x0040**          | Start of the application-initialization area and temporary memory space (heap). By default, the heap reserves 2K of memory but this can be modified through the flag `--heap`.|
-| **\_code\_**        | Program source code. Starts just after the heap and the startup code       |
-| **\_runtime\_**     | Label marking the beginning of compiler-generated support routines         |
+| **0x0040**          | Start of the application-initialization area and temporary memory space (heap).|
+| **\_code\_**        | Program source code. Starts just after the heap and the startup code.       |
+| **\_runtime\_**     | Label marking the beginning of compiler-generated support routines.         |
 | **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware.  |
-| **\_program_end\_** | Label marking the address where the program’s memory usage ends            |
+| **\_program_end\_** | Label marking the address where the program’s memory usage ends.            |
 
 Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
 ABASC supports them as well, but their semantics differ slightly due to the compiled-code model:
@@ -554,8 +553,7 @@ ABASC supports them as well, but their semantics differ slightly due to the comp
 | **FRE(1)**       | Returns the currently available temporary memory (heap). |
 | **FRE("")**      | Forces a cleanup of temporary memory (heap) and returns the same value as `FRE(0)`. |
 
-ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x040 and grows towards its maximun size (2k by default or the value set by --heap flag).
-After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
+ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x040 and its total maximum size is calculated at compiling time. After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
 ## Using the Firmware
 

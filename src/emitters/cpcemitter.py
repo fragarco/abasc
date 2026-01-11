@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False, heapsz=2048):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -64,8 +64,7 @@ class CPCEmitter:
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
-        self.max_heap_memory: int = heapsz
-        self.max_heap_used: int = 0
+        self.max_heap_memory: int = 0
         self.dataaddr = 0x4000
         self.startaddr = 0x040
         self.forloops: list[AST.ForLoop] = []
@@ -164,9 +163,7 @@ class CPCEmitter:
         for _, reservedtmp in self.memstacks:
             totaltmp += reservedtmp
         if totaltmp > self.max_heap_memory:
-            self._raise_error(7, node, info="heap memory exhausted")
-        if totaltmp > self.max_heap_used:
-            self.max_heap_used = totaltmp
+            self.max_heap_memory = totaltmp
 
     def _emit_pushcontext(self):
         if self.context != "":
@@ -206,11 +203,6 @@ class CPCEmitter:
         self._emit_head("jp   _startup_", 0)
         self._emit_head()
     
-        self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
-        self._emit_heap("rt_heapmem_next:  dw rt_heapmem_start ", 0, info="pointer to free memory for dynamic allocation")
-        self._emit_heap(f"rt_heapmem_start: defs {self.max_heap_memory}", 0, info="reserved area for dynamic allocated memory")
-        self._emit_heap()
-
         self._emit_startup("; PROGRAM MAIN", 0)
         self._emit_startup(f"_startup_:", 0)
 
@@ -224,6 +216,13 @@ class CPCEmitter:
         self._emit_code()
         self._emit_code("_code_end_: jr _code_end_", info="infinite end loop", indent=0)
 
+    def _emit_heap_def(self):
+        self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
+        self._emit_heap("rt_heapmem_next:  dw rt_heapmem_start ", 0, info="pointer to free memory for dynamic allocation")
+        self._emit_heap(f"rt_heapmem_start: defs {self.max_heap_memory}", 0, info="reserved area for dynamic allocated memory")
+        self._emit_heap("rt_heapmem_end:   db &DE,&AD", 0, info="DEAD mark")
+        self._emit_heap()
+    
     def _emit_amsdos_support(self):
         if "rt_restoreroms" in self.runtime:
             self._emit_startup("call    rt_restoreroms")
@@ -4546,7 +4545,8 @@ class CPCEmitter:
         for line in self.program.lines:
             self._emit_line(line)
         self._emit_code_end()
+        self._emit_heap_def()
         self._emit_amsdos_support()
         self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
-        return self._compose_program(), self.max_heap_used
+        return self._compose_program(), self.max_heap_memory

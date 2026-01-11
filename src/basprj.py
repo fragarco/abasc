@@ -47,9 +47,8 @@ set SOURCE=main
 set TARGET={TARGET}
 
 set LOADADDR=0x0040
-set HEAPSIZE=2048
 
-set RUNBAS=%BASC% %SOURCE%.bas --heap %HEAPSIZE%
+set RUNBAS=%BASC% %SOURCE%.bas
 set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
@@ -90,9 +89,8 @@ SOURCE=main
 TARGET={TARGET}
 
 LOADADDR=0x0040
-HEAPSIZE=2048
 
-RUNBAS="$BASC $SOURCE.bas --heap $HEAPSIZE"
+RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then

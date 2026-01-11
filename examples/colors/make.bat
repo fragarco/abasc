@@ -12,9 +12,8 @@ set SOURCE=main
 set TARGET=colors
 
 set LOADADDR=0x0040
-set HEAPSIZE=2048
 
-set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas --heap %HEAPSIZE%
+set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
 set RUNDSK=python3 ../../src/utils/dsk.py %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr=%LOADADDR% --start-addr=%LOADADDR%
 
 IF "%1"=="clear" (

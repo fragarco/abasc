@@ -14,9 +14,8 @@ SOURCE=main
 TARGET=cast
 
 LOADADDR=0x0040
-HEAPSIZE=32
 
-RUNBAS="$BASC $SOURCE.bas --heap $HEAPSIZE"
+RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then

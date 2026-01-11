@@ -328,8 +328,6 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 ### Opciones
 
 -   `--version` --- muestra la versión del compilador.
--   `--code` --- dirección de memoria inicial para el código, el punto de inicio del programa. Por defecto, su valor es 0x4000, asegurando que se puedan llamar a las rutinas del Firmware sin peligro.
--   `--heap` --- dirección de inicio del area para gestionar el montículo (heap). Por defecto es 0x0170, de forma que se superponga lo máximo posible con el área ocupada por la ROM del Firmware. Su valor debe ser menor a la dirección de código, ya que también se usa como la dirección de carga inicial para nuestro programa.
 -   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
 -   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
 -   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
@@ -538,11 +536,11 @@ El mapa de memoria de un programa compilado con ABASC es el siguiente:
 
 | Dirección         | Descripción                                                |
 | ----------------- | ---------------------------------------------------------- |
-| **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo). Por defecto, ABASC reserva 2K para el montículo. El valor exacto se puede modificar mediante el flag `--heap`|
-| **\_code\_**      | Comienzo del área para el código de la aplicación. comienza justo después del código de initialización y del montículo. |
-| **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador |
-| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, y que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF) |
-| **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa |
+| **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo).|
+| **\_code\_**      | Comienzo del área para el código de la aplicación. Comienza justo después del código de initialización y del montículo. |
+| **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador. |
+| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, y que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). |
+| **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa. |
 
 Locomotive BASIC incluye una serie de comandos relacionados con la gestión de memoria: `HIMEM`, `MEMORY`, `FRE` y `SYMBOL AFTER`.
 ABASC los soporta, pero su significado varía ligeramente debido al modelo compilado:
@@ -556,7 +554,7 @@ ABASC los soporta, pero su significado varía ligeramente debido al modelo compi
 | **FRE(1)**       | Devuelve la memoria temporal (montículo) disponible en ese instante. |
 | **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
 
-ABASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas). Esta memoría se reserva en el montículo o "heap". Dicho montículo comienza en la zona baja de la memoría (al rededor de la dirección 0x0040) y crece hasta un máximo de 2K por defecto, o el valor indicado mediante el flag `--heap`. Después de cada sentencia, la memoria temporal se libera automáticamente. La única excepción ocurre durante una llamada a `FUNCTION` o `SUB`: la memoria temporal previa a la llamada se preserva para poder restaurar el contexto al regresar.
+ABASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas). Esta memoría se reserva en el montículo o "heap". Dicho montículo comienza en la zona baja de la memoría (al rededor de la dirección 0x0040) y su tamaño máximo se calcula durante la compilación. Después de cada sentencia, la memoria temporal se libera automáticamente. La única excepción ocurre durante una llamada a `FUNCTION` o `SUB`: la memoria temporal previa a la llamada se preserva para poder restaurar el contexto al regresar.
 
 ABASC imprime al acabar de compilar un mensaje con la cantidad máxima de memoria del montículo calculada durante la compilación. Dicho valor puede usarse para ajustar el parámetro utilizado junto al flag `--heap`.
 
