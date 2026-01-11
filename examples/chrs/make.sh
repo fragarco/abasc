@@ -13,11 +13,11 @@ DSK="python3 ../../src/utils/dsk.py"
 SOURCE=main
 TARGET=chrs
 
-HEAPADDR=0x0170
-CODEADDR=0x4000
+LOADADDR=0x0040
+HEAPSIZE=2048
 
-RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $HEAPADDR"
-RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $HEAPADDR --start-addr $CODEADDR"
+RUNBAS="$BASC $SOURCE.bas --heap $HEAPSIZE"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -31,7 +31,7 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
 elif [ "$1" = "dsk" ]; then
-    $RUNBAS && $RUNDSK
+    $RUNBAS $2 $3 && $RUNDSK
 else
     $RUNBAS $@
 fi
