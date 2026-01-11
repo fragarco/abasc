@@ -20,6 +20,9 @@ FOR times=0 TO 10
     PRINT 
     RESTORE LOOPDATA
 NEXT
+PRINT TIME-T!
+
+WHILE INKEY$ = "": WEND
 
 RESTORE DATABLOCK
 FOR j=0 to 5
@@ -27,7 +30,6 @@ FOR j=0 to 5
         READ a(i,j): PRINT i;j,a(i,j)
     NEXT
 NEXT
-PRINT TIME-T!
 END
 
 LABEL DATABLOCK
