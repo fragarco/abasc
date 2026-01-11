@@ -31,8 +31,9 @@ class BasOptimizer:
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
+            # We replace AND and OR by its bitwise Python operators
             command = f'''{repr(node.left.value)}'''   # type: ignore [attr-defined]
-            command += f" {node.op} ".replace("AND", "and").replace("OR", "or").replace("MOD", "%").replace("\\", "//")
+            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "//")
             command += f'''{repr(node.right.value)}''' # type: ignore [attr-defined]
             try:
                 result = eval(command)                 
@@ -62,7 +63,9 @@ class BasOptimizer:
     def _op_CINT(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
-            return AST.Integer(value=int(node.args[0].value + 0.5))
+            fvalue = node.args[0].value
+            roff = -0.5 if fvalue < 0.0 else 0.5
+            return AST.Integer(value=int(fvalue + roff))
         elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
             # Lets use the interger version of TIME
             self.modified = True

@@ -2576,11 +2576,13 @@ f"""
 rt_real2int:
     ld      ix,{FWCALL.MATH_REAL_TO_INT}  ; MATH_REAL_TO_INT
     call    rt_math_call
-    jp      p,$+10
-    ld      de,0
-    xor     a
-    ex      hl,de
-    sbc     hl,de
+    jp      p,$+9
+    xor     a       ; HL = - HL
+    sub     l       ; one byte less then HL = 0 - HL
+    ld      l,a
+    sbc     a,h
+    sub     l
+    ld      h,a
     ret
 """
 ),
