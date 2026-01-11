@@ -13,11 +13,10 @@ DSK="python3 ../../src/utils/dsk.py"
 SOURCE=main
 TARGET=lineinput
 
-HEAPADDR=0x0170
-CODEADDR=0x4000
+LOADADDR=0x0040
 
-RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $HEAPADDR"
-RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $HEAPADDR --start-addr $CODEADDR"
+RUNBAS="$BASC $SOURCE.bas"
+RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 ADDTXT="$DSK $TARGET.dsk --put-ascii TEST.TXT"
 
 if [ "$1" = "clear" ]; then
@@ -32,7 +31,7 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
 elif [ "$1" = "dsk" ]; then
-    $RUNBAS && $RUNDSK && $ADDTXT
+    $RUNBAS $2 $3 && $RUNDSK && $ADDTXT
 else
     $RUNBAS $@
 fi

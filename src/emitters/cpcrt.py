@@ -2906,11 +2906,12 @@ rt_rnd0:
     jr      rt_rnd
 """
 ),
-    "rt_fileinbuf": (["rt_error", "rt_restoreroms"],"",
+    "rt_fileinbuf": (["rt_error", "rt_restoreroms"],
 """
 ; Buffer for content read from files through OPENIN
 rt_fileinbuf: defs 2048
-"""
+""",
+""
 ),
     "rt_fileoutbuf": (["rt_error", "rt_restoreroms"],
 """
@@ -3063,7 +3064,7 @@ __speedwrite_1
     jp      {FWCALL.CAS_SET_SPEED}
 """
 ),
-    "rt_restoreroms": ([],"",
+    "rt_restoreroms": ([],
 f"""
 ; RT_RESTOREROMS
 ; Based on https://www.cpcmania.com/Docs/Programming/Ficheros.htm
@@ -3088,7 +3089,8 @@ __restore_drive:
     ld      hl,(&be7d)             ; because when eneabling AMSDOS the drive
     ld      (hl),a                 ; reverts to 0
     jp      _restoreroms_end       ; jump back without a ret as the stack is empty
-"""
+""",
+""
 ),
     "rt_onsq": ([],
 """
