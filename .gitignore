@@ -170,6 +170,7 @@ extras/
 *.lex
 *.sym
 *.asm
+*.s
 *.bin
 *.lst
 *.map
