@@ -2692,7 +2692,10 @@ __real_round_toint:
     jp      rt_math_call
 """
 ),
-    "rt_timer": ([],"",
+    "rt_timer": ([],
+"""
+rt_timer_blocks: defs 13*4 ; 4 tick blocks (event timer structure is 13 bytes)
+""",
 """
 ; RT_TIMER_GET
 ; Retrieves a AFTER/EVERY data block (tick block). Each tick block has
@@ -2702,7 +2705,6 @@ __real_round_toint:
 ;     B  timer number (0-3)
 ; Outputs:
 ;     HL address to the timer block
-rt_timer_blocks: defs 13*4 ; 4 tick blocks
 rt_timer_get:
     ld      hl,rt_timer_blocks
     ld      de,13       ; Block size
@@ -2712,7 +2714,10 @@ __timerget_loop:
     ret
 """
 ),
-    "rt_fill": ([],"",
+    "rt_fill": ([],
+"""
+rt_fill_buffer: defs 70
+""",
 f"""
 ; RT_FILL
 ; Wrapper for the GRA FILL firmware call in the 664 and 6128
@@ -2721,8 +2726,6 @@ f"""
 ; Outputs:
 ;     None
 ;     AF, BC, DE and HL are modified
-rt_timer_blocks: defs 13*4 ; 4 tick blocks
-rt_fill_buffer: defs 70
 rt_fill:
     ld      a,l
     ld      hl,rt_fill_buffer
