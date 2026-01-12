@@ -2,8 +2,10 @@
 ' of PRINT and INKEY$
 
 CLS
+LABEL start
 PRINT "Select Yes or No (Y/N)?"
 tries = 0
+
 LABEL mainloop
     a$=INKEY$
     IF a$="" THEN GOTO mainloop
@@ -17,12 +19,12 @@ LABEL endyes
     PRINT "You have selected YES ";
     PRINT "after ";tries;" tries"
     tries = 0
-    GOTO mainloop
+    GOTO start
 
 LABEL endno
     PRINT "You have selected NO ";
     PRINT "after ";tries;" tries"
     tries = 0
-    GOTO mainloop
+    GOTO start
 
 
