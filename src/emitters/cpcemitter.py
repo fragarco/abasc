@@ -578,11 +578,9 @@ class CPCEmitter:
         to verify a program that has just been saved before altering the program
         memory. 
         """
-        self._emit_import("rt_malloc")
+        self._emit_import("rt_fileinbuf")
         self._emit_code("; CAT")
-        self._emit_code("ld      bc,2048", info="buffer used by the firmware")
-        self._emit_code("call    rt_malloc")
-        self._emit_code("ex      de,hl", info="buffer address in DE")
+        self._emit_code("ld      de,rt_fileinbuf", info="buffer address in DE")
         self._emit_code(f"call    {FWCALL.CAS_CATALOG}")
         self._emit_code(";")
 

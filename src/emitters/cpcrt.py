@@ -2908,7 +2908,7 @@ rt_rnd0:
 ),
     "rt_fileinbuf": (["rt_error", "rt_restoreroms"],
 """
-; Buffer for content read from files through OPENIN
+; Buffer for content read from files through OPENIN or CAT
 rt_fileinbuf: defs 2048
 """,
 ""
@@ -3064,7 +3064,7 @@ __speedwrite_1
     jp      {FWCALL.CAS_SET_SPEED}
 """
 ),
-    "rt_restoreroms": ([],
+    "rt_restoreroms": ([],"",
 f"""
 ; RT_RESTOREROMS
 ; Based on https://www.cpcmania.com/Docs/Programming/Ficheros.htm
@@ -3081,7 +3081,7 @@ rt_restoreroms:
     ld      (__restore_drive+1),a  ; self-modifying code
     ld      c,&ff                  ; disable all roms
     ld      hl, __restore_start    ; execution address for program
-    call    {FWCALL.MC_START_PROGRAM}                  ; MC_STRART_PROGRAM
+    call    {FWCALL.MC_START_PROGRAM}                  ; MC_START_PROGRAM
 __restore_start: db 0
     call    {FWCALL.KL_ROM_WALK}                  ; KL_ROM_WALK to initialize all roms 
 __restore_drive: 
@@ -3089,8 +3089,7 @@ __restore_drive:
     ld      hl,(&be7d)             ; because when eneabling AMSDOS the drive
     ld      (hl),a                 ; reverts to 0
     jp      _restoreroms_end       ; jump back without a ret as the stack is empty
-""",
-""
+"""
 ),
     "rt_onsq": ([],
 """
