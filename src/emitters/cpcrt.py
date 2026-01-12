@@ -1500,12 +1500,12 @@ rt_strfill:
 ;     HL points to the target string
 ;     AF, HL, DE and B are modified
 rt_upper:
-    push    de  ; Save string address
     ld      a,(hl)
     ld      (de),a
     or      a
     ret     z
     ld      b,a
+    push    de  ; Save string address
     inc     hl 
     inc     de  
 __upper_loop:                    
@@ -1537,12 +1537,12 @@ __upper_next:
 ;     HL points to the target string
 ;     AF, HL, DE and B are modified
 rt_lower:
-    push    de  ; Save string address
     ld      a,(hl)
     ld      (de),a
     or      a
     ret     z
     ld      b,a
+    push    de  ; Save string address
     inc     hl 
     inc     de  
 __lower_loop:                    
