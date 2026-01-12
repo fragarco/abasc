@@ -14,9 +14,8 @@ SOURCE=main
 TARGET=real
 
 LOADADDR=0x0040
-CODEADDR=0x4000
 
-RUNBAS="$BASC $SOURCE.bas --code $CODEADDR --heap $LOADADDR"
+RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 
 if [ "$1" = "clear" ]; then
@@ -31,7 +30,7 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
 elif [ "$1" = "dsk" ]; then
-    $RUNBAS && $RUNDSK
+    $RUNBAS $2 $3 && $RUNDSK
 else
     $RUNBAS $@
 fi
