@@ -14,11 +14,10 @@ set DSK=python3 "..\..\..\..\src\utils\dsk.py"
 set SOURCE=main
 set TARGET=box
 
-set HEAPADDR=0x0170
-set CODEADDR=0x4000
+set LOADADDR=0x0040
 
-set RUNBAS=%BASC% %SOURCE%.bas --code %CODEADDR% --heap %HEAPADDR%
-set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %HEAPADDR% --start-addr %CODEADDR%
+set RUNBAS=%BASC% %SOURCE%.bas
+set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
