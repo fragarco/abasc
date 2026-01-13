@@ -163,7 +163,7 @@ ABASC: USER MANUAL
     - [`RIGHT$(string, n)`](#rightstring-n)
     - [`RND[(0)]`](#rnd0)
     - [`ROUND(x[,n])`](#roundxn)
-    - [`RUN label or file`](#run-label-or-file)
+    - [`RUN [label | file]`](#run-label--file)
     - [`SAVE file[,type][,address,size[,entry]]`](#save-filetypeaddresssizeentry)
     - [`SGN(x)`](#sgnx)
     - [`SIN(x)`](#sinx)
@@ -722,7 +722,7 @@ PRINT CINT(PI)
 
 ### `CLEAR`
 
-**Command**. Originally in BASIC, this cleared all variables, the text memory area, closed open files, and reset angle mode to `RAD`. In ABASC, only the last two actions are performed.
+**Command**. This command sets all numeric variables to 0 and strings to "", closes open files, and resets angle mode to `RAD`.
 
 ### `CLEAR INPUT`
 
@@ -1744,9 +1744,9 @@ NEXT
 PRINT ROUND(PI, -3)
 ```
 
-### `RUN label or file`
+### `RUN [label | file]`
 
-**Command.** In Locomotive BASIC, this command runs the program already in memory starting at the specified `label`, or loads a program from `file` and executes it from the beginning. ABASC only supports the first form: it simply jumps to `label` as if executing a `GOTO`.
+**Command.** In Locomotive BASIC, this command runs the program already in memory from the beginning (no argument), starts the program in memory at the specified `label`, or loads a program from `file` and executes it from the beginning. ABASC only supports the first two forms. Bedore jumping to the start or the `label`, ABASC executes a `CLEAR` command to ensure some consistency between executions.
 
 ### `SAVE file[,type][,address,size[,entry]]`
 

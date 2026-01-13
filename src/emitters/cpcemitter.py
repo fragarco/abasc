@@ -647,10 +647,11 @@ class CPCEmitter:
         arrays and user functions are erased, and BASIC is set to radians mode
         of calculation. 
         """
-        # Only set RAD and file closing actions are performed here
         self._emit_import("rt_math_call")
+        self._emit_import("rt_reset_vars")
         self._emit_code("; CLEAR")
         self._emit_pushcontext()
+        self._emit_code("call    rt_reset_vars", info="Fill all vars data area with 0s")
         self._emit_code("xor     a")
         self._emit_code(f"ld      ix,{FWCALL.MATH_SET_ANGLE_MODE}", info="SET_ANGLE_MODE")
         self._emit_code("call    rt_math_call")
@@ -3037,7 +3038,10 @@ class CPCEmitter:
         """
         Loads a program (BASIC or binary) from disc or tape and start executing it.
         """
+        self._emit_import("rt_reset_vars")
         self._emit_code("; RUN [<str_expression> | <int_expression>]")
+        self._emit_code("call    rt_reset_vars")
+        self._emit_code(f"call    {FWCALL.CAS_INITIALISE}", info="CAS_INITIALISE")
         if len(node.args) == 0:
             self._emit_code("jp      _code_")
         elif isinstance(node.args[0], AST.Integer):
@@ -4529,8 +4533,11 @@ class CPCEmitter:
 
         program = program + self.data[DataSec.GEN] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
+        program = program + "_data_constants_end_:\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"
+        program = program + "_data_variables_end_:\n"
         program = program + "_data_datablock_:\n" + self.data[DataSec.DATA] + "\n"
+        program = program + "_data_datablock_end_:\n"
         if self.rtvars != "":
             program = program + "_data_runtime_vars_:\n" + self.rtvars + "\n"
         program = program + "_data_end_:\n"   

@@ -163,7 +163,7 @@ ABASC: MANUAL DEL USUARIO
     - [`RIGHT$(cadena,n)`](#rightcadenan)
     - [`RND[(0)]`](#rnd0)
     - [`ROUND(x[,n])`](#roundxn)
-    - [`RUN etiqueta o fichero`](#run-etiqueta-o-fichero)
+    - [`RUN [etiqueta | fichero]`](#run-etiqueta--fichero)
     - [`SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`](#save-ficherotipodireccióntamañoentrada)
     - [`SGN(x)`](#sgnx)
     - [`SIN(x)`](#sinx)
@@ -724,7 +724,7 @@ PRINT CINT(PI)
 
 ### `CLEAR`
 
-Comando. Originalmente, fijaba todas las variables a 0, limpiaba la zona de memoria para cadenas de texto, cerraba cualquier fichero abierto y volvia a poner el modo para angulos a `RAD`. Con ABASC, solo se llevan a cabo las dos últimas acciones indicadas.
+Comando. Fija todas las variables numéricas a 0 y los strings a "", cierra cualquier fichero abierto y vuelve a poner el modo para angulos a `RAD`.
 
 ### `CLEAR INPUT`
 
@@ -1720,9 +1720,9 @@ NEXT
 PRINT ROUND(PI,-3)
 ```
 
-### `RUN etiqueta o fichero`
+### `RUN [etiqueta | fichero]`
 
-Comando. En BASIC este comando permite ejecutar un programa en memoria desde la `etiqueta` indicada o carga el programa desde `fichero` y lo ejecuta desde el principio. ABASC solo soporta la primera de las versiones, haciendo que el programa salte a `etiqueta` como si se tratara de un `GOTO`.
+Comando. En BASIC este comando permite ejecutar desde el principio el programa actualmente en memoria (sin argumentos), ejecutar un programa en memoria desde la `etiqueta` indicada o carga un programa desde `fichero` y lo ejecuta desde el principio. ABASC solo soporta las dos primeras formas. En ambas, ejecuta un `CLEAR` antes de saltar al principio del programa o la `etiqueta` indicada para asegurar cierta consistencia entre ejecuciones.
 
 ### `SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`
 

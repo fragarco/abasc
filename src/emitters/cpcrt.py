@@ -624,7 +624,7 @@ __strcmp_loop:
 __strcmp_end:
     pop     de
     pop     hl
-    ret\
+    ret
 """
 ),
     "rt_strreplace": ([],"",
@@ -3062,6 +3062,25 @@ __speedwrite_1
     ld      hl,107
     ld      a,50
     jp      {FWCALL.CAS_SET_SPEED}
+"""
+),
+    "rt_reset_vars": ([],"",
+"""
+; RT_RESET_VARS
+; Fills with 0 all memory area between the labels
+; _data_variables_ and _data_variables_end_
+; Inputs:
+;   None
+; Outputs:
+;   None
+;   AF, HL, DE and BC are modified
+rt_reset_vars:
+    ld      bc,_data_variables_end_ - _data_variables_ - 1
+    ld      hl,_data_variables_
+    ld      de,_data_variables_ + 1
+    ld      (hl),0
+    ldir
+    ret
 """
 ),
     "rt_restoreroms": ([],"",
