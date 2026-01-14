@@ -121,9 +121,26 @@ class SymTable:
             for ftype in [SymType.Function, SymType.Procedure]:
                 keyfun = self._code_symtype(context, ftype)
                 if keyfun in self.syms:
-                    return self.syms[keyfun].locals.add(ident, info, prefix=context)
+                    return self.syms[keyfun].locals.add(ident, info, context="", prefix=context)
         return False
-        
+
+    def add_shared(self, ident: str, info: SymEntry, context: str) -> bool:
+        """ 
+        Allows programs to bind a local variable in a SUB or FUNCTION routine
+        to a global variable.
+        """
+        ident = ident.upper()
+        context = context.upper()
+        if context != "":
+            # Add the bind in the local context pointing to a global variable (prefix = "")
+            for ftype in [SymType.Function, SymType.Procedure]:
+                keyfun = self._code_symtype(context, ftype)
+                if keyfun in self.syms:
+                    keyident = self._code_symtype(ident, info.symtype)
+                    if keyident not in self.syms[keyfun].locals.syms:
+                        return self.syms[keyfun].locals.add(ident, info, "", "")
+        return False
+
     def find(self, ident: str, stype: SymType, context: str = "") -> Optional[SymEntry]:
         if "$." in ident:
             # check for Record pattern
@@ -153,6 +170,7 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
         data = syms[s]
         info = {
             "symtype": data.symtype,
+            "symlabel": data.label,
             "exptype": data.exptype,
             "writes":  data.writes,
             "calls": data.calls,

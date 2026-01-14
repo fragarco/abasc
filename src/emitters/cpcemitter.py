@@ -228,9 +228,13 @@ class CPCEmitter:
             self._emit_startup("call    rt_restoreroms")
             self._emit_startup("_restoreroms_end:", 0)
 
-    def _emit_symbols(self, syms: dict[str, SymEntry]):
+    def _emit_symbols(self, syms: dict[str, SymEntry], parent: SymEntry | None = None):
         for sym in syms:
             entry = syms[sym]
+            if entry.label[0:2] == "G_" and parent is not None:
+                # This is a global variable included in a Function or Sub context
+                # with SHARED
+                continue
             if entry.symtype == SymType.Variable:
                 self._emit_vardecl(entry)
             elif entry.symtype == SymType.Array:
@@ -242,9 +246,9 @@ class CPCEmitter:
                 lastchar = ord(sym[-1]) + 128
                 self._emit_data(f'{entry.label}: db "{sym[4:-1]}",{lastchar}')
             elif entry.symtype == SymType.Function:
-                self._emit_symbols(entry.locals.syms)
+                self._emit_symbols(entry.locals.syms, entry)
             elif entry.symtype == SymType.Procedure:
-                self._emit_symbols(entry.locals.syms)
+                self._emit_symbols(entry.locals.syms, entry)
 
     def _emit_vardecl(self, entry: SymEntry):
         self._emit_data(f"{entry.label}: defs {entry.datasz}", section=DataSec.VARS)
@@ -1431,7 +1435,7 @@ class CPCEmitter:
             self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
             self._emit_code("ld      de,_program_end_")
         else: # should be isinstance(arg, AST.Integer)
-            if arg.value == 1:
+            if arg.etype == AST.ExpType.Integer and arg.value == 1: #type: ignore [attr-defined]
                 # Current free temporal memory
                 self._emit_code("ld      hl,_startup_")
                 self._emit_code("ld      de,(_memory_next)")
@@ -3102,6 +3106,18 @@ class CPCEmitter:
             self._emit_code("call    rt_realsgn")
             self._emit_popcontext()
         self._emit_code(";")
+
+    def _emit_SHARED(self, node:AST.Command):
+        """
+        Imported from Locomotive BASIC 2 Plus
+        Sometimes is necessary to allow routines to access global variables declared
+        in the main program. This can be done by declaring the variable in the routine
+        as SHARED. The use of brackets at the end of the ident name means that the
+        variable is an array.
+        """
+        self._emit_code("; SHARED list of: <string ident[[]] > | <ident>[[]] ")
+        self._emit_code(";")
+        pass
 
     def _emit_SIN(self, node:AST.Function):
         """

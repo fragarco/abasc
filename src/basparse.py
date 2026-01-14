@@ -2088,6 +2088,62 @@ class LocBasParser:
         return AST.Function(name="SGN", etype=AST.ExpType.Integer, args=args)
 
     @astnode
+    def _parse_SHARED(self) -> AST.Command:
+        """ <SHARED> ::= IDENT | ARRAY[], [IDENT | ARRAY[]]* """
+        # This allows the user to signal a variable or array inside a sub or
+        # function as a global variable and not local one.
+        # Added from Locomotive BASIC 2 PLUS
+        self._advance()
+        args: list[AST.Statement] = []
+        while True:
+            tk = self._expect(TokenType.IDENT)
+            var = tk.lexeme
+            vartype = AST.exptype_fromname(var)
+            datasz = AST.exptype_memsize(vartype)
+            added = False
+            if self._current_is(TokenType.LBRACK):
+                self._advance()
+                self._expect(TokenType.RBRACK)
+                entry = self.symtable.find(var, SymType.Array)
+                if entry is None:
+                    self._raise_error(2, tk, "undefined global array")
+                else:
+                    added = self.symtable.add_shared(
+                        ident=var,
+                        info=SymEntry(
+                            symtype=SymType.Array,
+                            exptype=entry.exptype,
+                            locals=SymTable(),
+                            nargs=entry.nargs,
+                            indexes=entry.indexes,
+                            datasz=entry.datasz
+                        ),
+                        context=self.context
+                    )
+            else:
+                entry = self.symtable.find(var, SymType.Variable, context=self.context)
+                if "$." in var:
+                    self._raise_error(2, tk, info="unexpected record access")
+                added = self.symtable.add_shared(
+                    ident=var,
+                    info=SymEntry(
+                        symtype=SymType.Variable,
+                        exptype=vartype,
+                        locals=SymTable(),
+                        datasz=datasz
+                    ),
+                    context=self.context
+                )
+            if not added:
+                self._raise_error(2, tk, info="variable already declared")
+            args.append(AST.Variable(var, vartype))
+            if self._current_is(TokenType.COMMA):
+                self._advance()
+            else:
+                break
+        return AST.Command(name="SHARED", args=args)
+
+    @astnode
     def _parse_SIN(self) -> AST.Function:
         """ <SIN> ::= SIN(<num_expression>) """
         self._advance()
@@ -2218,7 +2274,7 @@ class LocBasParser:
         tk = self._advance()
         if self.context != "":
             # is not possible to define new functions or procs in the body of another
-            self._raise_error(2, tk)
+            self._raise_error(2, tk, "routine defined inside another routine body")
         tk = self._expect(TokenType.IDENT)
         pname = "SUB" + tk.lexeme.upper()
         pargs: list[AST.Variable] = []
@@ -2946,7 +3002,7 @@ class LocBasParser:
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
             # have to add them to the symtable now
-            self.symtable.add(
+            added = self.symtable.add(
                 ident=target.name,
                 info=SymEntry(
                     SymType.Variable,
@@ -2956,6 +3012,8 @@ class LocBasParser:
                 ),
                 context=self.context
             )
+            if not added:
+                self._raise_error(2, tk)
         return AST.Assignment(target=target, source=source, etype=target.etype)
 
     def _parse_RSX(self) -> AST.RSX:
