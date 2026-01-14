@@ -25,7 +25,7 @@ IF "%1"=="clear" (
     IF EXIST "%SOURCE%.ast" del "%SOURCE%.ast"
     IF EXIST "%SOURCE%.sym" del "%SOURCE%.sym"
     IF EXIST "%SOURCE%.asm" del "%SOURCE%.asm"
-    IF EXIST "%SOURCE%.asm" del "%SOURCE%.s"
+    IF EXIST "%SOURCE%.s"   del "%SOURCE%.s"
     IF EXIST "%SOURCE%.lst" del "%SOURCE%.lst"
     IF EXIST "%SOURCE%.map" del "%SOURCE%.map"
     IF EXIST "%SOURCE%.bin" del "%SOURCE%.bin"

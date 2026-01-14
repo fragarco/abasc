@@ -33,7 +33,7 @@ CHAIN MERGE "cpctelera/firmware.bas"
 CHAIN MERGE "cpctelera/sprites.bas"
 
 call cpctRemoveInterruptHandler()
-call cpctClearScreen(&03)
+call cpctClearScreen(&00)
 
 ' Lets draw some boxes
 
