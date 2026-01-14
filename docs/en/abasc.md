@@ -166,6 +166,7 @@ ABASC: USER MANUAL
     - [`RUN [label | file]`](#run-label--file)
     - [`SAVE file[,type][,address,size[,entry]]`](#save-filetypeaddresssizeentry)
     - [`SGN(x)`](#sgnx)
+    - [`SHARED variable | array [,variable | array]`](#shared-variable--array-variable--array)
     - [`SIN(x)`](#sinx)
     - [`SOUND channel,period,duration,volume,env,ent,noise`](#sound-channelperioddurationvolumeenventnoise)
     - [`SPACE$(n)`](#spacen)
@@ -1773,13 +1774,29 @@ PAPER 0
 CLS
 LOAD "pantalla.bin"
 ```
-
 ### `SGN(x)`
 
 **Function.** Returns **–1** if `x` is less than 0, **0** if `x` is exactly 0, and **1** if `x` is greater than 0.
 
 ```basic
 PRINT SGN(PI)
+```
+
+### `SHARED variable | array [,variable | array]`
+
+This command is imported from Locomotive BASIC 2 Plus. Sometimes is necessary to allow routines to access global variables declared in the main program. This can be done by declaring the variable in the routine as SHARED. The use of brackets at the end of the ident name means that the variable is an array.
+
+```basic
+DIM vec(3)
+
+SUB setvec()
+    SHARED vec[]
+    vec(0) = 1
+    vec(1) = 2
+    vec(2) = 3
+END SUB
+
+call setvec()
 ```
 
 ### `SIN(x)`

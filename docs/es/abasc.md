@@ -166,6 +166,7 @@ ABASC: MANUAL DEL USUARIO
     - [`RUN [etiqueta | fichero]`](#run-etiqueta--fichero)
     - [`SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`](#save-ficherotipodireccióntamañoentrada)
     - [`SGN(x)`](#sgnx)
+    - [`SHARED variable | array [,variable | array]`](#shared-variable--array-variable--array)
     - [`SIN(x)`](#sinx)
     - [`SOUND canal,perido-tono,duracion,volumen,env,ent,ruido`](#sound-canalperido-tonoduracionvolumenenventruido)
     - [`SPACE$(n)`](#spacen)
@@ -1756,6 +1757,22 @@ Función. Devuelve -1 si `x` es menor que 0, devuelve 0 si `x`es igual a 0 o dev
 
 ``` basic
 PRINT SGN(PI)
+```
+### `SHARED variable | array [,variable | array]`
+
+Este comando proviene del Locomotive BASIC 2 Plus. Permite que desde una rutina (SUB o FUNCTION) se referencie y utilice una variable global del programa. Si el nombre de la variable termina en corchetes, se interpreta que la variable a la que se quiere acceder es un array declarado con `DIM`.
+
+```basic
+DIM vec(3)
+
+SUB setvec()
+    SHARED vec[]
+    vec(0) = 1
+    vec(1) = 2
+    vec(2) = 3
+END SUB
+
+call setvec()
 ```
 
 ### `SIN(x)`
