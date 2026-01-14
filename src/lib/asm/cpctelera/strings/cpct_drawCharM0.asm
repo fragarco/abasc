@@ -21,9 +21,9 @@
 ;;
 ;; Include constants and general values
 ;;
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
-read 'cpctelera/strings/cpct_drawCharM0_inner.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM0_inner.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -115,8 +115,8 @@ read 'cpctelera/strings/cpct_drawCharM0_inner.asm'
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
 
 cpct_drawCharM0:
    ;; Enable Lower ROM during char copy operation, with interrupts disabled 

@@ -92,8 +92,8 @@
 
 ;; Global symbols
 ;;
-read 'cpctelera/macros/cpct_maths.asm'
-read 'cpctelera/strings/cpct_drawCharM2_inner.asm'   ;; defines cpct_charm2imc
+read 'asm/cpctelera/macros/cpct_maths.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM2_inner.asm'   ;; defines cpct_charm2imc
 
 cpct_setDrawCharM2:
    ;; Calculate offset inside the MC table where the machine code to be copied starts

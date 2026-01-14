@@ -28,8 +28,8 @@
 ;; Include constants and general values
 ;;
 
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

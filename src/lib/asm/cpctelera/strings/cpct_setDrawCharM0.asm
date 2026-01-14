@@ -20,8 +20,8 @@
 
 ;; Global symbols
 ;;
-read 'cpctelera/strings/cpct_dc_mode0_ct.asm'
-read 'cpctelera/strings/cpct_drawCharM0_inner.asm'
+read 'asm/cpctelera/strings/cpct_dc_mode0_ct.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM0_inner.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

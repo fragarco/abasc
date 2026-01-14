@@ -122,9 +122,9 @@
 ;;    L = Length of the string (excluding null-terminator character)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/strings/cpct_drawCharM2_inner.asm'
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM2_inner.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
 
 cpct_drawStringM2:
    ;; Enable Lower ROM during char copy operation, with interrupts disabled 

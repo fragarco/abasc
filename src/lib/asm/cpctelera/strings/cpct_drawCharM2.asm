@@ -83,7 +83,7 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/strings/cpct_drawCharM2_inner.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM2_inner.asm'
 
 cpct_drawCharM2:
    ;; Enable Lower ROM during char copy operation, with interrupts disabled 

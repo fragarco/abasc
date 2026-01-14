@@ -18,8 +18,8 @@
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read "cpctelera/strings/strings.asm"
-read "cpctelera/strings/cpct_drawCharM0_inner.asm"
+read "asm/cpctelera/strings/strings.asm"
+read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -116,8 +116,8 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/strings/cpct_drawCharM1_inner.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM1_inner.asm'
 
 cpct_drawCharM1:
    ;; Enable Lower ROM during char copy operation, with interrupts disabled 

@@ -22,7 +22,7 @@
 ;; Include constants and general values
 ;;
 
-read "cpctelera/macros/cpct_undocumentedOpcodes.asm"
+read "asm/cpctelera/macros/cpct_undocumentedOpcodes.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

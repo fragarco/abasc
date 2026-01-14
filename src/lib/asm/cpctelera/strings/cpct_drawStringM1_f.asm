@@ -22,7 +22,7 @@
 ;; Include constants and general values
 ;;
 
-read 'cpctelera/strings/cpct_drawCharM1_f.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM1_f.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

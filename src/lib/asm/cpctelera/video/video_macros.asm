@@ -320,13 +320,7 @@ endm
 ;; argument, which identifies the border).
 ;;
 macro cpctm_setBorder HWC
-   .radix h
-   cpctm_setBorder_raw HWC ;; [28] Macro that does the job, but requires a number value to be passed
-   .radix d
-endm
-
-macro cpctm_setBorder_raw _HWC_
-   ld   hl, #0x_HWC_10         ;; [3]  H=Hardware value of desired colour, L=Border INK (16)
+   ld   hl,(HWC << 8) + 16 ;; [3]  H=Hardware value of desired colour L=Border INK (16)
    call cpct_setPALColour  ;; [25] Set Palette colour of the border
 endm
 
@@ -371,7 +365,7 @@ endm
 macro cpctm_clearScreen COL
    ld    hl, &C000      ;; [3] HL Points to Start of Video Memory
    ld    de, &C001      ;; [3] DE Points to the next byte
-   ld    bc, (&4000-1)  ;; [3] BC = 16383 bytes to be copied
+   ld    bc, &3FFF      ;; [3] BC = 16383 bytes to be copied
    ld   (hl), COL       ;; [3] First Byte = given Colour
    ldir                 ;; [98297] Perform the copy
 endm

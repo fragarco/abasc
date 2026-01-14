@@ -18,9 +18,9 @@
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read 'cpctelera/strings/strings.asm'
-read 'cpctelera/strings/cpct_drawCharM1_inner.asm'
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/strings/strings.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM1_inner.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
