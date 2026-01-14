@@ -11,3 +11,9 @@ SUB cpctClearScreen(color) ASM
     ASM "cpctm_clearScreen a"
     ASM "ret"
 END SUB
+
+SUB cpctSetVideoMode(vmode) ASM
+    ASM "ld      c,(ix+0)"
+    ASM "jp      cpct_setVideoMode"
+    ASM "read 'asm/cpctelera/video/cpct_setVideoMode.asm'"
+END SUB
