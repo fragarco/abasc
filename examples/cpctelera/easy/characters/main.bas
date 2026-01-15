@@ -29,7 +29,7 @@ DIM maxcol(2)        ' Number of colour each mode has (0 = 16, 1 = 4, 2 = 2)
 DIM incs(2)          ' Byte increment for each mode
 
 maxcol(0) = 16: maxcol(1) = 4: maxcol(2) = 2
-incs(0) = 4: incs(1) = 2: incs(0) = 1
+incs(0) = 4: incs(1) = 2: incs(2) = 1
 
 ' This function calculates next video memory location, cycling pointer
 ' when it exceedes the end of standard screen video memory
