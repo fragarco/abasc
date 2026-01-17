@@ -467,11 +467,11 @@ label MAIN
 end
 ```
 
-Variables declared inside a procedure—using `DECLARE`, `DIM`, by assigning to them, or by using them in `INPUT`, `READ`, or `LINE INPUT`—are always local and cannot be accessed from outside the procedure. Global variables, on the other hand, may be used inside a procedure but only in read-only mode (for example, as part of an expression or as parameters to another function).
+Variables declared inside a procedure—using `DECLARE`, `DIM`, by assigning to them, or by using them in `INPUT`, `READ`, or `LINE INPUT`—are always local and cannot be accessed from outside the procedure. Global variables, on the other hand, may be used inside a procedure but only if they are referenced through the use of `SHARED` at the beginning of the routine body.
 
-Regarding parameter passing semantics, integers are passed **by value**, while strings and real numbers are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter two cases, the procedure may modify the original variable.
+Regarding parameter passing semantics, integers are passed **by value**, while strings and real numbers are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter two cases, the procedure may modify the original variable. Arrays can not be declared as parameters but can be referenced in `SHARED` sentences.
 
-**NOTE ON RECURSION:** ABASC does not support recursion. As with global variables, local variables reserve memory at compile time. Because of this, the code is not reentrant, making recursive calls impossible.
+**NOTE ON RECURSION:** ABASC does not support recursion because local variables reserve memory at compile time in the stack. Because of this, the code is not reentrant, making recursive calls impossible.
 
 ## Using Assembly Code
 
@@ -1784,7 +1784,7 @@ PRINT SGN(PI)
 
 ### `SHARED variable | array [,variable | array]`
 
-This command is imported from Locomotive BASIC 2 Plus. Sometimes is necessary to allow routines to access global variables declared in the main program. This can be done by declaring the variable in the routine as SHARED. The use of brackets at the end of the ident name means that the variable is an array.
+This command is imported from Locomotive BASIC 2 Plus. Sometimes is necessary to allow routines to access global variables declared in the main program. This can be done by declaring the variable in the routine as SHARED. The use of brackets at the end of the variable name means that the variable is an array.
 
 ```basic
 DIM vec(3)

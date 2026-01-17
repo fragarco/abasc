@@ -70,6 +70,7 @@ class CPCEmitter:
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
+        self.selectblocks: list[AST.SelectCase] = []
         self.symbolafter = 9999
         self.memlimit = 99999
         self.memstacks: list[tuple[bool,int]] = []
@@ -360,6 +361,19 @@ class CPCEmitter:
         self.constants +=1
         return f"__on_jump_{self.constants}"
 
+    def _set_select_case_labels(self, node:AST.SelectCase) -> None:
+        node.case_labels = []
+        node.def_label = ""
+        self.constants +=1
+        node.var_label = f"select_case{self.constants}"
+        self._emit_data(f"{node.var_label}: dw 0", section=DataSec.VARS)
+        for i in range(node.options):
+            node.case_labels.append(f"__selectcase{self.constants}_case{i}")
+        if node.defaultcase:
+            node.def_label = f"__selectcase{self.constants}_default"
+        self.constants += 1
+        node.end_label = f"__selectcase{self.constants}_end"
+            
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
@@ -573,6 +587,42 @@ class CPCEmitter:
                 self._emit_code("pop     de")
             self._emit_popcontext()
         self._emit_code(";")
+
+    def _emit_CASE(self, node:AST.Command):
+        if len(self.selectblocks):
+            sel = self.selectblocks[-1]
+            self._emit_code("; CASE <int_expression>")
+            if sel.currentopt != 0:
+                self._emit_code(f"jp      {sel.end_label}")
+            label = sel.case_labels[sel.currentopt]
+            self._emit_code(f"{label}:")
+            self._emit_expression(node.args[0])
+            self._emit_code(f"ld      de,({sel.var_label})")
+            self._emit_code("or      a")
+            self._emit_code("sbc     hl,de")
+            sel.currentopt += 1
+            if sel.currentopt < sel.options:
+                self._emit_code(f"jp      nz,{sel.case_labels[sel.currentopt]}")
+            else:
+                if sel.defaultcase:
+                    self._emit_code(f"jp      nz,{sel.def_label}")
+                else:
+                    self._emit_code(f"jp      nz,{sel.end_label}")
+            self._emit_code(";")
+        else:
+            self._raise_error(2, node, "unexpected CASE")
+
+    def _emit_CASE_DEFAULT(self, node:AST.Command):
+        if len(self.selectblocks):
+            self._emit_code("; CASE DEFAULT")
+            sel = self.selectblocks[-1]
+            if sel.currentopt != sel.options:
+                self._raise_error(2, node, "CASE DEAFULT must be the last option")
+            self._emit_code(f"jp      {sel.end_label}")
+            self._emit_code(f"{sel.def_label}:")
+            self._emit_code(";")
+        else:
+            self._raise_error(2, node, "unexpected CASE DEFAULT")
 
     def _emit_CAT(self, node:AST.Command):
         """
@@ -1648,6 +1698,15 @@ class CPCEmitter:
             self._emit_code(";")
         else:
             self._raise_error(36, node)
+
+    def _emit_END_SELECT(self, node:AST.BlockEnd):
+        if len(self.selectblocks):
+            sel = self.selectblocks.pop()
+            self._emit_code("; END SELECT")
+            self._emit_code(f"{sel.end_label}:")
+            self._emit_code(";")
+        else:
+            self._raise_error(46, node)
 
     def _emit_END_SUB(self, node:AST.Command):
         """
@@ -3087,6 +3146,17 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
+    def _emit_SELECT_CASE(self, node:AST.SelectCase):
+        """
+        """
+        self._emit_code("; SELECT CASE <int_expression>")
+        self._set_select_case_labels(node)
+        node.currentopt = 0
+        self._emit_expression(node.condition)
+        self._emit_code(f"ld      ({node.var_label}),hl")
+        self.selectblocks.append(node)
+        self._emit_code(";")
+
     def _emit_SGN(self, node:AST.Function):
         """
         Determines the sign of the <numeric expression>. Returns -1 if
@@ -3116,6 +3186,14 @@ class CPCEmitter:
         variable is an array.
         """
         self._emit_code("; SHARED list of: <string ident[[]] > | <ident>[[]] ")
+        # Lets check that the identifiers exists in the global context
+        for arg in node.args:
+            if isinstance(arg, AST.Variable):
+                entry = self.symtable.find(arg.name, SymType.Variable)
+                if entry is None:
+                    entry = self.symtable.find(arg.name, SymType.Array)
+                if entry is None:
+                    self._raise_error(38, node)
         self._emit_code(";")
         pass
 
@@ -4335,7 +4413,9 @@ class CPCEmitter:
                 self._emit_code("ld      c,(hl)")
                 self._emit_code("inc     c")
                 self._emit_code("ldir")
-    
+        else:
+            self._raise_error(38, node)
+
     def _emit_assigment_record(self, node: AST.Variable):
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
@@ -4431,6 +4511,8 @@ class CPCEmitter:
             self._emit_ELSE(node)
         elif node.name == "END IF":
             self._emit_END_IF(node)
+        elif node.name == "END SELECT":
+            self._emit_END_SELECT(node)
         else:
             self._raise_error(2, node, "not implemented yet")
 
@@ -4488,6 +4570,8 @@ class CPCEmitter:
             self._emit_FOR(stmt)
         elif isinstance(stmt, AST.WhileLoop):
             self._emit_WHILE(stmt)
+        elif isinstance(stmt, AST.SelectCase):
+            self._emit_SELECT_CASE(stmt)
         elif isinstance(stmt, AST.BlockEnd):
             self._emit_blockend(stmt)
         elif isinstance(stmt, AST.Data):

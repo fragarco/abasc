@@ -77,11 +77,12 @@ class TestSymTable(unittest.TestCase):
         # I is available in the local context
         sym = symt.find(ident="I", stype=SymType.Variable, context="FNpow")
         self.assertTrue(sym is not None)
-        # Global A is avaiable in the local context
+        # Global A is not avaiable in the local context
         symt.add(ident="A", info=info, context="")
-        sym1 = symt.find(ident="A", stype=SymType.Variable, context="FNpow")
-        sym2 = symt.find(ident="A", stype=SymType.Variable, context="")
-        self.assertEqual(sym1, sym2)
+        sym = symt.find(ident="A", stype=SymType.Variable, context="FNpow")
+        self.assertTrue(sym is None)
+        sym = symt.find(ident="A", stype=SymType.Variable, context="")
+        self.assertTrue(sym is not None)
 
     def test_local_precedence(self):
         symt = SymTable()

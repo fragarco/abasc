@@ -417,6 +417,32 @@ class WhileLoop(Statement):
         d["condition"] = self.condition.to_json()
         return d
 
+class SelectCase(Statement):
+    condition: Statement
+    options: int
+    defaultcase: bool
+    var_label: str         # used during code generation 
+    case_labels: list[str] # used during code generation
+    def_label: str         # used during code generation 
+    end_label: str         # used during code generation
+    currentopt: int        # used during code generation
+
+    def __init__(self, condition: Statement):
+        super().__init__(etype=ExpType.Void, id="SelectCase")
+        self.condition = condition
+        self.options = 0
+        self.defaultcase = False
+        self.end_label = ""
+        self.start_label = ""
+        self.currentopt = 0
+
+    def to_json(self) -> dict:
+        d = super().to_json()
+        d["condition"] = self.condition.to_json()
+        d["options"] = self.options
+        d["default case"] = self.defaultcase
+        return d
+
 class BlockEnd(Statement):
     name: str
     var: str

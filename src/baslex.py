@@ -98,20 +98,21 @@ class TokenEncoder(json.JSONEncoder):
 # List of Locomotive BASIC reserved words (commands and functions)
 _KEYWORDS = {
     # Commands
-    "AFTER","ASM", "AUTO","BORDER","CALL","CAT","CHAIN","CHAIN MERGE","CLEAR",
-    "CLEAR INPUT","CLG","CLOSEIN","CLOSEOUT","CLS","CONT","COPYCHR$","CURSOR","DATA",
-    "DECLARE","DEF","DEF FN","DEFINT","DEFREAL","DEFSTR","DEG","DELETE","DERR","DI",
-    "DIM","DRAW","DRAWR","EDIT","EI","ELSE","END","END IF","END SUB","END FUNCTION",
-    "ENT","ENV","ERASE","ERL","ERROR","EVERY","EXIT","EXIT FOR","EXIT WHILE","FILL",
-    "FIXED","FN","FOR","FRAME","FUNCTION","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER",
-    "GRAPHICS PEN","IF","INK","INPUT","KEY","KEY DEF","LABEL","LET","LINE","LINE INPUT",
-    "LIST","LOAD","LOCATE","MASK","MEMORY","MERGE","MID$","MODE","MOVE","MOVER","NEW",
-    "NEXT","ON","ON BREAK","ON ERROR GOTO","ON SQ","OPENIN","OPENOUT","ORIGIN","OUT",
-    "PAPER","PEN","PLOT","PLOTR","POKE","PRINT","RAD","RANDOMIZE","READ","RECORD","RELEASE",
-    "REM","RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SOUND","SPC","SPEED","SPEED KEY",
-    "SPEED INK","SPEED WRITE","STEP","STOP","SHARED","SUB","SWAP","SYMBOL","SYMBOL AFTER",
-    "TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN","USING","WAIT","WEND","WHILE","WIDTH",
-    "WINDOW","WINDOW SWAP","WRITE","ZONE",
+    "AFTER","ASM", "AUTO","BORDER","CALL","CASE","CASE DEFAULT","CAT","CHAIN",
+    "CHAIN MERGE","CLEAR","CLEAR INPUT","CLG","CLOSEIN","CLOSEOUT","CLS","CONT",
+    "COPYCHR$","CURSOR","DATA","DECLARE","DEF","DEF FN","DEFAULT", "DEFINT","DEFREAL",
+    "DEFSTR","DEG","DELETE","DERR","DI","DIM","DRAW","DRAWR","EDIT","EI","ELSE",
+    "END","END IF","END SUB","END FUNCTION","END SELECT","ENT","ENV","ERASE","ERL",
+    "ERROR","EVERY","EXIT","EXIT FOR","EXIT WHILE","FILL","FIXED","FN","FOR","FRAME",
+    "FUNCTION","GOSUB","GOTO","GRAPHICS","GRAPHICS PAPER","GRAPHICS PEN","IF",
+    "INK","INPUT","KEY","KEY DEF","LABEL","LET","LINE","LINE INPUT","LIST","LOAD",
+    "LOCATE","MASK","MEMORY","MERGE","MID$","MODE","MOVE","MOVER","NEW","NEXT","ON",
+    "ON BREAK","ON ERROR GOTO","ON SQ","OPENIN","OPENOUT","ORIGIN","OUT","PAPER",
+    "PEN","PLOT","PLOTR","POKE","PRINT","RAD","RANDOMIZE","READ","RECORD","RELEASE",
+    "REM","RENUM","RESTORE","RESUME","RETURN","RUN","SAVE","SELECT", "SELECT CASE",
+    "SOUND","SPC","SPEED","SPEED KEY","SPEED INK","SPEED WRITE","STEP","STOP","SHARED",
+    "SUB","SWAP","SYMBOL","SYMBOL AFTER","TAB","TAG","TAGOFF","TO","TROFF","TRON","THEN",
+    "USING","WAIT","WEND","WHILE","WIDTH","WINDOW","WINDOW SWAP","WRITE","ZONE",
     # Functions
     "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
@@ -346,16 +347,18 @@ class LocBasLexer:
         ON ERROR GOTO, SYMBOL AFTER, LINE INPUT, etc.
         """
         save_i, save_line, save_col = self.pos, self.line, self.col
-        compound = {       
+        compound = {
+            "CASE": ["DEFAULT"],
             "CHAIN": ["MERGE"],
             "CLEAR": ["INPUT"],
             "DEF": ["FN"],
-            "END": ["IF", "SUB", "FUNCTION"],
+            "END": ["IF", "SUB", "FUNCTION", "SELECT"],
             "EXIT": ["FOR", "WHILE"],
             "GRAPHICS": ["PAPER", "PEN"],
             "KEY": ["DEF"],
             "LINE": ["INPUT"],
             "ON": ["BREAK", "ERROR GOTO", "SQ"],
+            "SELECT": ["CASE"],
             "SPEED": ["KEY", "INK", "WRITE"],
             "SYMBOL": ["AFTER"],
             "WINDOW": ["SWAP"],

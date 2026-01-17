@@ -469,9 +469,9 @@ label MAIN
 end
 ```
 
-Las variables declaradas dentro del cuerpo de un procedimiento (mediante `DECLARE`, `DIM`, incluyéndolas en la parte izquierda de una asignación o utilizándolas en `INPUT`, `READ` o `LINE INPUT`) son siempre locales y no pueden ser referenciadas desde el exterior. Las variables globales, por su parte, pueden emplearse dentro de un procedimiento, pero solo en modo lectura (por ejemplo, como parte de una expresión o como parámetro de otra función).
+Las variables declaradas dentro del cuerpo de un procedimiento (mediante `DECLARE`, `DIM`, incluyéndolas en la parte izquierda de una asignación o utilizándolas en `INPUT`, `READ` o `LINE INPUT`) son siempre locales y no pueden ser referenciadas desde el exterior. Las variables globales, por su parte, pueden emplearse dentro de un procedimiento, pero solo si aparecen al principio del cuerpo del procedimiento en una sentencia `SHARED`.
 
-En cuanto a la semántica de paso de parámetros, los enteros se pasan por valor, mientras que las cadenas de texto y los números reales se pasan por referencia (es decir, mediante un puntero a su contenido). Por tanto, en estos dos últimos casos es posible modificar la variable original desde el cuerpo del procedimiento.
+En cuanto a la semántica de paso de parámetros, los enteros se pasan por valor, mientras que las cadenas de texto y los números reales se pasan por referencia (es decir, mediante un puntero a su contenido). Por tanto, en estos dos últimos casos es posible modificar la variable original desde el cuerpo del procedimiento. No es posible pasar vectores (arrays) como argumentos, aunque sí pueden utilizarse mediante el uso de la sentencia `SHARED`.
 
 **NOTA SOBRE RECURSIVIDAD:** ABASC no permite recursividad. Al igual que ocurre con las variables globales, las variables locales reservan memoria en tiempo de compilación. Debido a ello, el código no es reentrante y no es posible realizar llamadas recursivas.
 
@@ -1760,7 +1760,7 @@ PRINT SGN(PI)
 ```
 ### `SHARED variable | array [,variable | array]`
 
-Este comando proviene del Locomotive BASIC 2 Plus. Permite que desde una rutina (SUB o FUNCTION) se referencie y utilice una variable global del programa. Si el nombre de la variable termina en corchetes, se interpreta que la variable a la que se quiere acceder es un array declarado con `DIM`.
+Este comando proviene del Locomotive BASIC 2 Plus. Permite que desde una rutina (SUB o FUNCTION) se referencie y utilice una variable global del programa. Si el nombre de la variable termina en corchetes, se interpreta que la variable es un array declarado con `DIM`.
 
 ```basic
 DIM vec(3)

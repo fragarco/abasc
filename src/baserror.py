@@ -166,6 +166,8 @@ _ERRORCODES = {
     "042": "END SUB missing",
     "043": "Unexpected END FUNCTION",
     "044": "END FUNCTION missing",
+    "045": "END SELECT missing",
+    "046": "Unexpected END SELECT",
 }
 
 class BasError(Exception):

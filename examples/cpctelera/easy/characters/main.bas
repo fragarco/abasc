@@ -36,7 +36,7 @@ incs(0) = 4: incs(1) = 2: incs(2) = 1
 '
 SUB incVideoPos(inc)
     ' Increments video memory pointer in given 'inc' bytes
-    SHARED videomem   ' A Declare videomem as a global variable
+    SHARED videomem   ' Declare access to videomem global variable
     videomem = videomem + inc
     ' Check if video memory is greater that the last screen location where
     ' ... a character can be writen (25 character lines go from 0xC000 to 0xC7D0)
@@ -49,7 +49,7 @@ END SUB
 SUB print256Chars(vmode, icolour)
     ' Calculate increment in bytes, for every time we want to move 
     ' video memory pointer to the next character
-    SHARED videomem   ' B Declare videomem as a global variable
+    SHARED videomem, incs[], colours[]   ' Declare access to global variables
     inc = incs(vmode)
     fg = colours(icolour)
     bg = colours(icolour+1)
@@ -72,7 +72,7 @@ END SUB
 ' The function modifies video memory pointer and colours (received by reference)
 '
 SUB drawCharacters(maxtimes, vmode, icolour)
-    SHARED colours[]             ' Declare colours as a global array as we want
+    SHARED colours[], maxcol[]   ' Declare access to global variables
                                  ' to change its values and not only read them
     call cpctClearScreen(0)      ' Clear Screen filling up with 0's
     call cpctSetVideoMode(vmode) ' Set desired video mode

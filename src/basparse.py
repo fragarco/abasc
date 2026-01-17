@@ -60,6 +60,7 @@ class BlockType(Enum):
     WHILE = auto()
     SUB = auto()
     FUNCTION = auto()
+    SELECT = auto()
  
 @dataclass
 class CodeBlock:
@@ -67,6 +68,7 @@ class CodeBlock:
     until_keywords: tuple
     start_node: AST.Statement
     tk: Token
+    options: int = 0
 
 class LocBasParser:
     def __init__(self, code: list[CodeLine], tokens: list[Token], warning_level: WL=WL.ALL):
@@ -148,6 +150,11 @@ class LocBasParser:
                 info = "unexpected end of file found"
             self._raise_error(2, self._current(), info)
         return self._advance()
+
+    def _next_token(self) -> Token:
+        if (self.pos+1) >= len(self.tokens):
+            self._raise_error(2, self.tokens[-1], "unexpected EOF")
+        return self.tokens[self.pos+1]
 
     def _current_is(self, type: TokenType, lexeme: Optional[str] = None) -> bool:
         tk = self.tokens[self.pos]
@@ -294,6 +301,33 @@ class LocBasParser:
             args.append(self._parse_expression())
         return AST.Command(name="CALL", args=args)
  
+    @astnode
+    def _parse_CASE(self) -> AST.Command:
+        """ <CASE> ::= CASE <int_expression> """
+        # A direct command that is not allowed in compiled programs
+        # but let's the emiter fail 
+        tk = self._advance()
+        if len(self.codeblocks) == 0 or "END SELECT" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(2, tk, "unexpected CASE")
+        args: list[AST.Statement] = [self._parse_int_expression()]
+        node = self.codeblocks[-1].start_node
+        if isinstance(node, AST.SelectCase):
+            node.options = node.options + 1
+        return AST.Command(name="CASE", args=args)
+
+    @astnode
+    def _parse_CASE_DEFAULT(self) -> AST.Command:
+        """ <CASE DEFAULT> ::= CASE DEFAULT """
+        tk = self._advance()
+        if len(self.codeblocks) == 0 or "END SELECT" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(2, tk, "unexpected CASE DEFAULT")
+        node = self.codeblocks[-1].start_node
+        if isinstance(node, AST.SelectCase):
+            if node.defaultcase:
+                self._raise_error(2, tk, "only one CASE DEFAULT statement is allowed")
+            node.defaultcase = True
+        return AST.Command(name="CASE DEFAULT")
+
     @astnode
     def _parse_CAT(self) -> AST.Command:
         """ <CAT> ::= CAT """
@@ -1189,6 +1223,17 @@ class LocBasParser:
         return AST.Command(name="END FUNCTION", args=[cblock.start_node])
 
     @astnode
+    def _parse_END_SELECT(self) -> AST.BlockEnd:
+        tk = self._advance()
+        if len(self.codeblocks) == 0 or "END SELECT" not in self.codeblocks[-1].until_keywords:
+            self._raise_error(46, tk)
+        node = self.codeblocks.pop().start_node
+        if isinstance(node, AST.SelectCase):
+            if node.options == 0:
+                self._raise_error(2, tk, "CASE statement missing")
+        return AST.BlockEnd(name="END SELECT")
+
+    @astnode
     def _parse_END_SUB(self) -> AST.Command:
         """ <END_SUB> ::= END SUB """
         tk = self._advance()
@@ -2077,6 +2122,20 @@ class LocBasParser:
                 self._expect(TokenType.COMMA)
                 args.append(self._parse_int_expression())
         return AST.Command(name="SAVE", args=args)
+
+    @astnode
+    def _parse_SELECT_CASE(self) -> AST.SelectCase:
+        """ <SELECT CASE> ::= SELECT CASE <int_expression> """
+        tk = self._advance()
+        cond: AST.Statement = self._parse_int_expression()
+        node = AST.SelectCase(condition=cond)
+        self.codeblocks.append(CodeBlock(
+            type=BlockType.SELECT,
+            until_keywords=("END SELECT",),
+            start_node=node,
+            tk=tk
+        ))
+        return node
 
     @astnode
     def _parse_SGN(self) -> AST.Function:
@@ -3116,6 +3175,8 @@ class LocBasParser:
                 self._raise_error(42, info="EOF reached", tk=cblock.tk)
             elif "END FUNCTION" in cblock.until_keywords:
                 self._raise_error(44, info="EOF reached", tk=cblock.tk)
+            elif "END SELECT" in cblock.until_keywords:
+                self._raise_error(45, info="EOF reached", tk=cblock.tk)
             else:
                 self._raise_error(24, self.tokens[-1])
         return AST.Program(lines=lines), self.symtable

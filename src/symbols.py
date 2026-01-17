@@ -149,7 +149,8 @@ class SymTable:
         keyident = self._code_symtype(ident, stype)
         context = context.upper()
         if context == "":
-            # Global context
+            # Global context (usually main program)
+            # can also be a search in symbols for a given local context
             if keyident in self.syms:
                 return self.syms[keyident]
         else:
@@ -157,11 +158,7 @@ class SymTable:
             for ftype in [SymType.Function, SymType.Procedure]:
                 keyfun = self._code_symtype(context, ftype)
                 if keyfun in self.syms:
-                    s = self.syms[keyfun].locals.find(ident, stype)
-                    if s is None:
-                        # Search in the global context
-                        return self.find(ident, stype)
-                    return s
+                    return self.syms[keyfun].locals.find(ident, stype)
         return None
 
 def symsto_json(syms: dict[str, SymEntry]) -> dict:
