@@ -54,15 +54,18 @@ SUB print256Chars(vmode, icolour)
     fg = colours(icolour)
     bg = colours(icolour+1)
     ' Set colours to be used for text drawing
-    IF vmode = 2 THEN call cpctSetDrawCharM2(fg, bg)
-    IF vmode = 1 THEN call cpctSetDrawCharM1(fg, bg)
-    IF vmode = 0 THEN call cpctSetDrawCharM0(fg, bg)
-
+    SELECT CASE vmode
+        CASE 2: call cpctSetDrawCharM2(fg, bg)
+        CASE 1: call cpctSetDrawCharM1(fg, bg)
+        CASE 0: call cpctSetDrawCharM0(fg, bg)
+    END SELECT
    ' Draw the complete set of 256 characters (excluding char 0)
     FOR charnum=1 TO 255
-        IF vmode = 2 THEN call cpctDrawCharM2(videomem, charnum)
-        IF vmode = 1 THEN call cpctDrawCharM1(videomem, charnum)
-        IF vmode = 0 THEN call cpctDrawCharM0(videomem, charnum)
+        SELECT CASE vmode
+            CASE 2: call cpctDrawCharM2(videomem, charnum)
+            CASE 1: call cpctDrawCharM1(videomem, charnum)
+            CASE 0: call cpctDrawCharM0(videomem, charnum)
+        END SELECT
         ' Point to next location on screen to draw (increment bytes required for this mode)
         call incVideoPos(inc)
     NEXT
@@ -93,21 +96,21 @@ SUB drawCharacters(maxtimes, vmode, icolour)
         colours(icolour) = fg
         ' Print all 256 chars in mode 1 usingcurrent colours
         call print256Chars(vmode, icolour)
-   NEXT
+    NEXT
 END SUB
 
 ' Drawing Characters example: MAIN
 '
 LABEL MAIN
-   ' Disable firmware to prevent it from restoring our video memory changes 
-   ' ... and interfering with drawChar functions
-   call cpctRemoveInterruptHandler()
-   
-   ' Loop forever showing characters on different modes and colours
-   '
-   WHILE 1 
-      call drawCharacters(14, 2, 0) ' Drawing on mode 2, 14 times
-      call drawCharacters(17, 1, 2) ' Drawing on mode 1, 17 times
-      call drawCharacters(21, 0, 4) ' Drawing on mode 0, 21 times
-   WEND
+    ' Disable firmware to prevent it from restoring our video memory changes 
+    ' ... and interfering with drawChar functions
+    call cpctRemoveInterruptHandler()
+    ' Loop forever showing characters on different modes and colours
+    '
+    WHILE 1
+        call cpctClearScreen(0)
+        call drawCharacters(14, 2, 0) ' Drawing on mode 2, 14 times
+        call drawCharacters(17, 1, 2) ' Drawing on mode 1, 17 times
+        call drawCharacters(21, 0, 4) ' Drawing on mode 0, 21 times
+    WEND
 END

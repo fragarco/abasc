@@ -18,8 +18,8 @@ SUB cpctDrawCharM2(vmem, chnum) ASM
 END SUB
 
 SUB cpctSetDrawCharM1(fg, bg) ASM
-    ASM "ld      b,(ix+0)"
-    ASM "ld      c,(ix+2)"
+    ASM "ld      d,(ix+0)"
+    ASM "ld      e,(ix+2)"
     ASM "jp      cpct_setDrawCharM1"
     ASM "read 'asm/cpctelera/strings/cpct_setDrawCharM1.asm'"
 END SUB
@@ -43,6 +43,6 @@ SUB cpctDrawCharM0(vmem, chnum) ASM
     ASM "ld      e,(ix+0)"
     ASM "ld      l,(ix+2)"
     ASM "ld      h,(ix+3)"
-    ASM "jp      cpct_drawCharM1"
+    ASM "jp      cpct_drawCharM0"
     ASM "read 'asm/cpctelera/strings/cpct_drawCharM0.asm'"
 END SUB
