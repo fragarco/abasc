@@ -17,3 +17,12 @@ SUB cpctSetVideoMode(vmode) ASM
     ASM "jp      cpct_setVideoMode"
     ASM "read 'asm/cpctelera/video/cpct_setVideoMode.asm'"
 END SUB
+
+FUNCTION cpctGetHWColour(fwcol) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "ld      h,(ix+1)"
+    ASM "call    cpct_getHWColour"
+    ASM "ld      h,0 ; L has the result"
+    ASM "ret"
+    ASM "read 'asm/cpctelera/video/cpct_getHWColour.asm'"
+END FUNCTION

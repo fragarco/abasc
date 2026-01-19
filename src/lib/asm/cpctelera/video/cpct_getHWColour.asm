@@ -64,7 +64,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; colour conversion table defined in cpct_getHWColour.s
-read 'cpctelera/video/cpct_firmware2hw_colour_table.asm'
+read 'asm/cpctelera/video/cpct_firmware2hw_colour_table.asm'
 
 cpct_getHWColour:       ;; Assembly entry point
    ld   de, cpct_firmware2hw_colour  ;; [3] DE points to the start of the colour table
