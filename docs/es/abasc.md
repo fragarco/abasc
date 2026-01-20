@@ -51,6 +51,7 @@ ABASC: MANUAL DEL USUARIO
     - [`CLOSEIN`](#closein)
     - [`CLOSEOUT`](#closeout)
     - [`CLS [#x]`](#cls-x)
+    - [`CONST`](#const)
     - [`CONT`](#cont)
     - [`COPYCHR$(#canal)`](#copychrcanal)
     - [`COS(x)`](#cosx)
@@ -746,6 +747,18 @@ Comando. Cierra el fichero abierto actualmente para escritura. Ver `OPENOUT`.
 ### `CLS [#x]`
 
 Comando. Borra la pantalla usando el color de `PAPER` actual. Es posible indicar un canal con `#x`. Los valores 0-7 están disponibles para definir áreas de la pantalla mediante el comando `WINDOW`, miestras que el valor #8 suele estar asociado a la impresora (no soportado por ABASC) y el #9 se asocia con ficheros.
+
+### `CONST`
+
+Comando. CONST define una constante numérica simple y le asigna un nombre como si fuera una variable más. A partir de ese momento, cuando el nombre de la constante aparezca como parte de una expresión, será sustituido directamente por el valor númerico, lo que puede habilitar ciertas optimizaciones del compilador. Además, si se intenta cambiar su valor inicial, la compilación fallará alertando al programador del error.
+
+``` basic
+CONST VMEM = &C000
+
+FOR I=0 TO 16384
+    POKE VMEM + I, &FF
+NEXT
+```
 
 ### `CONT`
 

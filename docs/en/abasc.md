@@ -51,6 +51,7 @@ ABASC: USER MANUAL
     - [`CLOSEIN`](#closein)
     - [`CLOSEOUT`](#closeout)
     - [`CLS [#x]`](#cls-x)
+    - [`CONST`](#const)
     - [`CONT`](#cont)
     - [`COPYCHR$(#channel)`](#copychrchannel)
     - [`COS(x)`](#cosx)
@@ -744,6 +745,18 @@ PRINT CINT(PI)
 ### `CLS [#x]`
 
 **Command**. Clears the screen using the current `PAPER` color. A channel may be specified with `#x`. Values 0–7 define screen areas via the `WINDOW` command. `#8` is usually associated with the Printer (not supported in ABASC), and `#9` is for files.
+
+### `CONST`
+
+**Command**. CONST declares and defines named constants, assigning them a fixed integer value. When the constant name is used in an expression, its value is substituted directly, which may enable compiler optimizations. Any attempt to change the value of a constant will cause the compilation to fail with an error, alerting the programmer to the invalid operation.
+
+``` basic
+CONST VMEM = &C000
+
+FOR I=0 TO 16384
+    POKE VMEM + I, &FF
+NEXT
+```
 
 ### `CONT`
 

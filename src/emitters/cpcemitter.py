@@ -774,9 +774,9 @@ class CPCEmitter:
 
     def _emit_CONST(self, node:AST.Command):
         """
-        Declares and sets named constants where the variable is set to the corresponding
-        integer value. When the variable name is used in an expression, the constant value
-        will be used directly, which can enable compiling optimizations.
+        CONST declares and defines named constants, assigning them a fixed integer value.
+        When the constant name is used in an expression, its value is substituted directly,
+        which may enable compiler optimizations.
         """
         self._emit_code("; CONST IDENT = INT")
         self._emit_code(";")
