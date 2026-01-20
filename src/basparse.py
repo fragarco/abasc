@@ -2213,40 +2213,21 @@ class LocBasParser:
                 if entry is None:
                     self._raise_error(2, tk, "undefined global array")
                 else:
-                    added = self.symtable.add_shared(
-                        ident=var,
-                        info=SymEntry(
-                            symtype=SymType.Array,
-                            exptype=entry.exptype,
-                            locals=SymTable(),
-                            nargs=entry.nargs,
-                            indexes=entry.indexes,
-                            datasz=entry.datasz
-                        ),
-                        context=self.context
-                    )
+                    # local and global share the same SymEntry structure
+                    added = self.symtable.add_shared(var, entry, self.context)
             else:
                 if "$." in var:
                     self._raise_error(2, tk, info="unexpected record access")
                 entry = self.symtable.find(var, SymType.Variable)
                 if entry is None:
                     self._raise_error(2, tk, "undefined global variable")
-                added = self.symtable.add_shared(
-                    ident=var,
-                    info=SymEntry(
-                        symtype=SymType.Variable,
-                        exptype=vartype,
-                        locals=SymTable(),
-                        datasz=datasz
-                    ),
-                    context=self.context
-                )
-                if entry.const is not None:
-                    # SHARED CONSTANT
-                    localentry = self.symtable.find(var, SymType.Variable, context=self.context)
-                    if localentry is not None:
-                        localentry.const = entry.const
-
+                else:
+                    added = self.symtable.add_shared(var, entry, self.context)
+                    if entry.const is not None:
+                        # SHARED CONSTANT
+                        localentry = self.symtable.find(var, SymType.Variable, context=self.context)
+                        if localentry is not None:
+                            localentry.const = entry.const
             if not added:
                 self._raise_error(2, tk, info="variable already declared")
             args.append(AST.Variable(var, vartype))

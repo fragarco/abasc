@@ -20,8 +20,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, Any
 from enum import Enum
-import copy
 import astlib as AST
+import copy
 
 class SymType(str, Enum):
     Variable = "Variable"
@@ -74,7 +74,7 @@ class SymTable:
             return f"RSX_{name.upper()}"
         return ""
 
-    def _code_symtype(slef, ident: str, stype: SymType):
+    def _code_symtype(self, ident: str, stype: SymType):
         if stype == SymType.Variable:
             return f"VAR_{ident}"
         if stype == SymType.Param:
@@ -135,12 +135,14 @@ class SymTable:
         context = context.upper()
         if context != "":
             # Add the bind in the local context pointing to a global variable (prefix = "")
+            # In this way they will share important information as the number of writes
             for ftype in [SymType.Function, SymType.Procedure]:
                 keyfun = self._code_symtype(context, ftype)
                 if keyfun in self.syms:
                     keyident = self._code_symtype(ident, info.symtype)
                     if keyident not in self.syms[keyfun].locals.syms:
-                        return self.syms[keyfun].locals.add(ident, info, "", "")
+                        self.syms[keyfun].locals.syms[keyident] = info
+                        return True
         return False
 
     def find(self, ident: str, stype: SymType, context: str = "") -> Optional[SymEntry]:
