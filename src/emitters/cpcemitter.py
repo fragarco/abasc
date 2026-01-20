@@ -240,8 +240,6 @@ class CPCEmitter:
                 # optimized constant variables must not be added
                 if entry.writes != 1 or entry.const is None:
                     self._emit_vardecl(entry)
-                else:
-                    print("AAA", entry.label, entry.const)
             elif entry.symtype == SymType.Array:
                 self._emit_arraydecl(entry)
             elif entry.symtype == SymType.Param:
@@ -772,6 +770,15 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_CLEAR_WINDOW}", info="TXT_CLEAR_WINDOW")
         if len(node.args):
             self._emit_stream_0()
+        self._emit_code(";")
+
+    def _emit_CONST(self, node:AST.Command):
+        """
+        Declares and sets named constants where the variable is set to the corresponding
+        integer value. When the variable name is used in an expression, the constant value
+        will be used directly, which can enable compiling optimizations.
+        """
+        self._emit_code("; CONST IDENT = INT")
         self._emit_code(";")
 
     def _emit_CONT(self, node:AST.Command):

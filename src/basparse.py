@@ -425,6 +425,41 @@ class LocBasParser:
             args = [self._parse_int_expression()]
         return AST.Command(name="CLS", args=args)
 
+    def _check_noconst(self, varname: str, tk: Token) -> None:
+        entry = self.symtable.find(varname, SymType.Variable, self.context)
+        if entry is not None:
+            if entry.const is not None:
+                self._raise_error(2, tk, "constant redefinition")
+
+    @astnode
+    def _parse_CONST(self) -> AST.Command:
+        """ <CONST> := IDENT = INT """
+        self._advance()
+        tk = self._expect(TokenType.IDENT)
+        self._expect(TokenType.COMP, lex="=")
+        val = self._expect(TokenType.INT)
+        entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
+        if entry is not None:
+            self._raise_error(2, tk, "constant redefinition")
+        # Add the variable as a regular one
+        self.symtable.add(
+            ident=tk.lexeme,
+            info=SymEntry(
+                symtype=SymType.Variable,
+                exptype=AST.ExpType.Integer,
+                locals=SymTable(),
+                datasz= AST.exptype_memsize(AST.ExpType.Integer)
+            ),
+            context=self.context
+        )
+        # Set its constant properties
+        entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
+        entry.const = cast(int, val.value)  # type: ignore [union-attr]
+        args: list[AST.Statement] = []
+        args.append(AST.Variable(tk.lexeme, AST.ExpType.Integer))
+        args.append(AST.Integer(value=entry.const)) # type: ignore [union-attr]
+        return AST.Command(name="CONST", args=args)
+
     @astnode
     def _parse_CONT(self) -> AST.Command:
         """ <CONT> ::= CONT """
@@ -547,7 +582,7 @@ class LocBasParser:
                     datasz = cast(int, num.value) + 1
                     if datasz > 255 or datasz < 2:
                         self._raise_error(6, num, info="valid string size range is [1 - 254]")
-            self.symtable.add(
+            added = self.symtable.add(
                 ident=var,
                 info=SymEntry(
                     symtype=SymType.Variable,
@@ -557,6 +592,8 @@ class LocBasParser:
                 ),
                 context=self.context
             )
+            if not added:
+                self._raise_error(2, tk)
             args.append(AST.Variable(var, vartype))
             if self._current_is(TokenType.COMMA):
                 self._advance()
@@ -958,7 +995,9 @@ class LocBasParser:
         info = self.symtable.find(ident=var, stype=SymType.Variable, context=self.context)
         if info is None:
             # Lets add the FOR variable to the symtable as it persists
-            # in Locomotive BASIC after the loop ends
+            # in Locomotive BASIC after the loop ends. But check that we are not
+            # dealing with a constant
+            self._check_noconst(var, tk)
             self.symtable.add(
                 ident=var,
                 info=SymEntry(
@@ -1283,7 +1322,7 @@ class LocBasParser:
     @astnode
     def _parse_INPUT(self) -> AST.Input | AST.ReadIn:
         """ <INPUT> := INPUT [#<int_expression>][STRING(;|,)] <ident> [,<ident>] """
-        self._advance()
+        inputtk = self._advance()
         stream: Optional[AST.Statement] = None; 
         prompt: str = ""
         question: bool = True
@@ -1310,6 +1349,7 @@ class LocBasParser:
         # writes which is used by the optimizer
         for v in vars:
             if isinstance(v, AST.Variable):
+                self._check_noconst(v.name, inputtk)
                 self.symtable.add(
                     ident=v.name,
                     info=SymEntry(
@@ -1460,6 +1500,7 @@ class LocBasParser:
         # If the variable already exists, this call will increase the number of
         # writes which is used by the optimizer.
         if isinstance(var, AST.Variable):
+            self._check_noconst(var.name, tk)
             self.symtable.add(
                 ident=var.name,
                 info=SymEntry(
@@ -1950,6 +1991,8 @@ class LocBasParser:
             # If the variable already exists, this call will increase the number of
             # writes which is used by the optimizer
             if isinstance(var, AST.Variable):
+                tk = self._current()
+                self._check_noconst(var.name, tk)
                 self.symtable.add(
                     ident=var.name,
                     info=SymEntry(
@@ -2183,9 +2226,11 @@ class LocBasParser:
                         context=self.context
                     )
             else:
-                entry = self.symtable.find(var, SymType.Variable, context=self.context)
                 if "$." in var:
                     self._raise_error(2, tk, info="unexpected record access")
+                entry = self.symtable.find(var, SymType.Variable)
+                if entry is None:
+                    self._raise_error(2, tk, "undefined global variable")
                 added = self.symtable.add_shared(
                     ident=var,
                     info=SymEntry(
@@ -2196,6 +2241,12 @@ class LocBasParser:
                     ),
                     context=self.context
                 )
+                if entry.const is not None:
+                    # SHARED CONSTANT
+                    localentry = self.symtable.find(var, SymType.Variable, context=self.context)
+                    if localentry is not None:
+                        localentry.const = entry.const
+
             if not added:
                 self._raise_error(2, tk, info="variable already declared")
             args.append(AST.Variable(var, vartype))
@@ -3063,7 +3114,9 @@ class LocBasParser:
             target, source = self._cast_numtypes(target, source, target.etype, tk)
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
-            # have to add them to the symtable now
+            # have to add them to the symtable now but let's check is not
+            # a constant
+            self._check_noconst(target.name, tk)
             added = self.symtable.add(
                 ident=target.name,
                 info=SymEntry(

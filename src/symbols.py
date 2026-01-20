@@ -114,7 +114,8 @@ class SymTable:
                 # must be incremented
                 if not self.syms[keyident].symtype in (SymType.Variable, SymType.Array, SymType.Param):
                     return False
-                if self.syms[keyident].exptype == info.exptype:
+                # Check values is of the same type and also that this is not a constant
+                if self.syms[keyident].exptype == info.exptype and self.syms[keyident].const is None:
                     self.syms[keyident].writes += 1
                     return True
         else:
