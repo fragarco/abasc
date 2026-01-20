@@ -237,7 +237,11 @@ class CPCEmitter:
                 # with SHARED
                 continue
             if entry.symtype == SymType.Variable:
-                self._emit_vardecl(entry)
+                # optimized constant variables must not be added
+                if entry.writes != 1 or entry.const is None:
+                    self._emit_vardecl(entry)
+                else:
+                    print("AAA", entry.label, entry.const)
             elif entry.symtype == SymType.Array:
                 self._emit_arraydecl(entry)
             elif entry.symtype == SymType.Param:
@@ -4605,6 +4609,8 @@ class CPCEmitter:
             self._emit_LABEL(stmt)
         elif isinstance(stmt, AST.RSX):
             self._emit_RSX(stmt)
+        elif isinstance(stmt, AST.Nop):
+            pass
         else:
             self._raise_error(2, stmt, "unexpected statement")
         self._emit_free_heapmem()

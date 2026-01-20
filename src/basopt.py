@@ -25,8 +25,38 @@ import symbols as SYM
 class BasOptimizer:
     def __init__(self) -> None:
         self.modified = False
+        self.context = ""
 
     # ----------------- AST optimizations -----------------
+
+    def _op_variable(self, node: AST.Variable) -> AST.Statement:
+        """ 
+        Variables as part of expressions. Integer ones that are
+        only assigned once can be optimized as constants.
+        """
+        entry = self.syms.find(node.name, SYM.SymType.Variable, self.context)
+        if entry is not None and entry.writes == 1:
+            if entry.const is not None:
+                self.modified = True
+                nnode = AST.Integer(value=entry.const)
+                nnode.line = node.line
+                nnode.col = node.col
+                return nnode
+        return node
+
+    def _op_assignment(self, node: AST.Assignment) -> AST.Statement:
+        node.source = self._op_statement(node.source)
+        if isinstance(node.target, AST.Variable):
+            if isinstance(node.source, AST.Integer):
+                entry = self.syms.find(node.target.name, SYM.SymType.Variable, self.context)
+                if entry is not None and entry.writes == 1 and entry.const is None:
+                    entry.const = node.source.value
+                    self.modified = True
+                    nnode = AST.Nop()
+                    nnode.line = node.line
+                    nnode.col = node.col
+                    return nnode
+        return node
 
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
@@ -65,7 +95,10 @@ class BasOptimizer:
             self.modified = True
             fvalue = node.args[0].value
             roff = -0.5 if fvalue < 0.0 else 0.5
-            return AST.Integer(value=int(fvalue + roff))
+            nnode = AST.Integer(value=int(fvalue + roff))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
             # Lets use the interger version of TIME
             self.modified = True
@@ -78,27 +111,50 @@ class BasOptimizer:
             self.modified = True
             num = node.args[0].value
             if num < 0.0:
-                return AST.Integer(value=int(node.args[0].value))
+                nnode = AST.Integer(value=int(node.args[0].value))
+                nnode.line = node.args[0].line
+                nnode.col = node.args[0].col
+                return nnode
             else:
-                return AST.Integer(value=int(node.args[0].value - 0.999999999))
+                nnode =  AST.Integer(value=int(node.args[0].value - 0.999999999))
+                nnode.line = node.args[0].line
+                nnode.col = node.args[0].col
+                return nnode
         return node
 
     def _op_FIX(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
-            return AST.Integer(value=int(node.args[0].value))
+            nnode = AST.Integer(value=int(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         return node
 
     def _op_CREAL(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
-            return AST.Real(value=float(node.args[0].value))
+            nnode = AST.Real(value=float(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         return node
 
     def _op_CHRSS(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Integer):
             self.modified = True
-            return AST.String(value=chr(node.args[0].value))
+            nnode = AST.String(value=chr(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        return node
+
+    def _op_END_SUB(self, node: AST.Command) -> AST.Statement:
+        self.context = ""
+        return node
+    
+    def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
+        self.context = ""
         return node
 
     def _op_keyword(self, stmt: AST.Command | AST.Function) -> AST.Statement:
@@ -110,10 +166,12 @@ class BasOptimizer:
         return stmt
 
     def _op_statement(self, stmt: AST.Statement) -> AST.Statement:
-        if isinstance(stmt, AST.BinaryOp):
+        if isinstance(stmt, AST.Variable):
+            stmt = self._op_variable(stmt)
+        elif isinstance(stmt, AST.BinaryOp):
             stmt = self._op_binaryop(stmt)
-        if isinstance(stmt, AST.Assignment):
-            stmt.source = self._op_statement(stmt.source)
+        elif isinstance(stmt, AST.Assignment):
+            stmt = self._op_assignment(stmt)
         elif isinstance(stmt, AST.If):
             stmt.condition = self._op_statement(stmt.condition)
         elif isinstance(stmt, AST.ForLoop):
@@ -136,11 +194,16 @@ class BasOptimizer:
             for i in range(0, len(stmt.args)):
                 stmt.args[i] = self._op_statement(stmt.args[i])
             stmt = self._op_keyword(stmt)
+        elif isinstance(stmt, AST.DefSUB):
+            self.context = stmt.name
+        elif isinstance(stmt, AST.DefFUN):
+            self.context = stmt.name
         return stmt
       
     def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:
         print("Optimizing expressions...")
         self.modified = True
+        self.syms = syms
         while self.modified:
             self.modified = False
             for line in program.lines:

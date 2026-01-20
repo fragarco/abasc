@@ -1305,20 +1305,21 @@ class LocBasParser:
             if not self._match(TokenType.COMMA):
                 break
         # Input can declare variables so we need to add any new ones to the symtable
-        # but only if they are not ArrayItems, which must be declared with DIM
+        # but only if they are not ArrayItems, which must be declared with DIM.
+        # If the variable already exists, this call will increase the number of
+        # writes which is used by the optimizer
         for v in vars:
             if isinstance(v, AST.Variable):
-                if self.symtable.find(ident=v.name, stype=SymType.Variable, context=self.context) is None:
-                    self.symtable.add(
-                        ident=v.name,
-                        info=SymEntry(
-                            symtype=SymType.Variable,
-                            exptype=v.etype,
-                            locals=SymTable(),
-                            datasz=AST.exptype_memsize(v.etype)
-                        ),
-                        context=self.context
-                    )
+                self.symtable.add(
+                    ident=v.name,
+                    info=SymEntry(
+                        symtype=SymType.Variable,
+                        exptype=v.etype,
+                        locals=SymTable(),
+                        datasz=AST.exptype_memsize(v.etype)
+                    ),
+                    context=self.context
+                )
         if stream is not None and isinstance(stream,AST.Integer) and stream.value == 9:
             # Input used to read from a file
             return AST.ReadIn(vars=vars)
@@ -1455,19 +1456,20 @@ class LocBasParser:
         if var.etype != AST.ExpType.String:
             self._raise_error(13, tk)
         # LINE INPUT can declare a new variable so we need to add it
-        # but only if it is not an ArrayItem
+        # but only if it is not an ArrayItem.
+        # If the variable already exists, this call will increase the number of
+        # writes which is used by the optimizer.
         if isinstance(var, AST.Variable):
-            if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
-                self.symtable.add(
-                    ident=var.name,
-                    info=SymEntry(
-                        symtype=SymType.Variable,
-                        exptype=var.etype,
-                        locals=SymTable(),
-                        datasz=AST.exptype_memsize(var.etype)
-                    ),
-                    context=self.context
-                )
+            self.symtable.add(
+                ident=var.name,
+                info=SymEntry(
+                    symtype=SymType.Variable,
+                    exptype=var.etype,
+                    locals=SymTable(),
+                    datasz=AST.exptype_memsize(var.etype)
+                ),
+                context=self.context
+            )
         return AST.LineInput(stream=stream, prompt=prompt, carriage=carriage, question=question, var=var)
  
     @astnode
@@ -1944,19 +1946,20 @@ class LocBasParser:
             var = self._parse_ident()
             vars.append(var)
             # READ can declare new variables so we need to add any new ones to the symtable
-            # but not if they are Array items
+            # but not if they are Array items.
+            # If the variable already exists, this call will increase the number of
+            # writes which is used by the optimizer
             if isinstance(var, AST.Variable):
-                if self.symtable.find(ident=var.name, stype=SymType.Variable, context=self.context) is None:
-                    self.symtable.add(
-                        ident=var.name,
-                        info=SymEntry(
-                            symtype=SymType.Variable,
-                            exptype=var.etype,
-                            locals=SymTable(),
-                            datasz=AST.exptype_memsize(var.etype)
-                        ),
-                        context=self.context
-                    )
+                self.symtable.add(
+                    ident=var.name,
+                    info=SymEntry(
+                        symtype=SymType.Variable,
+                        exptype=var.etype,
+                        locals=SymTable(),
+                        datasz=AST.exptype_memsize(var.etype)
+                    ),
+                    context=self.context
+                )
             if not self._current_is(TokenType.COMMA):
                 break
             self._advance()

@@ -46,6 +46,7 @@ class SymEntry:
     memoff: int = 0     # if it's a param, offset in the call stack frame
     datasz: int = 0     # integers = 2, reals = 5, string up to 255
     heapused: int = 0    # DEF FN functions can reserve heap (temp) memory and we need to track that
+    const: Optional[int] = None # Used by the optimizer to store constant integer values
 
 class SymTable:
     syms: dict[str, SymEntry]
