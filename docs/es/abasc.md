@@ -25,6 +25,7 @@ ABASC: MANUAL DEL USUARIO
     - [Estructuras con RECORD](#estructuras-con-record)
   - [Procedimientos y Funciones](#procedimientos-y-funciones)
   - [Uso de código ensamblador](#uso-de-código-ensamblador)
+  - [Punteros](#punteros)
   - [Gestión de la memoria](#gestión-de-la-memoria)
   - [Uso del Firmware](#uso-del-firmware)
   - [Librerías](#librerías)
@@ -530,6 +531,38 @@ Mediante `ASM` es posible importar a nuestro proyecto otros ficheros con código
 ```basic
 ASM "read 'mylib.asm'    ; codigo ensablador adicional"
 ASM "incbin 'assets.bin' ; contenido binario"
+```
+
+## Punteros
+
+Locomotive BASIC emplea el símbolo `@` para acceder a la dirección de memoria de una variable. Por ejemplo, para leer y mostrar los 5 bytes correspondientes a un número real, se puede utilizar el siguiente código:
+
+```basic
+a! = 43.375
+PRINT "MEMORY ADDRESS:"; @a!
+PRINT "MEMORY CONTENT (HEX):"
+FOR i = 0 TO 4
+    PRINT i, HEX$(PEEK(@a! + i), 2)
+NEXT
+```
+
+`ABASC` extiende el uso del símbolo `@` permitiendo que se use para acceder a la dirección asociada a una etiqueta definida con     `LABEL`, así como obtener la dirección de memoria a la que leerá la siguiente llamada a `READ`. Esta opción es especialmente interesante para trabajar con código en ensamblador o contenido binario.
+
+```basic
+LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    ' Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM "read 'my_sprite.asm'"
+
+LABEL palette:
+    DATA 1,2,3,4
 ```
 
 ## Gestión de la memoria

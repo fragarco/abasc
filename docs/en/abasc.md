@@ -25,6 +25,7 @@ ABASC: USER MANUAL
     - [RECORD Structures](#record-structures)
   - [Functions and Procedures](#functions-and-procedures)
   - [Using Assembly Code](#using-assembly-code)
+  - [Pointers](#pointers)
   - [Memory Management](#memory-management)
   - [Using the Firmware](#using-the-firmware)
   - [Libraries](#libraries)
@@ -529,6 +530,38 @@ It's even possible to include other binary or assembly files to our program usin
 ```basic
 ASM "read 'mylib.asm'    ; extra assembly code"
 ASM "incbin 'assets.bin' ; binary content to append"
+```
+
+## Pointers
+
+Locomotive BASIC uses the `@` symbol to access the memory address of a given variable. For example, to read and display the 5-byte representation of a real number in memory, you can use the following code:
+
+```basic
+a! = 43.375
+PRINT "MEMORY ADDRESS:"; @a!
+PRINT "MEMORY CONTENT (HEX):"
+FOR i = 0 TO 4
+    PRINT i, HEX$(PEEK(@a! + i), 2)
+NEXT
+```
+
+`ABASC` extends the use of `@` by allowing access not only to the address of a variable, but also to the address of a label declared with `LABEL`, as well as to the memory location that will be read by the next `READ` statement (that is, the current `DATA` pointer). This functionality is particularly useful when working with data imported from binary files or assembly sources.
+
+```basic
+LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    ' Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM "read 'my_sprite.asm'"
+
+LABEL palette:
+    DATA 1,2,3,4
 ```
 
 ## Memory Management

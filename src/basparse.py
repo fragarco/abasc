@@ -97,7 +97,12 @@ class LocBasParser:
     # ----------------- Error management -----------------
 
     def _raise_error(self, codenum: int, tk: Token, info: str = ""):
-        codeline = self.lines[tk.line - 1] # Token lines start at 1
+        # Token lines start at 1
+        if tk.line >= len(self.lines):
+            # For example, EOF found while parsing the last line
+            codeline = self.lines[-1]
+        else:
+            codeline = self.lines[tk.line - 1]
         raise BasError(
             codenum,
             codeline.source,
@@ -3039,9 +3044,21 @@ class LocBasParser:
 
     @astnode
     def _parse_pointer(self) -> AST.Pointer:
-        """ <pointer> ::= @<ident> """
+        """ <pointer> ::= @<ident> | @LABEL(IDENT) | @DATA """
         self._advance()
-        var = self._parse_ident()
+        if self._current_is(TokenType.KEYWORD, lexeme="LABEL"):
+            self._advance()
+            self._expect(TokenType.LPAREN)
+            tk = self._expect(TokenType.IDENT)
+            self._expect(TokenType.RPAREN)
+            var = AST.Label(value=tk.lexeme)
+            var.set_origin(tk.line, tk.col)
+        elif self._current_is(TokenType.KEYWORD, lexeme="DATA"):
+            tk = self._advance()
+            var = AST.Label(value="DATA")
+            var.set_origin(tk.line, tk.col)
+        else:
+            var = self._parse_ident()
         return AST.Pointer(var=var)
 
     @astnode

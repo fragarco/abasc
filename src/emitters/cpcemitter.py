@@ -4101,12 +4101,21 @@ class CPCEmitter:
         self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
         self._emit_code("add     hl,de", info="final address of this item element")
 
-    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable):
+    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label):
         if isinstance(node, AST.ArrayItem):
             self._emit_arrayitem_ptr(node)
         elif isinstance(node, AST.Variable):
             # This includes Records and Params
             self._emit_variable_ptr(node)
+        elif isinstance(node, AST.Label):
+            if node.value.upper() == "DATA":
+                self._emit_code("ld      hl,(rt_data_ptr)")
+            else:
+                sym = self.symtable.find(node.value, SymType.Label, "")
+                if sym is not None:
+                    self._emit_code(f"ld      hl,{sym.label}")
+                else:
+                    self._raise_error(38, node)
         else:
             self._raise_error(2, node, "unsupported type")
 

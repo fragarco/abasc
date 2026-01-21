@@ -309,9 +309,9 @@ class ArrayItem(Statement):
         return d
 
 class Pointer(Statement):
-    var: Variable | ArrayItem
+    var: Variable | ArrayItem | Label
 
-    def __init__(self, var: Variable):
+    def __init__(self, var: Variable | ArrayItem | Label):
         super().__init__(etype=ExpType.Integer, id="Pointer")
         self.var = var
 
