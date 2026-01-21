@@ -46,3 +46,10 @@ SUB cpctSetPalette(palptr, items) ASM
     ASM "jp      cpct_setPalette"
     ASM "read 'asm/cpctelera/video/cpct_setPalette.asm'"
 END SUB
+
+SUB cpctSetPALColour(ipen, hwcolor) ASM
+    ASM "ld      h,(ix+0)     ; H = INK"
+    ASM "ld      l,(ix+2)     ; L = PEN"
+    ASM "jp      cpct_setPALColour"
+    ASM "read 'asm/cpctelera/video/cpct_setPALColour.asm'"
+END SUB

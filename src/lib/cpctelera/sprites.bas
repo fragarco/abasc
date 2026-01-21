@@ -32,6 +32,6 @@ SUB cpctDrawSprite(sprite, videopos, spwidth, spheight) ASM
     ASM "ld      d,(ix+5)           ; address"
     ASM "ld      l,(ix+6)           ; sprite data address"
     ASM "ld      h,(ix+7)"
-    ASM "jp      cpct_getScreenPtr"
-    ASM "read 'asm/cpctelera/video/cpct_getScreenPtr.asm'"
+    ASM "jp      cpct_drawSprite"
+    ASM "read 'asm/cpctelera/sprites/cpct_drawSprite.asm'"
 END SUB

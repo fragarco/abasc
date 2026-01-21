@@ -28,9 +28,7 @@
 '
 '    This byte pattern can be used in drawSolidBox and clearScreen functions.
 '
-CHAIN MERGE "cpctelera/video.bas"
-CHAIN MERGE "cpctelera/firmware.bas"
-CHAIN MERGE "cpctelera/sprites.bas"
+CHAIN MERGE "cpctelera/cpctelera.bas"
 
 call cpctRemoveInterruptHandler()
 call cpctClearScreen(&00)

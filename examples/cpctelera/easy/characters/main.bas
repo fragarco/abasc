@@ -18,9 +18,7 @@
 
 ' Code adapted to ABASC by Javier "Dwayne Hicks" Garcia
 
-CHAIN MERGE "cpctelera/video.bas"
-CHAIN MERGE "cpctelera/firmware.bas"
-CHAIN MERGE "cpctelera/strings.bas"
+CHAIN MERGE "cpctelera/cpctelera.bas"
 
 ' Global variables
 videomem = &C000     ' Pointer to video memory

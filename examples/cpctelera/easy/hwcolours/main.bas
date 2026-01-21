@@ -17,9 +17,7 @@
 '------------------------------------------------------------------------------
 ' Code adapted to ABASC by Javier "Dwayne Hicks" Garcia
 
-CHAIN MERGE "cpctelera/video.bas"
-CHAIN MERGE "cpctelera/firmware.bas"
-CHAIN MERGE "cpctelera/strings.bas"
+CHAIN MERGE "cpctelera/cpctelera.bas"
 
 ' MAIN PROGRAM:
 '   Do not disable firmware in this example, as we will use PRINT basic command

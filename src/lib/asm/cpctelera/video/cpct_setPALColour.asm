@@ -22,9 +22,9 @@
 ;#####################################################################
 ;
 
-;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
+; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read 'cpctelera/video/videomode.asm'
+read 'asm/cpctelera/video/videomode.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function: cpct_setPALColour

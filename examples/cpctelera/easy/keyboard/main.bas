@@ -50,12 +50,13 @@ LABEL MAIN
 
    ' Set the colour palette
    call cpctSetPalette(SPPAL, 4) ' Set up the hardware palette using hardware colours
-   
+   call cpctSetPALColour(16,&14)   ' Set Border to INK 0
+
    ' Set video mode 1 (320x200, 4 colours)
    call cpctSetVideoMode(1)
 
    ' Infinite moving loop
-   'WHILE 1
+   WHILE 1
       ' Scan Keyboard (fastest routine)
       ' The Keyboard has to be scanned to obtain pressed / not pressed status of
       ' every key before checking each individual key's status.
@@ -69,10 +70,10 @@ LABEL MAIN
       'else if (cpct_isKeyPressed(Key_CursorDown)  && y < (SCR_H - SP_H) ) ++y
       
       ' Get video memory byte for coordinates x, y of the sprite (in bytes)
-      videomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
+      ' videomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
       ' Draw the sprite in the video memory location got from coordinates x, y
       call cpctDrawSprite(SPMEM, videomem, SPW, SPH)
-   'WEND
+   WEND
 END
 
 LABEL CTLOGO.PALETTE:

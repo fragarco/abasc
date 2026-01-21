@@ -35,6 +35,7 @@ IF "%1"=="clear" (
     IF EXIST ".\img\*.asm"  del /Q ".\img\*.asm"
     IF EXIST ".\img\*.info"  del /Q ".\img\*.info"
 ) ELSE IF "%1"=="dsk" (
+    call %IMG% img/ctlogo.png --format asm --mode 1 --palette img/ctlogo.pal
     call %RUNBAS% %2 %3 && call %RUNDSK% 
 ) ELSE (
     call %IMG% img/ctlogo.png --format asm --mode 1
