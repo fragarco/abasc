@@ -191,11 +191,10 @@ class ImgConverter:
             imgbyte = int(i / pixelxbyte)
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
-                imgdata[imgbyte] = data[imgbyte] | (self.img[i] << pos)
+                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] << pos)
             elif self.mode == 1:
                 pos = 3 - (i % pixelxbyte)
-                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+4) | (self.img[i] & 0x01) << pos
-                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << pos
+                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << (pos+0)
             else:
                 pos = 1 - (i % pixelxbyte)
                 imgdata[imgbyte] = imgdata[imgbyte] | \
