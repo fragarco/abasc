@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.0'
+__version__='1.4.1'
 
 import sys
 import os
@@ -383,7 +383,7 @@ class Disk:
             with open(outputfile, 'wb') as fd:
                 fd.write(content)
         except IOError:
-            print("[dsk] could not write file:", outputfile)
+            print("[dsk] ERROR - could not write file:", outputfile)
 
     def read(self, inputfile):
         content = bytearray()
@@ -397,9 +397,9 @@ class Disk:
             self.set(content)
             return True      
         except IOError:
-            print("[dsk] could not read file:", inputfile)
+            print("[dsk] ERROR - could not read file:", inputfile)
         except FormatError as e:
-            print("[dsk] error in input file:", e.message)
+            print("[dsk] ERROR - input file format:", e.message)
         return False
 
     def check(self):
@@ -755,7 +755,7 @@ def run_check(args,disk):
     try:
         disk.check()
     except FormatError as e:
-        print("[dsk] unsupported DSK format:", e.message)
+        print("[dsk] ERROR - unsupported DSK format:", e.message)
         sys.exit(1)
 
 def run_dump(args, disk):
@@ -773,10 +773,10 @@ def run_check_direntry(disk, ientry):
     dirtable = disk.get_dirtable()
     entry = dirtable.entries[ientry]
     if entry.status == CPM_DELETED:
-        print("[dsk] specified directory entry does not contain a file")
+        print("[dsk] ERROR - specified directory entry does not contain a file")
         sys.exit(1)
     if entry.extend > 0:
-        print("[dsk] specified directory entry is not a file starting entry")
+        print("[dsk] ERROR - specified directory entry is not a file starting entry")
         sys.exit(1)
     return dirtable, entry
 
@@ -790,7 +790,7 @@ def run_dump_header(args, disk):
     header.set(content)
     print("[dsk] header located at track:", t, "sector:", s)
     if not header.is_valid_header():
-        print("but it doesn't seem to contain a valid AMSDOS header:")
+        print("[dsk] ERROR - no valid AMSDOS header:")
         for byte in content[0:69]: print(hex(byte), end=' ')
         sys.exit(1)
     header.dump()
@@ -817,7 +817,7 @@ def run_get_file(args, disk):
         with open(filename, 'wb') as fd:
             fd.write(data)
     except IOError:
-        print("[dsk] error trying to write file:", filename)
+        print("[dsk] ERROR - trying to write file:", filename)
     print("[dsk] file", filename, "was extracted:", npages, "pages of data,",len(data), "bytes written")
 
 def run_read_input_file(inputfile):
@@ -831,11 +831,11 @@ def run_read_input_file(inputfile):
                 content.extend(bytes)
                 bytes = fd.read(chunksz)
         if len(content) > filemaxsz:
-            print("[dsk] files cannot be bigger than 64K")
+            print("[dsk] ERROR - files cannot be bigger than 64K")
             sys.exit(1)
         return content      
     except IOError:
-        print("[dsk] error reading file:", inputfile)
+        print("[dsk] ERROR - reading file:", inputfile)
         sys.exit(1)
 
 def run_read_mapfile(mapfile):
@@ -845,7 +845,7 @@ def run_read_mapfile(mapfile):
             content = str.join('', fd.readlines())
             return eval(content)
     except IOError:
-        print("[dsk] error reading file:", mapfile)
+        print("[dsk] ERROR - reading file:", mapfile)
         sys.exit(1)
 
 def run_get_start(startaddr, mapfile):
@@ -856,14 +856,14 @@ def run_get_start(startaddr, mapfile):
         startaddr = startaddr.upper()
         if startaddr in mapfile:
             return mapfile[startaddr][0]
-        print(f"[dsk] invalid start address value: {startaddr}")
+        print(f"[dsk] ERROR - invalid start address value: {startaddr}")
         sys.exit(1)
 
 def run_put_file(infile, dskfile, disk, content):
     dirtable = disk.get_dirtable()
     ientry = dirtable.can_allocate(len(content))
     if ientry == -1:
-        print("no enough space")
+        print("[dsk] ERROR - not enough space")
         sys.exit(1)
     sectors = dirtable.write_entries(ientry, infile, len(content))
     disk.set_dirtable(dirtable)

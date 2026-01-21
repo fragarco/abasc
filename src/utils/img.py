@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.0'
+__version__='1.4.1'
 
 import sys
 import os
@@ -186,23 +186,24 @@ class ImgConverter:
     def _img2mode(self):
         pixelxbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
         totalbytes = int((self.imgh * self.imgw) / pixelxbyte)
-        data = bytearray([0x00 for i in range(0, totalbytes)])
+        imgdata = bytearray([0x00 for i in range(0, totalbytes)])
         for i in range(0, len(self.img)):
-            byte = int(i / pixelxbyte)
+            imgbyte = int(i / pixelxbyte)
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
-                data[byte] = data[byte] | (self.img[i] << pos)
+                imgdata[imgbyte] = data[imgbyte] | (self.img[i] << pos)
             elif self.mode == 1:
                 pos = 3 - (i % pixelxbyte)
-                data[byte] = data[byte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << pos
+                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+4) | (self.img[i] & 0x01) << pos
+                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << pos
             else:
                 pos = 1 - (i % pixelxbyte)
-                data[byte] = data[byte] | \
+                imgdata[imgbyte] = imgdata[imgbyte] | \
                              (self.img[i] & 0x01) << (6 + pos) | \
                              (self.img[i] & 0x02) << (1 + pos) | \
                              (self.img[i] & 0x04) << (2 + pos) | \
                              (self.img[i] & 0x08) >> (3 - pos)
-        return data
+        return imgdata
 
     def read_palette(self, palfile):
         """
@@ -395,12 +396,13 @@ class ImgConverter:
                 fd.writelines(datalines)
         except IOError as e:
             raise ConversionError("couldn't create asm file due to %s" % str(e))
+        self.write_info(target, '.asm')
 
     def write_bas(self, target):
         print("[img] generating BAS file...")
         data = self._img2mode()
         target = target.replace('.', '')
-        targetl = target.lower()
+        targetl = target.lower().replace('/','').replace('\\','')
         try:
             hwpalette = ', '.join('0x%02X' % x for x in self.palette)
             fwpalette = ', '.join('%d' % CPC_HW_COLORS[x] for x in self.palette)
@@ -413,7 +415,7 @@ class ImgConverter:
                     "' \tDATA " + hwpalette + "\n",
                     "' %sfwpal\n" % targetl,
                     "' \tDATA " + fwpalette + "\n\n",
-                    "LABEL %simg\n" % targetl,
+                    "LABEL " + targetl + "\n",
                 ])
                 datalines = []
                 pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
@@ -426,7 +428,8 @@ class ImgConverter:
                 datalines.append('\n')
                 fd.writelines(datalines)
         except IOError as e:
-            raise ConversionError("couldn't create asm file due to %s" % str(e))
+            raise ConversionError("couldn't create bas file due to %s" % str(e))
+        self.write_info(target, '.bas')
 
     def write_scn(self, target):
         """ 

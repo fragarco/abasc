@@ -28,7 +28,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.0'
+__version__='1.4.1'
 
 import sys
 import argparse
@@ -739,7 +739,7 @@ def run_read_input_file(inputfile):
                 bytes = fd.read(chunksz)
         return content      
     except IOError:
-        print("[cdt] error reading file:", inputfile)
+        print("[cdt] ERROR - trying to read file:", inputfile)
         sys.exit(1)
 
 def run_new(args, cdt):
@@ -754,7 +754,7 @@ def run_check(args, cdt):
         cdt.set(content)
         cdt.check()
     except FormatError as e:
-        print("[cdt] unsupported CDT format:", str(e))
+        print("[cdt] ERROR - unsupported CDT format:", str(e))
         sys.exit(1)
 
 def run_cat(args, cdt):
@@ -768,7 +768,7 @@ def run_read_mapfile(mapfile):
             content = str.join('', fd.readlines())
             return eval(content)
     except IOError:
-        print("[cdt] error reading file:", mapfile)
+        print("[cdt] ERROR - trying to read file:", mapfile)
         sys.exit(1)
 
 def run_get_start(startaddr, mapfile):
@@ -779,14 +779,14 @@ def run_get_start(startaddr, mapfile):
         startaddr = startaddr.upper()
         if startaddr in mapfile:
             return mapfile[startaddr][0]
-        print("[cdt] invalid start address value")
+        print("[cdt] ERROR - invalid start address value")
         sys.exit(1)
 
 def run_put_file(filein, args, cdt, header):
     run_check(args, cdt)
     content = run_read_input_file(filein)
     if len(content) > 65536:
-        print("[cdt] max input file size is 64K")
+        print("[cdt] ERROR - max input file size is 64K")
         sys.exit(1)
     if header != None:
         if header.type == DataHeader.FT_ASCII:
