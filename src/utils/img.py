@@ -6,15 +6,15 @@ IMG.PY by Javier Garcia
 Tool that converts regular image files to CPC images. The conversion depends
 on the screen mode, that must be specified (0 by default). As reference:
 
-Mode 2, 640×200, 2 colors
+Mode 2, 640x200, 2 colors
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0	pixel 1	pixel 2	pixel 3	pixel 4	pixel 5	pixel 6	pixel 7
 
-Mode 1, 320×200, 4 colors (2 bits x pixel: bit 1 then bit 0)
+Mode 1, 320x200, 4 colors (2 bits x pixel: bit 0 then bit 1)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 2 pixel 3 pixel 0 pixel 1	pixel 2 pixel 3
 
-Modo 0, 160×200, colors (4 bits x pixel: bit 0 bit 2 bit 1 bit 3)
+Modo 0, 160x200, colors (4 bits x pixel: bit 0 bit 2 bit 1 bit 3)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1
 
@@ -184,17 +184,26 @@ class ImgConverter:
         return nearest
 
     def _img2mode(self):
+        """
+        self.img contains the array of palette indexes. One value per original image
+        pixel. We have to calculate the byte in which each pixel is contained according
+        to the CPC's video memory mode and set the bits in the right way.
+        """
         pixelxbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
         totalbytes = int((self.imgh * self.imgw) / pixelxbyte)
         imgdata = bytearray([0x00 for i in range(0, totalbytes)])
         for i in range(0, len(self.img)):
+            # Let's go orginal image pixel by pixel
+            # and calculate in imgbyte which CPC image byte to set
             imgbyte = int(i / pixelxbyte)
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
                 imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] << pos)
             elif self.mode == 1:
                 pos = 3 - (i % pixelxbyte)
-                imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << (pos+0)
+                bit0 = self.img[i] & 0x01
+                bit1 = (self.img[i] & 0x02) >> 1
+                imgdata[imgbyte] = imgdata[imgbyte] | bit0 << (pos+4) | bit1 << pos
             else:
                 pos = 1 - (i % pixelxbyte)
                 imgdata[imgbyte] = imgdata[imgbyte] | \
