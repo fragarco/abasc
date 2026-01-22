@@ -77,7 +77,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Keyboard Status Buffer defined in an external file
-read 'cpctelera/keyboard/keyboard.asm'
+read 'asm/cpctelera/keyboard/keyboard.asm'
 
 cpct_isKeyPressed::
    ld    a, h     ;; [1] A = BitMask with only 1 bit ON: the one that identifies the key (<TargetKey>)

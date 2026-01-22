@@ -60,14 +60,14 @@ LABEL MAIN
       ' Scan Keyboard (fastest routine)
       ' The Keyboard has to be scanned to obtain pressed / not pressed status of
       ' every key before checking each individual key's status.
-      'cpct_scanKeyboard_f()
+      call cpctScanKeyboardf()
 
       ' Check if user has pressed a Cursor Key and, if so, move the sprite if
       ' it will still be inside screen boundaries
-      'if      (cpct_isKeyPressed(Key_CursorRight) && x < (SCR_W - SP_W) ) ++x 
-      'else if (cpct_isKeyPressed(Key_CursorLeft)  && x > 0              ) --x 
-      'if      (cpct_isKeyPressed(Key_CursorUp)    && y > 0              ) --y
-      'else if (cpct_isKeyPressed(Key_CursorDown)  && y < (SCR_H - SP_H) ) ++y
+      if cpctIsKeyPressed(KEY.Right) and x < (SCRW - SPW) then x = x + 1
+      if cpctIsKeyPressed(KEY.Left)  and x > 0 then x = x - 1 
+      if cpctIsKeyPressed(KEY.Up) and y > 0 then y = y - 1
+      if cpctIsKeyPressed(KEY.Down) and y < (SCRH - SPH) then y = y + 1
       
       ' Get video memory byte for coordinates x, y of the sprite (in bytes)
       videomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
