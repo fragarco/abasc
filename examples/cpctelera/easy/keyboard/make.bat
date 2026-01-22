@@ -19,6 +19,7 @@ set LOADADDR=0x0040
 
 set RUNBAS=%BASC% %SOURCE%.bas
 set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
+set RUNIMG=%IMG% img/ctlogo.png --format asm --mode 1 --palette img/ctlogo.pal
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -35,11 +36,9 @@ IF "%1"=="clear" (
     IF EXIST ".\img\*.asm"  del /Q ".\img\*.asm"
     IF EXIST ".\img\*.info"  del /Q ".\img\*.info"
 ) ELSE IF "%1"=="dsk" (
-    call %IMG% img/ctlogo.png --format asm --mode 1 --palette img/ctlogo.pal
-    call %RUNBAS% %2 %3 && call %RUNDSK% 
+    call %RUNIMG% && call %RUNBAS% %2 %3 && call %RUNDSK% 
 ) ELSE (
-    call %IMG% img/ctlogo.png --format asm --mode 1
-    call %RUNBAS% %*
+    call %RUNIMG% && call %RUNBAS% %*
 )
 
 @endlocal
