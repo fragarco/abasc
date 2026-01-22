@@ -1199,6 +1199,7 @@ class LocBasParser:
         if not tk.lexeme in ("THEN", "GOTO"):
             self._raise_error(2, tk, "THEN missing")
         self._advance()
+        self._match(TokenType.COMMENT) # ignore any comment after a THEN in a IF block
         if not self._current_is(TokenType.EOL):
             then_body = self._parse_inline_then()
             else_body: list[AST.Statement] = []

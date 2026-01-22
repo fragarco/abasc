@@ -105,3 +105,11 @@ FUNCTION cpctIsKeyPressed(keyid) ASM
     ASM "ret"
     ASM "read    'asm/cpctelera/keyboard/cpct_isKeyPressed.asm'"
 END FUNCTION
+
+FUNCTION cpctGetKeypressedAsASCII ASM
+    ASM "call    cpct_getKeypressedAsASCII   ; A = ascii code or 0"
+    ASM "ld      l,a"
+    ASM "ld      h,0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/keyboard/cpct_getKeypressedAsASCII.asm'"
+END FUNCTION
