@@ -70,7 +70,7 @@ LABEL MAIN
       'else if (cpct_isKeyPressed(Key_CursorDown)  && y < (SCR_H - SP_H) ) ++y
       
       ' Get video memory byte for coordinates x, y of the sprite (in bytes)
-      ' videomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
+      videomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
       ' Draw the sprite in the video memory location got from coordinates x, y
       call cpctDrawSprite(SPMEM, videomem, SPW, SPH)
    WEND
