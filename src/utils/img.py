@@ -537,7 +537,8 @@ def main():
     try:
         run_convert(args)
     except ConversionError as e:
-        print("[img] error: " + str(e))
+        print("[img] ERROR - " + str(e))
+        sys.exit(1)
     sys.exit(0)
 
 if __name__ == "__main__":
