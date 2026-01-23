@@ -11,7 +11,7 @@ BASC="python3 ../../../../src/abasc.py"
 DSK="python3 ../../../../src/utils/dsk.py"
 
 SOURCE=main
-TARGET=keyboard
+TARGET=keyascii
 
 LOADADDR=0x0040
 
