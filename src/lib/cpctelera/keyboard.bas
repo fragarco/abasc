@@ -92,10 +92,20 @@ CONST JOY0.Fire2       = &2009
 CONST JOY0.Fire3       = &4009
 CONST KEY.Del          = &8009
 
-SUB cpctScanKeyboardf ASM
-    ASM "jp      cpct_scanKeyboard_f"
-    ASM "read    'asm/cpctelera/keyboard/cpct_scanKeyboard_f.asm'"
-END SUB
+FUNCTION cpctGetKeypressedAsASCII ASM
+    ASM "call    cpct_getKeypressedAsASCII   ; A = ascii code or 0"
+    ASM "ld      l,a"
+    ASM "ld      h,0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/keyboard/cpct_getKeypressedAsASCII.asm'"
+END FUNCTION
+
+FUNCTION cpctIsAnyKeyPressedf ASM
+    ASM "call    cpct_isAnyKeyPressed_f  ; L = A = key status (0 = FALSE)"
+    ASM "ld      h,0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/keyboard/cpct_isAnyKeyPressed_f.asm'"
+END FUNCTION
 
 FUNCTION cpctIsKeyPressed(keyid) ASM
     ASM "ld      l,(ix+0)"
@@ -106,10 +116,7 @@ FUNCTION cpctIsKeyPressed(keyid) ASM
     ASM "read    'asm/cpctelera/keyboard/cpct_isKeyPressed.asm'"
 END FUNCTION
 
-FUNCTION cpctGetKeypressedAsASCII ASM
-    ASM "call    cpct_getKeypressedAsASCII   ; A = ascii code or 0"
-    ASM "ld      l,a"
-    ASM "ld      h,0"
-    ASM "ret"
-    ASM "read    'asm/cpctelera/keyboard/cpct_getKeypressedAsASCII.asm'"
-END FUNCTION
+SUB cpctScanKeyboardf ASM
+    ASM "jp      cpct_scanKeyboard_f"
+    ASM "read    'asm/cpctelera/keyboard/cpct_scanKeyboard_f.asm'"
+END SUB

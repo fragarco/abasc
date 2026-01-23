@@ -75,9 +75,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; colour conversion table defined in cpct_getHWColour.s
-read 'cpctelera/video/cpct_firmware2hw_colour_table.asm'
+read 'asm/cpctelera/video/cpct_firmware2hw_colour_table.asm'
 
-cpct_fw2hw_asm:
+cpct_fw2hw:
 f2h_colour_loop:
    ld   hl, cpct_firmware2hw_colour ;; [3] HL points to the start of the firmware2hw_colour array
    ld    a, (de)            ;; [2] A = Next colour to convert

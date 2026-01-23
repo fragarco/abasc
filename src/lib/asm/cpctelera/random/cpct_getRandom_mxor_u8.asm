@@ -79,10 +79,10 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/random/cpct_mxor32_seed.asm'
-read 'cpctelera/random/cpct_nextRandom_mxor_u32.asm'
+read 'asm/cpctelera/random/cpct_mxor32_seed.asm'
+read 'asm/cpctelera/random/cpct_nextRandom_mxor_u32.asm'
 
-cpct_getRandom_mxor_u8::
+cpct_getRandom_mxor_u8:
 
 cpct_randomIdx_mxor_u8 equ $+1
 mxoru8_n_randoms       equ $+1

@@ -69,7 +69,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; We need to change the value of the index counter to set it to its initial value
-read 'cpctelera/random/cpct_getRandom_mxor_u8.asm'
+read 'asm/cpctelera/random/cpct_getRandom_mxor_u8.asm'
 
 cpct_restoreState_mxor_u8:
    ;; Set internal index counter to 1, which is the initial value. This is so

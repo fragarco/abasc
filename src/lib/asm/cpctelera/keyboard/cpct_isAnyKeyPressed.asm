@@ -66,7 +66,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Keyboard Status Buffer defined in an external file
-read 'cpctelera/keyboard/keyboard.asm'
+read 'asm/cpctelera/keyboard/keyboard.asm'
 
 cpct_isAnyKeyPressed:
    ld  hl, cpct_keyboardStatusBuffer ;; [3] HL Points to the start of the keyboard status buffer

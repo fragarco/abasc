@@ -74,9 +74,9 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/random/cpct_mxor32_seed.asm'
+read 'asm/cpctelera/random/cpct_mxor32_seed.asm'
 
-cpct_setSeed_mxor::
+cpct_setSeed_mxor:
    ;; Only sets the seed. Does not restore internal index state of MXOR generators.
    ld   (cpct_mxor32_seed+0), de     ;; [6] |
    ld   (cpct_mxor32_seed+2), hl     ;; [5] | Store new value as next seed
