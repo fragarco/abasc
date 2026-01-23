@@ -389,7 +389,7 @@ rt_malloc_de:
 ;     None
 ;     DE gets modified
 rt_free_all:
-    ld      de,rt_heapmem_start
+    ld      de,(rt_heapmem_start)
     ld      (rt_heapmem_next),de
     ret
 """

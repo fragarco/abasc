@@ -1054,6 +1054,8 @@ class LocBasParser:
             # is not possible to define new functions or procs in the body of another
             self._raise_error(2, tk)
         tk = self._expect(TokenType.IDENT)
+        if tk.lexeme.upper()[:2] == "FN":
+            self._raise_error(2, tk, "FN starting chars are reserved for DEF FN functions")
         fname = "FUN" + tk.lexeme.upper()
         fargs: list[AST.Variable] = []
         self.context = fname
@@ -3099,13 +3101,14 @@ class LocBasParser:
             return AST.Command(name="REPLACE$", args=args)
         # The asignement is the way to declare variables so
         # we do not check in the sym table if left variables exist
+        # BUT routine parameters is an exception
         tk = self._current()
         target = self._parse_ident()
         self._expect(TokenType.COMP, "=")
         source = self._parse_expression()
         # assignament type is always the one from the target variable
         # an assignement is the way to declare new variables except in 
-        # the case of Arrays, which must be declared with DIM
+        # the case of Arrays, which must be declared with DIM or parameters
         dtype = AST.exptype_derive(target, source)
         if not AST.exptype_isvalid(dtype):
             self._raise_error(13, tk)
@@ -3113,21 +3116,23 @@ class LocBasParser:
             target, source = self._cast_numtypes(target, source, target.etype, tk)
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
-            # have to add them to the symtable now but let's check is not
-            # a constant
+            # have to add them to the symtable now but let's check that it
+            # is not a constant or a parameter
             self._check_noconst(target.name, tk)
-            added = self.symtable.add(
-                ident=target.name,
-                info=SymEntry(
-                    SymType.Variable,
-                    exptype=target.etype,
-                    locals=SymTable(),
-                    datasz=AST.exptype_memsize(target.etype)
-                ),
-                context=self.context
-            )
-            if not added:
-                self._raise_error(2, tk)
+            entry = self.symtable.find(target.name, SymType.Param, self.context)
+            if entry is None:
+                added = self.symtable.add(
+                    ident=target.name,
+                    info=SymEntry(
+                        SymType.Variable,
+                        exptype=target.etype,
+                        locals=SymTable(),
+                        datasz=AST.exptype_memsize(target.etype)
+                    ),
+                    context=self.context
+                )
+                if not added:
+                    self._raise_error(2, tk)
         return AST.Assignment(target=target, source=source, etype=target.etype)
 
     def _parse_RSX(self) -> AST.RSX:

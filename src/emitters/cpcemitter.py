@@ -73,7 +73,7 @@ class CPCEmitter:
         self.selectblocks: list[AST.SelectCase] = []
         self.symbolafter = 9999
         self.memlimit = 99999
-        self.memstacks: list[tuple[bool,int]] = []
+        self.heapstack: list[(int, int, bool)] = []
 
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
@@ -125,7 +125,6 @@ class CPCEmitter:
         return False
 
     def _emit_push_memheap(self) -> None:      
-        self.memstacks.append((self.free_heap_memory, self.reserved_heap_memory))
         self._emit_code("ld      hl,(rt_heapmem_start)")
         self._emit_code("push    hl", info="store current heap memory start address")
         self._emit_code("ld      hl,(rt_heapmem_next)")
@@ -135,7 +134,22 @@ class CPCEmitter:
         self._emit_free_heapmem()
         self._emit_code("pop     hl")
         self._emit_code("ld      (rt_heapmem_start),hl")
-        self.free_heap_memory, self.reserved_heap_memory = self.memstacks.pop()
+
+    def _push_heapvalues(self) -> None:
+        self.heapstack.append((
+            self.max_heap_memory,
+            self.reserved_heap_memory,
+            self.free_heap_memory
+        ))
+        self.max_heap_memory = 0
+        self.reserved_heap_memory = 0
+        self.free_heap_memory = False
+
+    def _pop_heapvalues(self) -> None:
+        values = self.heapstack.pop()
+        self.max_heap_memory = values[0]
+        self.reserved_heap_memory = values[1]
+        self.free_heap_memory = values[2]
 
     def _emit_free_heapmem(self) -> None:
         if self.free_heap_memory:
@@ -160,11 +174,8 @@ class CPCEmitter:
         self._check_heapmem(node)
 
     def _check_heapmem(self, node):
-        totaltmp = self.reserved_heap_memory
-        for _, reservedtmp in self.memstacks:
-            totaltmp += reservedtmp
-        if totaltmp > self.max_heap_memory:
-            self.max_heap_memory = totaltmp
+        if self.reserved_heap_memory > self.max_heap_memory:
+            self.max_heap_memory = self.reserved_heap_memory
 
     def _emit_pushcontext(self):
         if self.context != "":
@@ -219,8 +230,9 @@ class CPCEmitter:
 
     def _emit_heap_def(self):
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
-        self._emit_heap("rt_heapmem_next:  dw rt_heapmem_start ", 0, info="pointer to free memory for dynamic allocation")
-        self._emit_heap(f"rt_heapmem_start: defs {self.max_heap_memory}", 0, info="reserved area for dynamic allocated memory")
+        self._emit_heap("rt_heapmem_next:  dw rt_heapmem", 0, info="pointer to free memory for dynamic allocation")
+        self._emit_heap("rt_heapmem_start: dw rt_heapmem", 0, info="reserved area for dynamic allocated memory")
+        self._emit_heap(f"rt_heapmem:       defs {self.max_heap_memory}", 0, info="reserved area for dynamic allocated memory")
         self._emit_heap("rt_heapmem_end:   db &DE,&AD", 0, info="DEAD mark")
         self._emit_heap()
     
@@ -991,7 +1003,7 @@ class CPCEmitter:
         self.context = node.name
         currentcode = self.srccode  # keep current generated code
         self.srccode = ""           # capture only the code that will be generated now
-        heapused = self.reserved_heap_memory
+        self._push_heapvalues()
         self._emit_expression(node.body)
         self._emit_code("ret")
         fcode = self.srccode
@@ -1001,12 +1013,13 @@ class CPCEmitter:
         self._emit_data(f"{flabel}:", 0)
         self._emit_data(fcode, 0)
         # If the expresion required heap memory (tmp memory)
-        # we keep track of that now because it has to be freed after every call
+        # we store the amount
         entry = self.symtable.find(node.name, SymType.Function)
         if entry is not None:
-            entry.heapused = self.reserved_heap_memory - heapused
-            self.reserved_heap_memory = heapused
-            self.free_heap_memory = heapused > 0
+            entry.heapused = self.max_heap_memory
+            self._pop_heapvalues()
+        else:
+            self._raise_error(2, node)
         self._emit_code(";")
 
     def _emit_DEG(self, node:AST.Statement):
@@ -1529,6 +1542,13 @@ class CPCEmitter:
             # to care about the temporal memory but may better use only
             # ASM code or something bad will happen!
             self._emit_push_memheap()
+            entry = self.symtable.find(node.name, SymType.Function)
+            if entry is not None:
+                self._push_heapvalues()
+                self.max_heap_memory = 0
+            else:
+                self._raise_error(2,node)
+
 
     def _emit_GOSUB(self, node:AST.Command):
         """
@@ -1699,6 +1719,11 @@ class CPCEmitter:
         entry = self.symtable.find(ident=self.context, stype=SymType.Function)
         if entry and entry.calls > 0:
             self._emit_data(subfun, 0)
+            if not node.args[0].asm:        # type: ignore [attr-defined]
+                entry.heapused = self.max_heap_memory
+                self._pop_heapvalues()
+            else:
+                entry.heapused = 0
         self.context = ""
 
     def _emit_END_IF(self, node:AST.BlockEnd):
@@ -1735,6 +1760,11 @@ class CPCEmitter:
         entry = self.symtable.find(ident=self.context, stype=SymType.Procedure)
         if entry and entry.calls > 0:
             self._emit_data(subfun, 0)
+            if not node.args[0].asm:        # type: ignore [attr-defined]
+                entry.heapused = self.max_heap_memory
+                self._pop_heapvalues()
+            else:
+                entry.heapused = 0
         self.context = ""
 
     def _emit_INK(self, node:AST.Command):
@@ -3446,6 +3476,13 @@ class CPCEmitter:
             # to care about the temporal memory but may better use only
             # ASM code or something bad will happen!
             self._emit_push_memheap()
+            entry = self.symtable.find(node.name, SymType.Procedure)
+            if entry is not None:
+                # store current to calculate any use in END FUNCTION
+                self._push_heapvalues()
+                self.max_heap_memory = 0
+            else:
+                self._raise_error(2,node)
 
     def _emit_SYMBOL(self, node:AST.Command):
         """
@@ -3975,7 +4012,7 @@ class CPCEmitter:
 
     def _emit_variable(self, node: AST.Variable):
         """
-        Params are speciall variables because they don't have permanent reserved
+        Params are special variables because they don't have permanent reserved
         memory but are stored in the call stack frame and accessed through IX.
         """
         if "$." in node.name:
@@ -4456,8 +4493,37 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
-    def _emit_assigment_variable(self, node: AST.Variable):          
+    def _emit_assigment_param(self, param: SymEntry):
+        """
+        self._emit_code(f"ld      l,(ix+{entry.memoff})")
+        self._emit_code(f"ld      h,(ix+{entry.memoff+1})")
+        """
+        if param.exptype == AST.ExpType.Integer:
+            self._emit_code(f"ld      (ix+{param.memoff}),l")
+            self._emit_code(f"ld      (ix+{param.memoff+1}),h")
+        elif param.exptype == AST.ExpType.Real:
+            self._emit_code(f"ld      e,(ix+{param.memoff})")
+            self._emit_code(f"ld      d,(ix+{param.memoff+1})")
+            self._emit_code(f"ld      bc,{param.datasz}")
+            self._emit_code("ldir")
+        elif param.exptype == AST.ExpType.String:
+            self._emit_code(f"ld      e,(ix+{param.memoff})")
+            self._emit_code(f"ld      d,(ix+{param.memoff+1})")
+            self._emit_code("ld      b,0")
+            self._emit_code("ld      c,(hl)")
+            self._emit_code("inc     c")
+            self._emit_code("ldir")
+
+    def _emit_assigment_variable(self, node: AST.Variable):
+        """
+        Params are special variables because they don't have permanent reserved
+        memory but are stored in the call stack frame and accessed through IX.
+        """  
         var = self.symtable.find(node.name, SymType.Variable, self.context)
+        if var is None:
+            var = self.symtable.find(node.name, SymType.Param, self.context)
+            self._emit_assigment_param(var)
+            return
         if var is not None:
             if var.exptype == AST.ExpType.Integer:
                 self._emit_code(f"ld      ({var.label}),hl")
@@ -4550,14 +4616,21 @@ class CPCEmitter:
             for a in node.args:
                 self._emit_code("pop     de", info="clean the stack")
             self._emit_popcontext()
-        if node.name[:2] == "FN":
-            # DEF FN can use heap (tmp) memory in each call and must be
-            # tracked here so we can call freemem if needed
-            entry = self.symtable.find(node.name, SymType.Function)
-            if entry is not None and entry.heapused > 0:
-                self.reserved_heap_memory += entry.heapused
+        # Check heap memory will be within the limits 
+        entry = self.symtable.find(node.name, SymType.Function)
+        if entry is None:
+            entry = self.symtable.find(node.name, SymType.Procedure)
+        if entry is not None and entry.heapused > 0:
+            # DEF FN functions are inline expressions that must free
+            # heap memory now
+            if entry.symtype == SymType.Function and node.name[:2].upper() == "FN":
                 self.free_heap_memory = True
-                self._check_heapmem(node)
+                self.reserved_heap_memory += entry.heapused
+                self._check_heapmem()
+            else:
+                maxconsumed = self.reserved_heap_memory + entry.heapused
+                if maxconsumed > self.max_heap_memory:
+                    self.max_heap_memory = maxconsumed        
         self._emit_code(";")
 
     def _emit_function(self, node: AST.Function):
