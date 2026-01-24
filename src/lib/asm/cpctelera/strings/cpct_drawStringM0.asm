@@ -17,6 +17,10 @@
 ;;-------------------------------------------------------------------------------
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
+;;
+;; NOTE: this has been changed to work with the string structure used
+;; by ABASC instead of using null-terminated strings
+;; ABASC stores in the first byte the string length.
 
 read "asm/cpctelera/strings/strings.asm"
 read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
@@ -25,7 +29,7 @@ read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
 ;;
 ;; Function: cpct_drawStringM0
 ;;
-;;    Draws a null-terminated string with ROM characters to video memory or 
+;;    Draws an ABASC formated string with ROM characters to video memory or 
 ;; to a hardware backbuffer in Mode 0 (160x200, 16 colours).
 ;;
 ;; C Definition:
@@ -39,11 +43,8 @@ read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
 ;;    > call cpct_drawStringM0
 ;;
 ;; Parameter Restrictions:
-;;  * *string* must be a null terminated string. It could contain any 8-bit value as 
-;; characters except 0, which will signal the end of the string. Be careful to provide
-;; strings with a 0 (null) at the end of the string. Otherwise, unexpected results may
-;; happen (Typically, rubbish characters printed on screen and, occasionally, memory 
-;; overwrite and even hangs or crashes).
+;;  * *string* stores its length in the first byte. It could contain any 8-bit value as 
+;; characters except 0, which will signal the end of the string.
 ;;  * *video_memory* could theoretically be any 16-bit memory location. It will work
 ;; outside current screen memory boundaries, which is useful if you use any kind of
 ;; double buffer. However, be careful where you use it, as it does no kind of check
@@ -63,7 +64,7 @@ read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
 ;;  * This function *will not work from ROM*, as it uses self-modifying code.
 ;;
 ;; Details:
-;;    This function receives a null-terminated string and draws it to the screen in 
+;;    This function receives an ABASC formated string and draws it to the screen in 
 ;; Mode 0 (160x200, 16 colours). To do so, it repeatedly calls <cpct_drawCharM0_inner>,
 ;; for every character to be drawn. As foreground and background colours it uses the
 ;; ones previously set up by the latest call to <cpct_setDrawCharM0>.
@@ -74,50 +75,11 @@ read "asm/cpctelera/strings/cpct_drawCharM0_inner.asm"
 ;; string, it can only draw string on even-pixel columns (0, 2, 4, 6...), as 
 ;; every byte contains 2 pixels in Mode 0.
 ;;
-;;    Usage of this function is quite straight-forward, as you can see in the 
-;; following example,
-;; (start code)
-;;    // Just print some strings for testing
-;;    void main () {
-;;       u8* pvmem;  // Pointer to video memory
-;;
-;;       // Set video mode 0
-;;       cpct_disableFirmware();
-;;       cpct_setVideoMode(0);
-;;
-;;       // Draw some testing strings with curious colours, more or less centered
-;;       pvmem = cpctm_screenPtr(CPCT_VMEM_START, 16, 88);  // Calculate video memory address
-;;       cpct_setDrawCharM0(3, 5);                          // Red over black
-;;       cpct_drawStringM0("Hello there!", pvmem);          // Draw the string
-;;
-;;       pvmem = cpctm_screenPtr(CPCT_VMEM_START, 20, 108); // Calculate new video memory address
-;;       cpct_setDrawCharM0(1, 9);                          // Bright yellow over yellow
-;;       cpct_drawStringM0("Great man!",   pvmem);          // Draw the string
-;;
-;;       // And loop forever
-;;       while(1);
-;;    }
-;; (end code)
-;;
 ;; Destroyed Register values: 
 ;;    C bindings  - AF, BC, DE, HL
 ;;  ASM bindings  - AF, BC, DE, HL, IX, IY
 ;;
-;; Required memory: 
-;;    C bindings  - 58 (+100 cpct_drawCharM0_inner = 158 bytes)
-;;  ASM bindings  - 38 (+100 cpct_drawCharM0_inner = 138 bytes)
 ;;
-;; Time Measures:
-;; (start code)
-;;   Case     | microSecs (us) | CPU Cycles
-;; ----------------------------------------------
-;;   Best     |    74 + 854*L  |  296 + 3416*L  
-;;   Worst    |    74 + 862*L  |  296 + 3448*L
-;; ----------------------------------------------
-;; Asm saving |      -38       |     -152
-;; ----------------------------------------------
-;; (end code)
-;;    L = Length of the string (excluding null-terminator character)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 cpct_drawStringM0:
@@ -130,15 +92,16 @@ cpct_drawStringM0:
    out   (c), a                     ;; [3] GA Command: Set Video Mode and ROM status (100)
 
    ld     b, (iy)                   ;; [5] B = string len
+   inc    b                         ;; [1] B = number of times to run the print char loop (len(str) + 1)
    inc    iy                        ;; [3] IY += 1 (point to first character in the string)
    jr     dsm0_firstChar            ;; [3] Jump to first char (Saves 1 jr back every iteration)
 
 dsm0_nextChar:
    ;; Draw next character
    push  hl                         ;; [4] Save HL
-   push  bc
+   push  bc                         ;; [4] Save BC
    call  cpct_drawCharM0_inner      ;; [5 + 824/832] Draws the next character
-   pop   bc
+   pop   bc                         ;; [3] Recover BC 
    pop   hl                         ;; [3] Recover HL 
 
    ;; Increment Pointers
@@ -148,7 +111,7 @@ dsm0_nextChar:
 
 dsm0_firstChar:
    ld     a, (iy)                   ;; [5] A = next character from the string
-   djnz   dsm0_nextChar             ;; [2/3] if A != 0, A is next character, draw it, else end
+   djnz   dsm0_nextChar             ;; [3/4] if B != 0 draw A, else end
 
 dsm0_endstring:
    ;; After finishing character drawing, restore previous ROM and Interrupts status

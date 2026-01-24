@@ -35,9 +35,8 @@ sub waitframes(nframes)
       ' VSYNC is usually active for ~1500 cycles, then we have to do 
       ' something that takes approximately this amount of time before
       ' waiting for the next VSYNC, or we will find the same VSYNC signal
-      ' This active wait loop will do at least 750 comparisons, what
-      ' is the same as 750*4 cycles (at least)
-      for j=1 to 750: next
+      ' This active wait loop will do at least 500 comparisons
+      for j=1 to 500: next
    next
 end sub
 
@@ -54,11 +53,9 @@ label MAIN
    ' Loop forever showing characters on different modes and colours
    '
    while 1
-      
       '
       ' Show some strings in Mode 0, using different colours
       '
-
       ' Clear Screen filling it up with 0's and set mode 0
       call cpctClearScreen(0)
       call cpctSetVideoMode(0)
@@ -88,7 +85,6 @@ label MAIN
       '
       ' Show some strings in Mode 1, using different colours
       '
-
       ' Clear Screen filling it up with 0's and set mode 1
       call cpctClearScreen(0)
       call cpctSetVideoMode(1)
@@ -117,7 +113,7 @@ label MAIN
          ' Point to the start of the next character line on screen (80 bytes away)
          pvideomem = pvideomem + &50
       next
-      colours(4) = colours(4) + &0003
+      colours(4) = (colours(4) + 1) and &0003
 
       '
       ' Show some strings in Mode 2, using different colours
