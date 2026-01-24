@@ -134,12 +134,16 @@ cpct_drawStringM1:
    di                               ;; [1] Disable interrupts to prevent firmware from taking control while Lower ROM is enabled
    out   (c), a                     ;; [3] GA Command: Set Video Mode and ROM status (100)
 
-   jr    dsm1_firstChar             ;; [3] Jump to first char (Saves 1 jr back every iteration)
+   ld     b, (iy)                   ;; [5] B = string len
+   inc    iy                        ;; [3] IY += 1 (point to first character in the string)
+   jr     dsm1_firstChar            ;; [3] Jump to first char (Saves 1 jr back every iteration)
 
 dsm1_nextChar:
    ;; Draw next character
    push  hl                         ;; [4] Save HL
+   push  bc
    call  cpct_drawCharM1_inner      ;; [5 + 458/466] Draws the next character
+   pop   bc
    pop   hl                         ;; [3] Recover HL 
 
    ;; Increment Pointers
@@ -148,9 +152,8 @@ dsm1_nextChar:
    inc   iy                         ;; [3] IX += 1 (point to next character in the string)
 
 dsm1_firstChar:
-   ld     a, (iy+0)                 ;; [5] A = next character from the string
-   or     a                         ;; [1] Check if A = 0
-   jr    nz, dsm1_nextChar          ;; [2/3] if A != 0, A is next character, draw it, else end
+   ld     a, (iy)                   ;; [5] A = next character from the string
+   djnz   dsm1_nextChar             ;; [2/3] if A != 0, A is next character, draw it, else end
 
 dsm1_endstring:
    ;; After finishing character drawing, restore previous ROM and Interrupts status

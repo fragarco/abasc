@@ -1064,7 +1064,8 @@ def op_READ(p, opargs):
     g_context.include_stack.append((g_context.currentfile, g_context.linenumber))
     if not os.path.exists(filename):
         abort("couldn't access to the file " + filename)
-    if p == 1: print("[abasm] including", filename)
+    if p == 1 and g_context.verbose:
+        print("[abasm] including", filename)
     g_context.assembler_pass(p, filename)
     g_context.currentfile, g_context.linenumber = g_context.include_stack.pop()
     g_context.list_instruction = False
