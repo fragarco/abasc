@@ -8,61 +8,61 @@ ASM "read 'asm/cpctelera/video/video_macros.asm'"
 
 CONST CPCT.VMEMSTART    = &C000
 
-CONST FWC.Black         =  0
-CONST FWC.Blue          =  1
-CONST FWC.BrightBlue    =  2
-CONST FWC.Red           =  3
-CONST FWC.Magenta       =  4
-CONST FWC.Mauve         =  5
-CONST FWC.BrightRed     =  6
-CONST FWC.Purple        =  7
-CONST FWC.BrightMagenta =  8
-CONST FWC.Green         =  9
-CONST FWC.Cyan          = 10
-CONST FWC.SkyBlue       = 11
-CONST FWC.Yellow        = 12
-CONST FWC.White         = 13
-CONST FWC.PastelBlue    = 14
-CONST FWC.Orange        = 15
-CONST FWC.Pink          = 16
-CONST FWC.PasterMagenta = 17
-CONST FWC.BrightGreen   = 18
-CONST FWC.SeaGreen      = 19
-CONST FWC.BrightCyan    = 20
-CONST FWC.Lime          = 21
-CONST FWC.PastelGreen   = 22
-CONST FWC.PastelCyan    = 23
-CONST FWC.BrightYellow  = 24
-CONST FWC.PastelYellow  = 25
-CONST FWC.BrightWhite   = 26
+CONST FWC.BLACK         =  0
+CONST FWC.BLUE          =  1
+CONST FWC.BRIGHTBLUE    =  2
+CONST FWC.RED           =  3
+CONST FWC.MAGENTA       =  4
+CONST FWC.MAUVE         =  5
+CONST FWC.BRIGHTRED     =  6
+CONST FWC.PURPLE        =  7
+CONST FWC.BRIGHTMAGENTA =  8
+CONST FWC.GREEN         =  9
+CONST FWC.CYAN          = 10
+CONST FWC.SKYBLUE       = 11
+CONST FWC.YELLOW        = 12
+CONST FWC.WHITE         = 13
+CONST FWC.PASTELBLUE    = 14
+CONST FWC.ORANGE        = 15
+CONST FWC.PINK          = 16
+CONST FWC.PASTERMAGENTA = 17
+CONST FWC.BRIGHTGREEN   = 18
+CONST FWC.SEAGREEN      = 19
+CONST FWC.BRIGHTCYAN    = 20
+CONST FWC.LIME          = 21
+CONST FWC.PASTELGREEN   = 22
+CONST FWC.PASTELCYAN    = 23
+CONST FWC.BRIGHTYELLOW  = 24
+CONST FWC.PASTELYELLOW  = 25
+CONST FWC.BRIGHTWHITE   = 26
 
-CONST HWC.Black         = 20
-CONST HWC.Blue          =  4
-CONST HWC.BrightBlue    = 21
-CONST HWC.Red           = 28
-CONST HWC.Magenta       = 24
-CONST HWC.Mauve         = 29
-CONST HWC.BrightRed     = 12
-CONST HWC.Purple        =  5
-CONST HWC.BrightMagenta = 13
-CONST HWC.Green         = 22
-CONST HWC.Cyan          =  6
-CONST HWC.SkyBlue       = 23
-CONST HWC.Yellow        = 30
-CONST HWC.White         =  0
-CONST HWC.PastelBlue    = 31
-CONST HWC.Orange        = 14
-CONST HWC.Pink          =  7
-CONST HWC.PasterMagenta = 15
-CONST HWC.BrightGreen   = 18
-CONST HWC.SeaGreen      =  2
-CONST HWC.BrightCyan    = 19
-CONST HWC.Lime          = 26
-CONST HWC.PastelGreen   = 25
-CONST HWC.PastelCyan    = 27
-CONST HWC.BrightYellow  = 10
-CONST HWC.PastelYellow  =  3
-CONST HWC.BrightWhite   = 11
+CONST HWC.BLACK         = 20
+CONST HWC.BLUE          =  4
+CONST HWC.BRIGHTBLUE    = 21
+CONST HWC.RED           = 28
+CONST HWC.MAGENTA       = 24
+CONST HWC.MAUVE         = 29
+CONST HWC.BRIGHTRED     = 12
+CONST HWC.PURPLE        =  5
+CONST HWC.BRIGHTMAGENTA = 13
+CONST HWC.GREEN         = 22
+CONST HWC.CYAN          =  6
+CONST HWC.SKYBLUE       = 23
+CONST HWC.YELLOW        = 30
+CONST HWC.WHITE         =  0
+CONST HWC.PASTELBLUE    = 31
+CONST HWC.ORANGE        = 14
+CONST HWC.PINK          =  7
+CONST HWC.PASTERMAGENTA = 15
+CONST HWC.BRIGHTGREEN   = 18
+CONST HWC.SEAGREEN      =  2
+CONST HWC.BRIGHTCYAN    = 19
+CONST HWC.LIME          = 26
+CONST HWC.PASTELGREEN   = 25
+CONST HWC.PASTELCYAN    = 27
+CONST HWC.BRIGHTYELLOW  = 10
+CONST HWC.PASTELYELLOW  =  3
+CONST HWC.BRIGHTWHITE   = 11
 
 SUB cpctClearScreen(color) ASM
     ASM "ld      a,(ix+0)"
@@ -106,7 +106,7 @@ FUNCTION cpctGetScreenPtr(vstart, x, y) ASM
     ASM "read 'asm/cpctelera/video/cpct_getScreenPtr.asm'"
 END FUNCTION
 
-SUB cpctSetBorder(color) ASM
+SUB cpctSetBorder(hwcolor) ASM
     ASM "ld      h,(ix+0)     ; H = INK"
     ASM "ld      l,16         ; L = BORDER PEN"
     ASM "jp      cpct_setPALColour"

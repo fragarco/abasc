@@ -38,7 +38,7 @@
 ;;            It should be considered as an additional parameter.
 ;;
 ;; Assembly call (Input parameters on Registers):
-;;    > call cpct_etm_setDrawTilemap4x8_ag_asm
+;;    > call cpct_etm_setDrawTilemap4x8_ag
 ;;
 ;; Parameter Restrictions:
 ;;    * *width* (1-256) is the horizontal size in *tiles* of view window. The view window is 
@@ -211,8 +211,7 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_maths.asm'
-read 'cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_ag.asm'
+read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_ag.asm'
 
 cpct_etm_setDrawTileMap4x8_ag:
    ;; Set (tilesetPtr) placeholder
@@ -223,7 +222,7 @@ cpct_etm_setDrawTileMap4x8_ag:
    ;; initialization. The other one (restoreWidth) restores the value of the
    ;; width after each loop, as it is used as counter and decremented to 0.
    ld (dtm48ag_widthHeightSet), bc ;; [6]
-   ld     a, c                    ;; [1]
+   ld     a, c                     ;; [1]
    ld (dtm48ag_restoreWidth), a    ;; [4] Set restore width after each loop placeholder
    
    ;; In order to properly show a view of (Width x Height) tiles from within the
