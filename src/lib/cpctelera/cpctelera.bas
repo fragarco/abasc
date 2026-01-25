@@ -1,6 +1,7 @@
 ' MODULE CPCTELERA
 
 CHAIN MERGE "cpctelera/audio.bas"
+CHAIN MERGE "cpctelera/bitarray.bas"
 CHAIN MERGE "cpctelera/easytilemaps.bas"
 CHAIN MERGE "cpctelera/firmware.bas"
 CHAIN MERGE "cpctelera/keyboard.bas"
