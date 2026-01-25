@@ -18,7 +18,6 @@ LOADADDR=0x0040
 
 RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
-RUNIMG="$IMG img/ctlogo.png --format asm --mode 1 --palette img/ctlogo.pal"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -34,7 +33,7 @@ if [ "$1" = "clear" ]; then
     rm -f "img/*.asm"
     rm -f "img/*.info"
 elif [ "$1" = "dsk" ]; then
-    $RUNIMG && $RUNBAS $2 $3 && $RUNDSK
+    $RUNBAS $2 $3 && $RUNDSK
 else
-    $RUNIMG && $RUNBAS $@
+    $RUNBAS $@
 fi

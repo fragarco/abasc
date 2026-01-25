@@ -9,6 +9,7 @@
 
 BASC="python3 ../../../../src/abasc.py"
 DSK="python3 ../../../../src/utils/dsk.py"
+IMG="python3 ../../../../src/utils/img.py"
 
 SOURCE=main
 TARGET=keyascii
@@ -17,6 +18,7 @@ LOADADDR=0x0040
 
 RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
+RUNIMG="$IMG img/ctlogo.png --format asm --mode 1 --palette img/ctlogo.pal"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -30,7 +32,7 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
 elif [ "$1" = "dsk" ]; then
-    $RUNBAS $2 $3 && $RUNDSK
+    $RUNIMG && $RUNBAS $2 $3 && $RUNDSK
 else
-    $RUNBAS $@
+    $RUNIMG && $RUNBAS $@
 fi
