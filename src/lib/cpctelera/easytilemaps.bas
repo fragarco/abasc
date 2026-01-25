@@ -8,7 +8,7 @@ SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles) ASM
     ASM "ld      e,(ix+2)     ; tilemapw - Width in *tiles* of the complete tilemap"
     ASM "ld      d,(ix+3)"
     ASM "ld      b,(ix+4)     ; viewh - Height in *tiles* of the view window to be drawn"
-    ASM "ld      c,(ix+6)     ; voeww - Width in *tiles* of the view window to be drawn"
+    ASM "ld      c,(ix+6)     ; vieww - Width in *tiles* of the view window to be drawn"
     ASM "jp      cpct_etm_setDrawTilemap4x8_ag"
     ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setDrawTilemap4x8_ag.asm'"
 END SUB

@@ -211,6 +211,7 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+read 'asm/cpctelera/macros/cpct_maths.asm'
 read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_ag.asm'
 
 cpct_etm_setDrawTileMap4x8_ag:

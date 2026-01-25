@@ -67,23 +67,22 @@ const  COURTMAP.W = 18
 const  COURTMAP.H = 22
 
 ' Upper-left tile will be at (1,2) coordinate in tiles. Convert to byte coordinates.
-const  VIEWPORT.X = 4   ' (1*TILESIZE.X)
-const  VIEWPORT.Y = 16  ' (2*TILESIZE.Y)
+VIEWPORT.X = 1 * TILESIZE.X
+VIEWPORT.Y = 2 * TILESIZE.Y
 
-' Convert byte coordinates to video memory address (all values constant, use macro)
+' Convert byte coordinates to video memory address
 TILEMAP.VMEM = cpctGetScreenPtr(CPCT.VMEMSTART, VIEWPORT.X, VIEWPORT.Y)
 
 ''''''''''''''''''''''''''''''''''''''''''
 ' INITIALIZE THE CPC
 '
-sub initialize
-   SHARED HWC.BLACK
+sub initialize(bcolor)
    ' Firmware must be disabled to be able to change video mode,
    ' setting palette colours and border
    call cpctRemoveInterruptHandler()            ' Disable firmware 
    call cpctSetVideoMode(0)                     ' Set Video Mode 0 (160x200, 16 colours)
    call cpctSetPalette(@LABEL(TILEMAP.PAL), 16) ' Set palette colours
-   call cpctSetBorder(HWC.BLACK)                ' Set border colour to black
+   call cpctSetBorder(bcolor)                   ' Set border colour
 end sub
 
 ''''''''''''''''''''''''''''''''''''''''''
@@ -91,7 +90,7 @@ end sub
 '    Just initialize the CPC, draw the court map and wait forever
 '
 label MAIN
-   call initialize()  ' Initialize the CPC
+   call initialize(HWC.BLACK)  ' Initialize the CPC
 
    ' DRAW THE COURT
 
