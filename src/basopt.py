@@ -90,6 +90,17 @@ class BasOptimizer:
             node.left = self._op_statement(node.left)    
         return node 
 
+    def _op_ASC(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.String):
+            self.modified = True
+            if node.args[0].value != "":
+                nnode = AST.Integer(value = ord(node.args[0].value[0]))
+            else:
+                nnode = AST.Integer(value = 0)
+            nnode.set_origin(node.line, node.col)
+            return nnode
+        return node
+
     def _op_CINT(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
             self.modified = True

@@ -73,7 +73,7 @@ class CPCEmitter:
         self.selectblocks: list[AST.SelectCase] = []
         self.symbolafter = 9999
         self.memlimit = 99999
-        self.heapstack: list[(int, int, bool)] = []
+        self.heapstack: list[tuple[int, int, bool]] = []
 
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
@@ -163,7 +163,7 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc", info="HL points to heap memory")
         self.free_heap_memory = True
         self.reserved_heap_memory += nbytes
-        self._check_heapmem(node)
+        self._check_heapmem()
 
     def _reserve_heapmem_de(self, nbytes: int, node: AST.ASTNode):
         self._emit_import("rt_malloc_de")
@@ -171,9 +171,9 @@ class CPCEmitter:
         self._emit_code("call    rt_malloc_de", info="DE points to heap memory")
         self.free_heap_memory = True
         self.reserved_heap_memory += nbytes
-        self._check_heapmem(node)
+        self._check_heapmem()
 
-    def _check_heapmem(self, node):
+    def _check_heapmem(self):
         if self.reserved_heap_memory > self.max_heap_memory:
             self.max_heap_memory = self.reserved_heap_memory
 
@@ -3417,16 +3417,16 @@ class CPCEmitter:
         """
         self._emit_import("rt_strfill")
         self._emit_code("; STRING$(<integer expression>,<character expression>)")
-        self._emit_expression(node.args[0])
-        self._emit_code("push    hl")
         self._emit_expression(node.args[1])
-        self._reserve_heapmem_de(255, node)
         if node.args[1].etype == AST.ExpType.String:
             self._emit_code("inc     hl")
-            self._emit_code("ld      c,(hl)", info="first character")
+            self._emit_code("ld      a,(hl)", info="first character")
         else:
-            self._emit_code("ld      c,l")
-        self._emit_code("pop     hl")
+            self._emit_code("ld      a,l")
+        self._emit_code("push    af")
+        self._emit_expression(node.args[0])
+        self._reserve_heapmem_de(255, node)
+        self._emit_code("pop     bc")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
 
@@ -4522,8 +4522,9 @@ class CPCEmitter:
         var = self.symtable.find(node.name, SymType.Variable, self.context)
         if var is None:
             var = self.symtable.find(node.name, SymType.Param, self.context)
-            self._emit_assigment_param(var)
-            return
+            if var is not None:
+                self._emit_assigment_param(var)
+                return
         if var is not None:
             if var.exptype == AST.ExpType.Integer:
                 self._emit_code(f"ld      ({var.label}),hl")

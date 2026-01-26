@@ -1469,7 +1469,7 @@ rt_strright:
 ; as may times as indicated by HL, returs in HL de address to DE
 ; Inputs:
 ;     DE target string address
-;     HL number of repetitions (0-255)
+;      L number of repetitions (0-255)
 ;      C character to print
 ; Outputs:
 ;     HL points to string
