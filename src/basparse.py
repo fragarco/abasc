@@ -623,6 +623,7 @@ class LocBasParser:
         tk = self._expect(TokenType.IDENT)
         fname = "FN" + tk.lexeme
         fargs: list[AST.Variable] = []
+        argtypes: list[AST.ExpType] = []
         self.context = fname.upper()
         info = SymEntry(
             symtype=SymType.Function,
@@ -636,6 +637,7 @@ class LocBasParser:
             argtk = self._expect(TokenType.IDENT)
             vartype = AST.exptype_fromname(argtk.lexeme)
             fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+            argtypes.append(vartype)
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
@@ -647,6 +649,7 @@ class LocBasParser:
                 argtk = self._expect(TokenType.IDENT)
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+                argtypes.append(vartype)
                 info.exptype = vartype
                 info.memoff = argoffset
                 argoffset += 2
@@ -663,6 +666,7 @@ class LocBasParser:
         if info.exptype != fbody.etype:
             self._raise_error(13, tk)
         info.nargs = len(fargs)
+        info.argtypes = list(argtypes)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -1058,6 +1062,7 @@ class LocBasParser:
             self._raise_error(2, tk, "FN starting chars are reserved for DEF FN functions")
         fname = "FUN" + tk.lexeme.upper()
         fargs: list[AST.Variable] = []
+        argtypes: list[AST.ExpType] = []
         self.context = fname
         rettype = AST.exptype_fromname(tk.lexeme)
         info = SymEntry(
@@ -1073,6 +1078,7 @@ class LocBasParser:
             argtk = self._expect(TokenType.IDENT)
             vartype = AST.exptype_fromname(argtk.lexeme)
             fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+            argtypes.append(vartype)
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
@@ -1084,6 +1090,7 @@ class LocBasParser:
                 argtk = self._expect(TokenType.IDENT)
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+                argtypes.append(vartype)
                 info.exptype = vartype
                 info.memoff = argoffset
                 argoffset += 2
@@ -1095,6 +1102,7 @@ class LocBasParser:
         if info is None:
             self._raise_error(38, tk)
         info.nargs = len(fargs)
+        info.argtypes = list(argtypes)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -2380,6 +2388,7 @@ class LocBasParser:
         tk = self._expect(TokenType.IDENT)
         pname = "SUB" + tk.lexeme.upper()
         pargs: list[AST.Variable] = []
+        argtypes: list[AST.ExpType] = []
         self.context = pname
         info = SymEntry(
             symtype=SymType.Procedure,
@@ -2393,6 +2402,7 @@ class LocBasParser:
             argtk = self._expect(TokenType.IDENT)
             vartype = AST.exptype_fromname(argtk.lexeme)
             pargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+            argtypes.append(vartype)
             info.exptype = vartype
             info.symtype = SymType.Param
             info.locals = SymTable()
@@ -2404,6 +2414,7 @@ class LocBasParser:
                 argtk = self._expect(TokenType.IDENT)
                 vartype = AST.exptype_fromname(argtk.lexeme)
                 pargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
+                argtypes.append(vartype)
                 info.exptype = vartype
                 info.memoff = argoffset
                 argoffset += 2
@@ -2415,6 +2426,7 @@ class LocBasParser:
         if info is None:
             self._raise_error(38, tk)
         info.nargs = len(pargs)
+        info.argtypes = list(argtypes)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -3023,6 +3035,7 @@ class LocBasParser:
         tk = self._expect(TokenType.IDENT)
         fname = tk.lexeme
         # functions and procedures are always declared in the global context
+        # Lets check first for DEF FN functions
         entry = self.symtable.find(ident=fname, stype=SymType.Function, context="")
         if entry is None:
             fname = "FUN" + tk.lexeme
@@ -3042,6 +3055,10 @@ class LocBasParser:
         self._expect(TokenType.RPAREN)
         if entry.nargs != len(args): # type: ignore[union-attr]
             self._raise_error(2, tk, "wrong number of arguments")
+        # lets check param types
+        for i in range(len(args)):
+            if args[i].etype != entry.argtypes[i]:
+                self._raise_error(13, tk)
         if entry: entry.calls += 1
         return AST.UserFun(name=fname, etype=entry.exptype, args=args) # type: ignore[union-attr]
 

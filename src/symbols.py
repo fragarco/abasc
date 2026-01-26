@@ -41,8 +41,9 @@ class SymEntry:
     label: str = ""
     writes: int = 1
     calls: int = 0      # Used by SUB, FUNCTION and DEF FN: times that a func is called
-    nargs: int = 0      # Used by DEF FN and Arrays
-    indexes: list[int] = field(default_factory=list) # Used by Arrays
+    nargs: int = 0      # Used by routines and arrays
+    argtypes: list[AST.ExpType] = field(default_factory=list) # used bu routines
+    indexes:  list[int] = field(default_factory=list) # Used by arrays
     memoff: int = 0     # if it's a param, offset in the call stack frame
     datasz: int = 0     # integers = 2, reals = 5, string up to 255
     heapused: int = 0    # rutines can consume heap (temp) memory and we need to track that
@@ -176,6 +177,7 @@ def symsto_json(syms: dict[str, SymEntry]) -> dict:
             "writes":  data.writes,
             "calls": data.calls,
             "nargs": data.nargs,
+            "argtypes": data.argtypes,
             "indexes": data.indexes,
             "locals": symsto_json(data.locals.syms),
             "datasz": data.datasz,
