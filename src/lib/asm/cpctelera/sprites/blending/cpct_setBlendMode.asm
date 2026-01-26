@@ -98,9 +98,9 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/sprites/blending/cpct_drawSpriteBlended.asm'
+read 'asm/cpctelera/sprites/blending/cpct_drawSpriteBlended.asm'
 
-cpct_setBlendMode::
+cpct_setBlendMode:
    ld     a, l                         ;; [1] A = Opcode
    ld    hl, cpct_dsb_blendFunction    ;; [3] HL points to memory place where blend opcode lies
    ld  (hl), a                         ;; [2] Set the new blend function

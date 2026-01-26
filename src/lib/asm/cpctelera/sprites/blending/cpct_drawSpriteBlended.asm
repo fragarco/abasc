@@ -172,7 +172,7 @@
 ;;   Standard Blend operations take 2 nanoseconds except NOP and LDI, which take 1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 cpct_drawSpriteBlended:
    push ix         ;; [5] Save IX regiter before using it as temporal var

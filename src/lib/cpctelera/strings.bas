@@ -26,7 +26,7 @@ SUB cpctDrawCharM2(vmem, chnum) ASM
     ASM "read 'asm/cpctelera/strings/cpct_drawCharM2.asm'"
 END SUB
 
-SUB cpctDrawStringM0(str, vmem) ASM
+SUB cpctDrawStringM0(s$, vmem) ASM
     ASM "ld      l,(ix+0)   ; video memory destination"
     ASM "ld      h,(ix+1)"
     ASM "ld      e,(ix+2)   ; string address"
@@ -37,7 +37,7 @@ SUB cpctDrawStringM0(str, vmem) ASM
     ASM "read 'asm/cpctelera/strings/cpct_drawStringM0.asm'"
 END SUB
 
-SUB cpctDrawStringM1(str, vmem) ASM
+SUB cpctDrawStringM1(s$, vmem) ASM
     ASM "ld      l,(ix+0)   ; video memory destination"
     ASM "ld      h,(ix+1)"
     ASM "ld      e,(ix+2)   ; string address"
@@ -48,7 +48,7 @@ SUB cpctDrawStringM1(str, vmem) ASM
     ASM "read 'asm/cpctelera/strings/cpct_drawStringM1.asm'"
 END SUB
 
-SUB cpctDrawStringM2(str, vmem) ASM
+SUB cpctDrawStringM2(s$, vmem) ASM
     ASM "ld      l,(ix+0)   ; video memory destination"
     ASM "ld      h,(ix+1)"
     ASM "ld      e,(ix+2)   ; string address"

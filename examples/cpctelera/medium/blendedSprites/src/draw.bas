@@ -80,7 +80,7 @@ sub drawCurrentSpriteAtRandom
    y = BG.Y + ( cpctRand() mod (BG.HEIGHT - 8) )
 
    ' Draw the selected item with selected blending mode
-   drawSpriteMixed(blendmode(selectedBlendMode), itemsp(selectedItem), x, y, 4, 8)
+   call drawSpriteMixed(blendmode(selectedBlendMode), itemsp(selectedItem), x, y, 4, 8)
 end sub
 
 ''''''''''''''''''''''''''''''''''''/
@@ -105,7 +105,7 @@ sub drawUserInterfaceStatus
    
    ' Do the same as before to draw the name of the current blending mode
    p = cpctGetScreenPtr(CPCT.VMEMSTART, 52, 60)
-   call cpctDrawStringM0(blendmode$(selectedBlendMode), p)
+   call cpctDrawStringM0(blendname$(selectedBlendMode), p)
 end sub
 
 ''''''''''''''''''''''''''''''''''''/
@@ -139,6 +139,6 @@ sub drawUserInterfaceMessages
    ' And to same operation again, but to put messages for 
    ' selected Item and Blend mode on the 50th line of the screen
    p = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 50)
-   cpctSetDrawCharM0(1, 6)
-   cpctDrawStringM0("   Item     Blend   ", p)
+   call cpctSetDrawCharM0(1, 6)
+   call cpctDrawStringM0("   Item     Blend   ", p)
 end sub

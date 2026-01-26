@@ -2,6 +2,16 @@
 
 ' Functions and Procedures:
 
+const CPCTBLEND.XOR = &AE
+const CPCTBLEND.AND = &A6
+const CPCTBLEND.OR  = &B6
+const CPCTBLEND.ADD = &86
+const CPCTBLEND.ADC = &8E
+const CPCTBLEND.SBC = &9E
+const CPCTBLEND.SUB = &96
+const CPCTBLEND.LDI = &7E
+const CPCTBLEND.NOP = &00
+
 FUNCTION cpctpx2byteM1(px0, px1, px2, px3) ASM
     ASM "pop     iy ; parameters in the stack are just downside"
     ASM "pop     hl ; so we have to reorder them"
@@ -35,3 +45,23 @@ SUB cpctDrawSprite(sprite, videopos, spwidth, spheight) ASM
     ASM "jp      cpct_drawSprite"
     ASM "read 'asm/cpctelera/sprites/cpct_drawSprite.asm'"
 END SUB
+
+' Blending
+
+SUB cpctDrawSpriteBlended(vmem, w, h, sprite) ASM
+    ASM "ld      l,(ix+0)  ; sprite - Source Sprite Pointer (array with pixel data)"
+    ASM "ld      h,(ix+1)"
+    ASM "ld      c,(ix+2)  ; h - Sprite Height in bytes (>0)"
+    ASM "ld      b,(ix+4)  ; w - Sprite Width in *bytes* (>0) (Beware, *not* in pixels!)"
+    ASM "ld      e,(ix+6)"
+    ASM "ld      d,(ix+7)  ; vmem - Destination video memory pointer"
+    ASM "jp      cpct_drawSpriteBlended"
+    ASM "read 'asm/cpctelera/sprites/blending/cpct_drawSpriteBlended.asm'"
+END SUB
+
+SUB cpctSetBlendMode(bmode) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "jp      cpct_setBlendMode"
+    ASM "read 'asm/cpctelera/sprites/blending/cpct_setBlendMode.asm'"
+END SUB
+

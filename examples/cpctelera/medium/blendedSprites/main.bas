@@ -16,9 +16,6 @@
 '  along with this program.  If not, see <http:'www.gnu.org/licenses/>.
 '------------------------------------------------------------------------------
 
-chain merge "cpctelera/cpctelera.bas"
-chain merge "src/draw.bas"
-
 ' Arrays containing all possible CPCtelera blending modes 
 ' along with a 3-character name associated to every one.
 '
@@ -44,9 +41,24 @@ itemsp(1) = @label(item01): itemname$(1) = " Paper"
 itemsp(2) = @label(item02): itemname$(2) = "Potion"
 itemsp(3) = @label(item03): itemname$(3) = "   Cat"
 
+const KEYST.FREE        = 0 ' Not pressed
+const KEYST.PRESSED     = 1 ' Pressed "just now"
+const KEYST.STILLPRESS  = 2 ' Pressed (maintained)
+const KEYST.RELEASED    = 3 ' Released "just no
+
+DIM keyid(4), keystatus(4)
+keyid(0) = KEY.SPACE: keystatus(0) = KEYST.FREE
+keyid(1) = KEY.ESC  : keystatus(1) = KEYST.FREE
+keyid(2) = KEY.1    : keystatus(2) = KEYST.FREE
+keyid(3) = KEY.2    : keystatus(3) = KEYST.FREE
+
 ' Set initial selections for item and blending mode
 selectedBlendMode = 0
 selectedItem = 0
+
+chain merge "cpctelera/cpctelera.bas"
+chain merge "src/draw.bas"
+chain merge "src/keyboard.bas"
 
 ''''''''''''''''''''''''''''''''''''/
 ' selectNextItem
@@ -81,14 +93,21 @@ end sub
 '    Checks user input and performs selected actions
 '
 sub performUserActions
+   shared keystatus[], KEYST.PRESSED
    ' Checks status of every key in the g_keys array
    ' Those keys with "Pressed" status trigger their associated action
    ' Important: Pressed means "pressed just now". When the user maintains
    '            a key pressed, it moves to StillPressed status.
-   'for i=0 to i < G_NKEYS
-   ''   if (g_keys[i].status == KeySt_Pressed)
-   ''      g_keys[i].action()
-   'next
+   for i=0 to 3
+      if keystatus(i) = KEYST.PRESSED then
+         select case i
+            case 0: call drawCurrentSpriteAtRandom()
+            case 1: call drawBackground()
+            case 2: call selectNextItem()
+            case 3: call selectNextBlendMode()
+         end select
+      end if
+   next
 end sub
 
 ''''''''''''''''''''''''''''''''''''/
@@ -96,6 +115,7 @@ end sub
 '    Disables firmware, initializes palette and video mode
 '
 sub initialize 
+   shared HWC.BLACK
    ' Disable firmware to prevent it from interfering
    call cpctRemoveInterruptHandler()
    
@@ -122,12 +142,12 @@ label MAIN
    ' Loop forever checking keyboard status and then
    ' performing selected user actions
    while 1
-      call updateKeyboardStatus()
+      'call updateKeyboardStatus()
       call performUserActions()
    wend
 end
 
-label palete
+label palette
    asm "db 20, 4, 28, 12, 22, 30, 0, 31, 27, 3, 11"
 
 label background0
