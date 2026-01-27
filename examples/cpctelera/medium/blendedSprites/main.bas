@@ -69,7 +69,7 @@ sub selectNextItem
    ' Next item is item + 1, except when we run out of items.
    ' In that later case, we select again the first item (0)
    selectedItem = selectedItem + 1
-   if selectedItem > 8 then selectedItem = 0
+   if selectedItem > 3 then selectedItem = 0
    ' Draw changes
    call drawUserInterfaceStatus()
 end sub

@@ -62,7 +62,7 @@ sub drawSpriteMixed(blendmode, sprite, x, y, w, h)
    call cpctSetBlendMode(blendmode)
 
    ' Draw the sprite to screen with blending
-   call cpctDrawSpriteBlended(p, h, w, sprite)
+   call cpctDrawSpriteBlended(p, w, h, sprite)
 end sub
 
 ''''''''''''''''''''''''''''''''''''/
