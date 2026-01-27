@@ -44,7 +44,7 @@ sub drawBackground
    ' So, we have to draw them both. The first on (x,y) and the second
    ' on (x + BG_WIDTH/2, y)
    call cpctDrawSprite(@label(background0), p, BG.WIDTH/2, BG.HEIGHT)
-   call cpctDrawSprite(@label(background1), p + BG.WIDTH/2, BG.WIDTH/2, BG.HEIGHT)
+   call cpctDrawSprite(@label(background1), p+BG.WIDTH/2, BG.WIDTH/2, BG.HEIGHT)
 end sub
 
 ''''''''''''''''''''''''''''''''''''/

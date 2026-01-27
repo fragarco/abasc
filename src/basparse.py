@@ -441,11 +441,16 @@ class LocBasParser:
         """ <CONST> := IDENT = INT """
         self._advance()
         tk = self._expect(TokenType.IDENT)
+        vartype = AST.exptype_fromname(tk.lexeme)
         self._expect(TokenType.COMP, lex="=")
+        if not self._current_is(TokenType.INT):
+            self._raise_error(2, tk, "integer number expected")
         val = self._expect(TokenType.INT)
         entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
         if entry is not None:
             self._raise_error(2, tk, "constant redefinition")
+        if vartype != AST.ExpType.Integer:
+            self._raise_error(13, tk)
         # Add the variable as a regular one
         self.symtable.add(
             ident=tk.lexeme,

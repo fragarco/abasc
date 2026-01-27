@@ -142,7 +142,7 @@ label MAIN
    ' Loop forever checking keyboard status and then
    ' performing selected user actions
    while 1
-      'call updateKeyboardStatus()
+      call updateKeyboardStatus()
       call performUserActions()
    wend
 end
