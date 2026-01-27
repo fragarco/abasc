@@ -69,15 +69,14 @@ class BasOptimizer:
                 result = eval(command)                 
                 self.modified = True
                 nnode: AST.Statement = node
-                if type(result) == str:
-                    nnode = AST.String(value=result)
-                if type(result) == int:
-                    nnode = AST.Integer(value=result)
-                if type(result) == float:
-                    nnode = AST.Real(value=result)
-                if type(result) == bool:
-                    result = -1 if result else 0
-                    nnode = AST.Integer(value=result)
+                if node.etype == AST.ExpType.String:
+                    nnode = AST.String(value=str(result))
+                elif node.etype == AST.ExpType.Real:
+                    nnode = AST.Real(value=float(result))
+                else:
+                    if type(result) == bool:
+                        result = -1 if result else 0
+                    nnode = AST.Integer(value=int(result))
                 nnode.line = node.line
                 nnode.col = node.col
                 return nnode
