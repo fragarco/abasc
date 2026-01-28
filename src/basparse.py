@@ -521,7 +521,9 @@ class LocBasParser:
     @astnode
     def _parse_DATA(self) -> AST.Data:
         """ <DATA> ::= DATA <constant>[,<constant>]*"""
-        self._advance()
+        tk = self._advance()
+        if self.context != "":
+            self._raise_error(2, tk, "DATA cannot appear inside subroutines")
         args: list[AST.Statement] = [self._parse_data_constant()]
         while self._current_is(TokenType.COMMA):
             self._advance()
