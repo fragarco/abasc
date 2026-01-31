@@ -16,7 +16,9 @@ set TARGET=dbuffer
 
 set LOADADDR=0x0040
 
-set RUNBAS=%BASC% %SOURCE%.bas
+REM * In this example we move DATA section from 0x4000 to 0x8000 because the 0x4000
+REM * page is used as the double buffer area for video.
+set RUNBAS=%BASC% %SOURCE%.bas --data 0x8000
 set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (

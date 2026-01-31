@@ -45,7 +45,7 @@ page   = 0   ' Static value to remember the last page shown (0 = page 40, 1 = pa
 
 sub changeVideoMemoryPage(waitcycles)
    shared cycles, page
-
+   shared VMP.PAGE40, VMP.PAGEC0
    ' Count 1 more cycle and check if we have arrived to waitcycles
    cycles = cycles + 1
    if cycles >= waitcycles then     
@@ -54,10 +54,10 @@ sub changeVideoMemoryPage(waitcycles)
       ' Depending on which was the last page shown, we show the other 
       ' now, and change the page for the next time 
       if page <> 0 then
-         call cpctSetVideoMemoryPage(CPCT.PAGEC0) ' Set video memory at banck 3 (0xC000 - 0xFFFF)
+         call cpctSetVideoMemoryPage(VMP.PAGEC0) ' Set video memory at banck 3 (0xC000 - 0xFFFF)
          page = 0                                 ' Next page = 0
       else
-         call cpctSetVideoMemoryPage(CPCT.PAGE40) ' Set video memory at banck 1 (0x4000 - 0x7FFF)
+         call cpctSetVideoMemoryPage(VMP.PAGE40) ' Set video memory at banck 1 (0x4000 - 0x7FFF)
          page = 1                                 ' Next page = 1
       end if
    end if
@@ -74,11 +74,11 @@ label MAIN
 
    ' Initialize CPC Mode and Colours
    palette = @label(palettefw)
-   call cpctRemoveInterruptHandler()    ' Disable firmware to prevent it from interfering
-   call cpctfw2hw       (palette, 16)   ' Convert Firmware colours to Hardware colours 
-   call cpctSetPalette  (palette, 16)   ' Set up palette using hardware colours
-   call cpctSetBorder   (HWC.WHITE)     ' Set up the border to the background colour (white)
-   call cpctSetVideoMode(0)             ' Change to Mode 0 (160x200, 16 colours)
+   call cpctRemoveInterruptHandler()      ' Disable firmware to prevent it from interfering
+   call cpctfw2hw       (palette, 16)     ' Convert Firmware colours to Hardware colours 
+   call cpctSetPalette  (palette, 16)     ' Set up palette using hardware colours
+   call cpctSetBorder   (HWC.BRIGHTWHITE) ' Set up the border to the background colour (white)
+   call cpctSetVideoMode(0)               ' Change to Mode 0 (160x200, 16 colours)
 
    ' Clean up Screen and BackBuffer filling them up with 0's
    call cpctMemset(CPCT.VMEMSTART, &00, &4000)

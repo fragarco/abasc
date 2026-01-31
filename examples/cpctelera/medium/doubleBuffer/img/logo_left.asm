@@ -21,292 +21,292 @@
 
 ; CPCtelera Squared banner (right 40 bytes, mode 0), by Stefano Beltran (stefanobb at gmail dot com )
 cpctlogo_left: ; [40*96] 
-   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &20, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &98, &20, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &98, &00, &00, &00, &00, 
-   db &00, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &98, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &00, &00, &00, 
-   db &00, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &88, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &98, &00, &00, 
-   db &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, 
-   db &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &88, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, 
-   db &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, 
-   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &30, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &30, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &30, &30, &30, &30, 
-   db &30, &30, &30, &30, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &98, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &98, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &98, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &10, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &98, &64, &CC, &CC, &CC, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, 
-   db &30, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &30, &30, &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &30, &30, 
-   db &30, &30, &30, &30, &30, &30, &30, &30, 
-   db &CC, &CC, &CC, &CC, &98, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &88, &00, 
-   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &98, &20, &00, &44, &CC, &88, &00, &00, 
-   db &00, &44, &CC, &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &98, &00, &00, &00, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &00, &00, &00, 
-   db &00, &10, &CC, &CC, &CC, &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &00, &00, &00, &00, &64, &CC, &CC, &CC, 
-   db &98, &20, &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &88, &00, &00, &98, 
-   db &00, &00, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &88, 
-   db &00, &00, &00, &00, &44, &CC, &CC, &CC, 
-   db &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &00, &00, &CC, &CC, 
-   db &00, &10, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &20, 
-   db &00, &64, &88, &00, &44, &CC, &CC, &CC, 
-   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, 
-   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, 
-   db &44, &CC, &88, &00, &44, &CC, &CC, &CC, 
-   db &00, &10, &20, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &64, &CC, &98, 
-   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, 
-   db &44, &CC, &88, &00, &44, &CC, &CC, &CC, 
-   db &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &88, 
-   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, 
-   db &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &00, 
-   db &10, &CC, &CC, &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &20, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &98, &00, &44, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &88, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, 
-   db &CC, &20, &00, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &CC, &00, &00, &64, 
-   db &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, 
-   db &88, &00, &44, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &88, &00, &10, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &64, 
-   db &00, &00, &64, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &00, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &88, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &88, 
-   db &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &64, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &00, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, 
-   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &C8, 
-   db &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &88, &00, &44, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, 
-   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &80, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &00, &00, &98, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &64, &CC, &CC, &CC, 
-   db &CC, &CC, &20, &00, &44, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &44, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, 
-   db &CC, &98, &00, &00, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &88, &00, &40, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &00, &CC, &CC, &CC, 
-   db &88, &00, &00, &44, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &20, &00, &00, &44, 
-   db &CC, &CC, &CC, &CC, &98, &00, &00, &C0, 
-   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &20, &00, &44, &00, &00, &00, &00, &00, 
-   db &00, &00, &10, &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &20, &00, &00, &00, &44, 
-   db &CC, &CC, &CC, &98, &00, &00, &40, &C0, 
-   db &CC, &88, &00, &00, &CC, &CC, &CC, &20, &00, &10, &CC, &20, &00, &00, &00, &00, 
-   db &00, &00, &CC, &CC, &CC, &CC, &88, &00, &00, &30, &00, &00, &00, &88, &00, &00, 
-   db &10, &30, &20, &00, &00, &40, &C0, &C0, 
-   db &CC, &CC, &00, &00, &00, &00, &00, &00, &00, &CC, &CC, &CC, &00, &00, &00, &00, 
-   db &10, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &64, &CC, &00, &00, 
-   db &00, &00, &00, &00, &00, &C0, &C0, &C0, 
-   db &CC, &CC, &00, &00, &00, &00, &00, &00, &44, &CC, &CC, &CC, &98, &00, &00, &10, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00, &00, &00, &10, &CC, &CC, &88, &00, 
-   db &00, &00, &00, &00, &40, &C0, &C0, &C0, 
-   db &CC, &CC, &88, &00, &00, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &44, &CC, &CC, &CC, &CC, &00, 
-   db &00, &00, &00, &C0, &C0, &C0, &C0, &C0, 
-   db &CC, &CC, &CC, &20, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
-   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, 
+   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &20 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &98, &20, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &98, &00, &00, &00, &00 
+   db &00, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &98, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &00, &00, &00 
+   db &00, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &88, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &98, &00, &00 
+   db &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &88, &00 
+   db &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &88, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00 
+   db &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00 
+   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &30, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &30, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &30, &30, &30, &30 
+   db &30, &30, &30, &30, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &98 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &88, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &98, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &98, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &00, &00 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &98, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &10, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &20, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &10, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &98, &64, &CC, &CC, &CC, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &00, &00, &00 
+   db &30, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &30, &30, &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &30, &30 
+   db &30, &30, &30, &30, &30, &30, &30, &30 
+   db &CC, &CC, &CC, &CC, &98, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &88, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &88, &64, &CC, &CC, &88, &0 
+   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &98, &20, &00, &44, &CC, &88, &00, &0 
+   db &00, &44, &CC, &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &98, &00, &00, &00, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &CC, &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &00, &00, &0 
+   db &00, &10, &CC, &CC, &CC, &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &00, &00, &00, &00, &64, &CC, &CC, &CC 
+   db &98, &20, &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &88, &00, &00, &8 
+   db &00, &00, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &88 
+   db &00, &00, &00, &00, &44, &CC, &CC, &CC 
+   db &00, &00, &00, &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &00, &00, &CC, &C 
+   db &00, &10, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &20 
+   db &00, &64, &88, &00, &44, &CC, &CC, &CC 
+   db &00, &00, &00, &00, &00, &64, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &C 
+   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00 
+   db &44, &CC, &88, &00, &44, &CC, &CC, &CC 
+   db &00, &10, &20, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &64, &CC, &8 
+   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00 
+   db &44, &CC, &88, &00, &44, &CC, &CC, &CC 
+   db &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &8 
+   db &00, &44, &CC, &CC, &CC, &CC, &88, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00 
+   db &CC, &CC, &88, &00, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &10, &CC, &CC, &0 
+   db &10, &CC, &CC, &CC, &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &88, &00, &64, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &CC, &20, &0 
+   db &44, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &98, &00, &44 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &20, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &44, &88, &00, &0 
+   db &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &44 
+   db &CC, &20, &00, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &88, &00, &CC, &00, &00, &4 
+   db &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &44 
+   db &88, &00, &44, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &88, &00, &10, &C 
+   db &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &64 
+   db &00, &00, &64, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &00, &CC, &C 
+   db &CC, &CC, &CC, &CC, &88, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &88, &00, &88 
+   db &00, &44, &CC, &CC, &CC, &CC, &CC, &CC 
+   db &CC, &CC, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &64, &CC, &C 
+   db &CC, &CC, &CC, &CC, &00, &00, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00 
+   db &00, &CC, &CC, &CC, &CC, &CC, &CC, &C8 
+   db &CC, &98, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &C 
+   db &CC, &CC, &CC, &88, &00, &44, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00 
+   db &44, &CC, &CC, &CC, &CC, &CC, &CC, &80 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC, &CC, &CC, &C 
+   db &CC, &CC, &CC, &00, &00, &98, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &00 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &98, &00 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &64, &CC, &CC, &C 
+   db &CC, &CC, &20, &00, &44, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &20, &00, &44 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &00, &00 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &00, &00, &44, &CC, &CC, &C 
+   db &CC, &98, &00, &00, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &CC, &00, &00, &CC 
+   db &CC, &CC, &CC, &CC, &CC, &88, &00, &40 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &CC, &00, &00, &00, &00, &CC, &CC, &C 
+   db &88, &00, &00, &44, &CC, &CC, &00, &00, &CC, &CC, &CC, &CC, &20, &00, &00, &44 
+   db &CC, &CC, &CC, &CC, &98, &00, &00, &C0 
+   db &CC, &88, &00, &44, &CC, &CC, &CC, &CC, &20, &00, &44, &00, &00, &00, &00, &0 
+   db &00, &00, &10, &CC, &CC, &CC, &00, &00, &64, &CC, &CC, &20, &00, &00, &00, &44 
+   db &CC, &CC, &CC, &98, &00, &00, &40, &C0 
+   db &CC, &88, &00, &00, &CC, &CC, &CC, &20, &00, &10, &CC, &20, &00, &00, &00, &0 
+   db &00, &00, &CC, &CC, &CC, &CC, &88, &00, &00, &30, &00, &00, &00, &88, &00, &00 
+   db &10, &30, &20, &00, &00, &40, &C0, &C0 
+   db &CC, &CC, &00, &00, &00, &00, &00, &00, &00, &CC, &CC, &CC, &00, &00, &00, &0 
+   db &10, &CC, &CC, &CC, &CC, &CC, &88, &00, &00, &00, &00, &00, &64, &CC, &00, &00 
+   db &00, &00, &00, &00, &00, &C0, &C0, &C0 
+   db &CC, &CC, &00, &00, &00, &00, &00, &00, &44, &CC, &CC, &CC, &98, &00, &00, &0 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &98, &00, &00, &00, &00, &10, &CC, &CC, &88, &00 
+   db &00, &00, &00, &00, &40, &C0, &C0, &C0 
+   db &CC, &CC, &88, &00, &00, &00, &00, &44, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &C 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &20, &00, &00, &44, &CC, &CC, &CC, &CC, &00 
+   db &00, &00, &00, &C0, &C0, &C0, &C0, &C0 
+   db &CC, &CC, &CC, &20, &00, &10, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &C 
+   db &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC, &CC 
    db &CC, &CC, &CC, &30, &30, &30, &30, &30
 
