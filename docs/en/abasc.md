@@ -334,6 +334,7 @@ python abasc.py [options] file.bas [-o output]
 * `--version` — Displays the compiler version.
 * `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
 * `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
+* `--data <n>` — Starting address for the data area (0x4000 by default)
 * `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
 * `-o`, `--out` — Output file name (without extension).
 
@@ -545,7 +546,7 @@ FOR i = 0 TO 4
 NEXT
 ```
 
-`ABASC` extends the use of `@` by allowing access not only to the address of a variable, but also to the address of a label declared with `LABEL`, as well as to the memory location that will be read by the next `READ` statement (that is, the current `DATA` pointer). This functionality is particularly useful when working with data imported from binary files or assembly sources.
+`ABASC` extends the use of `@` by allowing access not only to the address of a variable, but also to the address of a label declared with `LABEL`, as well as to the memory location that will be read by the next `READ` statement (that is, the current `DATA` pointer). It's even possible to access to the address of a label defined in assembly. These options are particularly useful when working with data imported from binary files or assembly sources.
 
 ```basic
 LABEL MAIN
@@ -554,6 +555,7 @@ LABEL MAIN
     spdir = @LABEL(mysprite)
     RESTORE palette
     pldir = @DATA
+    asmdir = @LABEL("asm_label")
     ' Example usage of these pointers...
 END
 
@@ -562,6 +564,8 @@ LABEL mysprite:
 
 LABEL palette:
     DATA 1,2,3,4
+
+ASM "asm_label:"
 ```
 
 ## Memory Management
@@ -571,9 +575,9 @@ The memory map for a program compiled with ABASC is structured as follows:
 | Address             | Description                                                                |
 | ------------------- | -------------------------------------------------------------------------- |
 | **0x0040**          | Start of the application-initialization area and temporary memory space (heap).|
-| **\_code\_**        | Program source code. Starts just after the heap and the startup code.       |
+| **\_code\_**        | Program main source code. Starts just after the heap and the startup code.       |
 | **\_runtime\_**     | Label marking the beginning of compiler-generated support routines.         |
-| **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware.  |
+| **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware. The initial address, however, can be set using the parameter `--data`. if the preceding code overpasses the configured starting address for the data area, it will be allocated to start from the first free address. |
 | **\_program_end\_** | Label marking the address where the program’s memory usage ends.            |
 
 Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
@@ -1340,6 +1344,28 @@ PRINT posA
 LABEL MAIN
     PRINT "HELLO WORLD"
 GOTO MAIN
+```
+
+Next to symbol `@` can be used to obtain the address in memory of a label (defined in BASIC or assembly) or the address that the next call to `READ` will use to obtain the values.
+
+```basic
+LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    asmdir = @LABEL("asm_label")
+    ' Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM "read 'my_sprite.asm'"
+
+LABEL palette:
+    DATA 1,2,3,4
+
+ASM "asm_label:"
 ```
 
 ### `LEFT$(string, n)`

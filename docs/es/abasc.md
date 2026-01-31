@@ -333,6 +333,7 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 -   `--version` --- muestra la versión del compilador.
 -   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
 -   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
+-   `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
 -   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
 -   `-o`, `--out` --- nombre de salida sin extensión.\
 
@@ -546,7 +547,7 @@ FOR i = 0 TO 4
 NEXT
 ```
 
-`ABASC` extiende el uso del símbolo `@` permitiendo que se use para acceder a la dirección asociada a una etiqueta definida con     `LABEL`, así como obtener la dirección de memoria a la que leerá la siguiente llamada a `READ`. Esta opción es especialmente interesante para trabajar con código en ensamblador o contenido binario.
+`ABASC` extiende el uso del símbolo `@` permitiendo que se use para acceder a la dirección asociada a una etiqueta definida con `LABEL`, así como obtener la dirección de memoria desde la que se leerán los valores en la siguiente llamada a `READ`. Es, incluso, posible obtener la dirección a una etiqueta definida desde código en ensamblador. Estas opciones pueden ser muy interesantes cuando se trabaja con ficheros importados que contienen código en ensablamdor o datos en binario.
 
 ```basic
 LABEL MAIN
@@ -555,6 +556,7 @@ LABEL MAIN
     spdir = @LABEL(mysprite)
     RESTORE palette
     pldir = @DATA
+    asmdir = @LABEL("asm_label")
     ' Example usage of these pointers...
 END
 
@@ -563,6 +565,8 @@ LABEL mysprite:
 
 LABEL palette:
     DATA 1,2,3,4
+
+ASM "asm_label:"
 ```
 
 ## Gestión de la memoria
@@ -574,7 +578,7 @@ El mapa de memoria de un programa compilado con ABASC es el siguiente:
 | **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo).|
 | **\_code\_**      | Comienzo del área para el código de la aplicación. Comienza justo después del código de initialización y del montículo. |
 | **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador. |
-| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, y que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). |
+| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, ya que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). En cualquier caso, se puede configurar mediante el parámetros `--data`. Si el código que precede a esta área ocupa la dirección designada para los datos, el compilador moverá esta zona a la primera dirección de memoria posterior que esté disponible.|
 | **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa. |
 
 Locomotive BASIC incluye una serie de comandos relacionados con la gestión de memoria: `HIMEM`, `MEMORY`, `FRE` y `SYMBOL AFTER`.
@@ -1329,6 +1333,28 @@ Comando. Define una etiqueta a la que se puede saltar con `GOTO` o `GOSUB`. `eti
 LABEL main
     PRINT "HOLA MUNDO"
 GOTO MAIN
+```
+
+Junto al caracter `@` puede utilizarse para obtener la dirección en memoria de una etiqueta (definida en BASIC o ensamblador) o la dirección desde la que se leerán datos en la próxima llamada a `READ`.
+
+```basic
+LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    asmdir = @LABEL("asm_label")
+    ' Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM "read 'my_sprite.asm'"
+
+LABEL palette:
+    DATA 1,2,3,4
+
+ASM "asm_label:"
 ```
 
 ### `LEFT$(cadena,n)`
