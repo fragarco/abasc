@@ -309,15 +309,18 @@ class ArrayItem(Statement):
         return d
 
 class Pointer(Statement):
-    var: Variable | ArrayItem | Label
+    var: Variable | ArrayItem | Label | String
 
-    def __init__(self, var: Variable | ArrayItem | Label):
+    def __init__(self, var: Variable | ArrayItem | Label | String):
         super().__init__(etype=ExpType.Integer, id="Pointer")
         self.var = var
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["ident"] = self.var.to_json()
+        if isinstance(self.var, String):
+            d["ident"] = self.var.value    
+        else:
+            d["ident"] = self.var.to_json()
         return d
 
 class Stream(Statement):

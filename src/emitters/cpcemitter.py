@@ -38,12 +38,18 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable, warning_level=WL.ALL, verbose=False):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable):
         self.source = code
         self.program = program
         self.symtable = symtable
-        self.warning_level = warning_level
-        self.verbose=verbose
+        
+        self.warning_level = WL.ALL
+        self.verbose = False
+        self.dataaddr = 0x4000
+        self.startaddr = 0x040
+        self.symbolafter = 9999
+        self.memlimit = 99999
+
         self.context = ""
         self.headcode = ""
         self.startupcode = ""
@@ -59,21 +65,30 @@ class CPCEmitter:
         self.rtcode: str = ""
         self.rtvars: str = ""
         self.runtime: list[str] = []
+
         self.constants: int = 0
         self.issued_str_constants: dict[str,str] = {}
         self.issued_real_constants: dict[str,str] = {}
         self.free_heap_memory: bool = False
         self.reserved_heap_memory: int = 0
         self.max_heap_memory: int = 0
-        self.dataaddr = 0x4000
-        self.startaddr = 0x040
+        self.heapstack: list[tuple[int, int, bool]] = []
         self.forloops: list[AST.ForLoop] = []
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
         self.selectblocks: list[AST.SelectCase] = []
-        self.symbolafter = 9999
-        self.memlimit = 99999
-        self.heapstack: list[tuple[int, int, bool]] = []
+
+    def cfgset_wlevel(self, wlevel: WL) -> None:
+        self.warning_level = wlevel
+    
+    def cfgset_verbose(self, verbose: bool) -> None:
+        self.verbose = verbose
+
+    def cfgset_dataaddr(self, dataaddr: int) -> None:
+        self.dataaddr = dataaddr
+
+    def cfgset_startaddr(self, startaddr: int) -> None:
+        self.startaddr = startaddr
 
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
@@ -4153,6 +4168,9 @@ class CPCEmitter:
                     self._emit_code(f"ld      hl,{sym.label}")
                 else:
                     self._raise_error(38, node)
+        elif isinstance(node, AST.String):
+            # ASM label
+            self._emit_code(f"ld      hl,{node.value}")
         else:
             self._raise_error(2, node, "unsupported type")
 

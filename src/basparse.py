@@ -771,8 +771,8 @@ class LocBasParser:
             self._advance()
             num = self._expect(TokenType.INT)
             datasz = cast(int, num.value) + 1
-            if datasz > 255 or datasz < 2:
-                self._raise_error(6, num, info="valid string size range is [1 - 254]")
+            if datasz > 255 or datasz < 1:
+                self._raise_error(6, num, info="valid string size range is [1 - 255]")
         return AST.Array(name=var, etype=vartype, sizes=sizes, datasz=datasz)
 
     @astnode
@@ -3064,7 +3064,7 @@ class LocBasParser:
             self._raise_error(2, tk, "wrong number of arguments")
         # lets check param types
         for i in range(len(args)):
-            if args[i].etype != entry.argtypes[i]:
+            if args[i].etype != entry.argtypes[i]:  # type: ignore [union-attr]
                 self._raise_error(13, tk)
         if entry: entry.calls += 1
         return AST.UserFun(name=fname, etype=entry.exptype, args=args) # type: ignore[union-attr]
@@ -3074,11 +3074,17 @@ class LocBasParser:
         """ <pointer> ::= @<ident> | @LABEL(IDENT) | @DATA """
         self._advance()
         if self._current_is(TokenType.KEYWORD, lexeme="LABEL"):
-            self._advance()
+            tk = self._advance()
             self._expect(TokenType.LPAREN)
-            tk = self._expect(TokenType.IDENT)
+            if self._current_is(TokenType.IDENT):
+                tk = self._advance()
+                var = AST.Label(value=tk.lexeme)
+            elif self._current_is(TokenType.STRING):
+                tk = self._advance()
+                var = AST.String(value=tk.value)
+            else:
+                self._raise_error(2, tk)
             self._expect(TokenType.RPAREN)
-            var = AST.Label(value=tk.lexeme)
             var.set_origin(tk.line, tk.col)
         elif self._current_is(TokenType.KEYWORD, lexeme="DATA"):
             tk = self._advance()

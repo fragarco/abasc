@@ -64,6 +64,11 @@ CONST HWC.BRIGHTYELLOW  = 10
 CONST HWC.PASTELYELLOW  =  3
 CONST HWC.BRIGHTWHITE   = 11
 
+CONST VMP.PAGEC0 = &30
+CONST VMP.PAGE80 = &20
+CONST VMP.PAGE40 = &10
+CONST VMP.PAGE00 = &00
+
 SUB cpctClearScreen(color) ASM
     ASM "ld      a,(ix+0)"
     ASM "cpctm_clearScreen a"
@@ -127,6 +132,12 @@ SUB cpctSetPalette(palptr, items) ASM
     ASM "ld      h,(ix+3)"
     ASM "jp      cpct_setPalette"
     ASM "read 'asm/cpctelera/video/cpct_setPalette.asm'"
+END SUB
+
+SUB cpctSetVideoMemoryPage(pageid) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "jp      cpct_setVideoMemoryPage"
+    ASM "read 'asm/cpctelera/video/cpct_setVideoMemoryPage.asm'"
 END SUB
 
 SUB cpctSetVideoMode(vmode) ASM
