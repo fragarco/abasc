@@ -15,8 +15,6 @@ TARGET=tilemap
 
 LOADADDR=0x0040
 
-# In this example we move DATA section from 0x4000 to 0x8000 because the 0x4000
-# page is used as the double buffer area for video.
 RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
 

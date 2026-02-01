@@ -12,9 +12,10 @@ SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap) ASM
     ASM "ld      a,(ix+4)     ; Width in tiles of a complete row of the tilemap"
     ASM "ld      d,(ix+6)     ; Height in tiles of the tile-box to be redrawn"
     ASM "ld      e,(ix+8)     ; Width in tiles of the tile-box to be redrawn"
-    ASM "ld      l,(ix+10)    ; y tile-coordinate of the starting tile inside the tilemap"
-    ASM "ld      h,(ix+12)    ; x tile-coordinate of the starting tile inside the tilemap"
-    ASM "jp      cpct_etm_drawTileBox2x4"
+    ASM "ld      b,(ix+10)    ; y tile-coordinate of the starting tile inside the tilemap"
+    ASM "ld      c,(ix+12)    ; x tile-coordinate of the starting tile inside the tilemap"
+    ASM "call    cpct_etm_drawTileBox2x4"
+    ASM "ret"
     ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTileBox2x4.asm'"
 END SUB
 
