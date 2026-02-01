@@ -108,7 +108,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Declare tile drawing function we are going to use
-read 'cpctelera/sprites/drawTile/cpct_drawTileAligned2x4_f.asm'
+read 'asm/cpctelera/sprites/drawTile/cpct_drawTileAligned2x4_f.asm'
 
 cpct_etm_drawTileRow2x4: ;; Assembly entry point
 etmdr24_drawtiles_width:
