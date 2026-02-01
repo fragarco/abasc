@@ -29,6 +29,111 @@ class BasOptimizer:
 
     # ----------------- AST optimizations -----------------
 
+    def _op_ASC(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.String):
+            self.modified = True
+            if node.args[0].value != "":
+                nnode = AST.Integer(value = ord(node.args[0].value[0]))
+            else:
+                nnode = AST.Integer(value = 0)
+            nnode.set_origin(node.line, node.col)
+            return nnode
+        return node
+
+    def _op_CHRSS(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Integer):
+            self.modified = True
+            nnode = AST.String(value=chr(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        return node
+
+    def _op_CINT(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            self.modified = True
+            fvalue = node.args[0].value
+            roff = -0.5 if fvalue < 0.0 else 0.5
+            nnode = AST.Integer(value=int(fvalue + roff))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
+            # Lets use the interger version of TIME
+            self.modified = True
+            node.args[0].etype = AST.ExpType.Integer
+            return node.args[0]
+        return node
+
+    def _op_CREAL(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            self.modified = True
+            nnode = AST.Real(value=float(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        return node
+    
+    def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
+        self.context = ""
+        return node
+
+    def _op_END_SUB(self, node: AST.Command) -> AST.Statement:
+        self.context = ""
+        return node
+
+    def _op_FIX(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            self.modified = True
+            nnode = AST.Integer(value=int(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        return node
+
+    def _op_FOR(self, node: AST.ForLoop) -> AST.Statement:
+        node.start = self._op_statement(node.start)
+        node.end = self._op_statement(node.end)
+        if node.step is not None:
+            node.step = self._op_statement(node.step)
+        return node
+
+    def _op_IF(self, node: AST.If) -> AST.Statement:
+        node.condition = self._op_statement(node.condition)
+        if len(node.inline_then):
+            statements: list[AST.Statement] = []
+            for st in node.inline_then:
+                st = self._op_statement(st)
+                statements.append(st)
+            node.inline_then = statements
+        if len(node.inline_else):
+            statements: list[AST.Statement] = []
+            for st in node.inline_else:
+                st = self._op_statement(st)
+                statements.append(st)
+            node.inline_else = statements    
+        return node
+
+    def _op_INT(self, node: AST.Function) -> AST.Statement:
+        if isinstance(node.args[0], AST.Real):
+            self.modified = True
+            num = node.args[0].value
+            if num < 0.0:
+                nnode = AST.Integer(value=int(node.args[0].value))
+                nnode.line = node.args[0].line
+                nnode.col = node.args[0].col
+                return nnode
+            else:
+                nnode =  AST.Integer(value=int(node.args[0].value - 0.999999999))
+                nnode.line = node.args[0].line
+                nnode.col = node.args[0].col
+                return nnode
+        return node
+
+    def _op_WHILE(self, node:AST.WhileLoop) -> AST.Statement:
+        node.condition = self._op_statement(node.condition)
+        return node
+
     def _op_variable(self, node: AST.Variable) -> AST.Statement:
         """ 
         Variables as part of expressions. Integer ones that are
@@ -89,84 +194,6 @@ class BasOptimizer:
             node.left = self._op_statement(node.left)    
         return node 
 
-    def _op_ASC(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.String):
-            self.modified = True
-            if node.args[0].value != "":
-                nnode = AST.Integer(value = ord(node.args[0].value[0]))
-            else:
-                nnode = AST.Integer(value = 0)
-            nnode.set_origin(node.line, node.col)
-            return nnode
-        return node
-
-    def _op_CINT(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Real):
-            self.modified = True
-            fvalue = node.args[0].value
-            roff = -0.5 if fvalue < 0.0 else 0.5
-            nnode = AST.Integer(value=int(fvalue + roff))
-            nnode.line = node.args[0].line
-            nnode.col = node.args[0].col
-            return nnode
-        elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
-            # Lets use the interger version of TIME
-            self.modified = True
-            node.args[0].etype = AST.ExpType.Integer
-            return node.args[0]
-        return node
-
-    def _op_INT(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Real):
-            self.modified = True
-            num = node.args[0].value
-            if num < 0.0:
-                nnode = AST.Integer(value=int(node.args[0].value))
-                nnode.line = node.args[0].line
-                nnode.col = node.args[0].col
-                return nnode
-            else:
-                nnode =  AST.Integer(value=int(node.args[0].value - 0.999999999))
-                nnode.line = node.args[0].line
-                nnode.col = node.args[0].col
-                return nnode
-        return node
-
-    def _op_FIX(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Real):
-            self.modified = True
-            nnode = AST.Integer(value=int(node.args[0].value))
-            nnode.line = node.args[0].line
-            nnode.col = node.args[0].col
-            return nnode
-        return node
-
-    def _op_CREAL(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Real):
-            self.modified = True
-            nnode = AST.Real(value=float(node.args[0].value))
-            nnode.line = node.args[0].line
-            nnode.col = node.args[0].col
-            return nnode
-        return node
-
-    def _op_CHRSS(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Integer):
-            self.modified = True
-            nnode = AST.String(value=chr(node.args[0].value))
-            nnode.line = node.args[0].line
-            nnode.col = node.args[0].col
-            return nnode
-        return node
-
-    def _op_END_SUB(self, node: AST.Command) -> AST.Statement:
-        self.context = ""
-        return node
-    
-    def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
-        self.context = ""
-        return node
-
     def _op_keyword(self, stmt: AST.Command | AST.Function) -> AST.Statement:
         keyword = stmt.name
         funcname = "_op_" + keyword.replace('$','SS').replace(' ', '_')
@@ -183,13 +210,11 @@ class BasOptimizer:
         elif isinstance(stmt, AST.Assignment):
             stmt = self._op_assignment(stmt)
         elif isinstance(stmt, AST.If):
-            stmt.condition = self._op_statement(stmt.condition)
+            stmt = self._op_IF(stmt)
         elif isinstance(stmt, AST.ForLoop):
-            stmt.start = self._op_statement(stmt.start)
-            stmt.end = self._op_statement(stmt.end)
-            if stmt.step is not None: stmt.step = self._op_statement(stmt.step)
+            stmt = self._op_FOR(stmt)
         elif isinstance(stmt, AST.WhileLoop):
-            stmt.condition = self._op_statement(stmt.condition)
+            stmt = self._op_WHILE(stmt)
         elif isinstance(stmt, AST.Print):
             for i in range(0, len(stmt.items)):
                 stmt.items[i] = self._op_statement(stmt.items[i])

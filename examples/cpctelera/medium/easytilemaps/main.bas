@@ -104,12 +104,12 @@ sub showMessages
    print "viewport. All is done  using CPCTelera's";
    print "function cpctetmDrawTileBox2x4, from its";
    print "EasyTileMaps module.": print
-   print 3
    print "These are the control Keys:": print: pen 1
    print "Cursors  - Move tilemap location."
    print "  1, 2   - Change viewport width."
    print "  3, 4   - Change viewport height."
    print " W,A,S,D - Move viewport.": print
+   pen 3
    print "       Press [Space] to continue"
 
    ' Wait for the user to press Space before continuing
