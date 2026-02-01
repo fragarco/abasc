@@ -74,7 +74,7 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/easytilemaps/cpct_etm_setTileset2x4.asm'
+read 'asm/cpctelera/easytilemaps/cpct_etm_setTileset2x4.asm'
 
 ;; dtr_restore_ptileset is a label defined inside cpct_drawTileRow that
 ;; points to the placeholder where tileset address is to be configured

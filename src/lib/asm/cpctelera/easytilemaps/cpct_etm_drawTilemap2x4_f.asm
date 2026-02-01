@@ -118,7 +118,7 @@
 ;; into account (either for HO or HE).
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/easytilemap/cpct_etm_drawTileRow2x4.asm'
+read 'asm/cpctelera/easytilemap/cpct_etm_drawTileRow2x4.asm'
 
 cpct_etm_drawTilemap2x4_f:
    ld (etmdtrf_set_HLp_nextRow+1), a ;; [4] Save Map_width into the placeholder to restore B at each height loop

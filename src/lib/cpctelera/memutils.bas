@@ -22,6 +22,13 @@ SUB cpctMemsetf64(arrayptr, value, bytes) ASM
     ASM "read 'asm/cpctelera/memutils/cpct_memset_f64.asm'"
 END SUB
 
+SUB cpctSetStackLocation(halts) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "ld      h,(ix+1)"
+    ASM "jp      cpct_setStackLocation"
+    ASM "read 'asm/cpctelera/memutils/cpct_setStackLocation.asm'"
+END SUB
+
 SUB cpctWaitHalts(halts) ASM
     ASM "ld      b,(ix+0)"
     ASM "jp      cpct_waitHalts"

@@ -53,12 +53,15 @@ buffers(0) = CPCT.VMEMSTART: buffers(1) = &8000
 '
 sub swapBuffers
    shared buffers[]
+   shared VMP.PAGE80, VMP.PAGEC0, CPCT.VMEMSTART
    ' Change what is shown on the screen (present backbuffer (1) is changed to 
    ' front-buffer, so it is shown at the screen)
    ' cpct_setVideoMemoryPage requires the 6 Most Significant bits of the address,
    ' so we have to shift them 10 times to the right (as addresses have 16 bits)
    '
-   call cpctSetVideoMemoryPage( buffers(1) >> 10 )
+   page = VMP.PAGE80
+   if buffers(1) = CPCT.VMEMSTART then page = VMP.PAGEC0
+   call cpctSetVideoMemoryPage(page)
    
    ' Once backbuffer is being shown at the screen, we switch our two 
    ' variables to start using (0) as backbuffer and (1) as front-buffer
@@ -89,7 +92,7 @@ end sub
 ' until de user presses a key.
 '
 sub showMessages
-
+   shared KEY.SPACE
    pen 2
    print "*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-"
    print "             TILEMAPS DEMO"
@@ -116,9 +119,12 @@ end sub
 ''''''''''''''''''''''''''''''''''''''''/
 ' Read User Keyboard Input and do associated actions
 '
-sub readKeyboardInput()
+sub readKeyboardInput
    shared tilemap.x, tilemap.y, viewport.x, viewport.y, viewport.w, viewport.h
    shared SCR.WIDTH, SCR.HEIGHT, MAP.WIDTH, MAP.HEIGHT
+   shared KEY.DOWN, KEY.UP, KEY.LEFT, KEY.RIGHT
+   shared KEY.1, KEY.2, KEY.3, KEY.4
+   shared KEY.W, KEY.S, KEY.A, KEY.D
    ' Read keyboard continuously until the user perfoms an action
    while 1
       ' Scan Keyboard
@@ -129,58 +135,59 @@ sub readKeyboardInput()
       '
       ' Move Tilemap Up (4 by 4 pixels, as it can only be placed
       ' ... on pixel lines 0 and 4
-      if cpctIsKeyPressed(KEY.CURSORUP) and tilemap.y <> 0 then
+      if cpctIsKeyPressed(KEY.UP) and tilemap.y <> 0 then
          tilemap.y = tilemap.y - 4
-         goto readkey_end
+         goto readkeyend
       end if
       ' Move Tilemap Down (same as moving Up, 4 by 4 pixels)
-      if cpctIsKeyPressed(KEY.CURSORDOWN) and (tilemap.y < (SCR.HEIGHT - 4*MAP.HEIGHT)) then 
+      if cpctIsKeyPressed(KEY.DOWN) and (tilemap.y < (SCR.HEIGHT - 4*MAP.HEIGHT)) then 
          tilemap.y = tilemap.y + 4   
-         goto readkey_end
+         goto readkeyend
       end if
       ' Move Tilemap Left 2 pixels (1 byte)
-      if cpctIsKeyPressed(KEY.CURSORLEFT) and (tilemap.x <> 0) then
+      if cpctIsKeyPressed(KEY.LEFT) and (tilemap.x <> 0) then
          tilemap.x = tilemap.x - 1
-         goto readkey_end
+         goto readkeyend
       end if
       ' Move Tilemap Right 2 pixels (1 byte)
-      if cpctIsKeyPressed(KEY.CURSORRIGHT) and (tilemap.x < (SCR.WIDTH - 2*MAP.WIDTH)) then
+      if cpctIsKeyPressed(KEY.RIGHT) and (tilemap.x < (SCR.WIDTH - 2*MAP.WIDTH)) then
          tilemap.x = tilemap.x + 1      
-         goto readkey_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.2) and (viewport.x + viewport.w < MAP.WIDTH) then
          viewport.w = viewport.w + 1 ' Enlarge viewport Horizontally
-         goto readkey_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.1) and (viewport.w > 1) then
          viewport.w = viewport.w - 1 ' Reduce viewport Horizontally
-         goto readkey_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.4) and (viewport.y + viewport.h < MAP.HEIGHT) then
          viewport.h = viewport.h + 1   ' Enlarge viewport Vertically
-         goto keyboard_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.3) and (viewport.h > 1) then
          viewport.h = viewport.h - 1   ' Reduce viewport Vertically
-         goto keyboard_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.W) and (viewport.y <> 0) then
          viewport.y = viewport.y + 1   ' Move viewport Up
-         goto keyboard_end
+         goto readkeyend
+      end if
       if cpctIsKeyPressed(KEY.S) and (viewport.y + viewport.h < MAP.HEIGHT) then
-         viewport.y = vuiewport - 1   ' Move viewport Down
-         goto keyboard_end
+         viewport.y = viewport.y - 1   ' Move viewport Down
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.A) and (viewport.x <> 0) then
          viewport.x = viewport.x - 1   ' Move viewport Left
-         goto keyboard_end
+         goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.D) and (viewport.x + viewport.w < MAP.WIDTH) then
          viewport.x = viewport.x + 1   ' Move viewport Right
-         goto keyboard_end
+         goto readkeyend
       end if
    wend
-   label readkey_end
+   label readkeyend
 end sub
 
 ''''''''''''''''''''''''''''''''''''''''/
@@ -190,7 +197,7 @@ end sub
 '
 sub drawScreenTilemap
    shared tilemap.x, tilemap.y
-   shated viewport.x, viewport.y, viewport.w, viewport.h
+   shared viewport.x, viewport.y, viewport.w, viewport.h
    shared buffers[], MAP.WIDTH
    
    ' Clear the backbuffer

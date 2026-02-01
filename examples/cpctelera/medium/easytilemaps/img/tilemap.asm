@@ -48,9 +48,9 @@ g_tile_blue:
 ; A 2x4 tile full of red colour (PEN 3)
 ;
 g_tile_red:
-   db &FF, &FF,
-   db &FF, &FF,
-   db &FF, &FF,
+   db &FF, &FF
+   db &FF, &FF
+   db &FF, &FF
    db &FF, &FF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;/

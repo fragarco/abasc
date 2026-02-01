@@ -18,7 +18,7 @@
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read 'cpctelera/easytilemaps/cpct_etm_drawTileRow2x4.asm'
+read 'asm/cpctelera/easytilemaps/cpct_etm_drawTileRow2x4.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
