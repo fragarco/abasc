@@ -170,19 +170,19 @@ sub readKeyboardInput
          viewport.h = viewport.h - 1   ' Reduce viewport Vertically
          goto readkeyend
       end if
-      if cpctIsKeyPressed(KEY.W) and (viewport.y <> 0) then
-         viewport.y = viewport.y + 1   ' Move viewport Up
+      if cpctIsKeyPressed(KEY.W) and (viewport.y > 0) then
+         viewport.y = viewport.y - 1   ' Move viewport Up
          goto readkeyend
       end if
       if cpctIsKeyPressed(KEY.S) and (viewport.y + viewport.h < MAP.HEIGHT) then
-         viewport.y = viewport.y - 1   ' Move viewport Down
+         viewport.y = viewport.y + 1   ' Move viewport Down
          goto readkeyend
       end if
-      if cpctIsKeyPressed(KEY.A) and (viewport.x <> 0) then
+      if cpctIsKeyPressed(KEY.A) and (viewport.x > 0) then
          viewport.x = viewport.x - 1   ' Move viewport Left
          goto readkeyend
       end if
-      if cpctIsKeyPressed(KEY.D) and (viewport.x + viewport.w < MAP.WIDTH) then
+      if cpctIsKeyPressed(KEY.D) and ((viewport.x + viewport.w) < MAP.WIDTH) then
          viewport.x = viewport.x + 1   ' Move viewport Right
          goto readkeyend
       end if

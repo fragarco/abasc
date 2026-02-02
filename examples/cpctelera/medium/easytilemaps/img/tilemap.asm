@@ -58,7 +58,7 @@ g_tile_red:
 ;          in the tilemap. 
 ;
 g_tileset:
-   db g_tile_background, g_tile_yellow, g_tile_blue, g_tile_red
+   dw g_tile_background, g_tile_yellow, g_tile_blue, g_tile_red
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;/
 ; Tilemap: 2D matrix of tile-indexes (1-byte each). Each tile-index refers to the 
