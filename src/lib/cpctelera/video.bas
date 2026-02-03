@@ -84,6 +84,11 @@ SUB cpctClearScreenf64(color) ASM
     ASM "read 'asm/cpctelera/memutils/cpct_memset_f64.asm'"
 END SUB
 
+FUNCTION cpctCount2VSYNC ASM
+    ASM "jp      cpct_count2VSYNC"
+    ASM "read 'asm/cpctelera/video/cpct_count2VSYNC.asm'"
+END FUNCTION
+
 SUB cpctFW2HW(paldir, items) ASM
     ASM "ld      c,(ix+0)     ; items"
     ASM "ld      b,(ix+1)"
@@ -110,6 +115,21 @@ FUNCTION cpctGetScreenPtr(vstart, x, y) ASM
     ASM "jp      cpct_getScreenPtr   ; returns in HL the address"
     ASM "read 'asm/cpctelera/video/cpct_getScreenPtr.asm'"
 END FUNCTION
+
+FUNCTION cpctGetVSYNCStatus ASM
+    ASM "call    cpct_getVSYNCStatus"
+    ASM "ld      h,0"
+    ASM "ld      l,a"
+    ASM "ret"
+    ASM "read 'asm/cpctelera/video/cpct_getVSYNCStatus.asm'"
+END FUNCTION
+
+SUB cpctSetCRTCReg(newval, numreg) ASM
+    ASM "ld      c,(ix+0) ; regnum - Number of the register to be set "
+    ASM "ld      b,(ix+1) ; newval - New value to be set for the register"
+    ASM "jp      cpct_setCRTCReg"
+    ASM "read 'asm/cpctelera/video/cpct_setCRTCReg.asm'"
+END SUB
 
 SUB cpctSetBorder(hwcolor) ASM
     ASM "ld      h,(ix+0)     ; H = INK"
@@ -149,4 +169,9 @@ END SUB
 SUB cpctWaitVSYNC ASM
     ASM "jp      cpct_waitVSYNC"
     ASM "read 'asm/cpctelera/video/cpct_waitVSYNC.asm'"
+END SUB
+
+SUB cpctWaitVSYNCStart ASM
+    ASM "jp      cpct_waitVSYNCStart"
+    ASM "read 'asm/cpctelera/video/cpct_waitVSYNCStart.asm'"
 END SUB
