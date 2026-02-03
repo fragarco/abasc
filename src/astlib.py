@@ -659,11 +659,11 @@ class Write(Statement):
 
 class DefFN(Statement):
     name: str 
-    args: list[Variable]
+    args: list[Variable|Array]
     body: Statement
     heapmem: int    # used by the emiter to save the amount of tmp memory per call
 
-    def __init__(self, name: str, args: list[Variable], body: Statement):
+    def __init__(self, name: str, args: list[Variable|Array], body: Statement):
         super().__init__(etype=ExpType.Void, id="DefFN")
         self.name = name
         self.args = args
@@ -681,9 +681,9 @@ class DefFN(Statement):
 class DefFUN(Statement):
     name: str 
     asm: bool
-    args: list[Variable]
+    args: list[Variable|Array]
 
-    def __init__(self, name: str, args: list[Variable], asm=False):
+    def __init__(self, name: str, args: list[Variable|Array], asm=False):
         super().__init__(etype=ExpType.Void, id="DefFUN")
         self.name = name
         self.asm = asm
@@ -699,9 +699,9 @@ class DefFUN(Statement):
 class DefSUB(Statement):
     name: str 
     asm: bool
-    args: list[Variable]
+    args: list[Variable|Array]
 
-    def __init__(self, name: str, args: list[Variable], asm=False):
+    def __init__(self, name: str, args: list[Variable|Array], asm=False):
         super().__init__(etype=ExpType.Void, id="SUB")
         self.name = name
         self.asm = asm

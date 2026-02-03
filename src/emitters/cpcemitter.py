@@ -269,7 +269,7 @@ class CPCEmitter:
                     self._emit_vardecl(entry)
             elif entry.symtype == SymType.Array:
                 self._emit_arraydecl(entry)
-            elif entry.symtype == SymType.Param:
+            elif entry.symtype == SymType.Param or entry.symtype == SymType.ArrayParam:
                 pass   # we will access params directly from the call stack frame
             elif entry.symtype == SymType.RSX:
                 # last char must have bit 7 set and we have to remove RSX_
@@ -4111,6 +4111,8 @@ class CPCEmitter:
             vartype = AST.ExpType.String
         var = self.symtable.find(varname, SymType.Array, context=self.context)
         if var is None:
+            var = self.symtable.find(varname, SymType.ArrayParam, context=self.context)
+        if var is None:
             self._raise_error(38, node)
         # addr = i1*dim0 + i0
         dims = var.indexes  # type: ignore [union-attr]
@@ -4150,7 +4152,11 @@ class CPCEmitter:
         else:
             self._emit_code("ld      hl,0", info="unsupported type")
         # address = address_base + address_offset
-        self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
+        if var.symtype == SymType.ArrayParam:
+            self._emit_code(f"ld      l,(ix+{var.memoff})")
+            self._emit_code(f"ld      h,(ix+{var.memoff+1})")
+        else:
+            self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
         self._emit_code("add     hl,de", info="final address of this item element")
 
     def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label | AST.String):
@@ -4468,6 +4474,8 @@ class CPCEmitter:
 
     def _emit_assigment_arrayitem(self, node: AST.ArrayItem):
         var = self.symtable.find(node.name, SymType.Array, self.context)
+        if var is None:
+            var = self.symtable.find(node.name, SymType.ArrayParam, self.context)
         if var is not None:
             self._emit_code("push    hl")
             self._emit_arrayitem_ptr(node)
@@ -4626,7 +4634,12 @@ class CPCEmitter:
         if len(node.args):
             self._emit_pushcontext()
             for a in node.args:
-                self._emit_expression(a)
+                if isinstance(a, AST.Array):
+                    entry = self.symtable.find(a.name, SymType.Array, self.context)
+                    if entry is not None:
+                        self._emit_code(f"ld      hl,{entry.label}")
+                else:   
+                    self._emit_expression(a)
                 self._emit_code("push    hl")
             self._emit_code("ld      ix,0", info="last parameter position")
             self._emit_code("add     ix,sp")

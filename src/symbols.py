@@ -27,6 +27,7 @@ class SymType(str, Enum):
     Variable = "Variable"
     Array = "Array"
     Param = "Parameter"
+    ArrayParam = "ArrayParam"
     Label = "Label"
     Function = "Function"
     Procedure = "Procedure"
@@ -61,8 +62,10 @@ class SymTable:
         prefix = "G_" if prefix == "" else (prefix.upper() + "_")
         if entry.symtype == SymType.Variable:
             return f"{prefix}VAR_{name.upper()}"
-        if entry.symtype == SymType.Param:
+        elif entry.symtype == SymType.Param:
             return f"{prefix}ARG_{name.upper()}"
+        elif entry.symtype == SymType.ArrayParam:
+            return f"{prefix}ARG_ARRAY_{name.upper()}"
         elif entry.symtype == SymType.Array:
             return f"{prefix}ARRAY_{name.upper()}"
         elif entry.symtype == SymType.Label:
@@ -78,8 +81,10 @@ class SymTable:
     def _code_symtype(self, ident: str, stype: SymType):
         if stype == SymType.Variable:
             return f"VAR_{ident}"
-        if stype == SymType.Param:
+        elif stype == SymType.Param:
             return f"ARG_{ident}"
+        elif stype == SymType.ArrayParam:
+            return f"ARG_ARRAY_{ident}"
         elif stype == SymType.Array:
             return f"ARRAY_{ident}"
         elif stype == SymType.Label:

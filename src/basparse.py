@@ -620,30 +620,54 @@ class LocBasParser:
         self._raise_error(2, self._advance())
         return AST.Command(name="DEF")
 
-    def _parse_arguments(self, info: SymEntry) -> tuple[list[AST.Variable],list[AST.ExpType]]:
-        fargs: list[AST.Variable] = []
+    def _parse_arguments(self, info: SymEntry) -> tuple[list[AST.Variable|AST.Array], list[AST.ExpType]]:
+        fargs: list[AST.Variable | AST.Array] = []
         argtypes: list[AST.ExpType] = []
+        param: AST.Variable | AST.Array
+        paramname: str = ""
+        paramsym: SymType
         if self._match(TokenType.LPAREN):
-            argtk = self._expect(TokenType.IDENT)
-            vartype = AST.exptype_fromname(argtk.lexeme)
-            fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-            argtypes.append(vartype)
-            info.exptype = vartype
-            info.symtype = SymType.Param
+            if self._next_is(TokenType.LBRACK):
+                param = self._parse_array_declaration(start = TokenType.LBRACK, end = TokenType.RBRACK)
+                paramtype = param.etype
+                paramname = param.name
+                paramsym = SymType.ArrayParam
+                info.nargs = len(param.sizes)
+                info.indexes = list(param.sizes)
+            else:
+                paramname = self._expect(TokenType.IDENT).lexeme
+                paramtype = AST.exptype_fromname(paramname)
+                param = AST.Variable(name=paramname, etype=paramtype)
+                paramsym = SymType.Param
+            fargs.append(param)
+            argtypes.append(paramtype)
+            info.exptype = paramtype
+            info.symtype = paramsym
             info.locals = SymTable()
             info.memoff = 0
             argoffset = 2
-            self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
+            self.symtable.add(ident=paramname, info=info, context=self.context)
             while self._current_is(TokenType.COMMA):
                 self._advance()
-                argtk = self._expect(TokenType.IDENT)
-                vartype = AST.exptype_fromname(argtk.lexeme)
-                fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-                argtypes.append(vartype)
-                info.exptype = vartype
+                if self._next_is(TokenType.LBRACK):
+                    param = self._parse_array_declaration(start = TokenType.LBRACK, end = TokenType.RBRACK)
+                    paramtype = param.etype
+                    paramname = param.name
+                    paramsym = SymType.ArrayParam
+                    info.nargs = len(param.sizes)
+                    info.indexes = list(param.sizes)
+                else:
+                    paramname = self._expect(TokenType.IDENT).lexeme
+                    paramtype = AST.exptype_fromname(paramname)
+                    param = AST.Variable(name=paramname, etype=paramtype)
+                    paramsym = SymType.Param
+                fargs.append(param)
+                argtypes.append(paramtype)
+                info.exptype = paramtype
+                info.symtype = paramsym
                 info.memoff = argoffset
                 argoffset += 2
-                self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
+                self.symtable.add(ident=paramname, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         return fargs, argtypes
 
@@ -656,7 +680,7 @@ class LocBasParser:
             self._raise_error(2, tk)
         tk = self._expect(TokenType.IDENT)
         fname = "FN" + tk.lexeme
-        fargs: list[AST.Variable] = []
+        fargs: list[AST.Variable | AST.Array] = []
         argtypes: list[AST.ExpType] = []
         self.context = fname.upper()
         info = SymEntry(
@@ -755,13 +779,13 @@ class LocBasParser:
         return AST.Command(name="DIM", args=args)
 
     @astnode
-    def _parse_array_declaration(self) -> AST.Array:
+    def _parse_array_declaration(self, start = TokenType.LPAREN, end = TokenType.RPAREN) -> AST.Array:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
         var = self._expect(TokenType.IDENT).lexeme
         vartype = AST.exptype_fromname(var)
         datasz = AST.exptype_memsize(vartype)
         sizes = [10]
-        self._expect(TokenType.LPAREN)
+        self._expect(start)
         if not self._current_is(TokenType.RPAREN):
             tk = self._expect(TokenType.INT)
             sizes = [cast(int, tk.value)]
@@ -771,7 +795,7 @@ class LocBasParser:
                 tk = self._expect(TokenType.INT)
                 sizes.append(cast(int, tk.value))
                 if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
-        self._expect(TokenType.RPAREN)
+        self._expect(end)
         if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
             self._advance()
             num = self._expect(TokenType.INT)
@@ -1073,7 +1097,7 @@ class LocBasParser:
         if tk.lexeme.upper()[:2] == "FN":
             self._raise_error(2, tk, "FN starting chars are reserved for DEF FN functions")
         fname = "FUN" + tk.lexeme.upper()
-        fargs: list[AST.Variable] = []
+        fargs: list[AST.Variable | AST.Array] = []
         argtypes: list[AST.ExpType] = []
         self.context = fname
         rettype = AST.exptype_fromname(tk.lexeme)
@@ -2377,7 +2401,7 @@ class LocBasParser:
             self._raise_error(2, tk, "routine defined inside another routine body")
         tk = self._expect(TokenType.IDENT)
         pname = "SUB" + tk.lexeme.upper()
-        pargs: list[AST.Variable] = []
+        pargs: list[AST.Variable | AST.Array] = []
         argtypes: list[AST.ExpType] = []
         self.context = pname
         info = SymEntry(
@@ -3016,10 +3040,25 @@ class LocBasParser:
         args: list[AST.Statement] = []
         self._expect(TokenType.LPAREN)
         if not self._current_is(TokenType.RPAREN):
-            args = [self._parse_expression()]
+            args: list[AST.Statement] = []
+            if self._next_is(TokenType.LBRACK):
+                tk = self._advance()
+                vartype = AST.exptype_fromname(tk.lexeme)
+                self._expect(TokenType.LBRACK)
+                self._expect(TokenType.RBRACK)
+                args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], datasz=2))
+            else:
+                args.append(self._parse_expression())
             while self._current_is(TokenType.COMMA):
                 self._advance()
-                args.append(self._parse_expression()) 
+                if self._next_is(TokenType.LBRACK):
+                    tk = self._advance()
+                    vartype = AST.exptype_fromname(tk.lexeme)
+                    self._expect(TokenType.LBRACK)
+                    self._expect(TokenType.RBRACK)
+                    args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], datasz=2))
+                else:
+                    args.append(self._parse_expression()) 
         self._expect(TokenType.RPAREN)
         if entry.nargs != len(args): # type: ignore[union-attr]
             self._raise_error(2, tk, "wrong number of arguments")
