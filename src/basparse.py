@@ -620,27 +620,10 @@ class LocBasParser:
         self._raise_error(2, self._advance())
         return AST.Command(name="DEF")
 
-    @astnode
-    def _parse_DEF_FN(self) -> AST.DefFN:
-        """ <DEF_FN> ::== DEF FNIDENT[(IDENT[,IDENT]*)]=<num_expression>"""
-        tk = self._advance()
-        if self.context != "":
-            # is not possible to define new functions or procs in the body of another
-            self._raise_error(2, tk)
-        tk = self._expect(TokenType.IDENT)
-        fname = "FN" + tk.lexeme
+    def _parse_arguments(self, info: SymEntry) -> tuple[list[AST.Variable],list[AST.ExpType]]:
         fargs: list[AST.Variable] = []
         argtypes: list[AST.ExpType] = []
-        self.context = fname.upper()
-        info = SymEntry(
-            symtype=SymType.Function,
-            exptype=AST.exptype_fromname(tk.lexeme),
-            locals=SymTable(),
-            )
-        if not self.symtable.add(ident=fname, info=info, context=""):
-            self._raise_error(2, tk)
         if self._match(TokenType.LPAREN):
-            # No ArrayItems are supported here so we don't call _parse_ident()
             argtk = self._expect(TokenType.IDENT)
             vartype = AST.exptype_fromname(argtk.lexeme)
             fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
@@ -662,6 +645,28 @@ class LocBasParser:
                 argoffset += 2
                 self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
+        return fargs, argtypes
+
+    @astnode
+    def _parse_DEF_FN(self) -> AST.DefFN:
+        """ <DEF_FN> ::== DEF FNIDENT[(IDENT[,IDENT]*)]=<num_expression>"""
+        tk = self._advance()
+        if self.context != "":
+            # is not possible to define new functions or procs in the body of another
+            self._raise_error(2, tk)
+        tk = self._expect(TokenType.IDENT)
+        fname = "FN" + tk.lexeme
+        fargs: list[AST.Variable] = []
+        argtypes: list[AST.ExpType] = []
+        self.context = fname.upper()
+        info = SymEntry(
+            symtype=SymType.Function,
+            exptype=AST.exptype_fromname(tk.lexeme),
+            locals=SymTable(),
+            )
+        if not self.symtable.add(ident=fname, info=info, context=""):
+            self._raise_error(2, tk)
+        fargs, argtypes = self._parse_arguments(info)
         self._expect(TokenType.COMP, "=")
         fbody = self._parse_expression()
         self.context = ""
@@ -1062,7 +1067,7 @@ class LocBasParser:
         """ <SUB> ::== FUNCTION IDENT[(IDENT[,IDENT]*)] """
         tk = self._advance()
         if self.context != "":
-            # is not possible to define new functions or procs in the body of another
+            # is not possible to define new functions or procs in the bgody of another
             self._raise_error(2, tk)
         tk = self._expect(TokenType.IDENT)
         if tk.lexeme.upper()[:2] == "FN":
@@ -1080,29 +1085,7 @@ class LocBasParser:
             )
         if not self.symtable.add(ident=fname, info=info, context=""):
             self._raise_error(2, tk)
-        if self._match(TokenType.LPAREN):
-            # No ArrayItems are supported here so we don't call _parse_ident()
-            argtk = self._expect(TokenType.IDENT)
-            vartype = AST.exptype_fromname(argtk.lexeme)
-            fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-            argtypes.append(vartype)
-            info.exptype = vartype
-            info.symtype = SymType.Param
-            info.locals = SymTable()
-            info.memoff = 0
-            argoffset = 2
-            self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
-            while self._current_is(TokenType.COMMA):
-                self._advance()
-                argtk = self._expect(TokenType.IDENT)
-                vartype = AST.exptype_fromname(argtk.lexeme)
-                fargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-                argtypes.append(vartype)
-                info.exptype = vartype
-                info.memoff = argoffset
-                argoffset += 2
-                self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
-            self._expect(TokenType.RPAREN)
+        fargs, argtypes = self._parse_arguments(info)
         # Lets update our procedure entry with
         # the last calculated parameters
         info = self.symtable.find(ident=fname, stype=SymType.Function) # type: ignore[assignment]
@@ -2404,29 +2387,7 @@ class LocBasParser:
             )
         if not self.symtable.add(ident=pname, info=info, context=""):
             self._raise_error(2, tk)
-        if self._match(TokenType.LPAREN):
-            # No ArrayItems are supported here so we don't call _parse_ident()
-            argtk = self._expect(TokenType.IDENT)
-            vartype = AST.exptype_fromname(argtk.lexeme)
-            pargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-            argtypes.append(vartype)
-            info.exptype = vartype
-            info.symtype = SymType.Param
-            info.locals = SymTable()
-            info.memoff = 0
-            argoffset = 2
-            self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
-            while self._current_is(TokenType.COMMA):
-                self._advance()
-                argtk = self._expect(TokenType.IDENT)
-                vartype = AST.exptype_fromname(argtk.lexeme)
-                pargs.append(AST.Variable(name=argtk.lexeme, etype=vartype))
-                argtypes.append(vartype)
-                info.exptype = vartype
-                info.memoff = argoffset
-                argoffset += 2
-                self.symtable.add(ident=argtk.lexeme, info=info, context=self.context)
-            self._expect(TokenType.RPAREN)
+        pargs, argtypes = self._parse_arguments(info)
         # Lets update our procedure entry with
         # the last calculated parameters
         info = self.symtable.find(ident=pname, stype=SymType.Procedure) # type: ignore[assignment]
@@ -3073,6 +3034,7 @@ class LocBasParser:
     def _parse_pointer(self) -> AST.Pointer:
         """ <pointer> ::= @<ident> | @LABEL(IDENT) | @DATA """
         self._advance()
+        var: AST.Variable | AST.ArrayItem | AST.Label | AST.String
         if self._current_is(TokenType.KEYWORD, lexeme="LABEL"):
             tk = self._advance()
             self._expect(TokenType.LPAREN)
@@ -3081,7 +3043,7 @@ class LocBasParser:
                 var = AST.Label(value=tk.lexeme)
             elif self._current_is(TokenType.STRING):
                 tk = self._advance()
-                var = AST.String(value=tk.value)
+                var = AST.String(value=cast(str, tk.value))
             else:
                 self._raise_error(2, tk)
             self._expect(TokenType.RPAREN)

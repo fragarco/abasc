@@ -4153,7 +4153,7 @@ class CPCEmitter:
         self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
         self._emit_code("add     hl,de", info="final address of this item element")
 
-    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label):
+    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label | AST.String):
         if isinstance(node, AST.ArrayItem):
             self._emit_arrayitem_ptr(node)
         elif isinstance(node, AST.Variable):

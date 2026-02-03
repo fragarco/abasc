@@ -100,14 +100,14 @@ class BasOptimizer:
 
     def _op_IF(self, node: AST.If) -> AST.Statement:
         node.condition = self._op_statement(node.condition)
+        statements: list[AST.Statement] = []
         if len(node.inline_then):
-            statements: list[AST.Statement] = []
             for st in node.inline_then:
                 st = self._op_statement(st)
                 statements.append(st)
             node.inline_then = statements
         if len(node.inline_else):
-            statements: list[AST.Statement] = []
+            statements = []
             for st in node.inline_else:
                 st = self._op_statement(st)
                 statements.append(st)
