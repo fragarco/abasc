@@ -147,6 +147,17 @@ class TestParser(unittest.TestCase):
             with self.assertRaises(BasError):
                 self.parse_code(code)
 
+    def test_array_params_basic(self):
+        code = """
+10 DIM A(10)
+20 SUB PRINTARRAY(vec[10])
+30    FOR I=0 TO 10: PRINT vec(i): NEXT
+40 END SUB
+50 CALL PRINTARRAY(A[])
+"""
+        # check that it doesn't fail
+        self.parse_code(code)
+
     def test_asc_basic(self):
         codes = ['10 ASC("H")', '10 ASC("HELLO")', '10 ASC("H"+"E")']
         for code in codes:
@@ -317,6 +328,23 @@ class TestParser(unittest.TestCase):
             with self.assertRaises(BasError):
                 self.parse_code(code)
 
+
+    def test_basic_const_example(self):
+        code="""
+10 CONST a = 5
+20 PRINT a + 5
+"""
+        ast, _ = self.parse_code(code)
+        self.assertEqual(ast.lines[0].statements[0].name, "CONST")
+        self.assertIsInstance(ast.lines[0].statements[0].args[0], AST.Variable)
+
+    def test_const_error_example(self):
+        code="""
+10 CONST a = 5
+20 a = 6
+"""
+        with self.assertRaises(BasError):
+            self.parse_code(code)
 
     def test_copychrss_example(self):
         code = """
@@ -1237,6 +1265,31 @@ class TestParser(unittest.TestCase):
         self.assertEqual(ast.lines[0].statements[0].name, "SAVE")
         self.assertEqual(len(ast.lines[0].statements[0].args), 5)
 
+    def test_select_example(self):
+        code ="""
+10 INPUT "ENTER YOUR NUMBER:"; N
+20 SELECT CASE N
+30    CASE 1: PRINT "YOUR NUMBER IS 1"
+40    CASE 2: PRINT "YOUR NUMBER IS 2"
+50    CASE DEFAULT: PRINT "YOUR NUMBER IS DIFFERENT FROM 1 AND 2"
+60 END SELECT
+"""
+        # Probamos que este codigo no falla
+        self.parse_code(code)
+
+
+    def test_shared_example(self):
+        code ="""
+10 DIM A$(10)
+20 SUB PRINTA
+30    SHARED A$[]
+40    FOR i=0 To 10: PRINT a$(i): NEXT
+50 END SUB
+60 CALL PRINTA()
+"""
+        # Probamos que este codigo no falla
+        self.parse_code(code)
+
     def test_sgn_example(self):
         code ="""
 10 FOR n=200 TO -200 STEP -20
@@ -1443,6 +1496,7 @@ class TestParser(unittest.TestCase):
         ast, _ = self.parse_code(code)
         self.assertEqual(ast.lines[4].statements[0].name, "ZONE")
         self.assertEqual(ast.lines[4].statements[0].args[0].value, 5)
+
 
 if __name__ == "__main__":
     unittest.main()

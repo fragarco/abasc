@@ -632,8 +632,8 @@ class LocBasParser:
                 paramtype = param.etype
                 paramname = param.name
                 paramsym = SymType.ArrayParam
-                info.nargs = len(param.sizes)
-                info.indexes = list(param.sizes)
+                info.nargs = len(param.sizes)    # type: ignore [union-attr]
+                info.indexes = list(param.sizes) # type: ignore [union-attr]
             else:
                 paramname = self._expect(TokenType.IDENT).lexeme
                 paramtype = AST.exptype_fromname(paramname)
@@ -654,8 +654,8 @@ class LocBasParser:
                     paramtype = param.etype
                     paramname = param.name
                     paramsym = SymType.ArrayParam
-                    info.nargs = len(param.sizes)
-                    info.indexes = list(param.sizes)
+                    info.nargs = len(param.sizes)    # type: ignore [union-attr]
+                    info.indexes = list(param.sizes) # type: ignore [union-attr]
                 else:
                     paramname = self._expect(TokenType.IDENT).lexeme
                     paramtype = AST.exptype_fromname(paramname)
@@ -703,6 +703,7 @@ class LocBasParser:
             self._raise_error(13, tk)
         info.nargs = len(fargs)
         info.argtypes = list(argtypes)
+        info.args = list(fargs)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -1117,6 +1118,7 @@ class LocBasParser:
             self._raise_error(38, tk)
         info.nargs = len(fargs)
         info.argtypes = list(argtypes)
+        info.args = list(fargs)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -2419,6 +2421,7 @@ class LocBasParser:
             self._raise_error(38, tk)
         info.nargs = len(pargs)
         info.argtypes = list(argtypes)
+        info.args = list(pargs)
         # time to set correctly the parameters offset now we know the total number
         for localname in info.locals.syms:
             entry = info.locals.syms[localname]
@@ -3040,7 +3043,6 @@ class LocBasParser:
         args: list[AST.Statement] = []
         self._expect(TokenType.LPAREN)
         if not self._current_is(TokenType.RPAREN):
-            args: list[AST.Statement] = []
             if self._next_is(TokenType.LBRACK):
                 tk = self._advance()
                 vartype = AST.exptype_fromname(tk.lexeme)
@@ -3064,6 +3066,8 @@ class LocBasParser:
             self._raise_error(2, tk, "wrong number of arguments")
         # lets check param types
         for i in range(len(args)):
+            if isinstance(entry.args[i], AST.Array) and not isinstance(args[i], AST.Array):
+                self._raise_error(13, tk)
             if args[i].etype != entry.argtypes[i]:  # type: ignore [union-attr]
                 self._raise_error(13, tk)
         if entry: entry.calls += 1

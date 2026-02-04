@@ -4152,9 +4152,9 @@ class CPCEmitter:
         else:
             self._emit_code("ld      hl,0", info="unsupported type")
         # address = address_base + address_offset
-        if var.symtype == SymType.ArrayParam:
-            self._emit_code(f"ld      l,(ix+{var.memoff})")
-            self._emit_code(f"ld      h,(ix+{var.memoff+1})")
+        if var.symtype == SymType.ArrayParam:                   # type: ignore [union-attr]
+            self._emit_code(f"ld      e,(ix+{var.memoff})", info=f"base address for {node.name}[]") # type: ignore [union-attr]
+            self._emit_code(f"ld      d,(ix+{var.memoff+1})")   # type: ignore [union-attr]
         else:
             self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
         self._emit_code("add     hl,de", info="final address of this item element")

@@ -43,7 +43,8 @@ class SymEntry:
     writes: int = 1
     calls: int = 0      # Used by SUB, FUNCTION and DEF FN: times that a func is called
     nargs: int = 0      # Used by routines and arrays
-    argtypes: list[AST.ExpType] = field(default_factory=list) # used bu routines
+    argtypes: list[AST.ExpType] = field(default_factory=list) # used by routines
+    args: list[AST.Statement] = field(default_factory=list)   # used by routines
     indexes:  list[int] = field(default_factory=list) # Used by arrays
     memoff: int = 0     # if it's a param, offset in the call stack frame
     datasz: int = 0     # integers = 2, reals = 5, string up to 255

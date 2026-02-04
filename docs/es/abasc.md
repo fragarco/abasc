@@ -474,7 +474,20 @@ end
 
 Las variables declaradas dentro del cuerpo de un procedimiento (mediante `DECLARE`, `DIM`, incluyéndolas en la parte izquierda de una asignación o utilizándolas en `INPUT`, `READ` o `LINE INPUT`) son siempre locales y no pueden ser referenciadas desde el exterior. Las variables globales, por su parte, pueden emplearse dentro de un procedimiento, pero solo si aparecen al principio del cuerpo del procedimiento en una sentencia `SHARED`.
 
-En cuanto a la semántica de paso de parámetros, los enteros se pasan por valor, mientras que las cadenas de texto y los números reales se pasan por referencia (es decir, mediante un puntero a su contenido). Por tanto, en estos dos últimos casos es posible modificar la variable original desde el cuerpo del procedimiento. No es posible pasar vectores (arrays) como argumentos, aunque sí pueden utilizarse mediante el uso de la sentencia `SHARED`.
+En cuanto a la semántica de paso de parámetros, los enteros se pasan por valor, mientras que las cadenas de texto, los números reales y los array se pasan por referencia (es decir, mediante un puntero a su contenido). Por tanto, en estos tres últimos casos es posible modificar la variable original desde el cuerpo del procedimiento. Los arrays deben pasarse en la llamada usando el sufijo `[]`, igual que se hace en el uso del comando `SHARED`. En la declaración del procedimiento o función, debe indicarse el vector usando `[]` e indicando los indices como se hace en la declaración con `DIM`.
+
+```basic
+DIM myvec(3)
+
+sub printvec(v[3])
+    for i=0 to 3
+        print v(i)
+    next
+end sub
+
+myvec(0) = 0; myvec(1) = 1: myvec(2) = 2; myvec(3) = 3
+call printvec(myvec[])
+```
 
 **NOTA SOBRE RECURSIVIDAD:** ABASC no permite recursividad. Al igual que ocurre con las variables globales, las variables locales reservan memoria en tiempo de compilación. Debido a ello, el código no es reentrante y no es posible realizar llamadas recursivas.
 

@@ -472,7 +472,20 @@ end
 
 Variables declared inside a procedure—using `DECLARE`, `DIM`, by assigning to them, or by using them in `INPUT`, `READ`, or `LINE INPUT`—are always local and cannot be accessed from outside the procedure. Global variables, on the other hand, may be used inside a procedure but only if they are referenced through the use of `SHARED` at the beginning of the routine body.
 
-Regarding parameter passing semantics, integers are passed **by value**, while strings and real numbers are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter two cases, the procedure may modify the original variable. Arrays can not be declared as parameters but can be referenced in `SHARED` sentences.
+Regarding parameter passing semantics, integers are passed **by value**, while strings, real numbers and arrays are passed **by reference** (that is, as a pointer to their underlying data). Consequently, in the latter three cases, the procedure may modify the original variable. Arrays must be used in calls adding the postfix `[]` to identify the variable as an array, equal to its use in the command `SHARED`. However, in the procedure declaration, the indexes for each of the array components should be added between the `[]` symbols.
+
+```basic
+DIM myvec(3)
+
+sub printvec(v[3])
+    for i=0 to 3
+        print v(i)
+    next
+end sub
+
+myvec(0) = 0; myvec(1) = 1: myvec(2) = 2; myvec(3) = 3
+call printvec(myvec[])
+```
 
 **NOTE ON RECURSION:** ABASC does not support recursion because local variables reserve memory at compile time in the stack. Because of this, the code is not reentrant, making recursive calls impossible.
 
