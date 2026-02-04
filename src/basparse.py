@@ -3066,7 +3066,7 @@ class LocBasParser:
             self._raise_error(2, tk, "wrong number of arguments")
         # lets check param types
         for i in range(len(args)):
-            if isinstance(entry.args[i], AST.Array) and not isinstance(args[i], AST.Array):
+            if isinstance(entry.args[i], AST.Array) and not isinstance(args[i], AST.Array): # type: ignore [union-attr]
                 self._raise_error(13, tk)
             if args[i].etype != entry.argtypes[i]:  # type: ignore [union-attr]
                 self._raise_error(13, tk)
