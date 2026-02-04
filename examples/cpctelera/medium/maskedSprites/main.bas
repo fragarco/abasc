@@ -32,14 +32,14 @@ const SPR.W = 4
 const SPR.H = 16
 
 ' Cycles to wait between sprite movements
-const WAITLOOPS = 4000
+const WAITLOOPS = 1000
 
 ' Precalculate addresses to the tiles in the assembly file imported at the bottom
-dim background(14,6)  ' list of tiles is [14][6][4*8] bytes
+dim background(13,5)  ' list of tiles is [14][6][4*8] bytes
 
 for y=0 to (BACK.H-1)
    for x=0 to (BACK.W-1)
-      background(x,y) = @LABEL("background") + (14*y + x) * (4*8)
+      background(x,y) = @LABEL("background") + (6*x + y) * (4*8)
    next
 next
 
@@ -53,20 +53,20 @@ sub drawFrame
   pattern = cpctpx2byteM0 (15, 15)
   
   ' Draw top box
-  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, (BACK.X),  (BACK.Y - 8) )
-  call cpctDrawSolidBox(pvmem, pattern, 4*BACK.W,  8)
+  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, BACK.X, BACK.Y - 8)
+  call cpctDrawSolidBox(pvmem, pattern, 4*BACK.W, 8)
 
   ' Draw bottom box
-  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, (BACK.X),  (BACK.Y + 8*BACK.H) )
-  call cpctDrawSolidBox(pvmem, pattern, 4*BACK.W,  8)
+  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, BACK.X, BACK.Y + 8*BACK.H)
+  call cpctDrawSolidBox(pvmem, pattern, 4*BACK.W, 8)
 
   ' Draw left box
-  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, (BACK.X - 4), (BACK.Y - 8) )
-  call cpctDrawSolidBox(pvmem, pattern,  4, 8*(BACK.H + 2) )
+  pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, BACK.X - 4, BACK.Y - 8)
+  call cpctDrawSolidBox(pvmem, pattern, 4, 8*(BACK.H + 2))
 
   ' Draw right box
   pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, (BACK.X + 4*BACK.W),  (BACK.Y - 8))
-  call cpctDrawSolidBox(pvmem, pattern,  4, 8*(BACK.H + 2) )
+  call cpctDrawSolidBox(pvmem, pattern, 4, 8*(BACK.H + 2))
 end sub
 
 ''''''''''''''''''''''''''''''''''''/
@@ -161,7 +161,6 @@ label MAIN
       ' erasing the background. This is only valid for sprite defined with mask.
       pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)      
       call cpctDrawSpriteMasked(@LABEL("sprite_EMR"), pvmem, SPR.W, SPR.H)
-
       for i=0 to (WAITLOOPS-1): next   ' Wait for a little while
       call cpctWaitVSYNC()             ' Synchronize with VSYNC to prevent flickering
       

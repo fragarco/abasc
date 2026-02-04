@@ -50,8 +50,8 @@ SUB cpctDrawSpriteMasked(sprite, vmem, w, h) ASM
     ASM "ld      d,(ix+5)"
     ASM "ld      l,(ix+6)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
     ASM "ld      h,(ix+7)"
-    ASM "jp      cpct_drawSpriteBlended"
-    ASM "read 'asm/cpctelera/sprites/blending/cpct_drawSpriteBlended.asm'"
+    ASM "jp      cpct_drawSpriteMasked"
+    ASM "read 'asm/cpctelera/sprites/cpct_drawSpriteMasked.asm'"
 END SUB
 
 SUB cpctDrawTileAligned2x4f(tile, vmem) ASM
