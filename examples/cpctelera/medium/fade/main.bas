@@ -19,8 +19,8 @@
 '------------------------------------------------------------------------------
 
 chain merge "cpctelera/cpctelera.bas"
-chain merge "modules/palette.bas"
 chain merge "modules/utils.bas"
+chain merge "modules/palette.bas"
 
 '
 ' MAIN: Palette Effects Example
@@ -33,9 +33,9 @@ label MAIN
   img.spr(2) = @LABEL("G_No13"): img.x(2) = 22: img.y(2) = 60: img.w(2) = 36: img.h(2) = 80
 
   ' Initialize the CPC
-  call cpctDisableFirmware()   ' Disable firmware to prevent it from interfering
-  call cpctSetVideoMode(0)     ' Set video mode 0 (160x200, 16 colours)
-  call setBlackPalette(0, 16)   ' Set all 17 colours (16 palette + border) to Black
+  call cpctRemoveInterruptHandler() ' Disable firmware to prevent it from interfering
+  call cpctSetVideoMode(0)          ' Set video mode 0 (160x200, 16 colours)
+  call setBlackPalette(0, 16)       ' Set all 17 colours (16 palette + border) to Black
   call initPalette()
   '
   ' Infinite Loop
@@ -50,10 +50,10 @@ label MAIN
       call cpctDrawSprite(img.spr(i), pvmem, img.w(i), img.h(i))
 
       call waitFrames(50)                   ' Wait 1 second  ( 50 VSYNCs)
-      call fadein(rgbpalette, 0, 16, 4)  ' Do a Fade in effect to show the sprite
+      call fadeIn(0, 16, 4)  ' Do a Fade in effect to show the sprite
       
       call waitFrames(100)                   ' Wait 2 seconds (100 VSYNCs)
-      call fadeout(rgbpalette, 0, 16, 4)  ' Do a Fade out effect to return to black
+      call fadeOut(0, 16, 4)  ' Do a Fade out effect to return to black
     next
   wend
 end
