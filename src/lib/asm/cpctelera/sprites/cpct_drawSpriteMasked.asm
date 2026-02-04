@@ -18,7 +18,7 @@
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read "cpctelera/macros/cpct_undocumentedOpcodes.asm"
+read "asm/cpctelera/macros/cpct_undocumentedOpcodes.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

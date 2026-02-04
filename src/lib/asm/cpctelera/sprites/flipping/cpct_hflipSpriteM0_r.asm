@@ -150,7 +150,7 @@
 ;;   *WW* = *width*/2, *H* = *height*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_reverseBits.asm'
+read 'asm/cpctelera/macros/cpct_reverseBits.asm'
 
 cpct_hflipSpriteM0_r:
 ;; This loop is repeated for every vertical row of the sprite

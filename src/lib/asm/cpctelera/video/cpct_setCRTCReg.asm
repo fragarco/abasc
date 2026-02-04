@@ -83,7 +83,7 @@ read 'asm/cpctelera/video/videomode.asm'
 ;; (end code)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-cpct_setCRTCReg_asm:
+cpct_setCRTCReg:
    ;; Select CRTC the register to be modified
    ld     a, b                ;; [1] A = Value to be set (Save for later use)
    ld     b, CRTC_SELECTREG   ;; [2] B = 0xBC CRTC Select Register, C = register number to be selected

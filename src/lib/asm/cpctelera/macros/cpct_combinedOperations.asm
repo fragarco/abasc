@@ -26,7 +26,7 @@
 ;; instructions but are commonly used.
 ;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 ;; Macro: ld__hl_de
 ;;    Copy DE to HL, using 2 instructions

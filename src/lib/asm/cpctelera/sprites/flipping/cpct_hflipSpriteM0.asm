@@ -150,7 +150,7 @@
 ;;   *W* = *width* % 2, *WW* = *width*/2, *H* = *height*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_reverseBits.asm'
+read 'asm/cpctelera/macros/cpct_reverseBits.asm'
 
 ;;
 ;; USEFUL CONSTANTS TO CLARIFY CODE

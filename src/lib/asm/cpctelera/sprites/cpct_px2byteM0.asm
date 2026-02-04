@@ -89,8 +89,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; dc_mode0_ct: Pixel colour table defined in cpct_drawCharM0
-read 'cpctelera/strings/cpct_drawCharM0.asm'
-read 'cpctelera/macros/cpct_maths.asm'
+read 'asm/cpctelera/strings/cpct_drawCharM0.asm'
+read 'asm/cpctelera/macros/cpct_maths.asm'
+read 'asm/cpctelera/strings/cpct_dc_mode0_ct.asm'
 
 cpct_px2byteM0:
    ;; Convert first parameter (Pixel 0) to screen pixel format

@@ -100,6 +100,13 @@ FUNCTION cpctGetKeypressedAsASCII ASM
     ASM "read    'asm/cpctelera/keyboard/cpct_getKeypressedAsASCII.asm'"
 END FUNCTION
 
+FUNCTION cpctIsAnyKeyPressed ASM
+    ASM "call    cpct_isAnyKeyPressed  ; L = A = key status (0 = FALSE)"
+    ASM "ld      h,0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/keyboard/cpct_isAnyKeyPressed.asm'"
+END FUNCTION
+
 FUNCTION cpctIsAnyKeyPressedf ASM
     ASM "call    cpct_isAnyKeyPressed_f  ; L = A = key status (0 = FALSE)"
     ASM "ld      h,0"
