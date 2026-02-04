@@ -55,7 +55,6 @@ end sub
 ' MAIN PROGRAM
 label MAIN
    call initialization() ' Initialize the screen
-
    ' Main animation loop
    while 1
       call cpctWaitVSYNC()      ' Wait for VSYNC

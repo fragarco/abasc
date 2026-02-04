@@ -124,18 +124,18 @@ FUNCTION cpctGetVSYNCStatus ASM
     ASM "read 'asm/cpctelera/video/cpct_getVSYNCStatus.asm'"
 END FUNCTION
 
-SUB cpctSetCRTCReg(newval, numreg) ASM
-    ASM "ld      c,(ix+0) ; regnum - Number of the register to be set "
-    ASM "ld      b,(ix+1) ; newval - New value to be set for the register"
-    ASM "jp      cpct_setCRTCReg"
-    ASM "read 'asm/cpctelera/video/cpct_setCRTCReg.asm'"
-END SUB
-
 SUB cpctSetBorder(hwcolor) ASM
     ASM "ld      h,(ix+0)     ; H = INK"
     ASM "ld      l,16         ; L = BORDER PEN"
     ASM "jp      cpct_setPALColour"
     ASM "read 'asm/cpctelera/video/cpct_setPALColour.asm'"
+END SUB
+
+SUB cpctSetCRTCReg(regnum, newval) ASM
+    ASM "ld      b,(ix+0) ; newval - New value to be set for the register"
+    ASM "ld      c,(ix+2) ; regnum - Number of the register to be set"
+    ASM "jp      cpct_setCRTCReg"
+    ASM "read 'asm/cpctelera/video/cpct_setCRTCReg.asm'"
 END SUB
 
 SUB cpctSetPALColour(ipen, hwcolor) ASM
