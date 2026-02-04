@@ -22,7 +22,7 @@ chain merge "cpctelera/cpctelera.bas"
 ' Get a 16-bits colour pattern out of a sequence of 4 firmware colours (one for each mode 0 pixel)
 '
 function getColourPattern(c1, c2, c3, c4)
-   getColourPattern = 256*cpctpx2byteM0(c3, c4) + cpctpx2byteM0(c1, c2)
+   getColourPattern = (cpctpx2byteM0(c3, c4) and &FF00) or (cpctpx2byteM0(c1, c2) and &00FF)
 end function
 
 '
@@ -32,7 +32,6 @@ sub waitNVSYNCs(nstops)
    label dowait
       ' Wait for next VSYNC is detected
       call cpctWaitVSYNC()
-
       ' If this is not the last VSYNC to wait, 
       ' wait for 2 halts, to ensure VSYNC signal has stopped
       ' before waiting to detect it again
@@ -98,7 +97,7 @@ label MAIN
       call doSomeClears(1, colour, vsyncs)
 
       ' Next colour and less time
-      color = color + 1
+      colour = colour + 1
       if colour > 15 then colour = 1
       vsyncs = vsyncs - 1
       if vsyncs = 0 then vsyncs = 50

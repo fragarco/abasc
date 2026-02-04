@@ -183,21 +183,24 @@ END SUB
 FUNCTION cpctpx2byteM0(px0, px1) ASM
     ASM "ld      l,(ix+0)  ; px1 - Firmware colour value for left  pixel (pixel 0) [0-15]"
     ASM "ld      h,(ix+2)  ; px0 - Firmware colour value for left  pixel (pixel 0) [0-15]"
-    ASM "jp      cpct_px2byteM0"
+    ASM "call    cpct_px2byteM0"
+    ASM "ld      h,l"
+    ASM "ret"
     ASM "read 'asm/cpctelera/sprites/cpct_px2byteM0.asm'"
 END FUNCTION
 
 FUNCTION cpctpx2byteM1(px0, px1, px2, px3) ASM
-    ASM "pop     iy ; parameters in the stack are just downside"
-    ASM "pop     hl ; so we have to reorder them"
-    ASM "pop     de"
-    ASM "pop     bc"
-    ASM "pop     ix"
-    ASM "push    ix"
-    ASM "push    bc"
+    ASM "ld      d,(ix+0)  ; px3 - Firmware colour value for left  pixel (pixel 0) [0-15]"
+    ASM "ld      e,(ix+2)  ; px2 - Firmware colour value for left  pixel (pixel 0) [0-15]"
+    ASM "ld      b,(ix+4)  ; px1 - Firmware colour value for left  pixel (pixel 0) [0-15]"
+    ASM "ld      c,(ix+6)  ; px0 - Firmware colour value for left  pixel (pixel 0) [0-15]"
     ASM "push    de"
-    ASM "push    hl"
-    ASM "push    iy"
+    ASM "push    bc"
+    ASM "call    cpct_px2byteM1"
+    ASM "ld      h,l       ; h and l both has the same byte"
+    ASM "pop     bc"
+    ASM "pop     de"
+    ASM "ret"
     ASM "read 'asm/cpctelera/sprites/cpct_px2byteM1.asm'"
 END FUNCTION
 

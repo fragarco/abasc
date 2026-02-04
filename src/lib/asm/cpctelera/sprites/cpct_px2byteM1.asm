@@ -91,9 +91,9 @@
 
 cpct_px2byteM1:
    ;; Point HL to the start of the first parameter in the stack
-   ld   hl, 2           ;; [3] HL Points to SP+2 (first 2 bytes are return address)
-   ld    b, l            ;; [1] B = L (2) counter to loop twice
-   add  hl, sp           ;; [3]    , to use it for getting parameters from stack
+   ld   hl, 2          ;; [3] HL Points to SP+2 (first 2 bytes are return address)
+   ld    b, l          ;; [1] B = L (2) counter to loop twice
+   add  hl, sp         ;; [3]    , to use it for getting parameters from stack
    ld    c, &10        ;; [2] C = 0x10 Mask to set into high nibble
 
    ;; Process the first pixel
