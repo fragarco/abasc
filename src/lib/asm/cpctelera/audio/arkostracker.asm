@@ -112,7 +112,6 @@ cpct_akp_songLoopTimes: db 0
 ;; contributed to this source.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-cpct_akp_musicPlay:
 cpct_akp_musicPlay:   ;; Entry point for assembly calls 
 PLY_Play:
 

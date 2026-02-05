@@ -2,9 +2,10 @@
 
 ' Functions and Procedures:
 
-CONST AY.CHANNELA = 1
-CONST AY.CHANNELB = 2
-CONST AY.CHANNELC = 4
+CONST AY.CHANNELA   = 1
+CONST AY.CHANNELB   = 2
+CONST AY.CHANNELC   = 4
+CONST AY.CHANNELALL = 7
 
 SUB cpctakpMusicInit(songdata) ASM
     ASM "ld      e,(ix+0) ; songdata - Pointer to the start of the array"
