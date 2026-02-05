@@ -47,23 +47,11 @@ label MAIN
    while 1
       ' Scan Keyboard and change sprite location if cursor keys are pressed
       call cpctScanKeyboardf()
-      if cpctIsKeyPressed(KEY.RIGHT) and (x < (80 - SPR.W)) then
-         x = x + 1
-         pvideomem = pvideomem + 1
-      end if
-      if cpctIsKeyPressed(KEY.LEFT) and (x > 0) then
-         x = x - 1
-         pvideomem = pvideomem - 1
-      end if
-      if cpctIsKeyPressed(KEY.UP) and (y > 0) then
-         y = y - 1
-         if y and 7 then pvideomem = pvideomem - &0800 else pvideomem = pvideomem - &C850
-      end if
-      if cpctIsKeyPressed(KEY.DOWN) and (y < (200 - SPR.H)) then
-         y = y + 1
-         if y and 7 then pvideomem = pvideomem + &0800 else pvideomem = pvideomem + &C850
-      end if
-
+      if cpctIsKeyPressed(KEY.RIGHT) and (x < (80 - SPR.W)) then x = x + 1
+      if cpctIsKeyPressed(KEY.LEFT) and (x > 0) then x = x - 1
+      if cpctIsKeyPressed(KEY.UP) and (y > 0)   then y = y - 1
+      if cpctIsKeyPressed(KEY.DOWN) and (y < (200 - SPR.H)) then y = y + 1
+      pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART, x, y)
       ' Wait VSYNC monitor signal to synchronize the loop with it. We'll start drawing the sprite
       ' calculations always at the same time (when VSYNC is first detected)
       call cpctWaitVSYNC()
@@ -71,6 +59,7 @@ label MAIN
       ' Draw the sprite at its new location on screen. 
       ' Sprite automatically erases previous copy of itself on the screen because it moves 
       ' 1 byte at a time and has a &00 border that overwrites previous colours on that place
+      
       call cpctDrawSprite(@LABEL("sp_death"), pvideomem, SPR.W, SPR.H)
       
       ' Wait to next VSYNC signal, calculating the amount of free microseconds (time we wait for VSYNC)
