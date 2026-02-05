@@ -1769,7 +1769,6 @@ PLY_Init:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;Stop the music, cut the channels.
-cpct_akp_stop:
 cpct_akp_stop:  ;; Entry point for assembly calls 
 PLY_Stop:
 
