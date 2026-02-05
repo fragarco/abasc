@@ -12,7 +12,7 @@ set BASC=python3 "..\..\..\..\src\abasc.py"
 set DSK=python3 "..\..\..\..\src\utils\dsk.py"
 
 set SOURCE=main
-set TARGET=crtcanim
+set TARGET=arkos
 
 set LOADADDR=0x0040
 
