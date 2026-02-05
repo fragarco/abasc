@@ -107,7 +107,7 @@ class LocBasParser:
             codenum,
             codeline.source,
             codeline.code,
-            tk.line,
+            codeline.line,
             tk.col,
             info
         ) 

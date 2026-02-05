@@ -39,7 +39,6 @@ from enum import Enum, auto
 from typing import Union, Any, Optional, Tuple, Iterator
 import re
 import json
-import os
 
 # -------------------------------
 # Token types
