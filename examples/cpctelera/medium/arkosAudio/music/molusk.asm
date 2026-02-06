@@ -5,7 +5,7 @@
 ;;;
 
 ;;; Set absolute memory addressing
-; org &1D4D
+org &1D4D
 
 ;;; Music data start (8883 bytes)
 ;;;
