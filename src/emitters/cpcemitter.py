@@ -302,10 +302,11 @@ class CPCEmitter:
             self._emit_startup("ld      de,240")
             self._emit_startup("ld      hl,_symbols_table")
             self._emit_startup(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
-        self._emit_data()
-        self._emit_data("; Table for symbols defined with SYMBOL keyword", 0)
-        self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes", 0)
-        self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}", 0)
+        if self.symbolafter < 256:
+            self._emit_data()
+            self._emit_data("; Table for symbols defined with SYMBOL keyword", 0)
+            self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes", 0)
+            self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}", 0)
 
 
     def _real(self, n: float) -> bytearray:
@@ -3542,12 +3543,13 @@ class CPCEmitter:
             num = arg.value
             if num < 0 or num > 255: num = 256 
             self._emit_code("; SYMBOL AFTER <int expression>")
+            if num != 256 or self.symbolafter != 9999:
+                self._emit_code(f"ld      de,{num}")
+                self._emit_code("ld      hl,_symbols_table")
+                self._emit_code(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
+                self._emit_code(";")
             if num < self.symbolafter:
                 self.symbolafter = num
-            self._emit_code(f"ld      de,{num}")
-            self._emit_code("ld      hl,_symbols_table")
-            self._emit_code(f"call    {FWCALL.TXT_SET_M_TABLE}", info="TXT_SET_M_TABLE")
-            self._emit_code(";")
         else:
             self._raise_error(2, arg, 'an integer value was expected')
 
