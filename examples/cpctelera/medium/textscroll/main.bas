@@ -55,17 +55,16 @@ end sub
 '   pCharline: pointer to the first byte of the character line (the 8 pixel lines)
 '   lineSize:  number of total bytes a pixel line has
 '
-function scrollLine(pCharline, lineSize)
+sub scrollLine(pCharline, lineSize)
    shared CPCT.VMEMSTART, PIXEL.LINEOFFSET
    ' Scroll 8 pixel lines. This loop is executed 8 times: when pCharline is incremented
    ' the 9th time, it will overflow (will be greater than &FFFF, cycling through &0000)
    ' and will be lower than &C000.
    while pCharline > CPCT.VMEMSTART
-      pCharline = pCharline + PIXEL.LINEOFFSET
       call cpctMemcpy(pCharline, pCharline+1, lineSize)
+      pCharline = pCharline + PIXEL.LINEOFFSET
    wend
-   scrollLine = pCharline
-end function
+end sub
 
 '
 ' MAIN LOOP
@@ -112,8 +111,8 @@ label MAIN
       nextChar = nextChar + 1
       if nextChar = textlen then
          nextChar = 0
-         penColor = penColor + 1
-         if penColour > 3 then  penColour = 1
+         penColour = penColour + 1
+         if penColour > 3 then penColour = 1
          call cpctSetDrawCharM1(penColour, 0)
       end if
 
@@ -121,8 +120,8 @@ label MAIN
       ' the pixels 1 byte = 4 pixels. So, 2 times = 8 pixels = 1 Character
       ' Synchronize with VSYNC previous to each call to make it smooth
       call waitnVSYNCs(2)
-      pCharlineStart = scrollLine(pCharlineStart, PIXEL.LINESIZE)
+      call scrollLine(pCharlineStart, PIXEL.LINESIZE)
       call waitnVSYNCs(2)
-      pCharlineStart = scrollLine(pCharlineStart, PIXEL.LINESIZE)
+      call scrollLine(pCharlineStart, PIXEL.LINESIZE)
    wend
 end
