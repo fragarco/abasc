@@ -78,7 +78,7 @@ draw.moveRight = 0
 draw.posX = 0
 
 sub DrawUFO
-   shared CPCT.VMEMSTART, UFO.Y, UFO.W, UFO.H
+   shared CPCT.VMEMSTART, UFO.Y, UFO.W, UFO.H, SCREEN.CX
    ' Private data to control UFO location and status
    shared draw.moveRight, draw.posX
    
@@ -113,12 +113,12 @@ sub DrawUFO
    '--- UFO REDRAWING
     
    ' Erase UFO at its previous location by drawing background over it
-   call cpctDrawSprite(@LABEL("gScreenCapture"), pvmemufoBg, UFO.W, UFO.H)
+   call cpctDrawSprite(@LABEL(gScreenCapture), pvmemufoBg, UFO.W, UFO.H)
    
    ' Before drawing UFO at its new location, copy the background there
    ' to gScreenCapture buffer. This will let us restore it next time
    ' the UFO moves.
-   call cpctGetScreenToSprite(pvmem, @LABEL("gScreenCapture"), UFO.W, UFO.H)
+   call cpctGetScreenToSprite(pvmem, @LABEL(gScreenCapture), UFO.W, UFO.H)
    
    ' Draw UFO at its new location
    sp = GetUfoSprite()
@@ -152,16 +152,16 @@ function DrawSkyGradient(cy, posY, colorFront, colorBack)
 
       ' Draw lines of color
       for i=0 to (cy - j - 1)
+         call FillLine(pixFront, posY)
          posY = posY + 1
-         call FillLine(pixFront, posY)      
       next
+      call FillLine(pixBack, posY)
       posY = posY + 1
-      call FillLine(pixBack, posY++) 
    next
    
    ' Return ending line colorized
    DrawSkyGradient = posY
-end sub
+end function
 
 ''''''''''''''''''''''''''''''''''''''''/
 ' DRAW SKY WITH GRADIENT ZONES FOR BACKGROUND
@@ -186,40 +186,34 @@ end sub
 ''''''''''''''''''''''''''''''''''''''''/
 ' DRAW CITY WITH ALL BUILDING FOR BACKGROUND
 '
+dwc.pvmem1 = cpctGetScreenPtr(CPCT.VMEMSTART, 10, SCREEN.CY - BUILDING1.H)
+dwc.pvmem2 = cpctGetScreenPtr(CPCT.VMEMSTART, 30, SCREEN.CY - BUILDING2.H)
+dwc.pvmem3 = cpctGetScreenPtr(CPCT.VMEMSTART, 40, SCREEN.CY - BUILDING1.H)
+dwc.pvmem4 = cpctGetScreenPtr(CPCT.VMEMSTART, 67, SCREEN.CY - BUILDING2.H)
+dwc.pvmem5 = cpctGetScreenPtr(CPCT.VMEMSTART, 60, SCREEN.CY - BUILDING3.H)
 sub DrawCity
    shared CPCT.VMEMSTART, SCREEN.CY
    shared BUILDING1.W, BUILDING1.H, BUILDING2.W, BUILDING2.H, BUILDING3.W, BUILDING3.H
-   ' As all locations of buildings are constant, we use cpctm_screenPtr that 
-   ' will calculate screen video memory pointers during compile time (as it
-   ' is a macro). Resulting assembly code will be shorter and faster, as 
-   ' it will only contain exact video memory values for pointers, instead of
-   ' code for calculating them.
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, 10, SCREEN.CY - BUILDING1.H)
-   call cpctDrawSprite(@LABEL("g_building_1"), pvmem, BUILDING1.W, BUILDING1.H)
+   shared dwc.pvmem1, dwc.pvmem2, dwc.pvmem3, dwc.pvmem4, dwc.pvmem5
    
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, 30, SCREEN.CY - BUILDING2.H)
-   cpct_drawSprite(@LABEL("g_building_2"), pvmem, BUILDING2.W, BUILDING2.H)
-   
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, 40, SCREEN.CY - BUILDING1.H)
-   cpctDrawSprite(@LABEL("g_building_1"), pvmem, BUILDING1.W, BUILDING1.H)
-   
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, 67, SCREEN.CY - BUILDING2.H)
-   cpct_drawSprite(@LABEL("g_building_2"), pvmem, BUILDING2.W, BUILDING2.H)
-   
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, 60, SCREEN.CY - BUILDING3.H)
-   cpct_drawSprite(g_building_3, pvmem, BUILDING3.W, BUILDING3.H)
+   call cpctDrawSprite(@LABEL("g_building_1"), dwc.pvmem1, BUILDING1.W, BUILDING1.H)
+   call cpctDrawSprite(@LABEL("g_building_2"), dwc.pvmem2, BUILDING2.W, BUILDING2.H)
+   call cpctDrawSprite(@LABEL("g_building_1"), dwc.pvmem3, BUILDING1.W, BUILDING1.H)
+   call cpctDrawSprite(@LABEL("g_building_2"), dwc.pvmem4, BUILDING2.W, BUILDING2.H)
+   call cpctDrawSprite(@LABEL("g_building_3"), dwc.pvmem5, BUILDING3.W, BUILDING3.H)
 end sub
 
 ''''''''''''''''''''''''''''''''''''''''/
 ' INITIALIZE FIRST BACKGROUND CAPTURE    
 ' 
-call InitCapture
+ic.pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, UFO.INITX, UFO.Y)
+sub  InitCapture
    shared CPCT.VMEMSTART
    shared UFO.INITX, UFO.Y, UFO.W, UFO.H
+   shared ic.pvmem
    ' Get Screen Video Memory pointer of default UFO location 
    ' and make a copy of the background pixel data there to gScreenCapture buffer
-   pvmem = cpctmScreenPtr(CPCT.VMEMSTART, UFO.INITX, UFO.Y)
-   call cpctGetScreenToSprite(pvmem, @LABEL("gScreenCapture"), UFO.W, UFO.H)
+   call cpctGetScreenToSprite(ic.pvmem, @LABEL(gScreenCapture), UFO.W, UFO.H)
 end sub
 
 ''''''''''''''''''''''''''''''''''''''''/

@@ -126,6 +126,17 @@ SUB cpctDrawTileZigZagGrayCode4x8af(tile, vmem) ASM
     ASM "read 'asm/cpctelera/sprites/drawTile/cpct_drawTileZigZagGrayCode4x8_af.asm'"
 END SUB
 
+SUB cpctGetScreenToSprite(vmem, sprite, w, h) ASM
+    ASM "ld      b,(ix+0)  ; h - Sprite Height in bytes (>0)"
+    ASM "ld      c,(ix+2)  ; w - Sprite Width in *bytes* (>0) (Beware, *not* in pixels!)"
+    ASM "ld      e,(ix+4)  ; sprite - Destination Sprite Address (Sprite data array)"
+    ASM "ld      d,(ix+5)"
+    ASM "ld      l,(ix+6)  ; vmem - Source Screen Address (Video memory location)"
+    ASM "ld      h,(ix+7)"
+    ASM "jp      cpct_getScreenToSprite"
+    ASM "read 'asm/cpctelera/sprites/screenToSprite/cpct_getScreenToSprite.asm'"
+END SUB
+
 SUB cpctHflipSpriteM0(w, h, sprite) ASM
     ASM "ld      l,(ix+0)  ; sprite - Pointer to the sprite array (first byte of consecutive sprite data"
     ASM "ld      h,(ix+1)"
