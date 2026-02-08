@@ -154,7 +154,7 @@ def update_project_win(content: str, paths: list[str]) -> str:
         (r'^set DSK=.*$',  'set DSK=python3 '),
         (r'^set CDT=.*$',  'set CDT=python3 '),
         (r'^set IMG=.*$',  'set IMG=python3 '),
-        (r'^set ASM=.*$',  'set ABASM=python3 ')
+        (r'^set ASM=.*$',  'set ASM=python3 ')
     ]
     for i,exp in enumerate(expressions):
         content = re.sub(
@@ -175,7 +175,7 @@ def update_project_unix(content: str, paths: list[str]) -> str:
         (r'^DSK=.*$',  'DSK="python3 '),
         (r'^CDT=.*$',  'CDT="python3 '),
         (r'^IMG=.*$',  'IMG="python3 '),
-        (r'^ASM=.*$',  'ABASM="python3 ')
+        (r'^ASM=.*$',  'ASM="python3 ')
     ]
     for i,exp in enumerate(expressions):
         content = re.sub(
