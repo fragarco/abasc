@@ -233,6 +233,9 @@ class BasOptimizer:
             self.context = stmt.name
         elif isinstance(stmt, AST.DefFUN):
             self.context = stmt.name
+        elif isinstance(stmt, AST.RSX):
+            for i in range(0, len(stmt.args)):
+                stmt.args[i] = self._op_statement(stmt.args[i])
         return stmt
       
     def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:

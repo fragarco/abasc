@@ -3097,6 +3097,23 @@ class LocBasParser:
             var.set_origin(tk.line, tk.col)
         else:
             var = self._parse_ident()
+            if isinstance(var, AST.Variable):
+                # Let's contabilize this access as a write so the variable
+                # is not considered a constant
+                entry = self.symtable.find(var.name, SymType.Variable, self.context)
+                if entry is None:
+                    self.symtable.add(
+                        ident=var.name,
+                        info=SymEntry(
+                            SymType.Variable,
+                            exptype=var.etype,
+                            locals=SymTable(),
+                            datasz=AST.exptype_memsize(var.etype)
+                        ),
+                        context=self.context
+                    )
+                else:
+                    entry.writes += 1
         return AST.Pointer(var=var)
 
     @astnode
