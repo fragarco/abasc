@@ -47,6 +47,14 @@ python3 img.py <inimg> [--name NAME] [--format FORMAT] [--mode MODE] [--palette 
 - **`--mode`**: (Optional) The Amstrad CPC graphic mode. Possible values are `0`, `1`, `2`. The default value is `0`.
 - **`--palette`**: (Optional) A file containing a description of the color palette to be used in the conversion. If it is not provided, the program will compute a palette based on the most prevalent colors in the input image.
 
+## Processing Multiple Files
+
+The `IMG` tool allows you to convert multiple files at once by using a pattern as the input image.
+
+If you specify a path containing wildcards (for example, `*`) in the input parameter, `IMG` will automatically process all files that match the given pattern.
+
+For example, if you use `img/image*.jpg` as the input and the `img` directory contains the files `image01.jpg` and `image02.jpg`, both files will be processed and converted.
+
 ## Usage Examples
 
 1. **Convert a PNG image to a binary file without AMSDOS header (default format):**

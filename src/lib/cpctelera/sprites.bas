@@ -79,7 +79,7 @@ SUB cpctDrawTileAligned2x8(tile, vmem) ASM
     ASM "ld      d,(ix+1)"
     ASM "ld      l,(ix+2)  ; tile - Source Sprite Pointer (16-byte array with 8-bit pixel data)"
     ASM "ld      h,(ix+3)"
-    ASM "jp      cpct_drawTileAligned2x8f"
+    ASM "jp      cpct_drawTileAligned2x8"
     ASM "read 'asm/cpctelera/sprites/drawTile/cpct_drawTileAligned2x8.asm'"
 END SUB
 

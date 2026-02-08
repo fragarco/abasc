@@ -2749,7 +2749,6 @@ class CPCEmitter:
         self._emit_code("pop     de")
         self._emit_code(f"call    {FWCALL.GRA_PLOT_RELATIVE}", info="GRA_PLOT_RELATIVE")
         self._emit_code(";")
-        self._raise_error(2, node, 'not implemented yet')
 
     def _emit_POKE(self, node:AST.Command):
         """
@@ -3764,7 +3763,8 @@ class CPCEmitter:
         self._emit_code("ld      (hl),0")
         self._emit_code("pop     de")
         self._emit_code("call    rt_strz2num")
-
+        self._emit_code(";")
+    
     def _emit_VPOS(self, node:AST.Function):
         """
         Reports the current vertical POSition of the text cursor relative to

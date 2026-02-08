@@ -42,6 +42,9 @@ REM * USAGE: make [clear | dsk]
 
 set BASC=python3 "{BASC}"
 set DSK=python3 "{DSK}"
+set CDT=python3 "{CDT}"
+set IMG=python3 "{IMG}"
+set ASM=python3 "{ASM}"
 
 set SOURCE=main
 set TARGET={TARGET}
@@ -50,6 +53,7 @@ set LOADADDR=0x0040
 
 set RUNBAS=%BASC% %SOURCE%.bas
 set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
+set RUNCDT=%CDT% %TARGET%.cdt -n --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR% --name %TARGET%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -64,7 +68,9 @@ IF "%1"=="clear" (
     IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
     IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
 ) ELSE IF "%1"=="dsk" (
-    call %RUNBAS% %2 %3 && call %RUNDSK% 
+    call %RUNBAS% %2 %3 && call %RUNDSK%
+) ELSE IF "%1"=="cdt" (
+    call %RUNBAS% %2 %3 && call %RUNCDT% 
 ) ELSE (
     call %RUNBAS% %*
 )
@@ -73,7 +79,7 @@ IF "%1"=="clear" (
 @echo on
 """
 
-UNIX_TEMPLATE: str = """#!/bin/sh
+UNIX_TEMPLATE: str = r"""#!/bin/sh
 
 #
 # This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
@@ -84,6 +90,9 @@ UNIX_TEMPLATE: str = """#!/bin/sh
 
 BASC="python3 {BASC}"
 DSK="python3 {DSK}"
+CDT="python3 {CDT}"
+IMG="python3 {IMG}"
+ASM="python3 {ASM}"
 
 SOURCE=main
 TARGET={TARGET}
@@ -92,6 +101,7 @@ LOADADDR=0x0040
 
 RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
+RUNCDT="$CDT %TARGET%.cdt -n --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR --name $TARGET"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -106,6 +116,8 @@ if [ "$1" = "clear" ]; then
     rm -f "$TARGET.dsk"
 elif [ "$1" = "dsk" ]; then
     $RUNBAS $2 $3 && $RUNDSK
+elif [ "$1" = "cdt" ]; then
+    $RUNBAS $2 $3 && $RUNCDT
 else
     $RUNBAS $@
 fi
@@ -119,54 +131,59 @@ LABEL mainloop
     GOTO mainloop
 """
 
-def script_tools_paths() -> Tuple[str, str]:
+def script_tools_paths() -> list[str]:
     script_dir: str = os.path.dirname(os.path.abspath(__file__))
-    return (
+    return [
         os.path.join(script_dir, "abasc.py"),
         os.path.join(script_dir, "utils", "dsk.py"),
-    )
+        os.path.join(script_dir, "utils", "cdt.py"),
+        os.path.join(script_dir, "utils", "img.py"),
+        os.path.join(script_dir, "utils", "abasm.py"),
+    ]
 
 def target_name_from_dir(path: str) -> str:
     return os.path.basename(os.path.normpath(path))
 
-def update_project_win(content: str, basc_path: str, dsk_path: str) -> str:
+def update_project_win(content: str, paths: list[str]) -> str:
     """
     We have to use lamda functions to avoid the problem with Windows paths and re.sub calls
     raising errors like 're.error: bad escape'
     """
-    content = re.sub(
-        r'^set BASC=.*$',
-        lambda _: f'set BASC=python3 "{basc_path}"',
-        content,
-        flags=re.MULTILINE,
-    )
-
-    content = re.sub(
-        r'^set DSK=.*$',
-        lambda _: f'set DSK=python3 "{dsk_path}"',
-        content,
-        flags=re.MULTILINE,
-    )
+    expressions = [
+        (r'^set BASC=.*$', 'set BASC=python3 '),
+        (r'^set DSK=.*$',  'set DSK=python3 '),
+        (r'^set CDT=.*$',  'set CDT=python3 '),
+        (r'^set IMG=.*$',  'set IMG=python3 '),
+        (r'^set ASM=.*$',  'set ASM=python3 ')
+    ]
+    for i,exp in enumerate(expressions):
+        content = re.sub(
+            exp[0],
+            lambda _: exp[1] + f'"{paths[i]}"',
+            content,
+            flags=re.MULTILINE,
+        )
     return content
 
-def update_project_unix(content: str, basc_path: str, dsk_path: str) -> str:
+def update_project_unix(content: str, paths: list[str]) -> str:
     """ 
     Linux shouldn't have the same problem than Windows with bars in the path, but
     lets use the lambda workaround just in case.
     """
-    content = re.sub(
-        r'^BASC=.*$',
-        lambda _: f'BASC="python3 {basc_path}"',
-        content,
-        flags=re.MULTILINE,
-    )
-
-    content = re.sub(
-        r'^DSK=.*$',
-        lambda _: f'DSK="python3 {dsk_path}"',
-        content,
-        flags=re.MULTILINE,
-    )
+    expressions = [
+        (r'^BASC=.*$', 'BASC="python3 '),
+        (r'^DSK=.*$',  'DSK="python3 '),
+        (r'^CDT=.*$',  'CDT="python3 '),
+        (r'^IMG=.*$',  'IMG="python3 '),
+        (r'^ASM=.*$',  'ASM="python3 ')
+    ]
+    for i,exp in enumerate(expressions):
+        content = re.sub(
+            exp[0],
+            lambda _: exp[1] + f'{paths[i]}"',
+            content,
+            flags=re.MULTILINE,
+        )
     return content
 
 def update_project(target_dir: str, is_windows: bool) -> None:
@@ -177,34 +194,40 @@ def update_project(target_dir: str, is_windows: bool) -> None:
         print(f"{make_name} was not found in {target_dir}", file=sys.stderr)
         sys.exit(1)
 
-    basc_path, dsk_path = script_tools_paths()
+    paths = script_tools_paths()
 
     with open(make_path, "r", encoding="utf-8") as f:
         content: str = f.read()
     if is_windows:
-        content = update_project_win(content, basc_path, dsk_path)
+        content = update_project_win(content, paths)
     else:
-        content = update_project_unix(content, basc_path, dsk_path)
+        content = update_project_unix(content, paths)
     with open(make_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
     print(f"{make_name} was sucessfully updated")
 
 def create_project(target_dir: str, is_windows: bool) -> None:
     target_name: str = target_name_from_dir(target_dir)
-    basc_path, dsk_path = script_tools_paths()
+    paths = script_tools_paths()
 
     if is_windows:
         make_name: str = "make.bat"
         make_content: str = WINDOWS_TEMPLATE.format(
-            BASC=basc_path,
-            DSK=dsk_path,
+            BASC=paths[0],
+            DSK=paths[1],
+            CDT=paths[2],
+            IMG=paths[3],
+            ASM=paths[4],
             TARGET=target_name,
         )
     else:
         make_name = "make.sh"
         make_content = UNIX_TEMPLATE.format(
-            BASC=basc_path,
-            DSK=dsk_path,
+            BASC=paths[0],
+            DSK=paths[1],
+            CDT=paths[2],
+            IMG=paths[3],
+            ASM=paths[4],
             TARGET=target_name,
         )
         
