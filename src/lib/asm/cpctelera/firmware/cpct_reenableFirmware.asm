@@ -25,7 +25,7 @@
 
 ;; Code modified to be used with ABASM by Javier "Dwayne Hicks" Garcia
 
-read 'cpctelera/firmware/firmware.asm'
+read 'asm/cpctelera/firmware/firmware.asm'
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -77,7 +77,7 @@ read 'cpctelera/firmware/firmware.asm'
 
 JP_opcode equ 0xC3
 
-cpct_reenableFirmware::
+cpct_reenableFirmware:
    di                         ;; [1] Disable interrupts
    ld a, JP_opcode            ;; [2] A = 0xC3, opcode for JP instruction
    ld (firmware_RST_jp), a    ;; [4] Put JP instruction at 0x0038, to create a jump to the pointer at 0x0039

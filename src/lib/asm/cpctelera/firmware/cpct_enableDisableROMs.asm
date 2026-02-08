@@ -97,8 +97,8 @@
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/firmware/cpc_mode_rom_status.asm'
-read 'cpctelera/firmware/firmware.asm'
+read 'asm/cpctelera/firmware/cpc_mode_rom_status.asm'
+read 'asm/cpctelera/firmware/firmware.asm'
 
 cpct_enableLowerROM:
    ld   hl, &FBE6            ;; [3] HL = Machine Code. E6 FB = AND 0b11111011 = Reset Bit 3 (Enable Lower ROM, 0 = enabled)

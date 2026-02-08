@@ -71,7 +71,7 @@
 read 'cpctelera/random/cpct_mxor32_seed.asm'
 read 'cpctelera/random/cpct_nextRandom_mxor_u32.asm'
 
-cpct_getRandom_mxor_u32_asm:
+cpct_getRandom_mxor_u32:
    ;; Calculate next 32-bits random value using Marsaglia's XOR-shift
    ld   de, (cpct_mxor32_seed+0)    ;; [6] | 
    ld   hl, (cpct_mxor32_seed+2)    ;; [5] | DE:HL = Current 32-bits seed

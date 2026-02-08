@@ -1,6 +1,13 @@
 ' MODULE CPCTELERA/MEMUTILS
 
-' Functions and Procedures:
+' Functions and Commands:
+'   command   cpctMemcpy(toptr, fromptr, bytes)
+'   command   cpctMemset(arrayptr, value, bytes)
+'   command   cpctMemsetf8(arrayptr, value, bytes)
+'   command   cpctMemsetf64(arrayptr, value, bytes)
+'   command   cpctPageMemory(bankvalue)
+'   command   cpctSetStackLocation(halts)
+'   command   cpctWaitHalts(halts)
 
 SUB cpctMemcpy(toptr, fromptr, bytes) ASM
     ASM "ld      c,(ix+0) ; bytes  - Number of bytes to be set (>= 1)"

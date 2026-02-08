@@ -1,11 +1,34 @@
 ' MODULE CPCTELERA/AUDIO
 
-' Functions and Procedures:
+' Functions and Commands:
+'   function  cpctakpDigidrumStatus()
+'
+'   command   cpctakpMusicInit(songdata)
+'   command   cpctakpMusicPlay(array$, index)
+'
+'   command   cpctakpSetFadeVolume(fadelevel)
+' 
+'   function  cpctakpSFXGetInstrument(channel)
+'   command   cpctakpSFXInit(songdata)
+'   command   cpctakpSFXPlay(sfxnum, vol, note, nspeed, invertedpitch, channelbitmask)
+'   command   cpctakpSFXStop(chbitmask)
+'   command   cpctakpSFXStopAll()
+'
+'   function  cpctakpSongLoopTimes()
+'
+'   command   cpctakpStop()
 
 CONST AY.CHANNELA   = 1
 CONST AY.CHANNELB   = 2
 CONST AY.CHANNELC   = 4
 CONST AY.CHANNELALL = 7
+
+FUNCTION cpctakpDigidrumStatus ASM
+    ASM "ld      h,0"
+    ASM "ld      l,(cpct_akp_digidrumStatus)"
+    ASM "ret"
+    ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
+END FUNCTION
 
 SUB cpctakpMusicInit(songdata) ASM
     ASM "ld      e,(ix+0) ; songdata - Pointer to the start of the array"
@@ -16,6 +39,12 @@ END SUB
 
 SUB cpctakpMusicPlay ASM
     ASM "jp      cpct_akp_musicPlay"
+    ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
+END SUB
+
+SUB cpctakpSetFadeVolume(fadelevel) ASM
+    ASM "ld      a,(ix+0) ; Global volume for all channels, [0-15]. 0 = max volume, 16 or more = no volume."
+    ASM "jp      cpct_akp_setFadeVolume"
     ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
 END SUB
 
@@ -41,6 +70,17 @@ SUB cpctakpSFXPlay(sfxnum, vol, note, nspeed, invertedpitch, channelbitmask) ASM
     ASM "ld      h,(ix+8)  ; Volume [0-15], 0 = off, 15 = maximum volume."
     ASM "ld      l,(ix+10) ; Number of the instrument in the SFX Song (>0), same as the number given to the instrument in Arkos Tracker."
     ASM "jp      cpct_akp_SFXPlay"
+    ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
+END SUB
+
+SUB cpctakpSFXStop(chbitmask) ASM
+    ASM "ld      a,(ix+0)  ; chbitmask - stop sfx on specified channels (A = 001 (1), B = 010 (2), C = 100 (4))"
+    ASM "jp      cpct_akp_SFXStop"
+    ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
+END SUB
+
+SUB cpctakpSFXStopAll ASM
+    ASM "jp      cpct_akp_SFXStopAll"
     ASM "read 'asm/cpctelera/audio/arkostracker.asm'"
 END SUB
 

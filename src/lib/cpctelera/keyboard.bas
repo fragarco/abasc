@@ -1,12 +1,16 @@
 ' MODULE CPCTELERA/KEYBOARD
 
-' Functions and Procedures:
+' Functions and Commands:
+'   function  cpctGetKeypressedAsASCII()
+'   function  cpctIsAnyKeyPressed()
+'   function  cpctIsAnyKeyPressedf()
+'   function  cpctIsKeyPressed(keyid)
+'   command   cpctScanKeyboard()
+'   command   cpctScanKeyboardf()
 
-
-
-CONST KEY.UP            = &0100
-CONST KEY.RIGHT         = &0200
-CONST KEY.DOWN          = &0400
+CONST KEY.UP           = &0100
+CONST KEY.RIGHT        = &0200
+CONST KEY.DOWN         = &0400
 CONST KEY.F9           = &0800
 CONST KEY.F6           = &1000
 CONST KEY.F3           = &2000

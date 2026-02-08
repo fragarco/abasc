@@ -1,6 +1,8 @@
 ' MODULE CPCTELERA/RANDOM
 
-' Functions and Procedures:
+' Functions and Commands:
+'   command   cpctSRand(seed)
+'   function  cpctRand()
 
 SUB cpctSRand(seed) ASM
     ASM "ld      l,(ix+0)   ; The parameter is a 32 bits number"

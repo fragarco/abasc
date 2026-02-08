@@ -107,8 +107,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-_cpct_nextRandom_mxor532_u8::
-cpct_nextRandom_mxor532_u8_asm::
+cpct_nextRandom_mxor532_u8:
 ;;
 ;; INPUT:
 ;;  DE:HL == xz yw  (32 bits state)

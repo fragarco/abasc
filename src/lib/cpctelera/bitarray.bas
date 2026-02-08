@@ -1,6 +1,15 @@
 ' MODULE CPCTELERA/BITARRAY
 
-' Functions and Procedures:
+' Functions and Commands:
+'   function  cpctGetBit(array$, index)
+'   function  cpctGet2Bits(array$, index)
+'   function  cpctGet4Bits(array$, index)
+'   function  cpctGet6Bits(array$, index)
+'
+'   command   cpctSetBit(array$, value, index)
+'   command   cpctSet2Bits(array$, value, index)
+'   command   cpctSet4Bits(array$, value, index)
+'   command   cpctSet6Bits(array$, value, index)
 
 FUNCTION cpctGetBit(array$, index) ASM
     ASM "ld      l,(ix+0)"

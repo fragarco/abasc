@@ -68,7 +68,7 @@ read 'cpctelera/firmware/firmware.asm'
 ;; (end code)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-cpct_setInterruptHandler_naked_asm:
+cpct_setInterruptHandler_naked:
    ;; Modify interrupt vector to call user provided interrupt handler
    ld  a, &C3                              ;; [2] 0xC3 = JP instruction, that may have been removed by other functions
    di                                      ;; [1] Disable interrupts
