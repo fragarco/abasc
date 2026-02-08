@@ -54,6 +54,17 @@ SUB cpctDrawSpriteMasked(sprite, vmem, w, h) ASM
     ASM "read 'asm/cpctelera/sprites/cpct_drawSpriteMasked.asm'"
 END SUB
 
+SUB cpctDrawSpriteVFlip(sprite, vmem, w, h) ASM
+    ASM "ld      b,(ix+0)  ; h - Sprite Height in bytes (>0)"
+    ASM "ld      a,(ix+2)  ; w - Sprite Width in *bytes* (>0) (Beware, *not* in pixels!)"
+    ASM "ld      l,(ix+4)  ; vmem - Destination video memory pointer"
+    ASM "ld      h,(ix+5)"
+    ASM "ld      e,(ix+6)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
+    ASM "ld      d,(ix+7)"
+    ASM "jp      cpct_drawSpriteVFlip"
+    ASM "read 'asm/cpctelera/sprites/flipping/cpct_drawSpriteVFlip.asm'"
+END SUB
+
 SUB cpctDrawTileAligned2x4f(tile, vmem) ASM
     ASM "ld      e,(ix+0)  ; vmem - Pointer (aligned) to the first byte in video memory where the sprite will be copied."
     ASM "ld      d,(ix+1)"
@@ -125,6 +136,14 @@ SUB cpctDrawTileZigZagGrayCode4x8af(tile, vmem) ASM
     ASM "jp      cpct_drawTileZigZagGrayCode4x8_af"
     ASM "read 'asm/cpctelera/sprites/drawTile/cpct_drawTileZigZagGrayCode4x8_af.asm'"
 END SUB
+
+FUNCTION cpctGetBottomLeftPtr(vmem, h) ASM
+    ASM "ld      c,(ix+0)  ; h - Sprite Height in bytes (>0)"
+    ASM "ld      e,(ix+2)  ; vmem - Video memory pointer to the top-left corner of a sprite"
+    ASM "ld      d,(ix+3)"
+    ASM "jp      cpct_getBottomLeftPtr"
+    ASM "read 'asm/cpctelera/sprites/flipping/cpct_getBottomLeftPtr.asm'"
+END FUNCTION
 
 SUB cpctGetScreenToSprite(vmem, sprite, w, h) ASM
     ASM "ld      b,(ix+0)  ; h - Sprite Height in bytes (>0)"
