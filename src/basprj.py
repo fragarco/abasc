@@ -101,7 +101,7 @@ LOADADDR=0x0040
 
 RUNBAS="$BASC $SOURCE.bas"
 RUNDSK="$DSK $TARGET.dsk --new --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR"
-RUNCDT="$CDT %TARGET%.cdt -n --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR --name $TARGET"
+RUNCDT="$CDT $TARGET.cdt -n --put-bin $SOURCE.bin --load-addr $LOADADDR --start-addr $LOADADDR --name $TARGET"
 
 if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.bpp"
@@ -114,6 +114,7 @@ if [ "$1" = "clear" ]; then
     rm -f "$SOURCE.map"
     rm -f "$SOURCE.bin"
     rm -f "$TARGET.dsk"
+    rm -f "$TARGET.cdt"
 elif [ "$1" = "dsk" ]; then
     $RUNBAS $2 $3 && $RUNDSK
 elif [ "$1" = "cdt" ]; then
