@@ -3,9 +3,9 @@ EXAMPLES
 
 ## Versión en Español (English Version at the end)
 
-El directorio de `examples` continene varios ejemplos que pueden usarse para probar el compilador. Cada directorio contiene un fichero `make.bat` que permite, en Windows, generar el binario e incluso generar el fichero DSk. En otros sistemas operativos, este fichero `make.bat` aún puede ser de utilidad pues muestra como se invoca el compilador y las utilidades para empaquetar los resultados. Por último, en la ráiz del directorio de ejemplos, hay otro `make.bat` que permite generar todos los ejemplos de una sola pasada.
+El directorio de `examples` continene varios ejemplos que pueden usarse para probar el compilador. Cada directorio contiene un fichero `make.bat` (y `make.sh`) que permite generar el binario o, incluso, un fichero DSK listo para su uso con emuladores. En la ráiz del directorio de ejemplos, también hay `make` que permite generar todos los ejemplos a la vez.
 
-Cada `make.bat` soporta los siguientes párametros:
+El script de `make` soporta los siguientes párametros:
 
 * make (sin parámetros) - genera el fichero BIN.
 * make clear - limpia todos los ficheros intermedios.
@@ -13,10 +13,11 @@ Cada `make.bat` soporta los siguientes párametros:
 
 ## English Version
 
-This directory contains several examples that can be used to test the compiler. Each directory contains a `make.bat` file that, on Windows, allows you to generate the binary and even the DSK file. On other operating systems, this `make.bat` file can still be useful as it shows how to invoke the compiler and the utilities for packaging the results. Finally, in the root of the examples directory, there is another `make.bat` file that generate all the examples at once.
+This directory contains several examples that can be used to test the compiler. Each directory contains a `make.bat` (and `make.sh`) file that allows you to generate the binary or, even, a DSK file ready to be used in emulators. In the root of the examples directory, there is an extra `make` file that generates all the examples at once.
 
-Each `make.bat` file supports the following parameters:
+Each `make` script file supports the following parameters:
 
 * `make` (no parameters) - generates the BIN file.
 * `make clear` - clears all intermediate files.
 * `make dsk` - generates the BIN file, creates a DSK file, and appends the BIN file.
+
