@@ -3436,9 +3436,10 @@ class CPCEmitter:
         if node.args[1].etype == AST.ExpType.String:
             self._emit_code("inc     hl")
             self._emit_code("ld      a,(hl)", info="first character")
+            self._emit_code("ld      c,a")
         else:
-            self._emit_code("ld      a,l")
-        self._emit_code("push    af")
+            self._emit_code("ld      c,l")
+        self._emit_code("push    bc")
         self._emit_expression(node.args[0])
         self._reserve_heapmem_de(255, node)
         self._emit_code("pop     bc")
