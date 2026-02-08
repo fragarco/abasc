@@ -38,6 +38,7 @@ __version__='1.4.1'
 import sys
 import os
 import argparse
+import glob
 from PIL import Image
 
 # Array of CPC colours in the following format:
@@ -492,22 +493,24 @@ def run_read_inputimg(srcfile, format, mode):
         sys.exit(1)
 
 def run_convert(args):
-    inputimg = run_read_inputimg(args.inimg, args.format, args.mode)
-    converter = ImgConverter()
-    converter.build_cpcimg(inputimg, args.mode, args.palette)
-    target = args.name if args.name != '' else os.path.splitext(args.inimg)[0]
-    if args.format == 'bin':
-        converter.write_bin(target)
-    elif args.format == 'c':
-        converter.write_c(target)
-    elif args.format == 'asm':
-        converter.write_asm(target)
-    elif args.format == 'bas':
-        converter.write_bas(target)
-    elif args.format == 'scn':
-        converter.write_scn(target)
-    else:
-        raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas.")
+    images = glob.glob(args.inimg)
+    for inimg in images:
+        inputimg = run_read_inputimg(inimg, args.format, args.mode)
+        converter = ImgConverter()
+        converter.build_cpcimg(inputimg, args.mode, args.palette)
+        target = args.name if args.name != '' and len(images) == 1 else os.path.splitext(inimg)[0]
+        if args.format == 'bin':
+            converter.write_bin(target)
+        elif args.format == 'c':
+            converter.write_c(target)
+        elif args.format == 'asm':
+            converter.write_asm(target)
+        elif args.format == 'bas':
+            converter.write_bas(target)
+        elif args.format == 'scn':
+            converter.write_scn(target)
+        else:
+            raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas.")
 
 def process_args():
     parser = argparse.ArgumentParser(
