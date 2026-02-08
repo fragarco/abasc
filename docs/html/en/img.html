@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>img</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="img-user-manual">IMG: USER MANUAL</h1>
+<h1 id="description">Description</h1>
+<p><code>img.py</code> is a tool written in Python 3 that converts
+images in common formats such as <strong>PNG</strong> or
+<strong>JPEG</strong> into formats usable in programming projects for
+the <strong>Amstrad CPC</strong>. The output formats include:</p>
+<ul>
+<li>Pure binary files (<code>bin</code>)</li>
+<li>Source files in <strong>C/C++</strong> (<code>c</code>)</li>
+<li>Assembly code for <strong>Abasm</strong> (compatible with
+<strong>WinAPE/MAXAM</strong>) (<code>asm</code>)</li>
+<li><strong>SCN</strong> files for loading screens
+(<code>scn</code>)</li>
+<li>Source files in <strong>Basic</strong> (<code>bas</code>)</li>
+</ul>
+<p>The output file will have the same name as the input image but with
+the appropriate extension for the chosen output format. It generates, as
+well, a second file with <code>info</code> extension that will contain
+information about the size and palette for the converted image.</p>
+<p>The tool adjusts the image based on the output format and the Amstrad
+CPC video mode. In the case of <strong>SCN</strong> files, the image is
+automatically scaled to the correct resolution.</p>
+<p>In all cases, if the user doesn’t provide a palette definition file,
+<code>IMG</code> will generate a color palette calculated by selecting
+the most dominant colors in the image and approximating them to the
+nearest colors available in the Amstrad CPC palette.</p>
+<h2 id="amstrad-cpc-video-modes">Amstrad CPC Video Modes:</h2>
+<ul>
+<li><strong>Mode 0</strong>: 160x200 pixels, 16 colors</li>
+<li><strong>Mode 1</strong>: 320x200 pixels, 4 colors</li>
+<li><strong>Mode 2</strong>: 640x200 pixels, 2 colors</li>
+</ul>
+<h1 id="installation">Installation</h1>
+<p>To use this tool, you need to have <strong>Python 3.x</strong>
+installed on your system. Additionally, <code>img.py</code> uses the
+<strong>Pillow</strong> image library (Python’s standard image
+processing library), which can be easily installed using
+<code>pip</code>, the Python package manager, with the following
+command:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip3</span> install pillow</span></code></pre></div>
+<h1 id="basic-usage">Basic Usage</h1>
+<p>The tool runs from the command line, taking an image file (PNG, JPEG,
+etc.) as input and converting it to the specified format.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py <span class="op">&lt;</span>inimg<span class="op">&gt;</span> [--name NAME] [--format FORMAT] [--mode MODE] [--palette FILE]</span></code></pre></div>
+<h2 id="available-options">Available Options</h2>
+<ul>
+<li><strong><code>&lt;inimg&gt;</code></strong>: (Required) The input
+image file (or list of input files). This can be a PNG, JPEG, or other
+supported format.</li>
+<li><strong><code>--name</code></strong>: (Optional) The reference name
+for the converted image. If not specified, the input file name will be
+used. This name is used to generate the labels or variables that
+reference the image in the generated code (C/C++ and ASM options).</li>
+<li><strong><code>--format</code></strong>: (Optional) The output
+format. Valid values are <code>bin</code>, <code>c</code>,
+<code>asm</code>, <code>scn</code>. The default value is
+<code>bin</code>.</li>
+<li><strong><code>--mode</code></strong>: (Optional) The Amstrad CPC
+graphic mode. Possible values are <code>0</code>, <code>1</code>,
+<code>2</code>. The default value is <code>0</code>.</li>
+<li><strong><code>--palette</code></strong>: (Optional) A file
+containing a description of the color palette to be used in the
+conversion. If it is not provided, the program will compute a palette
+based on the most prevalent colors in the input image.</li>
+</ul>
+<h2 id="processing-multiple-files">Processing Multiple Files</h2>
+<p>The <code>IMG</code> tool allows you to convert multiple files at
+once by including all file names as the <code>inimg</code> parameter or
+by using a pattern with wildcards.</p>
+<p>If you specify a path containing wildcards (for example,
+<code>*</code>) in the input parameter, <code>IMG</code> will
+automatically process all files that match the given pattern.</p>
+<p>For example, if you use <code>img/image*.jpg</code> as the input and
+the <code>img</code> directory contains the files
+<code>image01.jpg</code> and <code>image02.jpg</code>, both files will
+be processed and converted.</p>
+<h2 id="usage-examples">Usage Examples</h2>
+<ol type="1">
+<li><strong>Convert a PNG image to a binary file without AMSDOS header
+(default format):</strong></li>
+</ol>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png</span></code></pre></div>
+<p>This command converts <code>imagen.png</code> into a binary file
+(<code>imagen.bin</code>) without AMSDOS header, using graphic mode 0
+with 16 colors.</p>
+<ol start="2" type="1">
+<li><strong>Convert a JPEG image to assembly compatible with
+WinAPE/MAXAM:</strong></li>
+</ol>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.jpg <span class="at">--format</span> asm <span class="at">--mode</span> 1</span></code></pre></div>
+<p>This command converts <code>imagen.jpg</code> into an assembly file
+(<code>imagen.asm</code>) ready for use in graphic mode 1 of the Amstrad
+CPC.</p>
+<ol start="3" type="1">
+<li><strong>Convert a PNG image to a C source file for
+SDCC:</strong></li>
+</ol>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> c <span class="at">--name</span> mi_sprite</span></code></pre></div>
+<p>This command converts <code>imagen.png</code> into C source files
+(<code>mi_sprite.h</code> and <code>mi_sprite.c</code>) that can be used
+with the SDCC compiler. The name <code>mi_sprite</code> will be used for
+the variables in the generated code.</p>
+<ol start="4" type="1">
+<li><strong>Convert an image to an SCN file for loading
+screens:</strong></li>
+</ol>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py portada.png <span class="at">--format</span> scn</span></code></pre></div>
+<p>This command converts <code>portada.png</code> into an SCN file
+(<code>portada.scn</code>) for use as a loading screen. The image will
+be scaled to a resolution of 160x200 (graphic mode 0) with a maximum of
+16 colors.</p>
+<h1 id="palettes">Palettes</h1>
+<p>If the <code>--palette</code> parameter is not used, <code>IMG</code>
+computes a color palette based on the desired graphics mode and the most
+representative colors of the input image. However, it is very common to
+work with a single palette shared by several images, especially when
+converting sprites. <code>IMG</code> always generates an additional file
+with various information for each conversion, using the
+<code>.info</code> extension. From this file, the values of the palette
+used in the conversion can be extracted, or we can create our own
+palette file from scratch.</p>
+<p>The contents of a palette specification file must be as follows:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span> <span class="kw">or</span> <span class="st">&#39;FW&#39;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [<span class="bu">list</span> of hardware <span class="kw">or</span> firmware values depending on the specified <span class="bu">type</span>]</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>For example, we can create a file called <code>paleta.pal</code> with
+the following contents:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x0B</span>, <span class="bn">0x00</span>, <span class="bn">0x14</span>, <span class="bn">0x1F</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x07</span>, <span class="bn">0x19</span>, <span class="bn">0x06</span>, <span class="bn">0x15</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x12</span>, <span class="bn">0x0C</span>, <span class="bn">0x1C</span>, <span class="bn">0x04</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x16</span>, <span class="bn">0x1E</span>, <span class="bn">0x1A</span>, <span class="bn">0x18</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>And use it to convert an image as follows:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> scn <span class="at">--palette</span> paleta.pal</span></code></pre></div>
+<h1 id="license">License</h1>
+<p><code>img.py</code> is free software; you can redistribute it and/or
+modify it under the terms of the <strong>GNU General Public License
+v3</strong>, as published by the <strong>Free Software
+Foundation</strong>.</p>
+<p><code>img.py</code> is distributed in the hope that it will be
+useful, but <strong>WITHOUT ANY WARRANTY</strong>; without even the
+implied warranty of <strong>MERCHANTABILITY</strong> or <strong>FITNESS
+FOR A PARTICULAR PURPOSE</strong>. See the <strong>GNU General Public
+License</strong> for more details.</p>
+</body>
+</html>

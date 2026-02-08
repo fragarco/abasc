@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>cdt</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="cdt-user-manual">CDT: USER MANUAL</h1>
+<h1 id="description">Description</h1>
+<p><code>cdt.py</code> is a simple Python 3.X-based tool for creating
+and managing CDT files used in simulators and tape emulators for Amstrad
+CPC computers. It can perform various operations to work with these
+files, with its main focus on aiding in packaging programs developed on
+modern computers.</p>
+<p>Additional information about the CDT format can be found at the
+following link: - <a
+href="https://www.cpcwiki.eu/index.php/Format:CDT_tape_image_file_format">CDT
+Tape Image File Format</a></p>
+<p>For further understanding of how information was stored on actual
+tapes, refer to the manual on the Amstrad CPC Firmware at the following
+link: - <a
+href="https://archive.org/details/SOFT968TheAmstrad6128FirmwareManual">The
+Amstrad 6128 Firmware Manual</a></p>
+<p>This tool does not overwrite existing files with the same name within
+the CDT file; all operations add files. Therefore, you can combine the
+<code>--new</code> option with insertion operations, allowing you to
+generate the same CDT file every time the command is executed.</p>
+<h1 id="basic-usage">Basic Usage</h1>
+<blockquote>
+<p>python3 cdt.py <cdtfile> [options]</p>
+</blockquote>
+<h2 id="available-options">Available Options</h2>
+<ul>
+<li><code>--new</code>: Creates a new empty CDT file.</li>
+<li><code>--check</code>: Checks if the CDT file format is compatible
+with the tool.</li>
+<li><code>--cat</code>: Lists all blocks currently present in the CDT
+file on the standard output.</li>
+<li><code>--put-bin &lt;file&gt;</code>: Adds a new binary/basic file to
+the CDT file.</li>
+<li><code>--put-ascii &lt;file&gt;</code>: Adds a new ASCII file to the
+CDT file.</li>
+<li><code>--put-raw &lt;file&gt;</code>: Adds the file directly inside a
+data block without any header.</li>
+<li><code>--map-file &lt;file&gt;</code>: Imports a file generated by
+the ABASM assembler containing a list of symbols and their asociated
+memory addresses.</li>
+<li><code>--load-addr &lt;address&gt;</code>: Initial address to load
+the file.</li>
+<li><code>--start-addr &lt;address|symbol&gt;</code>: Call address
+(default is 0x4000). Only used in binary files with generated AMSDOS
+headers. If a MAP file is specified, it’s possible to indicate the
+address using a symbol included in that file.</li>
+<li><code>--name &lt;name&gt;</code>: Name that will be displayed when
+loading the binary/ASCII file.</li>
+<li><code>--speed &lt;speed&gt;</code>: Write speed: 0 = 1000 bauds, 1
+(default) = 2000 bauds.</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<p>Create a new CDT file with a BASIC program:</p>
+<pre><code>python3 cdt.py tape.cdt --new --put-ascii program.bas</code></pre>
+<p>List the blocks in the CDT file:</p>
+<pre><code>python3 cdt.py tape.cdt --cat</code></pre>
+<p>Add a binary file to the CDT file that displays the name “MYPROGRAM”
+when each block is loaded:</p>
+<pre><code>python3 cdt.py tape.cdt --put-bin program.bin --load-addr 0x8000 --start-addr 0x8000 --name &quot;MYPROGRAM&quot;</code></pre>
+<p>Create a new CDT file and add a binary file which should be loaded at
+address 0x4000. It imports a MAP file called program.map that includes
+the symbol MAIN which is used to stablish the call address.</p>
+<pre><code>python3 cdt.py tape.cdt --new --put-bin program.bin --map-file program.map --load-addr 0x4000 --start-addr MAIN --name &quot;MYPROGRAM&quot;</code></pre>
+</body>
+</html>

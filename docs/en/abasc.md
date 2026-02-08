@@ -316,11 +316,11 @@ DATA "Elvira", 20, 2005
 
 In addition to the compiler, the development package includes several extra tools that cover the entire workflow from generating the binary to package it for distribution. Each tool has its own manual distributed alongside the compiler documentation. All utilities are fully independent and can be used on their own.
 
-* `abasm.py` — Assembler compatible with WinAPE and RVM syntax.
-* `basprj.py` — Creates a basic project structure to use with `ABASC`.
-* `img.py` — Converts images to CPC format and can generate loading screens.
-* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files.
-* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files.
+* `abasm.py` — Assembler compatible with WinAPE and RVM syntax. [manual](abasm.html)
+* `basprj.py` — Creates a basic project structure to use with `ABASC`. [manual](basprj.html)
+* `img.py` — Converts images to CPC format and can generate loading screens. [manual](img.html)
+* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files. [manual](dsk.html)
+* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files. [manual](cdt.html)
 
 
 # Using the Compiler

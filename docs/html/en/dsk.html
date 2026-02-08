@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>dsk</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="dsk-user-manual">DSK: USER MANUAL</h1>
+<h1 id="description">Description</h1>
+<p><code>dsk.py</code> is a simple Python 3.X-based tool for creating
+and managing DSK files, as used in simulators and disk drive emulators
+for Amstrad CPC computers. It can perform various operations to work
+with these files, with its main focus on aiding to package programs
+developed on modern computers.</p>
+<p>Currently, it only supports the single-sided data format: - 178 KB. -
+40 tracks with 9 sectors of 512 bytes each. - Sectors numbered from 0xC1
+to 0xC9. - File table with 64 entries.</p>
+<p>For more information on the format, refer to the following pages: -
+<a
+href="http://www.benchmarko.de/cpcemu/cpcdoc/chapter/cpcdoc7_e.html#I_FILE_STRUCTURE">Amstrad
+CPC Emulator Documentation</a> - <a
+href="https://www.cpcwiki.eu/index.php/Format:DSK_disk_image_file_format">CPCWiki
+- DSK Disk Image File Format</a> - <a
+href="https://sinclair.wiki.zxnet.co.uk/wiki/DSK_format">Sinclair Wiki -
+DSK Format</a></p>
+<p>This tool does not overwrite existing files with the same name inside
+the DSK; all operations add files. Therefore, you can combine the –new
+option with insertion operations, allowing you to generate the same DSK
+file every time the command is executed.</p>
+<h1 id="basic-usage">Basic Usage</h1>
+<blockquote>
+<p>python3 dsk.py <dskfile> [options]</p>
+</blockquote>
+<h2 id="available-options">Available Options</h2>
+<ul>
+<li><code>--new</code>: Creates a new empty DSK file.</li>
+<li><code>--check</code>: Checks if the DSK file format is compatible
+with the tool.</li>
+<li><code>--dump</code>: Prints DSK file format information on the
+standard output.</li>
+<li><code>--cat</code>: Lists the contents of the DSK file on the
+standard output.</li>
+<li><code>--header &lt;entry&gt;</code>: Prints the AMSDOS header for
+the specified file entry (starting at 0).</li>
+<li><code>--get &lt;entry&gt;</code>: Extracts the file pointed to by
+the specified entry (starting at 0).</li>
+<li><code>--put-bin &lt;file&gt;</code>: Adds a new binary file to the
+DSK file, generating and appending an additional AMSDOS header.</li>
+<li><code>--put-raw &lt;file&gt;</code>: Adds a new binary file to the
+DSK file without creating an additional AMSDOS header.</li>
+<li><code>--put-ascii &lt;file&gt;</code>: Adds a new ASCII file to the
+DSK file. The file should not include an AMSDOS header.</li>
+<li><code>--map-file &lt;file&gt;</code>: Imports a file generated by
+the ABASM assembler containing a list of symbols and their asociated
+memory addresses.</li>
+<li><code>--load-addr &lt;address&gt;</code>: Initial address to load
+the file (default is 0x4000). Only used in binary files with generated
+AMSDOS headers.</li>
+<li><code>--start-addr &lt;address|symbol&gt;</code>: Call address
+(default is 0x4000). Only used in binary files with generated AMSDOS
+headers. If a MAP file is specified, it’s possible to indicate the
+address using a symbol included in that file.</li>
+<li><code>--help</code>: Displays the help on the standard output.</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<p>Create a new DSK file with a BASIC program:</p>
+<pre><code>python3 dsk.py file.dsk --new --put-ascii program.bas</code></pre>
+<p>List the contents of the DSK file to verify that our program is
+included:</p>
+<pre><code>python3 dsk.py file.dsk --cat</code></pre>
+<p>Add a binary file to the DSK file which should be loaded and executed
+from address 0x4000:</p>
+<pre><code>python3 dsk.py --new file.dsk --put-bin program.bin --load-addr 0x4000 --start-addr 0x4000</code></pre>
+<p>Add a binary file to the DSK file which should be loaded at address
+0x4000. It imports a MAP file called program.map that includes the
+symbol MAIN which is used to stablish the call address.</p>
+<pre><code>python3 dsk.py --new file.dsk --put-bin program.bin --map-file program.map --load-addr 0x4000 --start-addr MAIN</code></pre>
+</body>
+</html>

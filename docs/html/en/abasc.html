@@ -1,0 +1,3056 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>abasc</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<!-- omit in toc -->
+<h1 id="abasc-user-manual">ABASC: USER MANUAL</h1>
+<p><strong>A BASIC cross compiler for the Amstrad CPC
+machines</strong></p>
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#influences">Influences</a></li>
+<li><a href="#a-brief-overview-of-the-locomotive-basic-versions">A Brief
+Overview of the Locomotive BASIC Versions</a>
+<ul>
+<li><a href="#version-10">Version 1.0</a></li>
+<li><a href="#version-11">Version 1.1</a></li>
+<li><a href="#version-2">Version 2</a></li>
+<li><a href="#version-2-plus">Version 2 Plus</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+<li><a href="#syntax-supported-by-abasc">Syntax Supported by ABASC</a>
+<ul>
+<li><a href="#example-1-syntax-compatible-with-basic-10-and-11">Example
+1 (syntax compatible with BASIC 1.0 and 1.1)</a></li>
+<li><a
+href="#example-2-syntax-using-several-basic-2-enhancements">Example 2
+(syntax using several BASIC 2 enhancements)</a></li>
+</ul></li>
+<li><a href="#additional-tools">Additional Tools</a></li>
+<li><a href="#using-the-compiler">Using the Compiler</a>
+<ul>
+<li><a href="#options">Options</a></li>
+<li><a href="#creating-a-project-using-basprj">Creating a Project Using
+BASPRJ</a></li>
+</ul></li>
+<li><a href="#peculiarities-of-the-compiler">Peculiarities of the
+Compiler</a>
+<ul>
+<li><a href="#types-and-variables">Types and Variables</a>
+<ul>
+<li><a href="#string-handling">String Handling</a></li>
+<li><a href="#arrays">Arrays</a></li>
+<li><a href="#record-structures">RECORD Structures</a></li>
+</ul></li>
+<li><a href="#functions-and-procedures">Functions and
+Procedures</a></li>
+<li><a href="#using-assembly-code">Using Assembly Code</a></li>
+<li><a href="#pointers">Pointers</a></li>
+<li><a href="#memory-management">Memory Management</a></li>
+<li><a href="#using-the-firmware">Using the Firmware</a></li>
+<li><a href="#libraries">Libraries</a></li>
+</ul></li>
+<li><a href="#commands-and-language-syntax">Commands and Language
+Syntax</a>
+<ul>
+<li><a href="#notation">Notation</a></li>
+<li><a href="#list-of-commands-and-functions">List of Commands and
+Functions</a>
+<ul>
+<li><a
+href="#absnumeric-expression"><code>ABS(&lt;numeric expression&gt;)</code></a></li>
+<li><a
+href="#after-delaytimer-gosub-label"><code>AFTER delay[,timer] GOSUB label</code></a></li>
+<li><a href="#ascstring"><code>ASC(string)</code></a></li>
+<li><a
+href="#asm-stringstring"><code>ASM string[,string]*</code></a></li>
+<li><a href="#atnx"><code>ATN(x)</code></a></li>
+<li><a
+href="#auto-linenumberincrement"><code>AUTO linenumber[,increment]</code></a></li>
+<li><a href="#binnumberdigits"><code>BIN$(number,digits)</code></a></li>
+<li><a
+href="#border-colour1colour2"><code>BORDER colour1[,colour2]</code></a></li>
+<li><a
+href="#call-address-list-of-parameters"><code>CALL address[, list of parameters]</code></a></li>
+<li><a href="#cat"><code>CAT</code></a></li>
+<li><a href="#chain"><code>CHAIN</code></a></li>
+<li><a
+href="#chain-merge-string"><code>CHAIN MERGE string</code></a></li>
+<li><a href="#chrx"><code>CHR$(x)</code></a></li>
+<li><a href="#cintx"><code>CINT(x)</code></a></li>
+<li><a href="#clear"><code>CLEAR</code></a></li>
+<li><a href="#clear-input"><code>CLEAR INPUT</code></a></li>
+<li><a href="#clg-ink"><code>CLG [ink]</code></a></li>
+<li><a href="#closein"><code>CLOSEIN</code></a></li>
+<li><a href="#closeout"><code>CLOSEOUT</code></a></li>
+<li><a href="#cls-x"><code>CLS [#x]</code></a></li>
+<li><a href="#const"><code>CONST</code></a></li>
+<li><a href="#cont"><code>CONT</code></a></li>
+<li><a href="#copychrchannel"><code>COPYCHR$(#channel)</code></a></li>
+<li><a href="#cosx"><code>COS(x)</code></a></li>
+<li><a href="#crealx"><code>CREAL(x)</code></a></li>
+<li><a
+href="#cursor-system-user"><code>CURSOR system[, user]</code></a></li>
+<li><a
+href="#data-list-of-constants"><code>DATA list-of-constants</code></a></li>
+<li><a
+href="#declare-variable-fixed-length"><code>DECLARE variable[$ FIXED length],...</code></a></li>
+<li><a
+href="#decnumber-pattern"><code>DEC$(number, pattern)</code></a></li>
+<li><a
+href="#def-fn-nameparameters--expression"><code>DEF FN name(parameters) = expression</code></a></li>
+<li><a
+href="#defint-defstr-defreal"><code>DEFINT, DEFSTR, DEFREAL</code></a></li>
+<li><a href="#deg"><code>DEG</code></a></li>
+<li><a href="#delete-low-high"><code>DELETE low-high</code></a></li>
+<li><a href="#derr"><code>DERR</code></a></li>
+<li><a href="#di"><code>DI</code></a></li>
+<li><a
+href="#dim-arrayindex1-index2--fixed-length"><code>DIM array(index1, index2, ...) [FIXED length]</code></a></li>
+<li><a href="#draw-xyimode"><code>DRAW x,y[,i[,mode]]</code></a></li>
+<li><a href="#drawr-xyimode"><code>DRAWR x,y[,i[,mode]]</code></a></li>
+<li><a href="#edit-line-line"><code>EDIT line[-line]</code></a></li>
+<li><a href="#ei"><code>EI</code></a></li>
+<li><a href="#end"><code>END</code></a></li>
+<li><a href="#end-function"><code>END FUNCTION</code></a></li>
+<li><a href="#end-sub"><code>END SUB</code></a></li>
+<li><a
+href="#ent-envelope_number-sections"><code>ENT envelope_number, sections</code></a></li>
+<li><a
+href="#env-envelope_number-sections"><code>ENV envelope_number, sections</code></a></li>
+<li><a href="#eof"><code>EOF</code></a></li>
+<li><a href="#erase-arrayname"><code>ERASE arrayname</code></a></li>
+<li><a href="#erl"><code>ERL</code></a></li>
+<li><a href="#err"><code>ERR</code></a></li>
+<li><a href="#error-integer"><code>ERROR integer</code></a></li>
+</ul></li>
+<li><a
+href="#every-timetimer-gosub-label"><code>EVERY time[,timer] GOSUB label</code></a>
+<ul>
+<li><a href="#exit-for"><code>EXIT FOR</code></a></li>
+<li><a href="#exit-while"><code>EXIT WHILE</code></a></li>
+<li><a href="#expx"><code>EXP(x)</code></a></li>
+<li><a href="#fill"><code>FILL</code></a></li>
+<li><a href="#fixx"><code>FIX(x)</code></a></li>
+<li><a
+href="#for-variable--start-to-end-step-increment"><code>FOR variable = start TO end STEP increment</code></a></li>
+<li><a href="#frame"><code>FRAME</code></a></li>
+<li><a href="#frex"><code>FRE(x)</code></a></li>
+<li><a
+href="#function-nameparameters-asm"><code>FUNCTION name(parameters) [ASM]</code></a></li>
+<li><a href="#gosub-label"><code>GOSUB label</code></a></li>
+<li><a href="#goto-label"><code>GOTO label</code></a></li>
+<li><a
+href="#graphics-paper-ink"><code>GRAPHICS PAPER ink</code></a></li>
+<li><a
+href="#graphics-pen-ink-mode"><code>GRAPHICS PEN ink, mode</code></a></li>
+<li><a href="#hexx-digits"><code>HEX$(x, digits)</code></a></li>
+<li><a href="#himem"><code>HIMEM</code></a></li>
+<li><a
+href="#if-expression-then-expression-else-expression-end-if"><code>IF expression THEN expression ELSE expression END IF</code></a></li>
+<li><a
+href="#ink-ink-color1-color2"><code>INK ink, color1[, color2]</code></a></li>
+<li><a href="#inkeykey"><code>INKEY(key)</code></a></li>
+<li><a href="#inkey"><code>INKEY$</code></a></li>
+<li><a href="#inpport"><code>INP(port)</code></a></li>
+<li><a
+href="#input-channel-prompt-variable1-variable2"><code>INPUT [#channel,] "prompt"[;] variable1, variable2,...</code></a></li>
+<li><a
+href="#instrstart_position-string1-string2"><code>INSTR([start_position,] string1, string2)</code></a></li>
+<li><a href="#intx"><code>INT(x)</code></a></li>
+<li><a href="#joyjoystick"><code>JOY(joystick)</code></a></li>
+<li><a href="#key-key-string"><code>KEY key, string</code></a></li>
+<li><a
+href="#key-def-key-repeatnormalshiftctrl"><code>KEY DEF key, repeat[,&lt;normal&gt;[,&lt;shift&gt;[,&lt;ctrl&gt;]]]</code></a></li>
+<li><a href="#label-label"><code>LABEL label</code></a></li>
+<li><a href="#leftstring-n"><code>LEFT$(string, n)</code></a></li>
+<li><a href="#lenstring"><code>LEN(string)</code></a></li>
+<li><a
+href="#let-variable--expression"><code>LET variable = expression</code></a></li>
+<li><a
+href="#line-input-channelstringvariable"><code>LINE INPUT [#channel,][;][string;]&lt;variable&gt;</code></a></li>
+<li><a
+href="#list-line-range-channel"><code>LIST [line range][, #channel]</code></a></li>
+<li><a
+href="#load-filenameaddress"><code>LOAD filename[,address]</code></a></li>
+<li><a
+href="#locate-channel-x-y"><code>LOCATE [#channel,] x, y</code></a></li>
+<li><a href="#logx"><code>LOG(x)</code></a></li>
+<li><a href="#log10x"><code>LOG10(x)</code></a></li>
+<li><a href="#lowerstring"><code>LOWER$(string)</code></a></li>
+<li><a
+href="#mask-maskstartpoint"><code>MASK mask[,startPoint]</code></a></li>
+<li><a
+href="#maxa-b-c-d-e"><code>MAX(a, b[, c, d, e...])</code></a></li>
+<li><a href="#memory-maxaddress"><code>MEMORY maxAddress</code></a></li>
+<li><a href="#merge-filename"><code>MERGE filename</code></a></li>
+<li><a
+href="#midstring-start-n"><code>MID$(string, start[, n])</code></a></li>
+<li><a
+href="#mina-b-c-d-e-f"><code>MIN(a, b[, c, d, e, f...])</code></a></li>
+<li><a href="#mode-n"><code>MODE n</code></a></li>
+<li><a
+href="#move-x-y-ink-mode"><code>MOVE x, y[, ink[, mode]]</code></a></li>
+<li><a
+href="#mover-x-y-ink-mode"><code>MOVER x, y[, ink[, mode]]</code></a></li>
+<li><a href="#new"><code>NEW</code></a></li>
+<li><a href="#next-variable"><code>NEXT variable</code></a></li>
+<li><a
+href="#on-n-gosub-list_of_labels"><code>ON n GOSUB list_of_labels</code></a></li>
+<li><a
+href="#on-n-goto-list_of_labels"><code>ON n GOTO list_of_labels</code></a></li>
+<li><a
+href="#on-break-gosub-label"><code>ON BREAK GOSUB label</code></a></li>
+<li><a href="#on-break-stop"><code>ON BREAK STOP</code></a></li>
+<li><a
+href="#on-error-goto-label"><code>ON ERROR GOTO label</code></a></li>
+<li><a
+href="#on-sqchannel-gosub-label"><code>ON SQ(channel) GOSUB label</code></a></li>
+<li><a href="#openin-file"><code>OPENIN file</code></a></li>
+<li><a href="#openout-file"><code>OPENOUT file</code></a></li>
+<li><a
+href="#origin-xyleftrighttopbottom"><code>ORIGIN x,y[,left,right,top,bottom]</code></a></li>
+</ul></li>
+<li><a href="#out-portn"><code>OUT port,n</code></a>
+<ul>
+<li><a
+href="#paper-channelink"><code>PAPER [#channel,]ink</code></a></li>
+<li><a href="#peekaddress"><code>PEEK(address)</code></a></li>
+<li><a href="#pen-channelink"><code>PEN [#channel,]ink</code></a></li>
+<li><a href="#pi"><code>PI</code></a></li>
+<li><a
+href="#plot-xyinkmode"><code>PLOT x,y[,ink[,mode]]</code></a></li>
+<li><a
+href="#plotr-xyinkmode"><code>PLOTR x,y[,ink[,mode]]</code></a></li>
+<li><a href="#poke-addressn"><code>POKE address,n</code></a></li>
+<li><a href="#poschannel"><code>POS(#channel)</code></a></li>
+<li><a
+href="#print-channellist-of-items"><code>PRINT [#channel,][list of items]</code></a></li>
+<li><a href="#rad"><code>RAD</code></a></li>
+<li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
+<li><a
+href="#read-variable-list"><code>READ variable-list</code></a></li>
+<li><a
+href="#readin-variable-list"><code>READIN variable-list</code></a></li>
+<li><a
+href="#record-namevariable-list"><code>RECORD name;variable-list</code></a></li>
+<li><a href="#release-channel"><code>RELEASE channel</code></a></li>
+<li><a href="#rem-text"><code>REM text</code></a></li>
+<li><a href="#remaintimer"><code>REMAIN(timer)</code></a></li>
+<li><a
+href="#renum-new-line-origin-line-step"><code>RENUM new-line, origin-line, step</code></a></li>
+<li><a href="#restore-label"><code>RESTORE [label]</code></a></li>
+<li><a href="#resume"><code>RESUME</code></a></li>
+<li><a href="#return"><code>RETURN</code></a></li>
+<li><a href="#rightstring-n"><code>RIGHT$(string, n)</code></a></li>
+<li><a href="#rnd0"><code>RND[(0)]</code></a></li>
+<li><a href="#roundxn"><code>ROUND(x[,n])</code></a></li>
+<li><a href="#run-label--file"><code>RUN [label | file]</code></a></li>
+<li><a
+href="#save-filetypeaddresssizeentry"><code>SAVE file[,type][,address,size[,entry]]</code></a></li>
+<li><a href="#sgnx"><code>SGN(x)</code></a></li>
+<li><a
+href="#shared-variable--array-variable--array"><code>SHARED variable | array [,variable | array]</code></a></li>
+<li><a href="#sinx"><code>SIN(x)</code></a></li>
+<li><a
+href="#sound-channelperioddurationvolumeenventnoise"><code>SOUND channel,period,duration,volume,env,ent,noise</code></a></li>
+<li><a href="#spacen"><code>SPACE$(n)</code></a></li>
+<li><a href="#speed-ink-t1t2"><code>SPEED INK t1,t2</code></a></li>
+<li><a
+href="#speed-key-delayrepeat"><code>SPEED KEY delay,repeat</code></a></li>
+<li><a href="#speed-write-n"><code>SPEED WRITE n</code></a></li>
+<li><a href="#sq-channel"><code>SQ channel</code></a></li>
+<li><a href="#sqrx"><code>SQR(x)</code></a></li>
+<li><a href="#stop"><code>STOP</code></a></li>
+<li><a href="#strx"><code>STR$(x)</code></a></li>
+<li><a
+href="#stringncharacter"><code>STRING$(n,character)</code></a></li>
+<li><a
+href="#sub-parameters-asm"><code>SUB [(parameters)] [ASM]</code></a></li>
+<li><a
+href="#symbol-charactervalue1value2value8"><code>SYMBOL character,value1,value2,...,value8</code></a></li>
+<li><a href="#symbol-after-n"><code>SYMBOL AFTER n</code></a></li>
+<li><a href="#tag-channel"><code>TAG [#channel]</code></a></li>
+<li><a href="#tagoff-channel"><code>TAGOFF [#channel]</code></a></li>
+<li><a href="#tanx"><code>TAN(x)</code></a></li>
+<li><a href="#testxy"><code>TEST(x,y)</code></a></li>
+<li><a href="#testrxy"><code>TESTR(x,y)</code></a></li>
+<li><a href="#timen"><code>TIME[(n)]</code></a></li>
+<li><a href="#troff"><code>TROFF</code></a></li>
+<li><a href="#tron"><code>TRON</code></a></li>
+<li><a href="#untn"><code>UNT(n)</code></a></li>
+<li><a href="#uppercadena"><code>UPPER$(cadena)</code></a></li>
+<li><a href="#valcadena"><code>VAL(cadena)</code></a></li>
+<li><a href="#vposcanal"><code>VPOS([#canal])</code></a></li>
+<li><a
+href="#wait-puertomascarainversion"><code>WAIT puerto,mascara[,inversion]</code></a></li>
+<li><a href="#wend"><code>WEND</code></a></li>
+<li><a href="#while-condición"><code>WHILE condición</code></a></li>
+<li><a href="#width-n"><code>WIDTH n</code></a></li>
+<li><a
+href="#window-channelleftrighttopbottom"><code>WINDOW [#channel,]left,right,top,bottom</code></a></li>
+<li><a
+href="#window-swap-channel1channel2"><code>WINDOW SWAP channel1,channel2</code></a></li>
+<li><a
+href="#write-channeldata1data2"><code>WRITE [#channel,]data1,data2,...</code></a></li>
+<li><a href="#xpos"><code>XPOS</code></a></li>
+<li><a href="#ypos"><code>YPOS</code></a></li>
+<li><a href="#zone-n"><code>ZONE n</code></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#appendix-i-debugging-compiled-programs">Appendix I:
+Debugging Compiled Programs</a>
+<ul>
+<li><a href="#verifying-basic-code">Verifying BASIC Code</a></li>
+<li><a href="#debugging-our-code">Debugging our Code</a></li>
+</ul></li>
+<li><a href="#appendix-ii-extending-the-compiler">Appendix II: Extending
+the Compiler</a></li>
+</ul>
+<hr />
+<h1 id="introduction">Introduction</h1>
+<p><strong>ABASC (Amstrad BASic Compiler)</strong> is a cross-compiler
+written entirely in Python and without external dependencies, making it
+highly portable to any system that includes a standard <strong>Python
+3</strong> installation.</p>
+<p>It is designed to support the dialect of BASIC created by
+<strong>Locomotive Software</strong> for the Amstrad CPC microcomputers,
+ensuring that all existing documentation for this language remains fully
+relevant and useful.</p>
+<p>Furthermore, as a cross-compiler running on modern systems, ABASC
+incorporates several features from <strong>Locomotive BASIC 2
+Plus</strong>, providing a development experience closer to modern
+programming languages while preserving the classic style of the original
+BASIC.</p>
+<h2 id="influences">Influences</h2>
+<p>ABASC owes its existence to the <strong>CPCBasic</strong> compiler:
+<a
+href="https://cpcbasic.webcindario.com/CPCBasicSp.html">https://cpcbasic.webcindario.com/CPCBasicSp.html</a>.
+ABASC would likely not exist if that project was still active and its
+source code publicly available.</p>
+<h2 id="a-brief-overview-of-the-locomotive-basic-versions">A Brief
+Overview of the Locomotive BASIC Versions</h2>
+<h3 id="version-1.0">Version 1.0</h3>
+<p>The first version of Locomotive BASIC appeared with the Amstrad CPC
+464. It was a relatively fast language compared to other BASIC
+implementations of its time. Among its main advantages was broad access
+to the audio chip’s capabilities. Program lines were numbered and those
+numbers served as labels for the <code>GOTO</code> and
+<code>GOSUB</code> statements.</p>
+<h3 id="version-1.1">Version 1.1</h3>
+<p>Introduced with the CPC 664 and 6128, this version fixed various bugs
+and added new functions such as <code>FRAME</code>,
+<code>COPYCHR$</code>, and <code>FILL</code>. However, it still required
+the use of line numbers.</p>
+<h3 id="version-2">Version 2</h3>
+<p>Released in 1987 for the Amstrad PC 1512 and 1640, this version
+removed the need for line numbers thanks to the <code>LABEL</code>
+command and enabled the development of applications for the GEM
+graphical environment, although it still lacked advanced
+code-structuring mechanisms.</p>
+<h3 id="version-2-plus">Version 2 Plus</h3>
+<p>Introduced in 1989, this revision added <code>FUNCTION</code>,
+<code>SUB</code>, multi-line <code>IF</code> statements, and other
+enhancements aimed at facilitating the development of more structured
+programs.</p>
+<hr />
+<h1 id="references">References</h1>
+<p>This manual is <strong>not</strong> intended to be a comprehensive
+guide to programming in BASIC. For in-depth information on Locomotive
+BASIC programming, the following texts are recommended:</p>
+<ul>
+<li><em>Amstrad CPC464 – User Manual</em> (I. Spital, R. Perry, W. Poel,
+C. Lawson)</li>
+<li><em>BASIC Programmer’s Reference Manual</em> (Amsoft)</li>
+<li><em>Amstrad CPC6128 – User Manual</em> (I. Spital, R. Perry, W.
+Poel, C. Lawson)</li>
+<li><em>BASIC 2 User Guide</em> (Locomotive Software Ltd.)</li>
+<li><em>BASIC 2 PLUS Language Reference</em> (Locomotive Software
+Ltd.)</li>
+<li><em>Using Locomotive BASIC 2 on the Amstrad 1512</em> (Robert
+Ransom)</li>
+</ul>
+<p>To deepen your knowledge of the Amstrad CPC464/CPC6128 firmware, or
+of Z80 assembly programming, the following reference books are
+recommended:</p>
+<ul>
+<li><em>CPC464/664/6128 FIRMWARE, ROM Routines and Explanations</em> (B.
+Godden, P. Overell, D. Radisic)</li>
+<li><em>The Amstrad CPC Firmware Guide</em> (Bob Taylor)</li>
+<li><em>Z80 Assembly Language Programming</em> (Lance A. Leventhal)</li>
+<li><em>Ready-Made Machine Language Routines for the Amstrad CPC</em>
+(Joe Pritchard)</li>
+</ul>
+<hr />
+<h1 id="syntax-supported-by-abasc">Syntax Supported by ABASC</h1>
+<ol type="1">
+<li>Line numbers are not required.</li>
+<li>Labels for jumps can be defined using <code>LABEL</code>.</li>
+<li>Multi-line <code>IF ... THEN ... ELSE ... END IF</code> blocks.</li>
+<li>Procedure definitions with <code>FUNCTION</code> and
+<code>SUB</code>.</li>
+<li>Inline assembly through <code>ASM</code>.</li>
+<li>Inclusion of external BASIC code with <code>CHAIN MERGE</code>.</li>
+<li>Data structure definitions using <code>RECORD</code>.</li>
+</ol>
+<h3 id="example-1-syntax-compatible-with-basic-1.0-and-1.1">Example 1
+(syntax compatible with BASIC 1.0 and 1.1)</h3>
+<pre class="basic"><code>10 MODE 1
+20 BORDER 0
+30 PAPER 3
+40 INK 0,1,2
+50 PEN 0
+60 PRINT &quot;Hello world&quot;
+70 END</code></pre>
+<h3 id="example-2-syntax-using-several-basic-2-enhancements">Example 2
+(syntax using several BASIC 2 enhancements)</h3>
+<pre class="basic"><code>RECORD person; name$ FIXED 10, age, birth
+DIM records$(5) FIXED 14
+
+CLS
+FOR I=0 TO 5
+    READ records$(i).person.name$, records$(i).person.age, records$(i).person.birth
+    PRINT &quot;Customer:&quot;, records$(i).person.name$
+    PRINT &quot;Age:&quot;, records$(i).person.age
+    PRINT &quot;Born in:&quot;, records$(i).person.birth
+NEXT
+END
+
+DATA &quot;Xavier&quot;, 49, 1976
+DATA &quot;Ross&quot;, 47, 1978
+DATA &quot;Gada&quot;, 12, 2013
+DATA &quot;Anabel&quot;, 51, 1974
+DATA &quot;Rachel&quot;, 45, 1980
+DATA &quot;Elvira&quot;, 20, 2005</code></pre>
+<hr />
+<h1 id="additional-tools">Additional Tools</h1>
+<p>In addition to the compiler, the development package includes several
+extra tools that cover the entire workflow from generating the binary to
+package it for distribution. Each tool has its own manual distributed
+alongside the compiler documentation. All utilities are fully
+independent and can be used on their own.</p>
+<ul>
+<li><code>abasm.py</code> — Assembler compatible with WinAPE and RVM
+syntax. <a href="abasm.html">manual</a></li>
+<li><code>basprj.py</code> — Creates a basic project structure to use
+with <code>ABASC</code>. <a href="basprj.html">manual</a></li>
+<li><code>img.py</code> — Converts images to CPC format and can generate
+loading screens. <a href="img.html">manual</a></li>
+<li><code>dsk.py</code> — Creates <code>.DSK</code> disk images,
+allowing you to distribute compiled binaries and additional files. <a
+href="dsk.html">manual</a></li>
+<li><code>cdt.py</code> — Creates <code>.CDT</code> tape images, also
+useful for distributing binaries and other accompanying files. <a
+href="cdt.html">manual</a></li>
+</ul>
+<h1 id="using-the-compiler">Using the Compiler</h1>
+<pre><code>python abasc.py [options] file.bas [-o output]</code></pre>
+<h3 id="options">Options</h3>
+<ul>
+<li><code>--version</code> — Displays the compiler version.</li>
+<li><code>-O &lt;n&gt;</code> — Optimization level (0 = none, 1 =
+peephole, 2 = full).</li>
+<li><code>-W &lt;n&gt;</code> — Warning level (0 = none, 1 = important,
+2 = important and medium, 3 = all).</li>
+<li><code>--data &lt;n&gt;</code> — Starting address for the data area
+(0x4000 by default)</li>
+<li><code>-v</code>, <code>--verbose</code> — Generates auxiliary
+compilation files (preprocessed output, symbol table, syntax tree,
+etc.).</li>
+<li><code>-o</code>, <code>--out</code> — Output file name (without
+extension).</li>
+</ul>
+<h2 id="creating-a-project-using-basprj">Creating a Project Using
+BASPRJ</h2>
+<p>In <code>ABASC</code>, project management is straightforward. It is
+sufficient to create a main source file that imports any additional
+required files using the <code>CHAIN MERGE</code> command. After running
+<code>ABASC</code>, a compiled binary file will be generated. A
+subsequent call to the <code>DSK</code> or <code>CDT</code> tools is
+then enough to package the result for use in emulators or on real
+hardware (for example, via devices such as Gotek, M4, or
+DDI-Revival).</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasc.py main.bas</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x0040 <span class="at">--load-addr</span><span class="op">=</span>0x0040</span></code></pre></div>
+<p>However, it is also possible to quickly generate a basic project
+structure using the <code>BASPRJ</code> tool. This utility automatically
+creates a build script with everything needed to get started: on
+Windows, a <code>make.bat</code> file is generated, while on Linux and
+macOS a <code>make.sh</code> file is created. In addition, a
+<code>main.bas</code> file containing ready-to-use example code is
+included.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> basprj.py <span class="at">-n</span> myproject</span></code></pre></div>
+<p>For more detailed information, please refer to the specific
+<code>BASPRJ</code> documentation.</p>
+<hr />
+<h1 id="peculiarities-of-the-compiler">Peculiarities of the
+Compiler</h1>
+<p>Although ABASC aims to compile programs written for BASIC 1.0 and 1.1
+with little or no modification, the very nature of a compiler versus an
+interpreter naturally introduces certain differences. This section
+explains those particular behaviors that may surprise programmers
+accustomed to the traditional BASIC interpreter.</p>
+<h2 id="types-and-variables">Types and Variables</h2>
+<p>ABASC uses a somewhat stricter type system than the original
+Locomotive BASIC interpreter. By default, <strong>all variables are
+integers</strong>, unless a suffix is used to indicate a different data
+type.</p>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 14%" />
+<col style="width: 77%" />
+</colgroup>
+<thead>
+<tr>
+<th>Type</th>
+<th>Suffix</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Integer</td>
+<td>% (optional)</td>
+<td>Integer values in the range -32768 to 32767</td>
+</tr>
+<tr>
+<td>Real</td>
+<td>!</td>
+<td>5-byte floating-point values (4-byte mantissa + 1-byte
+exponent)</td>
+</tr>
+<tr>
+<td>String</td>
+<td>$</td>
+<td>Strings of up to 254 characters (see next section)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="string-handling">String Handling</h3>
+<p>In the original Locomotive BASIC, strings used a
+<strong>double-indirection</strong> structure. A string variable
+occupied 3 bytes:</p>
+<ul>
+<li>Byte 1: length</li>
+<li>Bytes 2–3: pointer to the string data</li>
+</ul>
+<p>The maximum length was 255 characters.</p>
+<p>In ABASC, string data is stored <strong>directly after the length
+byte</strong>, reserving <strong>up to 255 bytes for the entire
+structure</strong>. Therefore, <strong>the maximum string length is 254
+characters</strong>.</p>
+<p>The only exception is <strong>RSX calls</strong>, for which ABASC
+preserves the original Locomotive BASIC string structure to ensure
+compatibility. Thus, RSX routines will always receive strings in the
+3-byte indirection format:</p>
+<ul>
+<li>1 byte: length</li>
+<li>2 bytes: pointer to content</li>
+</ul>
+<p>In addition, programmers may not always want to reserve the full 254
+bytes for every string. ABASC therefore includes two statements from
+Locomotive BASIC 2: <strong><code>FIXED</code></strong> and
+<strong><code>DECLARE</code></strong>, which allow specifying the exact
+buffer size:</p>
+<pre class="basic"><code>DECLARE A$ FIXED 10  &#39; A$ may contain up to 10 characters</code></pre>
+<p>The above sentence reserves 11 bytes total (1 length byte + 10
+characters). It is important to note that ABASC does <strong>not perform
+runtime bounds checking</strong>—unlike an interpreter—so writing more
+characters than the space allocated for <code>A$</code> will lead to
+unpredictable behavior.</p>
+<h3 id="arrays">Arrays</h3>
+<p>In Locomotive BASIC, an array that has not been explicitly declared
+with <code>DIM</code> is assumed to contain 10 elements. ABASC is
+stricter: compilation will fail if the program attempts to use an array
+that has not been declared explicitly with <code>DIM</code>.</p>
+<p>Furthermore, a string array immediately allocates memory for
+<strong>all its elements</strong>. By default, each string occupies 255
+bytes (1 length + 254 content), which can quickly exhaust available
+memory. As with individual strings, the <code>FIXED</code> clause may be
+used:</p>
+<pre class="basic"><code>DIM A$(5) FIXED 10   &#39; Total memory = 11 bytes × 5 elements</code></pre>
+<h3 id="record-structures">RECORD Structures</h3>
+<p>ABASC supports organizing data into more complex structures known as
+<strong>records</strong> as it was introduced by Locomotive BASIC
+version 2 Plus. Internally, a record is simply a structured way of
+subdividing and labeling the memory reserved by a string. To use
+records, their layout must first be defined using the
+<code>RECORD</code> statement:</p>
+<pre><code>RECORD name; field list</code></pre>
+<p>Example:</p>
+<pre class="basic"><code>RECORD person; name$ FIXED 10, age</code></pre>
+<p>Record patterns may then be applied to strings by using the
+<code>.</code> operator:</p>
+<pre class="basic"><code>DECLARE A$ FIXED 13         &#39; Optional but reduces memory usage
+RECORD person; name$ FIXED 10, age   &#39; Requires 13 bytes total
+
+A$.person.name$ = &quot;Juan&quot;
+A$.person.age = 20</code></pre>
+<p>The program above leaves the memory reserved for <code>A$</code> in
+the following layout:</p>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 42%" />
+<col style="width: 49%" />
+</colgroup>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>Content</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–10</td>
+<td>Length + content of <code>name$</code></td>
+<td>4, J, u, a, n, 0, 0, 0, 0, 0, 0</td>
+</tr>
+<tr>
+<td>11–12</td>
+<td>Value of <code>age</code></td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions-and-procedures">Functions and Procedures</h2>
+<p>Traditionally, BASIC allows reusable code to be organized through
+routines invoked with <code>GOSUB</code> and <code>RETURN</code>
+(without parameter support), or through single-line functions defined
+with <code>DEF FN</code>. ABASC is fully compatible with both
+mechanisms, but it also adds a more modern and structured approach
+introduced in Locomotive BASIC 2 Plus. The syntax is:</p>
+<pre class="basic"><code>SUB name(parameter list)
+    ....
+END SUB
+
+FUNCTION name(parameter list)
+    ....
+END FUNCTION</code></pre>
+<p>Functions defined with <code>FUNCTION</code> must include at least
+one assignment to the function’s own name in their bodies, which serves
+as the return value.</p>
+<p>Functions can be called directly as part of an expression, while
+subroutines must be invoked using <code>CALL</code>, specifying the
+procedure name and a comma-separated list of parameters inside
+parentheses.</p>
+<pre class="basic"><code>function pow2(x)
+    pow2 = x * x
+end function
+
+sub message(m$)
+    print m$
+end sub
+
+label MAIN
+    result = pow2(2)
+    msg$ = &quot;2 * 2 is &quot; + str$(result)
+    call message(msg$)
+end</code></pre>
+<p>Variables declared inside a procedure—using <code>DECLARE</code>,
+<code>DIM</code>, by assigning to them, or by using them in
+<code>INPUT</code>, <code>READ</code>, or <code>LINE INPUT</code>—are
+always local and cannot be accessed from outside the procedure. Global
+variables, on the other hand, may be used inside a procedure but only if
+they are referenced through the use of <code>SHARED</code> at the
+beginning of the routine body.</p>
+<p>Regarding parameter passing semantics, integers are passed <strong>by
+value</strong>, while strings, real numbers and arrays are passed
+<strong>by reference</strong> (that is, as a pointer to their underlying
+data). Consequently, in the latter three cases, the procedure may modify
+the original variable. Arrays must be used in calls adding the postfix
+<code>[]</code> to identify the variable as an array, equal to its use
+in the command <code>SHARED</code>. However, in the procedure
+declaration, the indexes for each of the array components should be
+added between the <code>[]</code> symbols.</p>
+<pre class="basic"><code>DIM myvec(3)
+
+sub printvec(v[3])
+    for i=0 to 3
+        print v(i)
+    next
+end sub
+
+myvec(0) = 0; myvec(1) = 1: myvec(2) = 2; myvec(3) = 3
+call printvec(myvec[])</code></pre>
+<p><strong>NOTE ON RECURSION:</strong> ABASC does not support recursion
+because local variables reserve memory at compile time in the stack.
+Because of this, the code is not reentrant, making recursive calls
+impossible.</p>
+<h2 id="using-assembly-code">Using Assembly Code</h2>
+<p>The <code>ASM</code> statement allows you to embed assembly code
+directly within any part of a BASIC program. <strong>ABASM</strong>, the
+assembler used by ABASC, has its own dedicated manual that describes the
+supported syntax and available options in detail.</p>
+<p>You can also call assembly routines using the <code>CALL</code>
+statement, as shown in the following example:</p>
+<pre class="basic"><code>ASM &quot;mylabel: ret ; empty routine&quot;
+
+CALL &quot;mylabel&quot;</code></pre>
+<p>It is possible to pass arguments to assembly routines, although this
+requires understanding ABASC’s calling convention. Parameters are
+<strong>pushed onto the stack in order</strong>, from first to last, and
+the routine is invoked with the <strong>IX register pointing to the last
+parameter</strong>. The callee <strong>must not</strong> remove
+parameters from the stack; this is handled by the caller after the
+routine returns.</p>
+<p>For example, a routine receiving three integer parameters (each 2
+bytes long):</p>
+<pre><code>CALL myroutine(param1, param2, param3)</code></pre>
+<p>can access them using the following layout:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Relative Address</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>param1</td>
+<td>IX+4, IX+5</td>
+</tr>
+<tr>
+<td>param2</td>
+<td>IX+2, IX+3</td>
+</tr>
+<tr>
+<td>param3</td>
+<td>IX+0, IX+1</td>
+</tr>
+</tbody>
+</table>
+<p>Finally, you can append the <code>ASM</code> clause to the
+declaration of a function or subroutine. This indicates that the entire
+routine is written in assembly and that the compiler does not need to
+allocate or manage temporary memory (heap) for it.</p>
+<pre class="basic"><code>SUB cpcSetColor(i, c) ASM
+    &#39; Equivalent to the BASIC INK statement
+    &#39; param 1: ink number (0–16), with 16 being the border ink
+    &#39; param 2: hardware color value – &amp;40 (i.e., &amp;14 becomes &amp;54 for black)
+
+    ASM &quot;ld      bc,&amp;7F00 ; Gate Array&quot;
+    ASM &quot;ld      a,(ix+2) ; ink number&quot;
+    ASM &quot;out     (c),a&quot;
+    ASM &quot;ld      a,&amp;40&quot;
+    ASM &quot;ld      e,(ix+0) ; hardware color&quot;
+    ASM &quot;or      e&quot;
+    ASM &quot;out     (c),a&quot;
+    ASM &quot;ret&quot;
+END SUB
+
+CALL cpcSetColor(0, &amp;14)</code></pre>
+<p>It’s even possible to include other binary or assembly files to our
+program using <code>ASM</code>:</p>
+<pre class="basic"><code>ASM &quot;read &#39;mylib.asm&#39;    ; extra assembly code&quot;
+ASM &quot;incbin &#39;assets.bin&#39; ; binary content to append&quot;</code></pre>
+<h2 id="pointers">Pointers</h2>
+<p>Locomotive BASIC uses the <code>@</code> symbol to access the memory
+address of a given variable. For example, to read and display the 5-byte
+representation of a real number in memory, you can use the following
+code:</p>
+<pre class="basic"><code>a! = 43.375
+PRINT &quot;MEMORY ADDRESS:&quot;; @a!
+PRINT &quot;MEMORY CONTENT (HEX):&quot;
+FOR i = 0 TO 4
+    PRINT i, HEX$(PEEK(@a! + i), 2)
+NEXT</code></pre>
+<p><code>ABASC</code> extends the use of <code>@</code> by allowing
+access not only to the address of a variable, but also to the address of
+a label declared with <code>LABEL</code>, as well as to the memory
+location that will be read by the next <code>READ</code> statement (that
+is, the current <code>DATA</code> pointer). It’s even possible to access
+to the address of a label defined in assembly. These options are
+particularly useful when working with data imported from binary files or
+assembly sources.</p>
+<pre class="basic"><code>LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    asmdir = @LABEL(&quot;asm_label&quot;)
+    &#39; Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM &quot;read &#39;my_sprite.asm&#39;&quot;
+
+LABEL palette:
+    DATA 1,2,3,4
+
+ASM &quot;asm_label:&quot;</code></pre>
+<h2 id="memory-management">Memory Management</h2>
+<p>The memory map for a program compiled with ABASC is structured as
+follows:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 79%" />
+</colgroup>
+<thead>
+<tr>
+<th>Address</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0x0040</strong></td>
+<td>Start of the application-initialization area and temporary memory
+space (heap).</td>
+</tr>
+<tr>
+<td><strong>_code_</strong></td>
+<td>Program main source code. Starts just after the heap and the startup
+code.</td>
+</tr>
+<tr>
+<td><strong>_runtime_</strong></td>
+<td>Label marking the beginning of compiler-generated support
+routines.</td>
+</tr>
+<tr>
+<td><strong>_data_</strong></td>
+<td>Label marking the beginning of the static variable-allocation area.
+The lowest address for this area is 0x4000 as it can not share the
+address space used by the Firmware. The initial address, however, can be
+set using the parameter <code>--data</code>. if the preceding code
+overpasses the configured starting address for the data area, it will be
+allocated to start from the first free address.</td>
+</tr>
+<tr>
+<td><strong>_program_end_</strong></td>
+<td>Label marking the address where the program’s memory usage
+ends.</td>
+</tr>
+</tbody>
+</table>
+<p>Locomotive BASIC provides several commands for memory management:
+<code>HIMEM</code>, <code>MEMORY</code>, <code>FRE</code>, and
+<code>SYMBOL AFTER</code>. ABASC supports them as well, but their
+semantics differ slightly due to the compiled-code model:</p>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 73%" />
+</colgroup>
+<thead>
+<tr>
+<th>Command</th>
+<th>Meaning in ABASC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HIMEM</strong></td>
+<td>Returns the memory address immediately above the end of the compiled
+program (<em>program_end</em> address).</td>
+</tr>
+<tr>
+<td><strong>MEMORY</strong></td>
+<td>Sets the maximum memory address the compiled binary may reach. If
+exceeded, compilation fails.</td>
+</tr>
+<tr>
+<td><strong>SYMBOL AFTER</strong></td>
+<td>ABASC reserves memory for redefinable characters (UDCs), just as
+Locomotive BASIC does. This region is part of the <code>_data_</code>
+segment. It can be released with <code>SYMBOL AFTER 256</code>.</td>
+</tr>
+<tr>
+<td><strong>FRE(0)</strong></td>
+<td>Returns the free memory between <code>_program_end_</code> and the
+Firmware’s variable-storage area (<code>&amp;A6FC</code>).</td>
+</tr>
+<tr>
+<td><strong>FRE(1)</strong></td>
+<td>Returns the currently available temporary memory (heap).</td>
+</tr>
+<tr>
+<td><strong>FRE(““)</strong></td>
+<td>Forces a cleanup of temporary memory (heap) and returns the same
+value as <code>FRE(0)</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>ABASC uses temporary memory to store intermediate results during the
+evaluation of expressions (such as string concatenation or numeric
+computations). This memory is allocated in a block called the “heap”.
+The heap starts around the memory address 0x040 and its total maximum
+size is calculated at compiling time. After each statement, this
+temporary memory is automatically released. The only exception occurs
+during a <code>FUNCTION</code> or <code>SUB</code> call: the temporary
+memory allocated before the call is preserved so it can be restored when
+execution returns to the caller.</p>
+<h2 id="using-the-firmware">Using the Firmware</h2>
+<p>ABASC makes extensive use of the <strong>Amstrad CPC
+Firmware</strong> routines, especially for handling floating-point
+numbers. This means that although compiled code is significantly faster
+than interpreted BASIC, its performance may still be limited by the
+speed of these system routines.</p>
+<p>However, you can use the <code>ASM</code> statement to provide more
+efficient replacements for Firmware calls (such as <code>CLS</code>,
+<code>INK</code>, <code>BORDER</code>, <code>PAPER</code>, etc.). Keep
+in mind, though, that unless interrupts are disabled, the Firmware
+remains active and <strong>may overwrite your changes</strong> without
+warning.</p>
+<p>Another option is to modify the program’s assembly code directly.
+During compilation, ABASC generates an <code>.ASM</code> file containing
+the full assembly code. This allows the developer to adjust or extend
+the generated code and apply specific optimizations when needed, using
+<strong>ABASM</strong> to produce the final binary. When the
+<code>--verbose</code> option is enabled, the generated ASM file
+includes more detailed comments, making it easier to follow how each
+BASIC statement is translated into assembly code.</p>
+<h2 id="libraries">Libraries</h2>
+<p>The ABASC installation includes a directory called <code>lib</code>.
+Any <code>.BAS</code> file can be placed there to be included in any of
+your programs using the <code>CHAIN MERGE</code> command.</p>
+<p><code>CHAIN MERGE</code> will first try to resolve any file to
+include against the local directory of our source code. If the specified
+file is not local to the program, it will then search in the ABASC
+<code>lib</code> directory, treating it as a “library” — a reusable
+<code>.BAS</code> file that can be used in any project. For example, we
+can test the <code>memory.bas</code> file distributed with ABASC using
+this simple program:</p>
+<pre class="basic"><code>CHAIN MERGE &quot;memory.bas&quot;
+
+A$=&quot;Hello world&quot;
+B$=&quot;&quot;
+
+CALL MEMSET(&amp;C000, &amp;4000, 0)
+CALL MEMCOPY(@B$, @A$, LEN(A$)+1)
+PRINT B$</code></pre>
+<hr />
+<h1 id="commands-and-language-syntax">Commands and Language Syntax</h1>
+<p>The following section provides a concise overview of the notation,
+commands, and functions supported by the compiler. It is
+<strong>not</strong> intended to be an exhaustive guide to Locomotive
+BASIC, but rather to highlight the elements that are specific to the
+compiler. For a more comprehensive understanding of the language, refer
+to the works listed in the <em>References</em> section at the beginning
+of this manual.</p>
+<h2 id="notation">Notation</h2>
+<p>Special characters:</p>
+<table>
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr>
+<th>Character</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&amp;</code> or <code>&amp;H</code></td>
+<td>Prefix for hexadecimal numbers</td>
+</tr>
+<tr>
+<td><code>&amp;X</code></td>
+<td>Prefix for binary numbers</td>
+</tr>
+<tr>
+<td><code>:</code></td>
+<td>Separates multiple statements on the same line</td>
+</tr>
+<tr>
+<td><code>#</code></td>
+<td>Prefix used to indicate a text channel (0–9)</td>
+</tr>
+<tr>
+<td><code>"</code></td>
+<td>String delimiter</td>
+</tr>
+<tr>
+<td><code>@</code></td>
+<td>Placed before a variable name to indicate the memory address
+referenced by that variable</td>
+</tr>
+<tr>
+<td><code>\|</code></td>
+<td>Placed before an identifier to indicate an RSX function call</td>
+</tr>
+</tbody>
+</table>
+<h2 id="list-of-commands-and-functions">List of Commands and
+Functions</h2>
+<h3
+id="absnumeric-expression"><code>ABS(&lt;numeric expression&gt;)</code></h3>
+<p><strong>Function.</strong> Returns the absolute value of the given
+numeric expression. The expression can be either integer or
+floating-point.</p>
+<h3
+id="after-delaytimer-gosub-label"><code>AFTER delay[,timer] GOSUB label</code></h3>
+<p><strong>Command.</strong> Calls the specified subroutine after a
+delay. The <code>delay</code> is measured in 1/50 second increments. The
+optional second parameter specifies which of the four timers to use
+(0..3). If omitted, timer 0 is used by default. The <code>GOSUB</code>
+label can be either a line number (integer) or a literal defined with
+the <code>LABEL</code> statement.</p>
+<p>ABASC uses Firmware routines to handle asynchronous events. User
+routines are called with the lower ROM active, so code should remain
+short and <strong>avoid using the first 16K of memory</strong>.
+Operations with floating-point numbers or text may attempt to allocate
+temporary memory in this area (the heap) and should be avoided. Integer
+operations, on the other hand, are safe. This mechanism also requires
+that interrupts are enabled (see <code>DI</code> and
+<code>EI</code>).</p>
+<pre class="basic"><code>A = 0
+AFTER 50 GOSUB INCR  &#39; Calls the INCR routine after 1 second
+A = 5
+END
+
+LABEL INCR
+    PRINT A
+RETURN</code></pre>
+<h3 id="ascstring"><code>ASC(string)</code></h3>
+<p><strong>Function.</strong> Returns the ASCII value of the first
+character in the provided string.</p>
+<pre class="basic"><code>PRINT ASC(&quot;HELLO&quot;)  &#39; prints 72, the ASCII code for H</code></pre>
+<h3 id="asm-stringstring"><code>ASM string[,string]*</code></h3>
+<p><strong>Command.</strong> Inserts the contents of the provided
+string(s) as assembler code. Each string is inserted as a new line.</p>
+<pre class="basic"><code>ASM &quot;ld  hl,_my_str&quot;, &quot;ld  a,(hl)&quot;</code></pre>
+<h3 id="atnx"><code>ATN(x)</code></h3>
+<p><strong>Function.</strong> Returns the arctangent of <code>x</code>.
+This function uses floating-point arithmetic.</p>
+<h3
+id="auto-linenumberincrement"><code>AUTO linenumber[,increment]</code></h3>
+<p><strong>Command.</strong> Ignored by ABASC. The compiler emits a
+warning because this command has no effect in compiled programs.</p>
+<h3 id="binnumberdigits"><code>BIN$(number,digits)</code></h3>
+<p><strong>Function.</strong> Returns the integer <code>number</code> as
+a string containing its binary representation. Locomotive BASIC allows
+specifying the exact number of digits, but <strong>ABASC only supports 8
+or 16 digits</strong>.</p>
+<pre class="basic"><code>PRINT BIN$(16,8)  &#39; prints the string &quot;00010000&quot;</code></pre>
+<h3
+id="border-colour1colour2"><code>BORDER colour1[,colour2]</code></h3>
+<p><strong>Command</strong>.Sets the border color. If two values are
+provided, the border will blink according to the timing controlled by
+the <code>SPEED INK</code> command.</p>
+<pre class="basic"><code>BORDER 0,1</code></pre>
+<h3
+id="call-address-list-of-parameters"><code>CALL address[, list of parameters]</code></h3>
+<p><strong>Command</strong>. Calls an existing routine in memory, either
+by its memory address, a routine declared with <code>SUB</code> or
+<code>FUNCTION</code>, or a label defined inside an assembler block.</p>
+<pre class="basic"><code>SUB nothing
+    PRINT &quot;Just printing nothing&quot;
+END SUB
+
+CALL &amp;BC14         &#39; Firmware routine to clear the screen
+CALL nothing()     &#39; Call a BASIC subroutine
+CALL &quot;infinite_loop&quot; 
+PRINT &quot;We will never reach here&quot;
+ASM &quot;infinite_loop: jr infinite_loop&quot;</code></pre>
+<h3 id="cat"><code>CAT</code></h3>
+<p><strong>Command</strong>. Displays the contents of the current
+storage device. The device can be changed using RSX commands such as
+<code>|TAPE</code>, <code>|DISC</code>, <code>|A</code>, or
+<code>|B</code>.</p>
+<h3 id="chain"><code>CHAIN</code></h3>
+<p><strong>Command</strong>. In BASIC, this replaces the current program
+in memory with another program. ABASC ignores this instruction and
+issues a warning if it is found.</p>
+<h3 id="chain-merge-string"><code>CHAIN MERGE string</code></h3>
+<p><strong>Command</strong>. Redefined in ABASC to allow splitting your
+code across multiple files. <code>string</code> should be the path to a
+<code>.BAS</code> file accessible from the main file location.</p>
+<p><code>CHAIN MERGE</code> cannot find the <code>string</code>file
+relative to our program directory, it will then search in the ABASC
+<code>lib</code> directory, treating <code>string</code> as a “library”
+— a reusable <code>.BAS</code> file that can be used in any project.</p>
+<pre class="basic"><code>&#39; MORECODE.BAS
+MYVAR$ = &quot;A VERY USEFUL STRING&quot;
+
+&#39; MAIN.BAS
+CHAIN MERGE &quot;MORECODE.BAS&quot;
+PRINT MYVAR$
+END</code></pre>
+<h3 id="chrx"><code>CHR$(x)</code></h3>
+<p><strong>Function</strong>. Returns a string containing the character
+corresponding to the numeric value <code>x</code> (0–255).</p>
+<pre class="basic"><code>PRINT CHR$(250)</code></pre>
+<h3 id="cintx"><code>CINT(x)</code></h3>
+<p><strong>Function</strong>. Converts a real number <code>x</code> to
+the nearest integer. <code>x</code> must be within the range
+-32768..32767; otherwise, the result may be incorrect.</p>
+<pre class="basic"><code>PRINT CINT(PI)</code></pre>
+<h3 id="clear"><code>CLEAR</code></h3>
+<p><strong>Command</strong>. This command sets all numeric variables to
+0 and strings to ““, closes open files, and resets angle mode to
+<code>RAD</code>.</p>
+<h3 id="clear-input"><code>CLEAR INPUT</code></h3>
+<p><strong>Command</strong>. Introduced in BASIC 1.1. ABASC supports it
+even on an Amstrad CPC 464, using the firmware routine
+<code>KM RESET</code> instead of <code>KM FLUSH</code>.</p>
+<h3 id="clg-ink"><code>CLG [ink]</code></h3>
+<p><strong>Command</strong>. Clears the graphics screen using the
+current <code>PAPER</code> value. If <code>ink</code> is provided, it is
+assigned as the new <code>PAPER</code> value before clearing.</p>
+<h3 id="closein"><code>CLOSEIN</code></h3>
+<p><strong>Command</strong>. Closes the currently open file used for
+reading. See <code>OPENIN</code>.</p>
+<h3 id="closeout"><code>CLOSEOUT</code></h3>
+<p><strong>Command</strong>. Closes the currently open file used for
+writing. See <code>OPENOUT</code>.</p>
+<h3 id="cls-x"><code>CLS [#x]</code></h3>
+<p><strong>Command</strong>. Clears the screen using the current
+<code>PAPER</code> color. A channel may be specified with
+<code>#x</code>. Values 0–7 define screen areas via the
+<code>WINDOW</code> command. <code>#8</code> is usually associated with
+the Printer (not supported in ABASC), and <code>#9</code> is for
+files.</p>
+<h3 id="const"><code>CONST</code></h3>
+<p><strong>Command</strong>. CONST declares and defines named constants,
+assigning them a fixed integer value. When the constant name is used in
+an expression, its value is substituted directly, which may enable
+compiler optimizations. Any attempt to change the value of a constant
+will cause the compilation to fail with an error, alerting the
+programmer to the invalid operation.</p>
+<pre class="basic"><code>CONST VMEM = &amp;C000
+
+FOR I=0 TO 16384
+    POKE VMEM + I, &amp;FF
+NEXT</code></pre>
+<h3 id="cont"><code>CONT</code></h3>
+<p><strong>Command</strong>. In original BASIC, continues execution
+after a <code>BREAK</code>, <code>STOP</code>, or <code>END</code>. In a
+compiled program, ABASC redefines it to pause execution and wait for any
+keypress, may be useful for debugging.</p>
+<h3 id="copychrchannel"><code>COPYCHR$(#channel)</code></h3>
+<p><strong>Function</strong>. Returns the character at the current text
+cursor position for the given <code>channel</code>. Introduced in BASIC
+1.1, ABASC provides support even on programs running on an Amstrad CPC
+464.</p>
+<pre class="basic"><code>MODE 1
+PRINT &quot;HELLO WORLD&quot;
+LOCATE 3,1
+C$ = COPYCHR$(#0)  &#39; L letter
+LOCATE 1,2: PRINT C$</code></pre>
+<h3 id="cosx"><code>COS(x)</code></h3>
+<p><strong>Function</strong>. Returns the cosine of <code>x</code>.
+Requires real-number arithmetic.</p>
+<h3 id="crealx"><code>CREAL(x)</code></h3>
+<p><strong>Function</strong>. Converts the integer <code>x</code> to a
+real number.</p>
+<h3 id="cursor-system-user"><code>CURSOR system[, user]</code></h3>
+<p><strong>Command</strong>. Introduced in BASIC 1.1. Controls cursor
+visibility using two flags. The cursor is shown only if both
+<code>system</code> and <code>user</code> are set to <code>1</code>.
+Otherwise, the cursor is hidden.</p>
+<h3 id="data-list-of-constants"><code>DATA list-of-constants</code></h3>
+<p><strong>Command</strong>. Allows adding a series of values (integers
+or characters) to the program, which can later be read sequentially
+using the <code>READ</code> statement.</p>
+<pre class="basic"><code>CLS
+FOR I=0 TO 5
+    READ name$
+    PRINT &quot;Name:&quot;, name$
+NEXT
+END
+
+DATA &quot;Xavier&quot;,&quot;Ross&quot;,&quot;Gada&quot;,
+DATA &quot;Anabel&quot;,&quot;Rachel&quot;,&quot;Elvira&quot;</code></pre>
+<h3
+id="declare-variable-fixed-length..."><code>DECLARE variable[$ FIXED length],...</code></h3>
+<p><strong>Command</strong>. Introduced in Locomotive BASIC 2,
+<code>DECLARE</code> allows you to “predefine” a variable that will be
+used later. Typically, only arrays need explicit declaration with
+<code>DIM</code> since scalar variables are automatically declared when
+assigned. However, <code>DECLARE</code> can be used to:</p>
+<ul>
+<li>Create string variables with a maximum length smaller than the
+default 254 bytes.</li>
+<li>Declare integer variables initialized to 0 without generating extra
+assignment instructions.</li>
+</ul>
+<p>Example:</p>
+<pre class="basic"><code>B$ = &quot;&quot;               &#39; B$ reserves 254 characters by default
+DECLARE A$ FIXED 15   &#39; A$ reserves 15 characters
+B = 0                 &#39; B initialized to 0, generating less assembler code
+DECLARE A             &#39; declares integer A</code></pre>
+<h3 id="decnumber-pattern"><code>DEC$(number, pattern)</code></h3>
+<p><strong>Function</strong>. Introduced in BASIC 1.1, <code>DEC$</code>
+converts <code>number</code> to a string using a pattern to define the
+number of spaces before or after the decimal point. ABASC currently
+ignores the pattern, so this behaves similarly to <code>STR$</code>.</p>
+<pre class="basic"><code>PRINT DEC$(15.5, &quot;###.##&quot;)</code></pre>
+<h3
+id="def-fn-nameparameters-expression"><code>DEF FN name(parameters) = expression</code></h3>
+<p><strong>Command</strong>. Declares a single-line function applying
+the expression on the right to the given parameters. In BASIC 1.0, this
+was the only way to define functions. ABASC supports the more versatile
+<code>FUNCTION ... END FUNCTION</code> syntax.</p>
+<p><strong>Important differences in ABASC:</strong> Functions and
+subroutines <strong>must be declared before use</strong> and type
+suffixes are mandatory, a function returning a real must end with
+<code>!</code>, and a string function must end with <code>$</code>.</p>
+<pre class="basic"><code>DEF FNinterest!(principal) = principal * 1.14
+PRINT FNinterest!(1000)</code></pre>
+<h3 id="defint-defstr-defreal"><code>DEFINT, DEFSTR, DEFREAL</code></h3>
+<p><strong>Command</strong>. In original BASIC, these defined ranges of
+initial letters for variable types. ABASC uses strict type suffixes
+(<code>%</code>, <code>!</code>, <code>$</code>) and ignores these
+commands entirely. Programmers must explicitly use suffixes to define
+variable types.</p>
+<h3 id="deg"><code>DEG</code></h3>
+<p><strong>Command</strong>. Sets angle-related functions
+(<code>SIN</code>, <code>COS</code>, etc.) to interpret input in degrees
+instead of radians.</p>
+<pre class="basic"><code>DEG
+PRINT SIN(90.0)  &#39; prints 1
+RAD
+PRINT SIN(90.0)  &#39; prints 0.8939 (value in radians)</code></pre>
+<h3 id="delete-low-high"><code>DELETE low-high</code></h3>
+<p><strong>Command</strong>. In Locomotive BASIC this command was used
+to delete a range of program lines. In ABASC, this behavior does not
+make sense, so <code>DELETE</code> has been redefined to clear (fill
+with zeros) a memory region. The range must be specified as: starting
+address - ending address.</p>
+<pre class="basic"><code>DELETE &amp;C000-&amp;FFFF</code></pre>
+<h3 id="derr"><code>DERR</code></h3>
+<p><strong>Command</strong>. Introduced in BASIC 1.1, it stored the last
+disk-related error. ABASC ignores any reference to this command and
+issues a warning if it appears in the code.</p>
+<h3 id="di"><code>DI</code></h3>
+<p><strong>Command</strong>. Disables the interrupt mechanism. With
+interrupts disabled, the <code>TIME</code> value stops updating, and
+events scheduled with <code>AFTER</code> or <code>EVERY</code> are not
+processed. Interrupts can be re-enabled using the <code>EI</code>
+command.</p>
+<h3
+id="dim-arrayindex1-index2-...-fixed-length"><code>DIM array(index1, index2, ...) [FIXED length]</code></h3>
+<p><strong>Command</strong>. Declares an array and reserves memory for
+it. The data type is indicated using a suffix on the array name
+(<code>%</code>, <code>!</code>, <code>$</code>). If no suffix is
+specified, the array stores integers. For string arrays, you can reduce
+the maximum memory allocated for each element using the
+<code>FIXED</code> clause after the index list.</p>
+<p>Indices start at 0 and go up to the number specified in the
+declaration.</p>
+<pre class="basic"><code>DIM name$(3) FIXED 8
+
+name$(0) = &quot;Juan&quot;
+name$(1) = &quot;Daniel&quot;
+name$(2) = &quot;Pepe&quot;
+name$(3) = &quot;Roberto&quot;
+
+FOR I=0 TO 3
+    PRINT name$(I)
+NEXT</code></pre>
+<h3 id="draw-xyimode"><code>DRAW x,y[,i[,mode]]</code></h3>
+<p><strong>Command</strong>. Draws a line from the current cursor
+position to the coordinates <code>x</code> and <code>y</code>. The
+optional third parameter specifies the color. In BASIC 1.1, a fourth
+parameter was added (supported by ABASC even for programs running on an
+Amstrad CPC 464), which defines the mode or mask applied between each
+point of the line and the background:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Fill (normal)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>XOR (exclusive OR)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AND</td>
+</tr>
+<tr>
+<td>3</td>
+<td>OR</td>
+</tr>
+</tbody>
+</table>
+<pre class="basic"><code>MODE 1
+DRAW 100,100,1
+DRAW 0,100,2
+DRAW 100,0,3
+DRAW 0,0,2</code></pre>
+<h3 id="drawr-xyimode"><code>DRAWR x,y[,i[,mode]]</code></h3>
+<p><strong>Command</strong>. Works similarly to <code>DRAW</code>, but
+the <code>x</code> and <code>y</code> values are
+<strong>relative</strong> to the current cursor position rather than
+absolute screen coordinates. The other parameters function the same way
+as in <code>DRAW</code>.</p>
+<h3 id="edit-line-line"><code>EDIT line[-line]</code></h3>
+<p><strong>Command</strong>. In Locomotive BASIC, this command allows
+editing a specific line of code. In ABASC, it is ignored and has no
+effect during compilation.</p>
+<h3 id="ei"><code>EI</code></h3>
+<p><strong>Command</strong>. Enables interrupts. See also
+<code>DI</code>.</p>
+<h3 id="end"><code>END</code></h3>
+<p><strong>Command</strong>. Ends program execution. In the BASIC
+interpreter, this returns control to the user. In ABASC, it jumps to an
+infinite loop. Note that <code>STOP</code> forces a machine restart.</p>
+<h3 id="end-function"><code>END FUNCTION</code></h3>
+<p><strong>Command</strong>. Marks the end of a function declaration.
+See <code>FUNCTION</code>.</p>
+<h3 id="end-sub"><code>END SUB</code></h3>
+<p><strong>Command</strong>. Marks the end of a procedure declaration.
+See <code>SUB</code>.</p>
+<h3
+id="ent-envelope_number-sections"><code>ENT envelope_number, sections</code></h3>
+<p><strong>Command.</strong> Defines the pitch variation of a sound.
+Locomotive BASIC allows specifying two types of pitch envelopes
+(sections): one with three parameters and another with two. Although not
+officially documented, to differentiate the second type, the
+<code>=</code> symbol could be placed before the first number. ABASC
+does not fail if this character is present; however, it determines the
+envelope type based on the number of parameters. If there is any
+ambiguity, ABASC assumes the first type, where each envelope is defined
+with three values.</p>
+<p><strong>Type 1 Section:</strong></p>
+<ul>
+<li>Parameter 1: number of steps, from 0 to 239.</li>
+<li>Parameter 2: step size, from -128 to +127.</li>
+<li>Parameter 3: pause</li>
+</ul>
+<p><strong>Type 2 Section:</strong></p>
+<ul>
+<li>Parameter 1: pitch period (16-bit integer).</li>
+<li>Parameter 2: pause</li>
+</ul>
+<h3
+id="env-envelope_number-sections"><code>ENV envelope_number, sections</code></h3>
+<p><strong>Command.</strong> Defines the volume variation of a sound.
+Locomotive BASIC supports two types of volume envelopes (sections): one
+with three parameters and another with two. Similar to <code>ENT</code>,
+the second type can optionally start with the <code>=</code> symbol.
+ABASC determines the envelope type based on the number of parameters and
+assumes the three-parameter type by default.</p>
+<p><strong>Type 1 Section:</strong></p>
+<ul>
+<li>Parameter 1: number of steps, from 0 to 127.</li>
+<li>Parameter 2: step size, from -128 to +127.</li>
+<li>Parameter 3: pause, range 0–255</li>
+</ul>
+<p><strong>Type 2 Section:</strong></p>
+<ul>
+<li>Parameter 1: envelope ID according to the sound hardware.</li>
+<li>Parameter 2: envelope period, the value sent directly to the
+hardware registers.</li>
+</ul>
+<pre class="basic"><code>ENV 1,=9,2000
+ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
+ENV 3,=9,9000</code></pre>
+<h3 id="eof"><code>EOF</code></h3>
+<p><strong>Function.</strong> Checks whether the file currently being
+read has reached the end. Returns <code>-1</code> (true) if the end of
+the file has been reached, or <code>0</code> (false) otherwise.</p>
+<pre class="basic"><code>OPENIN &quot;DATA.TXT&quot;
+WHILE NOT EOF
+    LINE INPUT #9, C$
+    PRINT C$
+WEND
+CLOSEIN</code></pre>
+<h3 id="erase-arrayname"><code>ERASE arrayname</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this frees the memory
+reserved for an array. In ABASC, memory is allocated at compile time, so
+this command has no effect and is ignored in compiled code.</p>
+<h3 id="erl"><code>ERL</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this returns the line
+number of the last error. In compiled programs, it has no effect and is
+ignored.</p>
+<h3 id="err"><code>ERR</code></h3>
+<p><strong>Command.</strong> Returns the error code (integer) previously
+set by the <code>ERROR</code> command. It can also return code
+<code>31</code> (“File not open”) if <code>OPENIN</code> or
+<code>OPENOUT</code> failed.</p>
+<pre class="basic"><code>ERROR 5
+PRINT ERR</code></pre>
+<h3 id="error-integer"><code>ERROR integer</code></h3>
+<p><strong>Command.</strong> Sets an error code that can be retrieved
+later using <code>ERR</code>.</p>
+<h2
+id="every-timetimer-gosub-label"><code>EVERY time[,timer] GOSUB label</code></h2>
+<p><strong>Command</strong>. Sets the specified <code>timer</code> (0–3,
+default 0) to call the subroutine at <code>label</code> every
+<code>time</code> ticks. Each tick represents 1/50 of a second, so a
+value of 50 corresponds to calling the label once per second.</p>
+<p>ABASC relies on the Amstrad CPC Firmware routines for handling
+asynchronous events. User routines are executed with the lower ROM
+active, so the code should be kept short and <strong>avoid using the
+first 16K of memory</strong>. Operations involving floating-point
+numbers or strings may attempt to allocate temporary memory within this
+range (the heap) and should be avoided, while integer operations are
+generally safe. This mechanism also requires that interrupts are enabled
+(see <code>DI</code> and <code>EI</code>).</p>
+<pre class="basic"><code>A = 0
+EVERY 300 GOSUB INCA  &#39; Prints and increments A every 6 seconds
+END
+
+LABEL INCA
+    PRINT A
+    A = A + 1
+RETURN</code></pre>
+<h3 id="exit-for"><code>EXIT FOR</code></h3>
+<p><strong>Command</strong>. In Locomotive BASIC, it was possible to
+exit a loop using a <code>GOTO</code> statement. In a program compiled
+with ABASC, using <code>GOTO</code> to exit loops may cause unexpected
+runtime errors. The proper way to exit a <code>FOR</code> loop early is
+to use <code>EXIT FOR</code>, which jumps to the statement immediately
+after the corresponding <code>NEXT</code>. This command was introduced
+in Locomotive BASIC 2.</p>
+<pre class="basic"><code>FOR I = 0 TO 100
+    IF I = 50 THEN EXIT FOR
+NEXT
+PRINT I</code></pre>
+<h3 id="exit-while"><code>EXIT WHILE</code></h3>
+<p><strong>Command</strong>. Using <code>GOTO</code> to exit a
+<code>WHILE</code> loop in compiled code can lead to runtime errors. To
+exit a <code>WHILE</code> loop correctly, use <code>EXIT WHILE</code>,
+which jumps to the statement immediately after the corresponding
+<code>WEND</code>. This command was introduced in Locomotive BASIC
+2.</p>
+<pre class="basic"><code>I = 0
+WHILE I &lt; 101
+    IF I = 50 THEN EXIT WHILE
+    I = I + 1
+WEND
+PRINT I</code></pre>
+<h3 id="expx"><code>EXP(x)</code></h3>
+<p><strong>Function</strong>. Returns e raised to the power of
+<code>x</code>, where e ≈ 2.7182818 (the number whose natural logarithm
+is 1). Requires floating-point support.</p>
+<h3 id="fill"><code>FILL</code></h3>
+<p><strong>Command</strong>. Only available on Amstrad CPC 664, 6128, or
+higher. Fills an area of the screen starting from the current graphics
+cursor position using the active pen color. It can fill shapes
+automatically. While ABASC will compile the program, execution on an
+Amstrad CPC 464 will fail.</p>
+<pre class="basic"><code>MODE 0
+GRAPHICS PEN 15
+MOVE 200,0
+DRAW 200,400
+MOVE 639,0
+FILL 15</code></pre>
+<h3 id="fixx"><code>FIX(x)</code></h3>
+<p><strong>Function</strong>. Converts the real number <code>x</code> to
+an integer by truncation. The result is valid only if <code>x</code> is
+within the range -32768 to +32767.</p>
+<pre class="basic"><code>PRINT FIX(PI + 0.5), CINT(PI + 0.5)</code></pre>
+<h3
+id="for-variable-start-to-end-step-increment"><code>FOR variable = start TO end STEP increment</code></h3>
+<p>Command. Defines a loop in which <code>variable</code> iterates from
+<code>start</code> to <code>end</code>. If no <code>increment</code> is
+specified, the loop defaults to a step of 1.</p>
+<pre class="basic"><code>CLS
+T! = TIME
+FOR i = 1 TO 10
+    FOR j = 1 TO 1000
+        s = 1000 + j
+    NEXT j
+    PRINT &quot;.&quot;;
+NEXT i
+PRINT &quot; DONE!&quot;
+PRINT TIME - T!</code></pre>
+<p><strong>NOTE:</strong> <code>GOTO</code> should not be use to leave a
+FOR LOOP. Instead, use <code>EXIT FOR</code>.</p>
+<h3 id="frame"><code>FRAME</code></h3>
+<p><strong>Command</strong>. Pauses program execution until the next
+vertical sync signal of the monitor (maximum 50 times per second).</p>
+<h3 id="frex"><code>FRE(x)</code></h3>
+<p><strong>Function</strong>. Returns values related to memory depending
+on the parameter <code>x</code>:</p>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Return Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FRE(0)</strong></td>
+<td>Returns the available memory between <code>_program_end_</code> and
+the Firmware area where variables start (<code>&amp;A6FC</code>).</td>
+</tr>
+<tr>
+<td><strong>FRE(1)</strong></td>
+<td>Returns the currently available temporary memory (heap).</td>
+</tr>
+<tr>
+<td><strong>FRE(““)</strong></td>
+<td>Forces the release of temporary memory (heap) and returns the same
+value as <code>FRE(0)</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="function-nameparameters-asm"><code>FUNCTION name(parameters) [ASM]</code></h3>
+<p><strong>Command</strong>. Introduced in Locomotive BASIC 2 Plus, this
+command declares a function similar to <code>DEF FN</code> but with a
+multi-line body.</p>
+<p>Functions declared with <code>FUNCTION</code> must include at least
+one assignment to the function’s own name, which will act as the return
+value. Functions can be called directly as part of an expression.</p>
+<pre class="basic"><code>FUNCTION pow2(x)
+    pow2 = x * x
+END FUNCTION
+
+result = pow2(2)</code></pre>
+<p>The optional <code>ASM</code> clause indicates that the function body
+will consist entirely of assembly code (using the <code>ASM</code>
+command), as described in the section <strong>Using Assembly
+Code</strong> under <strong>Peculiarities of the Compiler</strong>.</p>
+<p>Programmers are advised to read the <strong>Functions and
+Procedures</strong> section for more information about parameter
+handling and the lack of recursion support, as discussed in the
+<strong>Peculiarities of the Compiler</strong> chapter.</p>
+<h3 id="gosub-label"><code>GOSUB label</code></h3>
+<p><strong>Command</strong>. Jumps to a label, which can be defined
+either as a line number or as a literal declared with
+<code>LABEL</code>. Execution returns to the line immediately following
+the <code>GOSUB</code> when a <code>RETURN</code> statement is
+encountered.</p>
+<pre class="basic"><code>A = 0
+GOSUB increment
+GOSUB increment
+PRINT A
+END
+
+LABEL increment
+    A = A + 1
+RETURN</code></pre>
+<h3 id="goto-label"><code>GOTO label</code></h3>
+<p><strong>Command</strong>. Jumps to a label, which can be defined
+either as a line number or as a literal declared with
+<code>LABEL</code>.</p>
+<h3 id="graphics-paper-ink"><code>GRAPHICS PAPER ink</code></h3>
+<p><strong>Command</strong>. Sets the <code>ink</code> value (0–15) to
+be used as the background color for text characters if a
+<code>TAG</code> statement has been used. It also determines the
+background color when clearing a graphics window via
+<code>CLG</code>.</p>
+<pre class="basic"><code>MODE 0
+MASK 15
+GRAPHICS PAPER 3
+DRAW 640,0</code></pre>
+<h3 id="graphics-pen-ink-mode"><code>GRAPHICS PEN ink, mode</code></h3>
+<p><strong>Command</strong>. Introduced in BASIC 1.1. Sets the
+<code>ink</code> value (0–15) to be used for line and point drawing
+commands. The <code>mode</code> parameter determines how the drawing is
+combined with the background:</p>
+<ul>
+<li>0: Opaque background.</li>
+<li>1: Transparent background.</li>
+</ul>
+<p>The background color can only be used on CPC 664 or higher models. On
+an Amstrad CPC 464, this feature is unsupported and may produce
+undefined behavior.</p>
+<pre class="basic"><code>MODE 0
+GRAPHICS PEN 15
+MOVE 200,0
+DRAW 200,400
+MOVE 639,0
+FILL 15</code></pre>
+<h3 id="hexx-digits"><code>HEX$(x, digits)</code></h3>
+<p><strong>Function</strong>. Returns a string representing the
+hexadecimal conversion of <code>x</code>. Locomotive BASIC allows any
+number of digits, but ABASC only supports 2 or 4 digits.</p>
+<pre class="basic"><code>PRINT HEX$(255,2)
+PRINT HEX$(2048,4)</code></pre>
+<h3 id="himem"><code>HIMEM</code></h3>
+<p><strong>Function</strong>. Returns the memory address immediately
+following the end of the program compiled by ABASC. This can be
+particularly useful with the <code>LOAD</code> command to load other
+binaries into free memory space.</p>
+<pre class="basic"><code>PRINT &quot;Memory used limit:&quot;, HIMEM
+PRINT &quot;Free memory before firmware variables:&quot;, FRE(0)</code></pre>
+<h3
+id="if-expression-then-expression-else-expression-end-if"><code>IF expression THEN expression ELSE expression END IF</code></h3>
+<p><strong>Command</strong>. ABASC supports the traditional one-line
+<code>IF ... THEN ... ELSE</code> structure from Locomotive BASIC 1.0
+and 1.1. It also supports the multi-line syntax introduced in Locomotive
+BASIC 2 Plus, which allows the <code>THEN</code> and <code>ELSE</code>
+blocks to span multiple lines.</p>
+<p>You cannot mix single-line and multi-line formats in the same
+<code>IF</code> statement. If the <code>THEN</code> block uses the
+multi-line format, the <code>ELSE</code> block (if present) must also
+use it, and the statement must end with <code>END IF</code>.</p>
+<pre class="basic"><code>PAS$ = &quot;Please&quot;
+LABEL QUESTION
+    PRINT &quot;ENTER THE PASSWORD:&quot;;
+    INPUT C$
+IF C$ = PAS$ THEN
+    PRINT &quot;ACCESS GRANTED!&quot;
+ELSE
+    PRINT &quot;TRY AGAIN&quot;
+    GOTO QUESTION
+END IF
+END</code></pre>
+<h3
+id="ink-ink-color1-color2"><code>INK ink, color1[, color2]</code></h3>
+<p><strong>Command</strong>. Assigns <code>color1</code> to the
+specified <code>ink</code>. If a second color is provided, the ink will
+alternate (blink) between <code>color1</code> and <code>color2</code>.
+The number of available inks depends on the screen mode:</p>
+<ul>
+<li>Mode 2: 2 inks (0 and 1)</li>
+<li>Mode 1: 4 inks (0–3)</li>
+<li>Mode 0: 16 inks (0–15)</li>
+</ul>
+<p>The color range is from 0 (black) to 26 (bright white).</p>
+<pre class="basic"><code>MODE 1
+BORDER 0
+INK 0,0: INK 1,26: INK 2,26,0
+PRINT &quot;READY&quot;
+PEN 2: PRINT &quot;_&quot;</code></pre>
+<h3 id="inkeykey"><code>INKEY(key)</code></h3>
+<p><strong>Function</strong>. Checks the keyboard to determine which
+keys are currently pressed. The keyboard is scanned 50 times per second.
+The [SHIFT] and [CTRL] keys are identified as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Return Value</th>
+<th>[SHIFT]</th>
+<th>[CTRL]</th>
+<th>Specified Key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-1</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Not pressed</td>
+</tr>
+<tr>
+<td>0</td>
+<td>Not pressed</td>
+<td>Not pressed</td>
+<td>Pressed</td>
+</tr>
+<tr>
+<td>32</td>
+<td>Pressed</td>
+<td>Not pressed</td>
+<td>Pressed</td>
+</tr>
+<tr>
+<td>128</td>
+<td>Not pressed</td>
+<td>Pressed</td>
+<td>Pressed</td>
+</tr>
+<tr>
+<td>160</td>
+<td>Pressed</td>
+<td>Pressed</td>
+<td>Pressed</td>
+</tr>
+</tbody>
+</table>
+<pre class="basic"><code>CLS
+LABEL LOOP
+    IF INKEY(55) = 32 THEN PRINT &quot;V + SHIFT&quot;; END
+GOTO LOOP</code></pre>
+<h3 id="inkey"><code>INKEY$</code></h3>
+<p><strong>Function</strong>. Returns a string containing the key
+currently pressed. If no key is pressed, it returns an empty string
+<code>""</code>.</p>
+<pre class="basic"><code>MODE 1
+LABEL LOOP
+    k$ = INKEY$
+    IF k$ &lt;&gt; &quot;&quot; THEN PRINT k$;
+GOTO LOOP</code></pre>
+<h3 id="inpport"><code>INP(port)</code></h3>
+<p><strong>Function</strong>. Reads a value from the specified
+input/output <code>port</code>.</p>
+<h3
+id="input-channel-prompt-variable1-variable2..."><code>INPUT [#channel,] "prompt"[;] variable1, variable2,...</code></h3>
+<p><strong>Command</strong>. <code>INPUT</code> is a versatile command
+with many options. Its full usage is beyond the scope of this manual.
+Users are advised to consult the references listed in the
+<code>References</code> section.</p>
+<h3
+id="instrstart_position-string1-string2"><code>INSTR([start_position,] string1, string2)</code></h3>
+<p><strong>Function</strong>. Searches <code>string1</code> for the
+first occurrence of <code>string2</code>. If the optional
+<code>start_position</code> parameter is provided, the search begins at
+that position; otherwise, it starts at the first character. Positions
+are 1-based, not 0-based.</p>
+<pre class="basic"><code>posA = INSTR(1, &quot;AMSTRAD&quot;, &quot;A&quot;)
+PRINT posA
+posA = INSTR(posA + 1, &quot;AMSTRAD&quot;, &quot;A&quot;)
+PRINT posA
+posA = INSTR(posA + 1, &quot;AMSTRAD&quot;, &quot;A&quot;)
+PRINT posA</code></pre>
+<h3 id="intx"><code>INT(x)</code></h3>
+<p><strong>Function</strong>. For positive numbers, it behaves like
+<code>FIX</code>, truncating the decimal part. For negative numbers, it
+returns the smallest integer greater than or equal to <code>x</code>
+(i.e., rounding toward minus infinity), which may differ from
+<code>FIX</code>.</p>
+<h3 id="joyjoystick"><code>JOY(joystick)</code></h3>
+<p><strong>Function</strong>. Works similarly to <code>INKEY</code>, but
+for joysticks. The <code>joystick</code> parameter must be 0 or 1, as
+Amstrad CPC computers support a maximum of two joysticks simultaneously.
+If no direction or button is pressed, it returns 0. Otherwise, it
+returns an integer encoding the joystick state as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Bit</th>
+<th>Decimal</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>Up</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+<td>Down</td>
+</tr>
+<tr>
+<td>2</td>
+<td>4</td>
+<td>Left</td>
+</tr>
+<tr>
+<td>3</td>
+<td>8</td>
+<td>Right</td>
+</tr>
+<tr>
+<td>4</td>
+<td>16</td>
+<td>Fire 2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>32</td>
+<td>Fire 1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-key-string"><code>KEY key, string</code></h3>
+<p><strong>Command</strong>. Assigns a text <code>string</code> to a
+function <code>key</code>. ABASC does <strong>not</strong> support this
+command and will issue a warning if it is encountered in the code.</p>
+<h3
+id="key-def-key-repeatnormalshiftctrl"><code>KEY DEF key, repeat[,&lt;normal&gt;[,&lt;shift&gt;[,&lt;ctrl&gt;]]]</code></h3>
+<p><strong>Command</strong>. Redefines the behavior of a key press.
+ABASC does <strong>not</strong> support this command and will issue a
+warning if it appears in the code.</p>
+<h3 id="label-label"><code>LABEL label</code></h3>
+<p><strong>Command</strong>. Defines a label that can be used as a
+target for <code>GOTO</code> or <code>GOSUB</code>. The
+<code>label</code> is an identifier, <strong>not</strong> a string, so
+it should <strong>not</strong> be enclosed in quotation marks. Labels
+are case-insensitive.</p>
+<pre class="basic"><code>LABEL MAIN
+    PRINT &quot;HELLO WORLD&quot;
+GOTO MAIN</code></pre>
+<p>Next to symbol <code>@</code> can be used to obtain the address in
+memory of a label (defined in BASIC or assembly) or the address that the
+next call to <code>READ</code> will use to obtain the values.</p>
+<pre class="basic"><code>LABEL MAIN
+    CLS
+
+    spdir = @LABEL(mysprite)
+    RESTORE palette
+    pldir = @DATA
+    asmdir = @LABEL(&quot;asm_label&quot;)
+    &#39; Example usage of these pointers...
+END
+
+LABEL mysprite:
+    ASM &quot;read &#39;my_sprite.asm&#39;&quot;
+
+LABEL palette:
+    DATA 1,2,3,4
+
+ASM &quot;asm_label:&quot;</code></pre>
+<h3 id="leftstring-n"><code>LEFT$(string, n)</code></h3>
+<p><strong>Function</strong>. Returns the first <code>n</code>
+characters from the left of <code>string</code>.</p>
+<pre class="basic"><code>PRINT LEFT$(&quot;AMSTRAD&quot;, 3)  &#39; Output: &quot;AMS&quot;</code></pre>
+<h3 id="lenstring"><code>LEN(string)</code></h3>
+<p><strong>Function</strong>. Returns the length of <code>string</code>
+in characters.</p>
+<pre class="basic"><code>PRINT LEN(&quot;AMSTRAD&quot;)  &#39; Output: 7</code></pre>
+<h3
+id="let-variable-expression"><code>LET variable = expression</code></h3>
+<p><strong>Command</strong>. A legacy from early BASIC specifications.
+It is <strong>not required</strong> to use <code>LET</code> for
+assignments in Locomotive BASIC, but it is supported for compatibility
+purposes.</p>
+<h3
+id="line-input-channelstringvariable"><code>LINE INPUT [#channel,][;][string;]&lt;variable&gt;</code></h3>
+<p><strong>Command</strong>. Reads a line of text from the specified
+input channel (#0 by default). Channel #9 is used to read from an open
+input file. For channels #0–#8, it behaves similarly to the
+<code>INPUT</code> command.</p>
+<pre class="basic"><code>OPENIN &quot;DATOS.TXT&quot;
+WHILE NOT EOF
+    LINE INPUT #9, C$
+    PRINT C$
+WEND
+CLOSEIN</code></pre>
+<h3
+id="list-line-range-channel"><code>LIST [line range][, #channel]</code></h3>
+<p><strong>Command</strong>. Ignored by ABASC. If encountered in the
+code, a warning is issued.</p>
+<h3 id="load-filenameaddress"><code>LOAD filename[,address]</code></h3>
+<p><strong>Command</strong>. Loads a file from disk or tape into memory.
+ABASC <strong>only supports loading binary files</strong>. If a memory
+address is provided as the second parameter, the binary content will be
+loaded at that location.</p>
+<pre class="basic"><code>ENDDIR = HIMEM
+LOAD &quot;SPRITES.BIN&quot;, ENDDIR</code></pre>
+<h3 id="locate-channel-x-y"><code>LOCATE [#channel,] x, y</code></h3>
+<p><strong>Command</strong>. Moves the text cursor to the position
+<code>x</code>, <code>y</code>. Coordinates start at 1. The maximum
+<code>x</code> value depends on the current graphics mode:</p>
+<ul>
+<li>Mode 0 → 20 columns</li>
+<li>Mode 1 → 40 columns</li>
+<li>Mode 2 → 80 columns</li>
+</ul>
+<p>If a <code>#channel</code> is specified, the limits depend on the
+dimensions defined with <code>WINDOW</code>.</p>
+<pre class="basic"><code>CLS
+LABEL MAIN
+    FRAME
+    FOR x = 2 TO 39
+        LOCATE x-1, 10: PRINT &quot; &quot;
+        LOCATE x, 10: PRINT CHR$(250)
+    NEXT
+GOTO MAIN</code></pre>
+<h3 id="logx"><code>LOG(x)</code></h3>
+<p><strong>Function</strong>. Returns the natural logarithm (base e) of
+<code>x</code>. Requires floating-point numbers.</p>
+<h3 id="log10x"><code>LOG10(x)</code></h3>
+<p><strong>Function</strong>. Returns the base-10 logarithm of
+<code>x</code>. Requires floating-point numbers.</p>
+<h3 id="lowerstring"><code>LOWER$(string)</code></h3>
+<p><strong>Function</strong>. Returns <code>string</code> with all
+characters converted to lowercase.</p>
+<pre class="basic"><code>C$ = &quot;AmsTRaD&quot;
+PRINT LOWER$(C$)  &#39; Output: &quot;amstrad&quot;
+PRINT UPPER$(C$)  &#39; Output: &quot;AMSTRAD&quot;</code></pre>
+<h3 id="mask-maskstartpoint"><code>MASK mask[,startPoint]</code></h3>
+<p><strong>Command</strong>. Available only from BASIC 1.1 onward.
+Programs compiled using this command will only run on Amstrad CPC 664 or
+CPC 6128 computers.</p>
+<p>Defines the mask or pattern to use when drawing lines. The binary
+value <code>mask</code> must be between 0 and 255. Each bit in
+<code>mask</code> determines whether a group of 8 consecutive pixels is
+drawn (1) or skipped (0). The optional parameter <code>startPoint</code>
+specifies whether the first pixel of the line should be drawn (1) or not
+(0).</p>
+<pre class="basic"><code>MODE 0
+MASK 15   &#39; mask = 00001111
+GRAPHICS PAPER 3
+DRAW 640,0</code></pre>
+<h3 id="maxa-b-c-d-e..."><code>MAX(a, b[, c, d, e...])</code></h3>
+<p><strong>Function</strong>. Returns the maximum value among the
+parameters provided. Supports both integer and floating-point
+numbers.</p>
+<h3 id="memory-maxaddress"><code>MEMORY maxAddress</code></h3>
+<p><strong>Command</strong>. Sets <code>maxAddress</code> as the maximum
+memory address that the compiled binary can occupy. If the program
+exceeds this limit during compilation, the compilation will fail.</p>
+<pre class="basic"><code>MEMORY &amp;A6FB  &#39; The Firmware/AMSDOS variables start at &amp;A6FC</code></pre>
+<h3 id="merge-filename"><code>MERGE filename</code></h3>
+<p><strong>Command</strong>. Reads <code>filename</code> from disk or
+tape and replaces the program currently in memory. ABASC <strong>does
+not support</strong> this command and will produce an error if it is
+found in the source code. To add or replace other binaries, it is
+recommended to use the <code>LOAD</code> command instead.</p>
+<h3 id="midstring-start-n"><code>MID$(string, start[, n])</code></h3>
+<p><strong>Function and Command</strong>. As a function, it returns a
+substring of length <code>n</code> starting at position
+<code>start</code> from <code>string</code>. As a command, It can be
+used to replace part of the string in memory. Writing directly to string
+memory is delicate, and the programmer must ensure not to exceed the
+allocated length of the string; otherwise, the program may behave
+unpredictably.</p>
+<pre class="basic"><code>C$ = &quot;AMSTRAD&quot;
+PRINT MID$(C$, 3, 3)       &#39; Output: &quot;STR&quot;
+MID$(C$, 3, 3) = &quot;BBB&quot;
+PRINT C$                   &#39; Output: &quot;AMBBBAD&quot;</code></pre>
+<h3 id="mina-b-c-d-e-f..."><code>MIN(a, b[, c, d, e, f...])</code></h3>
+<p><strong>Function</strong>. Returns the minimum value among the
+parameters provided. Supports both integer and floating-point
+numbers.</p>
+<h3 id="mode-n"><code>MODE n</code></h3>
+<p><strong>Command</strong>. Changes the screen mode. Valid values are
+0, 1, or 2.</p>
+<h3 id="move-x-y-ink-mode"><code>MOVE x, y[, ink[, mode]]</code></h3>
+<p><strong>Command</strong>. Moves the graphics cursor to the absolute
+position <code>(x, y)</code>.</p>
+<ul>
+<li>Optional parameter <code>ink</code> sets the drawing color from that
+point onward.</li>
+<li>Optional parameter <code>mode</code> defines how each point of the
+line is combined with the background, with the following values:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Fill (normal)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>XOR (exclusive OR)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AND</td>
+</tr>
+<tr>
+<td>3</td>
+<td>OR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mover-x-y-ink-mode"><code>MOVER x, y[, ink[, mode]]</code></h3>
+<p><strong>Command</strong>. Works like <code>MOVE</code>, but the
+<code>x</code> and <code>y</code> coordinates are
+<strong>relative</strong> to the current cursor position instead of
+absolute screen coordinates.</p>
+<h3 id="new"><code>NEW</code></h3>
+<p><strong>Command</strong>. In Locomotive BASIC, this clears the
+current program and all its variables from memory. ABASC generates code
+to reset the machine (<code>CALL 0</code>).</p>
+<h3 id="next-variable"><code>NEXT variable</code></h3>
+<p><strong>Command</strong>. Marks the end of a <code>FOR</code>
+loop.</p>
+<h3
+id="on-n-gosub-list_of_labels"><code>ON n GOSUB list_of_labels</code></h3>
+<p><strong>Command</strong>. Jumps to the label in the list indicated by
+<code>n</code> and returns after encountering a <code>RETURN</code>.
+Labels are 1-based. They can be either line numbers or identifiers
+declared with <code>LABEL</code>.</p>
+<h3
+id="on-n-goto-list_of_labels"><code>ON n GOTO list_of_labels</code></h3>
+<p><strong>Command</strong>. Jumps to the label in the list indicated by
+<code>n</code>. Labels are 1-based and can be either line numbers or
+identifiers declared with <code>LABEL</code>.</p>
+<h3 id="on-break-gosub-label"><code>ON BREAK GOSUB label</code></h3>
+<p><strong>Command</strong>. In Locomotive BASIC, this jumps to
+<code>label</code> when a program is interrupted by a double press of
+the <code>ESC</code> key. Compiled ABASC programs cannot be interrupted
+in this way, so this command is ignored and a warning is issued if it
+appears in the code.</p>
+<h3 id="on-break-stop"><code>ON BREAK STOP</code></h3>
+<p><strong>Command</strong>. Cancels the last
+<code>ON BREAK GOSUB</code> statement issued. Since compiled ABASC
+programs ignore the previous statement, this command is also ignored,
+and a warning is issued if it appears in the code.</p>
+<h3 id="on-error-goto-label"><code>ON ERROR GOTO label</code></h3>
+<p><strong>Command</strong>. In interpreted BASIC, this jumps to
+<code>label</code> when an error is detected during program execution.
+This mechanism does not apply to compiled programs, so ABASC jumps to
+the label <strong>only</strong> if <code>ERR</code> is different from 0
+(for example, after changing the value with the <code>ERROR</code>
+command).</p>
+<p><strong>NOTE:</strong> Be careful not to leave a WHILE or FOR bucle
+using this command as it may cause an undefined behaviour.</p>
+<pre class="basic"><code>ERROR 0
+ON ERROR GOTO errormsg
+ERROR 1
+ON ERROR GOTO errormsg
+PRINT &quot;No errors&quot;
+END
+
+LABEL errormsg
+    print &quot;Error&quot;, ERR
+END</code></pre>
+<h3
+id="on-sqchannel-gosub-label"><code>ON SQ(channel) GOSUB label</code></h3>
+<p><strong>Command</strong>. Registers a jump to a label as an interrupt
+to be executed when there is a free “slot” in the sound queue of the
+specified <code>channel</code>. The <code>channel</code> value must be
+one of the following:</p>
+<ul>
+<li>1 = channel A</li>
+<li>2 = channel B</li>
+<li>4 = channel C</li>
+</ul>
+<pre class="basic"><code>ON SQ(2) GOSUB InsertInB</code></pre>
+<h3 id="openin-file"><code>OPENIN file</code></h3>
+<p><strong>Command</strong>. Opens the specified <code>file</code> for
+reading. See the <code>EOF</code> function section for an example. If an
+error occurs, error code 31 is generated, which can be retrieved using
+<code>ERR</code>. Only one file can be open for reading at a time.</p>
+<h3 id="openout-file"><code>OPENOUT file</code></h3>
+<p><strong>Command</strong>. Opens the specified <code>file</code> for
+writing. If an error occurs, error code 31 is generated, which can be
+retrieved using <code>ERR</code>. Only one file can be open for writing
+at a time.</p>
+<h3
+id="origin-xyleftrighttopbottom"><code>ORIGIN x,y[,left,right,top,bottom]</code></h3>
+<p><strong>Command</strong>. Sets the current position of the graphics
+cursor. Optionally, you can define the dimensions of the graphics window
+by providing <code>left</code>, <code>right</code>, <code>top</code>,
+and <code>bottom</code> coordinates. Calling <code>MODE</code> will
+reset the window dimensions.</p>
+<pre class="basic"><code>CLS: BORDER 13
+LABEL LOOP
+    ORIGIN 0,0,50,590,350,50
+    DRAW 540,350
+GOTO LOOP</code></pre>
+<h2 id="out-portn"><code>OUT port,n</code></h2>
+<p><strong>Command.</strong> Sends the value <code>n</code> to the
+specified hardware <code>port</code>.</p>
+<h3 id="paper-channelink"><code>PAPER [#channel,]ink</code></h3>
+<p><strong>Command.</strong> Sets the background color for text. If no
+<code>channel</code> is specified, the command applies to channel #0.
+<strong>See note under <code>PEN</code>.</strong></p>
+<pre class="basic"><code>MODE 1
+INK 1,3  &#39; red color
+PAPER 1
+CLS</code></pre>
+<h3 id="peekaddress"><code>PEEK(address)</code></h3>
+<p><strong>Function.</strong> Returns the content of the memory byte at
+the specified <code>address</code>.</p>
+<pre class="basic"><code>&#39; Print the 5 bytes of a real number
+N! = PI
+FOR I = 0 TO 4
+    PRINT HEX$(PEEK(@N!+I),2);&quot; &quot;;
+NEXT</code></pre>
+<h3 id="pen-channelink"><code>PEN [#channel,]ink</code></h3>
+<p><strong>Command.</strong> Sets <code>ink</code> as the drawing color
+for the specified channel (#0 by default).</p>
+<pre class="basic"><code>MODE 1
+INK 2,3  &#39; red color
+PEN 2
+PRINT &quot;HELLO WORLD&quot;</code></pre>
+<p><strong>NOTE:</strong> The <code>PAPER</code> and <code>PEN</code>
+values are not applied immediately. They are stored in firmware
+variables and sent to the hardware once per frame via the routine called
+by the interrupts. If these values are changed inside a routine
+triggered by <code>EVERY</code> or <code>AFTER</code>, it is very likely
+that the change will have no effect.</p>
+<h3 id="pi"><code>PI</code></h3>
+<p><strong>Function.</strong> Returns the real number 3.14159265.</p>
+<h3 id="plot-xyinkmode"><code>PLOT x,y[,ink[,mode]]</code></h3>
+<p><strong>Command.</strong> Moves the graphics cursor to position
+<code>x</code>,<code>y</code> and plots a point. If an <code>ink</code>
+value is specified, it becomes the active drawing color. The fourth
+parameter defines the drawing mode or mask applied between each point
+and the background:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Fill (normal)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>XOR (exclusive OR)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AND</td>
+</tr>
+<tr>
+<td>3</td>
+<td>OR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="plotr-xyinkmode"><code>PLOTR x,y[,ink[,mode]]</code></h3>
+<p><strong>Command.</strong> Works like <code>PLOT</code> but with
+<code>x</code> and <code>y</code> interpreted as relative coordinates
+from the current graphics cursor position rather than absolute
+coordinates.</p>
+<h3 id="poke-addressn"><code>POKE address,n</code></h3>
+<p><strong>Command.</strong> Writes the value <code>n</code> (a byte)
+into the memory location <code>address</code>. If <code>n</code> is
+greater than 255, the value is truncated.</p>
+<pre class="basic"><code>CLS
+SUB MEMCOPY(org,dest,n)
+    FOR I = 0 TO n
+        byte = PEEK(org+I)
+        POKE dest+I,byte
+    NEXT
+END SUB
+
+A$ = &quot;HELLO WORLD&quot;
+B$ = &quot;&quot;
+CALL MEMCOPY(@A$, @B$, 11)  &#39; 10 characters plus length byte
+PRINT B$</code></pre>
+<h3 id="poschannel"><code>POS(#channel)</code></h3>
+<p><strong>Function.</strong> Returns the current X position of the text
+cursor for the specified <code>channel</code> (#0 by default).</p>
+<pre class="basic"><code>MODE 1
+PRINT POS(#0), VPOS(#0)</code></pre>
+<h3
+id="print-channellist-of-items"><code>PRINT [#channel,][list of items]</code></h3>
+<p><strong>Command.</strong> <code>PRINT</code> is a highly versatile
+command with many options. Its full details are beyond the scope of this
+manual, so the reader is encouraged to consult the references listed in
+the <code>References</code> chapter. <strong>Note:</strong> ABASC does
+<strong>not</strong> support formatted output using
+<code>USING</code>.</p>
+<h3 id="rad"><code>RAD</code></h3>
+<p><strong>Command.</strong> Sets trigonometric functions to return
+results in radians. It is the counterpart to <code>DEG</code>.</p>
+<pre class="basic"><code>DEG
+PRINT SIN(90.0)
+RAD
+PRINT SIN(90.0)</code></pre>
+<h3 id="randomize-n"><code>RANDOMIZE [n]</code></h3>
+<p><strong>Command.</strong> The ABASC implementation differs slightly
+from the usual behavior in Locomotive BASIC. If <code>RANDOMIZE</code>
+is used without parameters, ABASC treats it as if
+<code>RANDOMIZE TIME</code> had been used. Both <code>RANDOMIZE</code>
+and <code>RND</code> require the use of real numbers.</p>
+<pre class="basic"><code>RANDOMIZE
+FOR I=1 TO 20
+    PRINT RND
+NEXT</code></pre>
+<h3 id="read-variable-list"><code>READ variable-list</code></h3>
+<p><strong>Command.</strong> Reads the next datum from those declared
+using <code>DATA</code> and assigns it to the corresponding variable in
+the list. It is the programmer’s responsibility to ensure that the data
+type matches the type of the target variable.</p>
+<pre class="basic"><code>CLS
+FOR I=0 TO 5
+    READ name$
+    PRINT &quot;Name:&quot;, name$
+NEXT
+END
+
+DATA &quot;Xavier&quot;,&quot;Ross&quot;,&quot;Gada&quot;,
+DATA &quot;Anabel&quot;,&quot;Rachel&quot;,&quot;Elvira&quot;</code></pre>
+<h3 id="readin-variable-list"><code>READIN variable-list</code></h3>
+<p><strong>Command.</strong> Equivalent to <code>INPUT #9</code>; that
+is, it reads data from the currently open input file and assigns them to
+the variables in the list. At present, ABASC does not support real
+variables with this command.</p>
+<h3
+id="record-namevariable-list"><code>RECORD name;variable-list</code></h3>
+<p><strong>Command.</strong> Declares a record structure that can be
+applied to string (<code>$</code>) variables in order to create data
+structures. See the section <em>Record Structures with
+<code>RECORD</code></em> in the chapter <em>Compiler Specifics</em> for
+more details.</p>
+<pre class="basic"><code>DECLARE A$ FIXED 13   &#39; Optional, but reduces memory usage
+RECORD person; name$ FIXED 10, age   &#39; Requires 13 bytes of memory
+
+A$.person.name$ = &quot;Juan&quot;
+A$.person.age = 20</code></pre>
+<h3 id="release-channel"><code>RELEASE channel</code></h3>
+<p><strong>Command.</strong> Sounds queued on a given
+<code>channel</code> may enter a <em>hold</em> state. This command
+releases those sounds. <code>channel</code> is an integer that specifies
+the affected channels:</p>
+<ul>
+<li>1 = channel A</li>
+<li>2 = channel B</li>
+<li>4 = channel C</li>
+</ul>
+<pre class="basic"><code>RELEASE 7   &#39; releases sounds on all three channels</code></pre>
+<h3 id="rem-text"><code>REM text</code></h3>
+<p><strong>Command.</strong> Inserts a comment in the program. The
+symbol <code>'</code> is an alias for this command.</p>
+<h3 id="remaintimer"><code>REMAIN(timer)</code></h3>
+<p><strong>Function.</strong> Disables the event associated with
+<code>timer</code> (in the range 0–3) and returns the number of ticks
+remaining before it would have been triggered. Such events are
+registered using <code>AFTER</code> or <code>EVERY</code>.</p>
+<h3
+id="renum-new-line-origin-line-step"><code>RENUM new-line, origin-line, step</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this command renumbers
+the program’s line numbers. In a compiled program this has no meaning.
+ABASC ignores this command and issues a warning if it appears in the
+source code.</p>
+<h3 id="restore-label"><code>RESTORE [label]</code></h3>
+<p><strong>Command.</strong> Sets the next value to be read by
+<code>READ</code> to the first <code>DATA</code> item found after the
+specified <code>label</code>, which may be either a line number or an
+identifier declared using <code>LABEL</code>. If no <code>label</code>
+is given, the next <code>READ</code> will fetch the very first
+<code>DATA</code> item in the program.</p>
+<pre class="basic"><code>LABEL LOOP
+FOR N=1 TO 5 
+    READ A$ 
+    PRINT A$;&quot; &quot;; 
+    DATA data,&quot;to read&quot;,again,and,again   
+NEXT 
+PRINT 
+RESTORE 
+GOTO LOOP</code></pre>
+<h3 id="resume"><code>RESUME</code></h3>
+<p><strong>Command.</strong> Resumes execution after an error event
+handled by <code>ON ERROR GOTO</code>. This mechanism only works in
+interpreted BASIC. ABASC implements ‘ON ERROR GOTO’ in a different way
+so it ignores <code>RESUME</code> and issues a warning if it appears in
+the code.</p>
+<h3 id="return"><code>RETURN</code></h3>
+<p><strong>Command.</strong> Continues execution at the instruction
+immediately following the most recent <code>GOSUB</code>.</p>
+<h3 id="rightstring-n"><code>RIGHT$(string, n)</code></h3>
+<p><strong>Function.</strong> Returns the rightmost <code>n</code>
+characters from <code>string</code>.</p>
+<pre class="basic"><code>PRINT RIGHT$(&quot;AMSTRAD&quot;, 3)</code></pre>
+<h3 id="rnd0"><code>RND[(0)]</code></h3>
+<p><strong>Function.</strong> Returns a pseudo-random number in the
+range [0.0–1.0]. When called with the parameter <code>0</code>
+(<code>RND(0)</code>), it returns the <strong>last</strong> generated
+random number. The use of <code>RANDOMIZE</code> and <code>RND</code>
+implies the use of real numbers.</p>
+<pre class="basic"><code>RANDOMIZE
+FOR I=1 TO 20
+    PRINT RND
+NEXT</code></pre>
+<h3 id="roundxn"><code>ROUND(x[,n])</code></h3>
+<p><strong>Function.</strong> Rounds the real number <code>x</code> to
+<code>n</code> decimal places (<code>n = 0</code> by default).</p>
+<pre class="basic"><code>FOR I=0 TO 4
+    PRINT ROUND(PI, I)
+NEXT
+PRINT ROUND(PI, -3)</code></pre>
+<h3 id="run-label-file"><code>RUN [label | file]</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this command runs the
+program already in memory from the beginning (no argument), starts the
+program in memory at the specified <code>label</code>, or loads a
+program from <code>file</code> and executes it from the beginning. ABASC
+only supports the first two forms. Bedore jumping to the start or the
+<code>label</code>, ABASC executes a <code>CLEAR</code> command to
+ensure some consistency between executions.</p>
+<h3
+id="save-filetypeaddresssizeentry"><code>SAVE file[,type][,address,size[,entry]]</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this instruction saves
+a program to disk or tape. ABASC, however, only allows saving a memory
+region as a binary file. Therefore, the file <code>type</code> must be
+always <strong>B</strong> (Binary), and must be specified as such if any
+of the following parameters are used. For reference, the file types
+supported in Locomotive BASIC are:</p>
+<ul>
+<li><strong>A</strong> – ASCII text</li>
+<li><strong>P</strong> – Protected file</li>
+<li><strong>B</strong> – Binary</li>
+</ul>
+<p>The additional optional parameters are:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>address</code></td>
+<td>Starting memory address for the dump.</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>Total number of bytes to write to the file.</td>
+</tr>
+<tr>
+<td><code>entry</code></td>
+<td>Execution address when the binary is loaded with
+<code>RUN</code>.</td>
+</tr>
+</tbody>
+</table>
+<pre class="basic"><code>MODE 1
+PAPER 3
+CLS
+SAVE &quot;pantalla.bin&quot;,B,&amp;C000,&amp;4000
+PAPER 0
+CLS
+LOAD &quot;pantalla.bin&quot;</code></pre>
+<h3 id="sgnx"><code>SGN(x)</code></h3>
+<p><strong>Function.</strong> Returns <strong>–1</strong> if
+<code>x</code> is less than 0, <strong>0</strong> if <code>x</code> is
+exactly 0, and <strong>1</strong> if <code>x</code> is greater than
+0.</p>
+<pre class="basic"><code>PRINT SGN(PI)</code></pre>
+<h3
+id="shared-variable-array-variable-array"><code>SHARED variable | array [,variable | array]</code></h3>
+<p>This command is imported from Locomotive BASIC 2 Plus. Sometimes is
+necessary to allow routines to access global variables declared in the
+main program. This can be done by declaring the variable in the routine
+as SHARED. The use of brackets at the end of the variable name means
+that the variable is an array.</p>
+<pre class="basic"><code>DIM vec(3)
+
+SUB setvec()
+    SHARED vec[]
+    vec(0) = 1
+    vec(1) = 2
+    vec(2) = 3
+END SUB
+
+call setvec()</code></pre>
+<h3 id="sinx"><code>SIN(x)</code></h3>
+<p><strong>Function.</strong> Returns the sine of <code>x</code>.
+Requires the use of real numbers.</p>
+<h3
+id="sound-channelperioddurationvolumeenventnoise"><code>SOUND channel,period,duration,volume,env,ent,noise</code></h3>
+<p><strong>Command.</strong> <code>SOUND</code> is one of the strongest
+features of Locomotive BASIC compared to other BASIC dialects of the
+era. It is extremely flexible and provides extensive access to the
+Amstrad CPC’s sound chip. Given its complexity, readers are encouraged
+to study the books listed in the <strong>References</strong> chapter for
+full details.</p>
+<pre class="basic"><code>ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
+SOUND 1,1000,0,12,2
+SOUND 2,900,0,12,2</code></pre>
+<h3 id="spacen"><code>SPACE$(n)</code></h3>
+<p><strong>Function.</strong> Returns a string containing <code>n</code>
+space characters.</p>
+<h3 id="speed-ink-t1t2"><code>SPEED INK t1,t2</code></h3>
+<p><strong>Command.</strong> The <code>INK</code> and
+<code>BORDER</code> commands can assign two alternating colors.
+<code>SPEED INK</code> specifies how long each color remains visible.
+<code>t1</code> and <code>t2</code> represent durations in
+<strong>frames</strong> (50 per second).</p>
+<pre class="basic"><code>SPEED INK 150,50 &#39; 3 seconds and 1 second
+BORDER 0,1</code></pre>
+<h3 id="speed-key-delayrepeat"><code>SPEED KEY delay,repeat</code></h3>
+<p><strong>Command.</strong> When a key is held down, it begins
+repeating after the specified <code>delay</code>, then repeats again
+every <code>repeat</code> frames. Times must be in the range <strong>1
+to 255 frames</strong> (50 per second).</p>
+<h3 id="speed-write-n"><code>SPEED WRITE n</code></h3>
+<p><strong>Command.</strong> Changes the tape output speed (in baud).
+<code>n</code> can be:</p>
+<ul>
+<li><strong>1</strong> → 2000 baud</li>
+<li><strong>0</strong> → 1000 baud</li>
+</ul>
+<h3 id="sq-channel"><code>SQ channel</code></h3>
+<p><strong>Function.</strong> Returns the number of free entries in the
+queue for the specified <code>channel</code> (1, 2, or 4). It also
+determines whether that channel is currently active and, if not, why the
+first entry in the queue (if present) is waiting.</p>
+<p>The result is an integer whose bits encode the information as
+follows:</p>
+<ul>
+<li><strong>Bits 0, 1, 2</strong> – Number of free slots in the
+queue.</li>
+<li><strong>Bits 3, 4, 5</strong> – Synchronization status of the first
+note in the queue.</li>
+<li><strong>Bit 6</strong> – Set if the first note is waiting.</li>
+<li><strong>Bit 7</strong> – Set if the channel is currently
+active.</li>
+</ul>
+<pre class="basic"><code>SOUND 65,100,100
+PRINT BIN$(SQ(1),8) &#39; should print 01000011</code></pre>
+<h3 id="sqrx"><code>SQR(x)</code></h3>
+<p><strong>Function.</strong> Returns the square root of <code>x</code>.
+Requires real-number support.</p>
+<h3 id="stop"><code>STOP</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, this stops program
+execution and returns control to the interpreter. Execution may be
+resumed with <code>CONT</code>. Since this is of little use in a
+compiled program, ABASC repurposes this instruction to perform a machine
+reset (<code>CALL 0</code>).</p>
+<h3 id="strx"><code>STR$(x)</code></h3>
+<p><strong>Function.</strong> Converts the number <code>x</code> to a
+string.</p>
+<pre class="basic"><code>PRINT &quot;PI = &quot; + STR$(PI)</code></pre>
+<h3 id="stringncharacter"><code>STRING$(n,character)</code></h3>
+<p><strong>Function.</strong> Returns a string composed of the specified
+<code>character</code> repeated <code>n</code> times.</p>
+<pre class="basic"><code>MODE 1
+LOCATE 1,10
+PRINT STRING$(40,250)</code></pre>
+<h3 id="sub-parameters-asm"><code>SUB [(parameters)] [ASM]</code></h3>
+<p><strong>Command.</strong> Imported from <strong>Locomotive BASIC 2
+Plus</strong>, <code>SUB</code> defines procedures with parameters. You
+must use <code>CALL</code> to invoke a procedure declared with
+<code>SUB</code>. Procedures must be declared <strong>before</strong>
+any call to them appears in the code.</p>
+<p>If the <code>ASM</code> clause is specified, ABASC assumes that the
+body of the procedure will consist mostly of assembly code that does
+<strong>not</strong> rely on the temporary-memory mechanism.</p>
+<p>Programmers are encouraged to read the sections <strong>Functions and
+Procedures</strong> and <strong>Using Assembly Code</strong> in the
+chapter <strong>“Compiler Peculiarities”</strong> for details on
+parameter handling and recursion support.</p>
+<pre class="basic"><code>SUB myUSING(n,long)
+    &#39; Prints number N using a fixed LONG width,
+    &#39; padding the left side with zeroes.
+    n$ = STR$(n)
+    text$ = STRING$(long,48)  &#39; fill with ASCII 0
+    digits = LEN(n$)
+    ini = long - LEN(n$) + 1
+    MID$(text$,ini,digits)=n$
+    PRINT text$
+END SUB
+
+num=1234
+CALL myUSING(num,8)</code></pre>
+<h3
+id="symbol-charactervalue1value2...value8"><code>SYMBOL character,value1,value2,...,value8</code></h3>
+<p><strong>Command.</strong> Redefines the symbol identified by the
+numeric code <code>character</code>. This code must correspond to a
+redefinable character slot (see <code>SYMBOL AFTER</code>).</p>
+<p>Each character is represented by an <strong>8×8 pixel
+matrix</strong>. The eight values following the character code define
+each row of the matrix. Each value is the sum of the bits corresponding
+to the pixels that should be lit using the current pen color. The bit
+values for each pixel position are:</p>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Pixel 1</th>
+<th>Pixel 2</th>
+<th>Pixel 3</th>
+<th>Pixel 4</th>
+<th>Pixel 5</th>
+<th>Pixel 6</th>
+<th>Pixel 7</th>
+<th>Pixel 8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>128</td>
+<td>64</td>
+<td>32</td>
+<td>16</td>
+<td>8</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<pre class="basic"><code>SYMBOL AFTER 240
+SYMBOL 240,&amp;00,&amp;00,&amp;74,&amp;7E,&amp;6C,&amp;70,&amp;7C,&amp;30
+SYMBOL 241,&amp;7E,&amp;FD,&amp;80,&amp;80,&amp;80,&amp;80,&amp;40,&amp;00
+SYMBOL 242,&amp;00,&amp;00,&amp;08,&amp;00,&amp;00,&amp;00,&amp;00,&amp;00
+SYMBOL 243,&amp;00,&amp;00,&amp;00,&amp;00,&amp;10,&amp;0C,&amp;00,&amp;00
+SYMBOL 244,&amp;60,&amp;F8,&amp;FC,&amp;FC,&amp;FC,&amp;FC,&amp;FC,&amp;FC
+SYMBOL 245,&amp;00,&amp;00,&amp;60,&amp;60,&amp;30,&amp;30,&amp;00,&amp;00
+SYMBOL 246,&amp;00,&amp;00,&amp;00,&amp;00,&amp;0C,&amp;0C,&amp;00,&amp;00
+SYMBOL 247,&amp;FC,&amp;FC,&amp;EC,&amp;CC,&amp;CC,&amp;CC,&amp;00,&amp;00
+SYMBOL 248,&amp;00,&amp;00,&amp;00,&amp;00,&amp;00,&amp;00,&amp;EE,&amp;EE
+
+MODE 0
+PRINT CHR$(22)+CHR$(1)  &#39; Transparent printing ON
+LOCATE 5,2:PEN 11:PRINT CHR$(240);
+LOCATE 5,2:PEN 1: PRINT CHR$(241);
+LOCATE 5,2:PEN 8: PRINT CHR$(242);
+LOCATE 5,2:PEN 3: PRINT CHR$(243);
+LOCATE 5,3:PEN 10:PRINT CHR$(244);
+LOCATE 5,3:PEN 6: PRINT CHR$(245);
+LOCATE 5,3:PEN 11:PRINT CHR$(246);
+LOCATE 5,4:PEN 9: PRINT CHR$(247);
+LOCATE 5,4:PEN 3: PRINT CHR$(248);
+PRINT CHR$(22)+CHR$(0)  &#39; Transparent printing OFF</code></pre>
+<h3 id="symbol-after-n"><code>SYMBOL AFTER n</code></h3>
+<p><strong>Command.</strong> Sets the character code from which
+redefinitions are allowed. <code>n</code> must be between <strong>1 and
+256</strong>. By default, programs may redefine characters
+<strong>240–255</strong>.</p>
+<p>In a compiled program, the effective available range is the
+<strong>lowest</strong> value used across all <code>SYMBOL AFTER</code>
+statements.</p>
+<p>ABASC reserves <strong>8 bytes per redefinable character</strong>. If
+custom symbols are not needed, it is recommended to begin the program
+with:</p>
+<pre class="basic"><code>SYMBOL AFTER 256</code></pre>
+<p>This prevents memory from being reserved. See the <code>SYMBOL</code>
+section for an example.</p>
+<h3 id="tag-channel"><code>TAG [#channel]</code></h3>
+<p><strong>Command.</strong> Redirects the text output of the specified
+<code>channel</code> (#0 by default) so that it uses the
+<strong>graphics cursor</strong> instead of the text cursor. This allows
+mixing text with graphics or moving the printed text pixel-by-pixel
+instead of in 8×8 character blocks.</p>
+<pre class="basic"><code>MODE 2
+BORDER 9
+INK 0,12 : INK 1,0
+LABEL BUCLE
+TAG
+FOR n = 1 TO 100
+    MOVE 200+n, 320+n
+    IF n &lt; 70 THEN
+        PRINT &quot;Hola&quot;;
+    ELSE
+        PRINT &quot;Adios&quot;;
+    END IF
+NEXT
+GOTO BUCLE</code></pre>
+<h3 id="tagoff-channel"><code>TAGOFF [#channel]</code></h3>
+<p><strong>Command.</strong> Disables the use of the graphics cursor for
+the specified text channel (#0 by default). See <code>TAG</code> for
+details.</p>
+<h3 id="tanx"><code>TAN(x)</code></h3>
+<p><strong>Function.</strong> Returns the tangent of angle
+<code>x</code>. Uses real-number arithmetic.</p>
+<pre class="basic"><code>PRINT TAN(45)</code></pre>
+<h3 id="testxy"><code>TEST(x,y)</code></h3>
+<p><strong>Function.</strong> Returns the ink value of the pixel located
+at screen coordinates <code>(x, y)</code>.</p>
+<pre class="basic"><code>MODE 1
+PRINT TEST(320,200)
+PLOT 320,200,1
+PRINT TEST(320,200)</code></pre>
+<h3 id="testrxy"><code>TESTR(x,y)</code></h3>
+<p><strong>Function.</strong> Equivalent to <code>TEST</code>, but
+interprets <code>x</code> and <code>y</code> as
+<strong>relative</strong> rather than absolute positions.</p>
+<h3 id="timen"><code>TIME[(n)]</code></h3>
+<p><strong>Function.</strong> Returns the time elapsed since the machine
+was powered on. The measurement is done in units of 1/300 of a second.
+It requires interrupts to be enabled; therefore, <code>DI</code> and
+certain disk/tape operations will prevent the timer from advancing. The
+returned value is a real number.</p>
+<p>ABASC provides an additional usage mode in which <code>TIME</code>
+behaves as a <strong>command</strong>. In this form, you may supply an
+integer value in parentheses, and that value becomes the new
+<code>TIME</code> counter.</p>
+<pre class="basic"><code>CLS
+T! = TIME      &#39; TIME(0) could be used instead
+FOR i = 1 TO 10
+    FOR j = 1 TO 1000
+        s = 1000 + j
+    NEXT j
+    PRINT &quot;.&quot;;
+NEXT i
+PRINT &quot; FIN!&quot;
+PRINT &quot;Tiempo =&quot;; (TIME - T!) / 300.0; &quot;s&quot;   &#39; If TIME(0) was used, subtracting is unnecessary</code></pre>
+<p>Finally, if ABASC detects that the value returned by
+<code>TIME</code> is being converted to an integer, it applies an
+optimization that avoids using real numbers. However, the programmer
+should be cautious when using <code>TIME</code> in this way, since the
+value wraps around every 3 seconds due to the lower precision of
+integers.</p>
+<pre class="basic"><code>TIME(0)
+FOR I = 0 TO 20
+    FRAME
+    PRINT CINT(TIME)
+NEXT</code></pre>
+<h3 id="troff"><code>TROFF</code></h3>
+<p><strong>Command.</strong> Disables trace printing. ABASC ignores this
+command when compiling and emits a warning. See also
+<code>TRON</code>.</p>
+<h3 id="tron"><code>TRON</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, enables execution
+tracing during program interpretation. ABASC ignores this command when
+compiling and emits a warning.</p>
+<h3 id="untn"><code>UNT(n)</code></h3>
+<p><strong>Command.</strong> Converts an unsigned value (such as a
+memory address) in the range 0..65535 into a signed integer in the range
+-32768..+32767.</p>
+<pre class="basic"><code>PRINT UNT(&amp;FF66)  &#39; Outputs: -154</code></pre>
+<h3 id="uppercadena"><code>UPPER$(cadena)</code></h3>
+<p><strong>Function.</strong> Returns <code>cadena</code> with all
+characters converted to uppercase.</p>
+<pre class="basic"><code>C$ = &quot;AmsTRaD&quot;
+PRINT LOWER$(C$)
+PRINT UPPER$(C$)</code></pre>
+<h3 id="valcadena"><code>VAL(cadena)</code></h3>
+<p><strong>Function.</strong> Returns the first <strong>integer</strong>
+found in <code>cadena</code>. Unlike the BASIC interpreter on Amstrad
+CPC machines, <code>VAL</code> <strong>cannot</strong> extract a real
+number from a string.</p>
+<pre class="basic"><code>PRINT VAL(&quot;15&quot;) + 15  &#39; Outputs: 30</code></pre>
+<h3 id="vposcanal"><code>VPOS([#canal])</code></h3>
+<p><strong>Function.</strong> Returns the current Y position of the text
+cursor for the specified <code>canal</code> (#0 by default).</p>
+<pre class="basic"><code>MODE 1
+PRINT POS(#0), VPOS(#0)</code></pre>
+<h3
+id="wait-puertomascarainversion"><code>WAIT puerto,mascara[,inversion]</code></h3>
+<p><strong>Command.</strong> Pauses execution until a specified value is
+read from the given I/O <code>puerto</code>. The command performs an
+<strong>AND</strong> with the <code>mascara</code> and an optional
+<strong>XOR</strong> with <code>inversion</code> (if provided).
+Execution resumes only if the result is nonzero.</p>
+<pre class="basic"><code>WAIT &amp;FF34, 20, 25</code></pre>
+<h3 id="wend"><code>WEND</code></h3>
+<p><strong>Command.</strong> Marks the end of a <code>WHILE</code>
+loop.</p>
+<h3 id="while-condición"><code>WHILE condición</code></h3>
+<p><strong>Command.</strong> Marks the beginning of a loop that
+continues executing as long as <code>condición</code> is true.</p>
+<pre class="basic"><code>CLS
+PRINT &quot;Waiting 10 seconds&quot;: T! = TIME + 3000
+WHILE TIME &lt; T!
+    SOUND 1, 0, 100, 15
+WEND
+SOUND 129, 40, 30, 15</code></pre>
+<h3 id="width-n"><code>WIDTH n</code></h3>
+<p><strong>Command.</strong> Specifies the maximum character width for
+the printer. ABASC does <strong>not</strong> support this command and
+will issue a warning if it appears in the code to be compiled.</p>
+<h3
+id="window-channelleftrighttopbottom"><code>WINDOW [#channel,]left,right,top,bottom</code></h3>
+<p><strong>Command.</strong> Defines a new text window for the specified
+<code>channel</code> (#0 by default, valid range #0..#7).</p>
+<pre class="basic"><code>MODE 1
+WINDOW #1, 1, 40, 20, 25
+WINDOW #2, 2, 39, 21, 24
+PAPER 0
+PAPER #1, 1
+PAPER #2, 2
+CLS#0
+CLS#1
+CLS#2</code></pre>
+<h3
+id="window-swap-channel1channel2"><code>WINDOW SWAP channel1,channel2</code></h3>
+<p><strong>Command.</strong> Swaps the settings of the text windows
+associated with <code>channel1</code> and <code>channel2</code>.</p>
+<pre class="basic"><code>MODE 1
+WINDOW #1, 1, 40, 20, 25
+PAPER 0
+PAPER #1, 2
+CLS#0
+CLS#1
+WINDOW SWAP 0, 1
+PRINT &quot;WINDOW 0&quot;</code></pre>
+<h3
+id="write-channeldata1data2..."><code>WRITE [#channel,]data1,data2,...</code></h3>
+<p><strong>Command.</strong> In Locomotive BASIC, writes the specified
+values to the indicated channel (#0 by default). ABASC ignores the
+channel parameter and always uses #9, the channel for file operations.
+Therefore, <code>WRITE</code> can be used to save data to a file, while
+<code>READIN</code> can be used to read it back. Real numbers are
+<strong>not supported</strong>; only integers or text strings can be
+written.</p>
+<pre class="basic"><code>A = 15
+NOM$ = &quot;Juan&quot;
+OPENOUT &quot;DATA.TXT&quot;
+WRITE #9, NOM$, A
+CLOSEOUT</code></pre>
+<h3 id="xpos"><code>XPOS</code></h3>
+<p><strong>Function.</strong> Returns the current <strong>X</strong>
+position of the graphics cursor.</p>
+<pre class="basic"><code>MODE 1
+PRINT XPOS; YPOS
+MOVE 320, 200
+PRINT XPOS; YPOS</code></pre>
+<h3 id="ypos"><code>YPOS</code></h3>
+<p><strong>Function.</strong> Returns the current <strong>Y</strong>
+position of the graphics cursor. See <code>XPOS</code>.</p>
+<h3 id="zone-n"><code>ZONE n</code></h3>
+<p><strong>Command.</strong> Changes the width (default is 13) of the
+print zone used by <code>PRINT</code> when items are separated with
+commas.</p>
+<pre class="basic"><code>CLS
+PRINT &quot;A&quot;, &quot;B&quot;
+ZONE 4
+PRINT &quot;A&quot;, &quot;B&quot;</code></pre>
+<hr />
+<h1 id="appendix-i-debugging-compiled-programs">Appendix I: Debugging
+Compiled Programs</h1>
+<p>Debugging programs generated by a cross-compiler can be a challenging
+task, as the machine running the code is different from the machine
+where it was developed. Fortunately, emulators can significantly
+simplify this process. For example, <strong>WinApe</strong> and
+<strong>Retro Virtual Machine</strong> allow us to set up an effective
+debugging environment.</p>
+<h2 id="verifying-basic-code">Verifying BASIC Code</h2>
+<p><strong>WinApe</strong> provides a convenient way to “paste” BASIC
+code and run it. This allows us to compare results between the BASIC
+interpreter and our compiled code. Naturally, to make a fair comparison,
+we cannot use features introduced in Locomotive BASIC 2.0 (such as
+<code>FUNCTION</code>, <code>SUB</code>, multiline <code>IF</code>,
+etc.). However, we <strong>can</strong> use the following options:</p>
+<ul>
+<li>Code without line numbers</li>
+<li>Code split across multiple files</li>
+</ul>
+<p>When compiling with ABASC, the first step is handled by the
+preprocessor. With the <code>--verbose</code> option enabled, it
+generates an intermediate file with the <code>.BPP</code> extension,
+where line numbers are added and any additional files referenced with
+<code>CHAIN MERGE</code> are included.</p>
+<p>To paste code into <strong>WinApe</strong>, follow these steps:</p>
+<ol type="1">
+<li>Select the desired code in your preferred editor and choose the
+<code>Copy</code> option.</li>
+<li>In <strong>WinApe</strong>, go to the <code>File</code> menu and
+select <code>Paste</code>.</li>
+<li>If you are pasting a large amount of code, enable
+<code>Settings &gt; High Speed</code> to accelerate the process.
+Remember to switch back to <code>Normal Speed</code> once the paste is
+complete.</li>
+</ol>
+<h2 id="debugging-our-code">Debugging our Code</h2>
+<p>It is not possible to debug BASIC code step by step, but we
+<strong>can</strong> debug the assembly code generated by the compiler.
+As part of the compilation process, ABASC produces an intermediate file
+with the <code>.ASM</code> extension. This file uses a syntax compatible
+with <strong>WinApe</strong> and <strong>Retro Virtual Machine
+2.0</strong>.</p>
+<p>In <strong>Retro Virtual Machine</strong>, we can enable debugging
+tools by following these steps:</p>
+<ol type="1">
+<li>Open our Amstrad CPC machine (464 or 6128).</li>
+<li>Click on the hamburger menu in the top-left corner.</li>
+<li>Enable the <code>Developer Mode</code> option.</li>
+</ol>
+<p>An icon with a hammer will appear in the top toolbar. Clicking on it
+will display a submenu with various tools; we select the last one, the
+<strong>Retro Virtual Machine</strong> console. From this console, we
+can navigate through the machine’s directories and load our code as
+follows:</p>
+<ul>
+<li><code>ls</code> — Lists the contents of the current directory.</li>
+<li><code>cd</code> — Changes the current directory.</li>
+<li><code>asm</code> — Assembles the specified <code>.ASM</code>
+file.</li>
+</ul>
+<p>This method allows us to load our program into a test environment
+much faster than using <code>.DSK</code> files and disk support. Once
+the program is in memory, it can be executed with the command:</p>
+<pre class="basic"><code>CALL &amp;170</code></pre>
+<p>Additionally, after assembling our code with <strong>Retro Virtual
+Machine</strong>, it is possible to list all symbols (line labels,
+variable names, etc.) in the console using the command:</p>
+<pre><code>symbols</code></pre>
+<p>This allows us to set breakpoints at any memory location with:</p>
+<pre><code>break memory-address</code></pre>
+<p>To clear all breakpoints, simply execute:</p>
+<pre><code>break -x</code></pre>
+<p>This debugging process requires some familiarity with assembly code.
+The <code>References</code> section includes books and resources that
+can serve as useful learning material.</p>
+<p>Finally, readers are encouraged to consult the official documentation
+for <strong>WinApe</strong> and <strong>Retro Virtual Machine</strong>
+to explore additional debugging options and fully leverage the tools
+provided by these emulators.</p>
+<hr />
+<h1 id="appendix-ii-extending-the-compiler">Appendix II: Extending the
+Compiler</h1>
+<p>One of the major advantages of ABASC is that, being written in
+Python, it is easy to <strong>extend and modify its
+functionality</strong>. The source code is organized across the
+following main files:</p>
+<ul>
+<li><strong>abasc.py – Main file:</strong> Handles the compiler options
+and executes the compilation process step by step.</li>
+<li><strong>baspp.py – Preprocessor:</strong> Adds line numbers and
+inserts any additional code files referenced via
+<code>CHAIN MERGE</code>. If the <code>--verbose</code> option is
+enabled, it generates an intermediate file with the <code>.BPP</code>
+extension.</li>
+<li><strong>baslex.py – Lexical Analyzer:</strong> Scans the source code
+and generates the corresponding list of tokens. With
+<code>--verbose</code>, it produces an intermediate <code>.LEX</code>
+file.</li>
+<li><strong>basparse.py – Syntax Analyzer:</strong> Processes the token
+list, checks the program’s syntax, and generates an intermediate
+representation of the code in the form of an Abstract Syntax Tree (AST).
+With <code>--verbose</code>, an intermediate <code>.AST</code> file is
+generated.</li>
+<li><strong>emitters/cpcemitter.py – Assembler Code Generator:</strong>
+Takes the AST produced by the syntax analyzer and outputs the equivalent
+assembly code. The result is saved as a <code>.ASM</code> file, which is
+then assembled by <strong>ABASM</strong> to produce the final
+binary.</li>
+<li><strong>emitters/cpcrt.py – Compiler Runtime:</strong> Contains
+assembly routines called by the code generated by
+<code>cpcemitter.py</code>.</li>
+</ul>
+<p>Whenever changes are made to any of these files, it is recommended to
+check for obvious errors. This can be done by running the following
+commands from the directory containing <code>abasc.py</code>:</p>
+<ul>
+<li><strong>Type checking:</strong></li>
+</ul>
+<div class="sourceCode" id="cb119"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<ul>
+<li><strong>Unit testing:</strong></li>
+</ul>
+<div class="sourceCode" id="cb120"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<p>Finally, the <code>examples</code> directory contains several sample
+programs that can be compiled and also used for testing and
+experimenting with the compiler.</p>
+<hr />
+</body>
+</html>

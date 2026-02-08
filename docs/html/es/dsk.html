@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>dsk</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="dsk-manual-del-usuario">DSK: MANUAL DEL USUARIO</h1>
+<h1 id="descripción">Descripción</h1>
+<p><code>dsk.py</code> es una herramienta simple basada en Python 3.X
+para crear y gestionar archivos DSK como los utilizados en simuladores y
+emuladores de disquetera para ordenadores Amstrad CPC. Puede realizar
+varias operaciones para trabajar con estos archivos, siendo su principal
+objetivo ayudar en el empaquetado de programas desarrollados desde
+ordenadores modernos.</p>
+<p>Actualmente solo soporta el formato de datos de una cara: * 178 kb. *
+40 pistas con 9 sectores de 512 bytes cada uno. * Sectores numerados del
+0xC1 al 0xC9. * Taba de ficheros con 64 entradas.</p>
+<p>Para más información sobre el formato se pueden consultar las
+siguientes páginas: - <a
+href="http://www.benchmarko.de/cpcemu/cpcdoc/chapter/cpcdoc7_e.html#I_FILE_STRUCTURE">Amstrad
+CPC Emulator Documentation</a> - <a
+href="https://www.cpcwiki.eu/index.php/Format:DSK_disk_image_file_format">CPCWiki
+- DSK Disk Image File Format</a> - <a
+href="https://sinclair.wiki.zxnet.co.uk/wiki/DSK_format">Sinclair Wiki -
+DSK Format</a></p>
+<p>Esta herramienta no sobreescribe ficheros existentes con el mismo
+nombre dentro del fichero DSK, todas las operaciones añaden ficheros.
+Por eso, se puede combinar la opción –new con las operaciones de
+insertado, de forma que se pueda generar el mismo fichero DSK cada vez
+que se ejecute el comando.</p>
+<h1 id="uso-básico">Uso básico</h1>
+<pre><code>python dsk.py &lt;dskfile&gt; [opciones]</code></pre>
+<h2 id="opciones-disponibles">Opciones disponibles</h2>
+<ul>
+<li><code>--new</code>: Crea un nuevo archivo DSK vacío.</li>
+<li><code>--check</code>: Verifica si el formato del archivo DSK es
+compatible con la herramienta.</li>
+<li><code>--dump</code>: Muestra información sobre el formato del
+archivo DSK en la salida estándar.</li>
+<li><code>--cat</code>: Lista el contenido del archivo DSK en la salida
+estándar.</li>
+<li><code>--header &lt;entry&gt;</code>: Muestra el encabezado AMSDOS
+para la entrada de archivo indicada (comenzando en 0).</li>
+<li><code>--get &lt;entry&gt;</code>: Extrae el archivo apuntado por la
+entrada indicada (comenzando en 0).</li>
+<li><code>--put-bin &lt;file&gt;</code>: Agrega un nuevo archivo binario
+al archivo DSK, generando y añadiendo un encabezado AMSDOS
+adicional.</li>
+<li><code>--put-raw &lt;file&gt;</code>: Agrega un nuevo archivo binario
+al archivo DSK sin crear un encabezado AMSDOS adicional.</li>
+<li><code>--put-ascii &lt;file&gt;</code>: Agrega un nuevo archivo ASCII
+al archivo DSK. El archivo no debe incluir encabezado AMSDOS.</li>
+<li><code>--map-file &lt;file&gt;</code>: Importa un archivo generado
+por el ensamblador ABASM con un listado de símbolos y su dirección de
+memoria asociada.</li>
+<li><code>--load-addr &lt;address&gt;</code>: Dirección inicial para la
+carga del archivo (por defecto 0x4000), solo se usa en archivos binarios
+con encabezados AMSDOS generados.</li>
+<li><code>--start-addr &lt;address|symbol&gt;</code>: Dirección de
+llamada después de cargar el archivo (por defecto 0x4000). Si se importa
+un archivo MAP con símbolos se puede indicar uno de esos símbolos como
+punto de inicio. Solo tiene uso en archivos binarios con encabezados
+AMSDOS.</li>
+<li><code>--help</code>: Muestra la ayuda en la salida estándar.</li>
+</ul>
+<h2 id="ejemplos-de-uso">Ejemplos de uso</h2>
+<p>Crear un nuevo archivo DSK con un programa en BASIC</p>
+<pre><code>python3 dsk.py archivo.dsk --new --put-ascii programa.bas</code></pre>
+<p>Listar el contenido del archivo DSK para verificar que nuestro
+programa está incluido</p>
+<pre><code>python3 dsk.py archivo.dsk --cat</code></pre>
+<p>Crear un fichero DSK con un programa binario que debe cargarse y
+ejecutarse en la dirección 0x4000</p>
+<pre><code>python3 dsk.py --new archivo.dsk --new --put-bin programa.bin --load-addr 0x4000 --start-addr 0x4000</code></pre>
+<p>Crear un fichero DSK con un programa binario que debe cargarse en la
+dirección 0x4000 y ejecutarse saltando a la dirección asociada al
+símbolo MAIN contenido en el archivo simbols.map</p>
+<pre><code>python3 dsk.py --new archivo.dsk --new --put-bin programa.bin --map-file simbols.map --load-addr 0x4000 --start-addr MAIN</code></pre>
+</body>
+</html>
