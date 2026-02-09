@@ -2485,7 +2485,7 @@ class CPCEmitter:
         addresses = addresses + f": dw {datastr[:-1]}"
         self._emit_data(addresses, section=DataSec.CONST)
 
-    def _emit_ON_BREAK_STOP(self, node:AST.Command) -> None:
+    def _emit_ON_BREAK_CONT(self, node:AST.Command) -> None:
         """
         ON BREAK CONT disables the option to break a program pressing
         the escape key twice.
