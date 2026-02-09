@@ -59,9 +59,12 @@ SUB cpctPageMemory(bankvalue) ASM
 END SUB
 
 SUB cpctSetStackLocation(halts) ASM
-    ASM "ld      l,(ix+0)"
-    ASM "ld      h,(ix+1)"
-    ASM "jp      cpct_setStackLocation"
+    ASM "pop     bc                    ; store current return address"
+    ASM "pop     hl                    ; get the new stack address"
+    ASM "call    cpct_setStackLocation ; change stack position"
+    ASM "push    hl                    ; restore the stack memory consummed by the argument"
+    ASM "push    bc                    ; restore return address"
+    ASM "ret"
     ASM "read 'asm/cpctelera/memutils/cpct_setStackLocation.asm'"
 END SUB
 
