@@ -18,9 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 from __future__ import annotations
 import sys
 import os
-import re
 import argparse
-from typing import cast
 from dataclasses import dataclass
 from baserror import BasError
 from baslex import LocBasLexer, TokenType
@@ -151,7 +149,7 @@ class LocBasPreprocessor:
         except IOError:
             self._raise_error(25, info=f"couldn't write file {output}")
 
-def process_args():
+def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='baspp.py',
         description="""

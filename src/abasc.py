@@ -16,6 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
+from typing import Any
 import sys, os
 import argparse
 import time
@@ -35,7 +36,7 @@ __author__='Javier "Dwayne Hicks" Garcia'
 __version__= "0.99 beta"
 
 
-def aux_int(param):
+def aux_int(param: Any) -> int:
     """
     By default, int params are converted assuming base 10.
     To allow hex values we need to 'auto' detect the base.
@@ -58,7 +59,7 @@ def process_args() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def clear(sourcefile: str):
+def clear(sourcefile: str) -> None:
     basefile = sourcefile.upper() 
     files: list[str] = [
         basefile.replace('.BAS', '.BPP'),
@@ -124,7 +125,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose
     emitter.cfgset_dataaddr(dataaddr)
     return emitter.emit_program()
     
-def assemble(infile: str, outfile: str, asmcode: str):
+def assemble(infile: str, outfile: str, asmcode: str) -> None:
     asmfile = infile.upper().replace('BAS','ASM')
     with open(asmfile, "w", encoding="utf-8") as fd:
             fd.write(asmcode)

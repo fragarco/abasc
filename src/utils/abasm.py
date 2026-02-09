@@ -561,7 +561,7 @@ class AsmContext:
                     self.assembled_code.append(self.currentinst)
                 self.origin = self.origin + incbytes
                 if self.origin > self.limit:
-                    abort(f"memory full. Current limit is set to {self.limit}")
+                    abort(message=f"current limit is set to {self.limit}", errortype="Memory Full")
             if self.whilestate == WSTATE_LOOP:
                 self.linenumber = self.whileline
             elif self.repeatstate == RSTATE_LOOP:
@@ -621,8 +621,8 @@ def warning(message, tolerancelevel):
     elif tolerancelevel == g_context.tolerance:
         print(f"[WARNING{tolerancelevel:02d}] {os.path.basename(g_context.currentfile)}: {message} in {g_context.currentline.strip()}")
 
-def abort(message, tolerancelevel=0):
-    line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: Syntax Error ({message})"
+def abort(message, tolerancelevel=0, errortype = "Syntax Error"):
+    line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: {errortype} ({message})"
     code = g_context.currentline.strip()
     line2 = '' if code == '' else f"in {code}"
     if g_context.listingfile != None:
@@ -1615,7 +1615,7 @@ def op_LD(p,opargs):
                 abort("invalid argument")
 
             if r1 == REG_IND and r2 == REG_IND:
-                abort("Ha - nice try. That's a HALT.")
+                abort("this sentece produces same binary code than a HALT")
 
             if (r1 == REG_H or r1 == REG_L) and (r2 == REG_H or r2 == REG_L) and prefix1 != prefix2:
                 abort("illegal combination of operands")

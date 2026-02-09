@@ -94,12 +94,12 @@ class ASTNode:
     line: int
     col: int
 
-    def __init__(self, id: str):
+    def __init__(self, id: str) -> None:
         self.id = id
         self.line = 0
         self.col = 0
 
-    def set_origin(self, line: int, col: int):
+    def set_origin(self, line: int, col: int) -> None:
         self.line = line
         self.col = col
 
@@ -116,7 +116,7 @@ class ASTNode:
 class Program(ASTNode):
     lines: list["Line"]
 
-    def __init__(self, lines: list["Line"]):
+    def __init__(self, lines: list["Line"]) -> None:
         super().__init__(id="Program")
         self.lines = lines
 
@@ -129,7 +129,7 @@ class Line(ASTNode):
     number: int
     statements: list["Statement"]
 
-    def __init__(self, number: int, statements: list["Statement"]):
+    def __init__(self, number: int, statements: list["Statement"]) -> None:
         super().__init__(id="Line")
         self.number=number
         self.statements=statements
@@ -143,7 +143,7 @@ class Line(ASTNode):
 class Statement(ASTNode):
     etype: ExpType
 
-    def __init__(self, etype: ExpType, id: str):
+    def __init__(self, etype: ExpType, id: str) -> None:
         super().__init__(id=id)
         self.etype = etype
 
@@ -155,7 +155,7 @@ class Statement(ASTNode):
 class Nop(Statement):
     """ can be used to return something after an error occurred """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(etype=ExpType.Void, id="NOP")
 
     def to_json(self) -> dict:
@@ -168,7 +168,7 @@ class Assignment(Statement):
     source: Statement
     id: str = "Assignment"
 
-    def __init__(self, target: Statement, source: Statement, etype: ExpType):
+    def __init__(self, target: Statement, source: Statement, etype: ExpType) -> None:
         super().__init__(etype=etype, id="Assignment")
         self.target = target
         self.source = source
@@ -184,7 +184,7 @@ class BinaryOp(Statement):
     left: Statement
     right: Statement
 
-    def __init__(self, op: str, left: Statement, right: Statement, etype: ExpType):
+    def __init__(self, op: str, left: Statement, right: Statement, etype: ExpType) -> None:
         super().__init__(etype=etype, id="BinaryOp")
         self.left = left
         self.right = right
@@ -201,7 +201,7 @@ class UnaryOp(Statement):
     op: str
     operand: Statement
 
-    def __init__(self, op: str, operand: Statement, etype: ExpType):
+    def __init__(self, op: str, operand: Statement, etype: ExpType) -> None:
         super().__init__(etype=etype, id="UnaryOp")
         self.operand = operand
         self.op = op
@@ -216,7 +216,7 @@ class Range(Statement):
     low: str | int
     high: str | int
 
-    def __init__(self, low: int | str, high: int | str, etype: ExpType):
+    def __init__(self, low: int | str, high: int | str, etype: ExpType) -> None:
         super().__init__(etype=etype, id="Range")
         self.low = low
         self.high = high
@@ -230,7 +230,7 @@ class Range(Statement):
 class Integer(Statement):
     value: int
 
-    def __init__(self, value: int):
+    def __init__(self, value: int) -> None:
         super().__init__(etype=ExpType.Integer, id="Integer")
         self.value = value
 
@@ -242,7 +242,7 @@ class Integer(Statement):
 class Real(Statement):
     value: float
 
-    def __init__(self, value: float):
+    def __init__(self, value: float) -> None:
         super().__init__(etype=ExpType.Real, id="Real")
         self.value = value
 
@@ -254,7 +254,7 @@ class Real(Statement):
 class String(Statement):
     value: str
 
-    def __init__(self, value: str):
+    def __init__(self, value: str) -> None:
         super().__init__(etype=ExpType.String, id="String")
         self.value = value
 
@@ -266,7 +266,7 @@ class String(Statement):
 class Variable(Statement):
     name: str
 
-    def __init__(self, name: str, etype: ExpType):
+    def __init__(self, name: str, etype: ExpType) -> None:
         super().__init__(etype=etype, id="Variable")
         self.name = name
 
@@ -280,7 +280,7 @@ class Array(Statement):
     sizes: list[int]
     datasz: int
 
-    def __init__(self, name: str, etype: ExpType, sizes: list[int], datasz: int):
+    def __init__(self, name: str, etype: ExpType, sizes: list[int], datasz: int) -> None:
         super().__init__(etype=etype, id="Array")
         self.name = name
         self.sizes = sizes
@@ -297,7 +297,7 @@ class ArrayItem(Statement):
     name: str
     args: list[Statement]
 
-    def __init__(self, name: str, etype: ExpType, args: list[Statement]):
+    def __init__(self, name: str, etype: ExpType, args: list[Statement]) -> None:
         super().__init__(etype=etype, id="ArrayItem")
         self.name = name
         self.args = args
@@ -311,7 +311,7 @@ class ArrayItem(Statement):
 class Pointer(Statement):
     var: Variable | ArrayItem | Label | String
 
-    def __init__(self, var: Variable | ArrayItem | Label | String):
+    def __init__(self, var: Variable | ArrayItem | Label | String) -> None:
         super().__init__(etype=ExpType.Integer, id="Pointer")
         self.var = var
 
@@ -326,7 +326,7 @@ class Pointer(Statement):
 class Stream(Statement):
     value: int
 
-    def __init__(self, value: int = 0):
+    def __init__(self, value: int = 0) -> None:
         super().__init__(etype=ExpType.Integer, id="Stream")
         self.value = value
 
@@ -338,7 +338,7 @@ class Stream(Statement):
 class Separator(Statement):
     sym: str
     
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str) -> None:
         super().__init__(etype=ExpType.Void, id="Separator")
         self.sym = symbol
 
@@ -358,7 +358,7 @@ class If(Statement):
     else_label: str    # used during code generation
     end_label: str      # used during code generation
 
-    def __init__(self, condition: Statement, inline_then: list[Statement] = [], inline_else: list[Statement] = []):
+    def __init__(self, condition: Statement, inline_then: list[Statement] = [], inline_else: list[Statement] = []) -> None:
         super().__init__(etype=ExpType.Void, id="If")
         self.condition = condition
         self.inline_then = inline_then
@@ -387,7 +387,7 @@ class ForLoop(Statement):
     end_label: str      # used during code generation
     var_label: str      # used during code generation
 
-    def __init__(self, var: Variable, start: Statement, end: Statement, step: Optional[Statement]=None):
+    def __init__(self, var: Variable, start: Statement, end: Statement, step: Optional[Statement]=None) -> None:
         super().__init__(etype=ExpType.Void, id="ForLoop")
         self.var = var
         self.start = start
@@ -409,7 +409,7 @@ class WhileLoop(Statement):
     start_label: str      # used during code generation
     end_label: str      # used during code generation
 
-    def __init__(self, condition: Statement):
+    def __init__(self, condition: Statement) -> None:
         super().__init__(etype=ExpType.Void, id="WhileLoop")
         self.condition = condition
         self.end_label = ""
@@ -430,7 +430,7 @@ class SelectCase(Statement):
     end_label: str         # used during code generation
     currentopt: int        # used during code generation
 
-    def __init__(self, condition: Statement):
+    def __init__(self, condition: Statement) -> None:
         super().__init__(etype=ExpType.Void, id="SelectCase")
         self.condition = condition
         self.options = 0
@@ -450,7 +450,7 @@ class BlockEnd(Statement):
     name: str
     var: str
 
-    def __init__(self, name: str, var: str = ""):
+    def __init__(self, name: str, var: str = "") -> None:
         super().__init__(etype=ExpType.Void, id="BlockEnd")
         self.name = name
         self.var = var 
@@ -464,7 +464,7 @@ class BlockEnd(Statement):
 class Comment(Statement):
     text: str = ""
 
-    def __init__(self, text: str):
+    def __init__(self, text: str) -> None:
         super().__init__(etype=ExpType.Void, id="Comment")
         self.text = text
 
@@ -476,7 +476,7 @@ class Comment(Statement):
 class Label(Statement):
     value: str
 
-    def __init__(self, value: str):
+    def __init__(self, value: str) -> None:
         super().__init__(etype=ExpType.Void, id="Label")
         self.value = value
 
@@ -491,7 +491,7 @@ class RSX(Statement):
     command: str = ""
     args: list[Statement]
 
-    def __init__(self, command: str, args: list[Statement] = []):
+    def __init__(self, command: str, args: list[Statement] = []) -> None:
         super().__init__(etype=ExpType.Void, id="RSX")
         self.command = command
         self.args = args
@@ -506,7 +506,7 @@ class Command(Statement):
     name: str
     args: list[Statement]
 
-    def __init__(self, name: str, args: list[Statement] = []):
+    def __init__(self, name: str, args: list[Statement] = []) -> None:
         super().__init__(etype=ExpType.Void, id="Command")
         self.name = name
         self.args = args
@@ -521,7 +521,7 @@ class Function(Statement):
     name: str
     args: list[Statement]
 
-    def __init__(self, name: str, etype: ExpType, args: list[Statement] = []):
+    def __init__(self, name: str, etype: ExpType, args: list[Statement] = []) -> None:
         super().__init__(etype=etype, id="Function")
         self.name = name
         self.args = args
@@ -536,7 +536,7 @@ class UserFun(Statement):
     name: str
     args: list[Statement]
 
-    def __init__(self, name: str, etype: ExpType, args: list[Statement]):
+    def __init__(self, name: str, etype: ExpType, args: list[Statement]) -> None:
         super().__init__(etype=etype, id="UserFun")
         self.name = name
         self.args = args
@@ -552,7 +552,7 @@ class Data(Statement):
     linelabel: str
     userlabel: str
 
-    def __init__(self, args: list[Statement], linelabel: str, userlabel: str):
+    def __init__(self, args: list[Statement], linelabel: str, userlabel: str) -> None:
         super().__init__(etype=ExpType.Void, id="Data")
         self.args = args
         self.linelabel = f"_data_{linelabel}_label"
@@ -570,7 +570,7 @@ class Print(Statement):
     items: list[Statement]
     newline: bool
 
-    def __init__(self, stream: Optional[Statement], items: list[Statement]):
+    def __init__(self, stream: Optional[Statement], items: list[Statement]) -> None:
         super().__init__(etype=ExpType.Void, id="Print")
         self.stream = stream
         self.items = items
@@ -591,7 +591,7 @@ class Input(Statement):
     question: bool
     vars: Sequence[Variable | ArrayItem]
 
-    def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable | ArrayItem]):
+    def __init__(self, stream: Optional[Statement], prompt: str, question: bool, vars: list[Variable | ArrayItem]) -> None:
         super().__init__(etype=ExpType.Void, id="Input")
         self.stream = stream
         self.prompt = prompt
@@ -610,7 +610,7 @@ class ReadIn(Statement):
     prompt: str
     vars: Sequence[Variable | ArrayItem]
 
-    def __init__(self, vars: list[Variable | ArrayItem]):
+    def __init__(self, vars: list[Variable | ArrayItem]) -> None:
         super().__init__(etype=ExpType.Void, id="ReadIn")
         self.vars = vars
 
@@ -626,7 +626,7 @@ class LineInput(Statement):
     question: bool
     var: Variable | ArrayItem
 
-    def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, question: bool, var: Variable | ArrayItem):
+    def __init__(self, stream: Optional[Statement], prompt: str, carriage: bool, question: bool, var: Variable | ArrayItem) -> None:
         super().__init__(etype=ExpType.Void, id="LineInput")
         self.stream = stream
         self.prompt = prompt
@@ -646,7 +646,7 @@ class Write(Statement):
     stream: Optional[Statement]
     items: list[Statement]
 
-    def __init__(self, stream: Optional[Statement], items: list[Statement]):
+    def __init__(self, stream: Optional[Statement], items: list[Statement]) -> None:
         super().__init__(etype=ExpType.Void, id="Write")
         self.stream = stream
         self.items = items
@@ -663,7 +663,7 @@ class DefFN(Statement):
     body: Statement
     heapmem: int    # used by the emiter to save the amount of tmp memory per call
 
-    def __init__(self, name: str, args: list[Variable|Array], body: Statement):
+    def __init__(self, name: str, args: list[Variable|Array], body: Statement) -> None:
         super().__init__(etype=ExpType.Void, id="DefFN")
         self.name = name
         self.args = args
@@ -683,7 +683,7 @@ class DefFUN(Statement):
     asm: bool
     args: list[Variable|Array]
 
-    def __init__(self, name: str, args: list[Variable|Array], asm=False):
+    def __init__(self, name: str, args: list[Variable|Array], asm=False) -> None:
         super().__init__(etype=ExpType.Void, id="DefFUN")
         self.name = name
         self.asm = asm
@@ -701,7 +701,7 @@ class DefSUB(Statement):
     asm: bool
     args: list[Variable|Array]
 
-    def __init__(self, name: str, args: list[Variable|Array], asm=False):
+    def __init__(self, name: str, args: list[Variable|Array], asm=False) -> None:
         super().__init__(etype=ExpType.Void, id="SUB")
         self.name = name
         self.asm = asm

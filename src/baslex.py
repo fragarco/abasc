@@ -141,7 +141,7 @@ _SINGLE_CHARS = {
 # -------------------------------
 
 class LocBasLexer:
-    def __init__(self, text: str, enforce_varlen: bool = True):
+    def __init__(self, text: str, enforce_varlen: bool = True) -> None:
         # Windows/Amstrad line end to \n
         self.text = text.replace("\r\n", "\n").replace("\r", "\n")
         self.pos = 0
@@ -185,7 +185,7 @@ class LocBasLexer:
             return True
         return False
 
-    def _skip_spaces(self):
+    def _skip_spaces(self) -> None:
         while self._peek() in (" ", "\t"):
             self._advance()
 

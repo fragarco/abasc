@@ -171,7 +171,7 @@ _ERRORCODES = {
 }
 
 class BasError(Exception):
-    def __init__(self, ecode: int, source: str = "", code: str = "", line: int = -1, col: int = -1, info: str = ""):
+    def __init__(self, ecode: int, source: str = "", code: str = "", line: int = -1, col: int = -1, info: str = "") -> None:
         self.ecode = f"{ecode:03d}"
         self.source = source
         self.code = code
@@ -179,7 +179,7 @@ class BasError(Exception):
         self.col = col
         self.info = info
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = f"[ERR{self.ecode}] "
         if self.source != "":
             msg = msg + f"{self.source}"

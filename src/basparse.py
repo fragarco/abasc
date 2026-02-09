@@ -42,7 +42,7 @@ for line in ast.lines:
 """
 
 from __future__ import annotations
-from typing import Callable, Optional, cast
+from typing import Callable, Optional, cast, NoReturn
 from dataclasses import dataclass
 from enum import Enum, auto
 from math import log
@@ -96,7 +96,7 @@ class LocBasParser:
 
     # ----------------- Error management -----------------
 
-    def _raise_error(self, codenum: int, tk: Token, info: str = ""):
+    def _raise_error(self, codenum: int, tk: Token, info: str = "") -> NoReturn:
         # Token lines start at 1
         if tk.line >= len(self.lines):
             # For example, EOF found while parsing the last line
@@ -112,7 +112,7 @@ class LocBasParser:
             info
         ) 
 
-    def _raise_warning(self, level: WL, msg: str, node: Optional[AST.ASTNode] = None):
+    def _raise_warning(self, level: WL, msg: str, node: Optional[AST.ASTNode] = None) -> None:
         if level <= self.warning_level:
             current: AST.ASTNode | Token = node if node is not None else self._current()
             # tokens start line counting in 1
@@ -1784,7 +1784,7 @@ class LocBasParser:
     def _parse_ON_BREAK(self) -> AST.Command:
         """ 
         <ON_BREAK> ::= ON BREAK <on_break_body>
-        <on_break_body> ::= COUNT | STOP |GOSUB INT
+        <on_break_body> ::= COUNT | STOP | GOSUB INT
         """
         self._advance()
         args: list[AST.Statement] = []

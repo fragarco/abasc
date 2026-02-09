@@ -54,7 +54,7 @@ class SymEntry:
 class SymTable:
     syms: dict[str, SymEntry]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.syms = {}
 
     def _gen_label(self, name: str, entry: SymEntry, prefix: str) -> str:
@@ -79,7 +79,7 @@ class SymTable:
             return f"RSX_{name.upper()}"
         return ""
 
-    def _code_symtype(self, ident: str, stype: SymType):
+    def _code_symtype(self, ident: str, stype: SymType) -> str:
         if stype == SymType.Variable:
             return f"VAR_{ident}"
         elif stype == SymType.Param:

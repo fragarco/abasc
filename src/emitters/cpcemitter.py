@@ -21,12 +21,12 @@ and are not covered by the above license statement.
 """
 
 from __future__ import annotations
-from typing import cast
+from typing import cast, NoReturn
 from enum import Enum
 from baspp import CodeLine
 from baserror import BasError
 from baserror import WarningLevel as WL
-from symbols import SymTable, SymEntry, SymType, symsto_json
+from symbols import SymTable, SymEntry, SymType
 import astlib as AST
 from .cpcrt import FWCALL, RT
 
@@ -38,7 +38,7 @@ class DataSec(str, Enum):
     CONST = "Constants"
 
 class CPCEmitter:
-    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable):
+    def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable) -> None:
         self.source = code
         self.program = program
         self.symtable = symtable
@@ -98,29 +98,29 @@ class CPCEmitter:
             line = f"{line:<30}; {info}"
         return line
 
-    def _emit_head(self, line: str="", indent: int=4, info: str=""):
+    def _emit_head(self, line: str="", indent: int=4, info: str="") -> None:
         line = self._emit_prepare_line(line, indent, info)
         self.headcode = self.headcode + line + "\n"
 
-    def _emit_startup(self, line: str="", indent: int=4, info: str=""):
+    def _emit_startup(self, line: str="", indent: int=4, info: str="") -> None:
         line = self._emit_prepare_line(line, indent, info)
         self.startupcode = self.startupcode + line + "\n"
 
-    def _emit_heap(self, line: str="", indent: int=4, info: str=""):
+    def _emit_heap(self, line: str="", indent: int=4, info: str="") -> None:
         line = self._emit_prepare_line(line, indent, info)
         self.heapcode = self.heapcode + line + "\n"
 
-    def _emit_code(self, line: str="", indent: int=4, info: str=""):
+    def _emit_code(self, line: str="", indent: int=4, info: str="") -> None:
         """ Pure comments are added only if we are in verbose mode """
         if self.verbose or line == "" or line[0] != ";":
             line = self._emit_prepare_line(line, indent, info)
             self.srccode = self.srccode + line + "\n"
 
-    def _emit_data(self, line: str="", indent: int=4, info: str="", section: DataSec=DataSec.GEN):
+    def _emit_data(self, line: str="", indent: int=4, info: str="", section: DataSec=DataSec.GEN) -> None:
         line = self._emit_prepare_line(line,indent, info)
         self.data[section] = self.data[section] + line +"\n"
 
-    def _emit_line_label(self, line: AST.Line):
+    def _emit_line_label(self, line: AST.Line) -> None:
         sym = self.symtable.find(str(line.number), SymType.Label, "")
         if sym is not None:
             codeline = self.source[line.line-1]
@@ -172,7 +172,7 @@ class CPCEmitter:
             self.free_heap_memory = False
             self.reserved_heap_memory = 0
 
-    def _reserve_heapmem(self, nbytes: int, node: AST.ASTNode):
+    def _reserve_heapmem(self, nbytes: int, node: AST.ASTNode) -> None:
         self._emit_import("rt_malloc")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
         self._emit_code("call    rt_malloc", info="HL points to heap memory")
@@ -180,7 +180,7 @@ class CPCEmitter:
         self.reserved_heap_memory += nbytes
         self._check_heapmem()
 
-    def _reserve_heapmem_de(self, nbytes: int, node: AST.ASTNode):
+    def _reserve_heapmem_de(self, nbytes: int, node: AST.ASTNode) -> None:
         self._emit_import("rt_malloc_de")
         self._emit_code(f"ld      bc,{nbytes}", info="bytes to reserve")
         self._emit_code("call    rt_malloc_de", info="DE points to heap memory")
@@ -188,31 +188,31 @@ class CPCEmitter:
         self.reserved_heap_memory += nbytes
         self._check_heapmem()
 
-    def _check_heapmem(self):
+    def _check_heapmem(self) -> None:
         if self.reserved_heap_memory > self.max_heap_memory:
             self.max_heap_memory = self.reserved_heap_memory
 
-    def _emit_pushcontext(self):
+    def _emit_pushcontext(self) -> None:
         if self.context != "":
             self._emit_code("push    ix")
 
-    def _emit_popcontext(self):
+    def _emit_popcontext(self) -> None:
         if self.context != "":
             self._emit_code("pop     ix")
 
-    def _moveflo_accum1(self):
+    def _moveflo_accum1(self) -> None:
         """ Moves real number in (HL) to rt_math_accum1"""
         self._emit_import("rt_move_real")
         self._emit_code("ld      de,rt_math_accum1")
         self._emit_code("call    rt_move_real", info="REAL to rt_math_accum1")
 
-    def _moveflo_accum2(self):
+    def _moveflo_accum2(self) -> None:
         """ Moves real number in (HL) to rt_math_accum2"""
         self._emit_import("rt_move_real")
         self._emit_code("ld      de,rt_math_accum2")
         self._emit_code("call    rt_move_real", info="REAL to rt_math_accum2")
 
-    def _moveflo_heap(self, node: AST.ASTNode):
+    def _moveflo_heap(self, node: AST.ASTNode) -> None:
         """ 
         Copies the current float number pointed by HL to a new
         temporal memory location (heap). Returns in Hl that address. 
@@ -221,7 +221,7 @@ class CPCEmitter:
         self._reserve_heapmem_de(5, node)
         self._emit_code("call    rt_move_real", info="REAL to heap memory")
 
-    def _emit_preamble(self):
+    def _emit_preamble(self) -> None:
         self._emit_head("; FILE GENERATED BY ABASC COMPILER", 0)
         self._emit_head("; DESIGNED TO BE ASSEMBLED BY ABASM", 0)
         self._emit_head(";", 0)
@@ -239,11 +239,11 @@ class CPCEmitter:
         self._emit_data("endif", 0)
         self._emit_data("_data_:", 0) 
 
-    def _emit_code_end(self):
+    def _emit_code_end(self) -> None:
         self._emit_code()
         self._emit_code("_code_end_: jr _code_end_", info="infinite end loop", indent=0)
 
-    def _emit_heap_def(self):
+    def _emit_heap_def(self) -> None:
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
         self._emit_heap("rt_heapmem_next:  dw rt_heapmem", 0, info="pointer to free memory for dynamic allocation")
         self._emit_heap("rt_heapmem_start: dw rt_heapmem", 0, info="reserved area for dynamic allocated memory")
@@ -251,12 +251,12 @@ class CPCEmitter:
         self._emit_heap("rt_heapmem_end:   db &DE,&AD", 0, info="DEAD mark")
         self._emit_heap()
     
-    def _emit_amsdos_support(self):
+    def _emit_amsdos_support(self) -> None:
         if "rt_restoreroms" in self.runtime:
             self._emit_startup("call    rt_restoreroms")
             self._emit_startup("_restoreroms_end:", 0)
 
-    def _emit_symbols(self, syms: dict[str, SymEntry], parent: SymEntry | None = None):
+    def _emit_symbols(self, syms: dict[str, SymEntry], parent: SymEntry | None = None) -> None:
         for sym in syms:
             entry = syms[sym]
             if entry.label[0:2] == "G_" and parent is not None:
@@ -280,10 +280,10 @@ class CPCEmitter:
             elif entry.symtype == SymType.Procedure:
                 self._emit_symbols(entry.locals.syms, entry)
 
-    def _emit_vardecl(self, entry: SymEntry):
+    def _emit_vardecl(self, entry: SymEntry) -> None:
         self._emit_data(f"{entry.label}: defs {entry.datasz}", section=DataSec.VARS)
 
-    def _emit_arraydecl(self, entry: SymEntry):
+    def _emit_arraydecl(self, entry: SymEntry) -> None:
         items = 1
         # index starts in 0 and DIM sets the last usable index
         # so number of items = max index + 1
@@ -406,7 +406,7 @@ class CPCEmitter:
             
     # ----------------- Error management -----------------
 
-    def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = ""):
+    def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = "") -> NoReturn:
         if self.verbose:
             print(node)
         codeline = self.source[node.line - 1]
@@ -419,7 +419,7 @@ class CPCEmitter:
             info
         ) 
 
-    def _raise_warning(self, level: WL, msg: str, node: AST.ASTNode):
+    def _raise_warning(self, level: WL, msg: str, node: AST.ASTNode) -> None:
         if level <= self.warning_level:
             # tokens start line counting in 1
             codeline = self.source[node.line - 1]
@@ -427,7 +427,7 @@ class CPCEmitter:
 
     # ----------------- Commands and Functions -----------------
 
-    def _emit_ABS(self, node:AST.Function):
+    def _emit_ABS(self, node:AST.Function) -> None:
         """
         Returns the absolute value of the given expression which primarily means
         that negative numbers are returned as positive. 
@@ -451,7 +451,7 @@ class CPCEmitter:
             self._emit_code("call    rt_abs")
         self._emit_code(";")
 
-    def _emit_AFTER(self, node:AST.Command):
+    def _emit_AFTER(self, node:AST.Command) -> None:
         """
         Invoke a subroutine after a given time period has elapsed. The first
         <int expr>, indicates the period of the delay, in units of 1/50 second,
@@ -464,7 +464,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
         self._emit_code(";")
 
-    def _emit_event_init(self, node:AST.Command):
+    def _emit_event_init(self, node:AST.Command) -> None:
         self._emit_import("rt_timer")
         args = node.args
         self._emit_expression(args[0])
@@ -489,7 +489,7 @@ class CPCEmitter:
         self._emit_code("pop     hl", info="tick block address")
         self._emit_code("pop     de", info="timer ticks needed to fire the event")
 
-    def _emit_ASC(self, node:AST.Function):
+    def _emit_ASC(self, node:AST.Function) -> None:
         """
         Gets the numeric value of the first character of a string as long as
         ASCII characters are used.
@@ -502,7 +502,7 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_ASM(self, node:AST.Command):
+    def _emit_ASM(self, node:AST.Command) -> None:
         """
         Inserts direct ASM code.
         """
@@ -514,7 +514,7 @@ class CPCEmitter:
                 self._raise_error(2, a)
         self._emit_code(";")
 
-    def _emit_ATN(self, node:AST.Function):
+    def _emit_ATN(self, node:AST.Function) -> None:
         """
         Calculates the arc-tangent (forcing the numeric expression) to a real
         number ranging from -PI/2 to +PI/2 of the value specified.
@@ -530,7 +530,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_AUTO(self, node:AST.Command):
+    def _emit_AUTO(self, node:AST.Command) -> None:
         """
         Generate line numbers automatically. The <line number>, sets the first
         line to be generated, in case you want to add to the end of an existing
@@ -541,7 +541,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, 'AUTO is ignored and has not effect', node)
         self._emit_code("; IGNORED")
         
-    def _emit_BINSS(self, node:AST.Function):
+    def _emit_BINSS(self, node:AST.Function) -> None:
         """
         Produces a string of binary digits that represents the value of the
         <unsigned integer expression>, filling with leading zeros to the number
@@ -563,7 +563,7 @@ class CPCEmitter:
         self._emit_code("call    rt_int2bin")
         self._emit_code(";")
 
-    def _emit_BORDER(self, node:AST.Command):
+    def _emit_BORDER(self, node:AST.Command) -> None:
         """
         To change the colour of the border on the screen. If two colours are
         specified, the border alternates between the two at the rate determined
@@ -584,7 +584,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SCR_SET_BORDER}", info="SCR_SET_BORDER")
         self._emit_code(";")
 
-    def _emit_CALL(self, node:AST.Command):
+    def _emit_CALL(self, node:AST.Command) -> None:
         """
         Allows an externally developed sub-routine to be invoked from BASIC.
         The routine is called with IX pointing to the list of parameters and A
@@ -618,7 +618,7 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_CASE(self, node:AST.Command):
+    def _emit_CASE(self, node:AST.Command) -> None:
         if len(self.selectblocks):
             sel = self.selectblocks[-1]
             self._emit_code("; CASE <int_expression>")
@@ -642,7 +642,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, "unexpected CASE")
 
-    def _emit_CASE_DEFAULT(self, node:AST.Command):
+    def _emit_CASE_DEFAULT(self, node:AST.Command) -> None:
         if len(self.selectblocks):
             self._emit_code("; CASE DEFAULT")
             sel = self.selectblocks[-1]
@@ -654,7 +654,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, "unexpected CASE DEFAULT")
 
-    def _emit_CAT(self, node:AST.Command):
+    def _emit_CAT(self, node:AST.Command) -> None:
         """
         Causes BASIC to start reading the directory of the current drive
         (cassette or disc) and to display the names of all files found.
@@ -668,7 +668,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.CAS_CATALOG}")
         self._emit_code(";")
 
-    def _emit_CHAIN(self, node:AST.Command):
+    def _emit_CHAIN(self, node:AST.Command) -> None:
         """
         CHAIN loads a program from disc or cassette into the memory; replacing the
         existing program. The new program then commences running, either from the
@@ -680,7 +680,7 @@ class CPCEmitter:
         self._emit_code("; IGNORED")
         self._emit_code(";")
 
-    def _emit_CHAIN_MERGE(self, node:AST.Command):
+    def _emit_CHAIN_MERGE(self, node:AST.Command) -> None:
         """
         CHAIN MERGE merges a program from disc or cassette into the current program
         memory. The <line number expression>, indicates the line number from which
@@ -694,7 +694,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, 'CHAIN MERGE is ignored and has not effect', node)
         self._emit_code("; IGNORED")
 
-    def _emit_CHRSS(self, node:AST.Function):
+    def _emit_CHRSS(self, node:AST.Function) -> None:
         """
         Converts <integer expression> in the range 0 to 255, to its character
         string equivalent. Note that 0 to 31 are control characters. 
@@ -709,7 +709,7 @@ class CPCEmitter:
         self._emit_code("dec     hl")
         self._emit_code(";")
 
-    def _emit_CINT(self, node:AST.Function):
+    def _emit_CINT(self, node:AST.Function) -> None:
         """
         Converts the given value to a rounded integer in the range -32768..32767. 
         """
@@ -725,7 +725,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_CLEAR(self, node:AST.Command):
+    def _emit_CLEAR(self, node:AST.Command) -> None:
         """
         Clears all variables to zero or null. All open files are abandoned, all
         arrays and user functions are erased, and BASIC is set to radians mode
@@ -743,7 +743,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
         
-    def _emit_CLEAR_INPUT(self, node:AST.Command):
+    def _emit_CLEAR_INPUT(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Discards all previously typed input from the keyboard, still in the
@@ -755,7 +755,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KM_RESET}", info="KM_RESET")
         self._emit_code(";")
 
-    def _emit_CLG(self, node:AST.Command):
+    def _emit_CLG(self, node:AST.Command) -> None:
         """
         Clears the graphics screen to the graphics paper colour. If the <ink>
         is specified, the graphics paper is set to that value. 
@@ -768,7 +768,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_CLEAR_WINDOW}", info="GRA_CLEAR_WINDOW")
         self._emit_code(";")
     
-    def _emit_CLOSEIN(self, node:AST.Command):
+    def _emit_CLOSEIN(self, node:AST.Command) -> None:
         """
         Close any input file from disc or cassette.
         """
@@ -776,7 +776,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.CAS_IN_CLOSE}", info="CAS_IN_CLOSE")
         self._emit_code(";")
 
-    def _emit_CLOSEOUT(self, node:AST.Command):
+    def _emit_CLOSEOUT(self, node:AST.Command) -> None:
         """
         Close any output file from disc or cassette.
         """
@@ -786,7 +786,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_CLS(self, node:AST.Command):
+    def _emit_CLS(self, node:AST.Command) -> None:
         """
         Clear the given screen stream (window) to its paper ink. If no
         <stream expression> is given, screen stream #0 is cleared. 
@@ -800,7 +800,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_CONST(self, node:AST.Command):
+    def _emit_CONST(self, node:AST.Command) -> None:
         """
         CONST declares and defines named constants, assigning them a fixed integer value.
         When the constant name is used in an expression, its value is substituted directly,
@@ -809,7 +809,7 @@ class CPCEmitter:
         self._emit_code("; CONST IDENT = INT")
         self._emit_code(";")
 
-    def _emit_CONT(self, node:AST.Command):
+    def _emit_CONT(self, node:AST.Command) -> None:
         """
         Continue program execution after a *Break*, STOP or END, as long as the
         program has not been altered. Direct commands may be entered. 
@@ -821,7 +821,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KM_WAIT_CHAR}", info="KM_WAIT_CHAR")
         self._emit_code(";")
     
-    def _emit_COPYCHRSS(self, node:AST.Function):
+    def _emit_COPYCHRSS(self, node:AST.Function) -> None:
         """
         BASIC 1.1 only
         COPies ChaRacter from the current position in the stream (which MUST be
@@ -836,7 +836,7 @@ class CPCEmitter:
         self._emit_code("call    rt_copychrs")
         self._emit_code(";")
 
-    def _emit_COS(self, node:AST.Function):
+    def _emit_COS(self, node:AST.Function) -> None:
         """
         Calculates the COSINE of a given value. The function defaults to radian
         measure unless specifically instructed otherwise by the DEG command. 
@@ -852,7 +852,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_CREAL(self, node:AST.Function):
+    def _emit_CREAL(self, node:AST.Function) -> None:
         """
         Converts a value to a real number (As opposed to integer).
         """
@@ -868,7 +868,7 @@ class CPCEmitter:
             self._emit_code("; already REAL so no action taken")
         self._emit_code(";")
 
-    def _emit_CURSOR(self, node:AST.Command):
+    def _emit_CURSOR(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Sets the system switch or the user switch to the cursor, ON or OFF. The
@@ -892,7 +892,7 @@ class CPCEmitter:
             self._emit_code(f"call    {calls_off[i]}", info="TXT_CURSOR_OFF/TXT_CURSOR_DISABLE")
         self._emit_code(";")
    
-    def _emit_DATA(self, node:AST.Data):
+    def _emit_DATA(self, node:AST.Data) -> None:
         """
         Compatibility
         With BASIC 1.0, DATA statements have to be at the end of the line.
@@ -930,7 +930,7 @@ class CPCEmitter:
         self._emit_data(dataline[:-1], section=DataSec.DATA)
         self._emit_code(";")
 
-    def _emit_DECLARE(self, node:AST.Command):
+    def _emit_DECLARE(self, node:AST.Command) -> None:
         """
         Imported from Locomotive BASIC 2 Plus
         Declares a variable before being used. This allows users to set a size
@@ -939,7 +939,7 @@ class CPCEmitter:
         self._emit_code("; DECLARE list of: <string ident> [FIXED INT] | <ident>")
         self._emit_code(";")
 
-    def _emit_DECSS(self, node:AST.Function):
+    def _emit_DECSS(self, node:AST.Function) -> None:
         """
         Only available with BASIC 1.1
         Return a DECimal string representation of the <numeric expression>, using
@@ -969,7 +969,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "text patterns are not supported yet", node)
         self._emit_code(";")
 
-    def _emit_DEFINT(self, node:AST.Command):
+    def _emit_DEFINT(self, node:AST.Command) -> None:
         """
         Define default variable types where <type> is integer, real or string.
         The variable will be set according to the first letter of the variable's
@@ -981,7 +981,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "DEFINT has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DEFREAL(self, node:AST.Command):
+    def _emit_DEFREAL(self, node:AST.Command) -> None:
         """
         Define default variable types where <type> is integer, real or string.
         The variable will be set according to the first letter of the variable's
@@ -993,7 +993,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "DEFREAL has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DEFSTR(self, node:AST.Command):
+    def _emit_DEFSTR(self, node:AST.Command) -> None:
         """
         Define default variable types where <type> is integer, real or string.
         The variable will be set according to the first letter of the variable's
@@ -1005,7 +1005,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "DEFSTR has no effect, use % ! $ sufixes instead", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DEF_FN(self, node:AST.DefFN):
+    def _emit_DEF_FN(self, node:AST.DefFN) -> None:
         """
         BASIC allows the program to define and use simple value returning functions.
         DEF FuNction is the definition part of this mechanism and creates program-specific
@@ -1038,7 +1038,7 @@ class CPCEmitter:
             self._raise_error(2, node)
         self._emit_code(";")
 
-    def _emit_DEG(self, node:AST.Statement):
+    def _emit_DEG(self, node:AST.Statement) -> None:
         """
         Set degrees mode. The default condition is for functions such as SIN and
         COS is to assume radian measure for numeric data. The command sets to
@@ -1054,7 +1054,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_DELETE(self, node:AST.Command):
+    def _emit_DELETE(self, node:AST.Command) -> None:
         """
         A command that removes part of the current program as defined in the line
         number range, expression. Not recoverable if issued in error, so use with
@@ -1076,7 +1076,7 @@ class CPCEmitter:
             self._emit_code("ldir")
         self._emit_code(";")
 
-    def _emit_DERR(self, node:AST.Statement):
+    def _emit_DERR(self, node:AST.Statement) -> None:
         """
         Only available with BASIC 1.1.
         Report the last error code returned by the disc operating system. The
@@ -1087,7 +1087,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "DERR is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_DI(self, node:AST.Command):
+    def _emit_DI(self, node:AST.Command) -> None:
         """
         Disable interrupts (other than the *Break* interrupt) until re-enabled
         explicitly by EI or implicitly by the RETURN at the end of an interrupt
@@ -1097,7 +1097,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KL_EVENT_DISABLE}", info="KL_EVENT_DISABLE")
         self._emit_code(";")
 
-    def _emit_DIM(self, node:AST.Command):
+    def _emit_DIM(self, node:AST.Command) -> None:
         """
         Allocate space for arrays and specify maximum subscript values. Basic must be
         advised of the space to be reserved for an array, or it will default to 10.
@@ -1123,7 +1123,7 @@ class CPCEmitter:
                 self._raise_error(2, node)
         self._emit_code(";")
 
-    def _emit_DRAW(self, node:AST.Command):
+    def _emit_DRAW(self, node:AST.Command) -> None:
         """
         <ink mode> is only available with BASIC 1.1
         Draws a line on the screen from the current graphics cursor position to
@@ -1154,7 +1154,7 @@ class CPCEmitter:
         self._emit_code(";")
         
 
-    def _emit_DRAWR(self, node:AST.Command):
+    def _emit_DRAWR(self, node:AST.Command) -> None:
         """
         <ink mode> is only available with BASIC 1.1
         To draw a line on the screen from the current graphics cursor position to
@@ -1182,7 +1182,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_LINE_RELATIVE}", info="GRA_LINE_RELATIVE")
         self._emit_code(";")
 
-    def _emit_EDIT(self, node:AST.Statement):
+    def _emit_EDIT(self, node:AST.Statement) -> None:
         """
         Edit a program line by calling for a specific line number. 
         """
@@ -1190,7 +1190,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "EDIT is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_EI(self, node:AST.Command):
+    def _emit_EI(self, node:AST.Command) -> None:
         """
         Enable interrupts disabled by a DI command. 
         """
@@ -1198,7 +1198,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KL_EVENT_ENABLE}", info="KL_EVENT_ENABLE")
         self._emit_code(";")
 
-    def _emit_ELSE(self, node:AST.Statement):
+    def _emit_ELSE(self, node:AST.Statement) -> None:
         if len(self.ifblocks) > 0:
             # END IF will remove from the queue
             ifnode = self.ifblocks[-1]
@@ -1208,7 +1208,7 @@ class CPCEmitter:
         else:
             self._raise_error(37, node)
 
-    def _emit_END(self, node:AST.Command):
+    def _emit_END(self, node:AST.Command) -> None:
         """
         End of program. An END is implicit in AMSTRAD BASIC as the program
         passes the last line of instruction. END closes all cassette files and
@@ -1218,7 +1218,7 @@ class CPCEmitter:
         self._emit_code("; END")
         self._emit_code(f"jp      _code_end_")
 
-    def _emit_ENT(self, node:AST.Command):
+    def _emit_ENT(self, node:AST.Command) -> None:
         """
         Sets the Tone ENvelope specified in the <envelope section> (in the
         range 1 to 15), which is used in conjunction with the SOUND command.
@@ -1262,7 +1262,7 @@ class CPCEmitter:
         self._emit_data(f"{entlabel}: db {values}", section=DataSec.CONST)
         self._emit_code(";")
 
-    def _emit_ENV(self, node:AST.Command):
+    def _emit_ENV(self, node:AST.Command) -> None:
         """
         Sets the volume envelope specified in the <envelope number> (in the range 1 to 15),
         which is used in conjunction with the SOUND command. Each of the <enveloppe section>s
@@ -1302,7 +1302,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SOUND_AMPL_ENVELOPE}", info="SOUND_AMPL_ENVELOPE")
         self._emit_code(";")
 
-    def _emit_EOF(self, node:AST.Function):
+    def _emit_EOF(self, node:AST.Function) -> None:
         """
         Tests to see if the cassette input is at the end of the file. Returns -1
         (true) at the end, otherwise 0 (false).
@@ -1314,7 +1314,7 @@ class CPCEmitter:
         self._emit_code("inc     hl", info="NOT EOF")
         self._emit_code(";")
 
-    def _emit_ERASE(self, node:AST.Command):
+    def _emit_ERASE(self, node:AST.Command) -> None:
         """
         When an array is no longer required, it may be ERASEd and the memory used
         be reclaimed ready for other use.
@@ -1323,7 +1323,7 @@ class CPCEmitter:
         self._emit_code("; ERASE list of: <variable name>")
         self._emit_code("; IGNORED")
 
-    def _emit_ERL(self, node:AST.Function):
+    def _emit_ERL(self, node:AST.Function) -> None:
         """
         Reports the Line number of the last ERror encountered.
         """
@@ -1331,7 +1331,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "ERL is ignored and has no effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_ERR(self, node:AST.Function):
+    def _emit_ERR(self, node:AST.Function) -> None:
         """
         Reports the number of the last ERRor encountered.
         """
@@ -1344,7 +1344,7 @@ class CPCEmitter:
         self._emit_code("ld      l,a")
         self._emit_code(";")
 
-    def _emit_ERROR(self, node:AST.Command):
+    def _emit_ERROR(self, node:AST.Command) -> None:
         """
         Invokes the error specified in the <integer expression>. The error may
         be one already used and recognised by BASIC, in which case the action taken
@@ -1361,7 +1361,7 @@ class CPCEmitter:
         self._emit_code("ld      (rt_error),a")
         self._emit_code(";")
 
-    def _emit_EVERY(self, node:AST.Command):
+    def _emit_EVERY(self, node:AST.Command) -> None:
         """
         The EVERY command allows a BASIC program to arrange for subroutines to
         be called at regular intervals. Four delay timers are available, specified
@@ -1375,7 +1375,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KL_ADD_TICKER}", info="KL_ADD_TICKER")
         self._emit_code(";")
 
-    def _emit_EXIT_FOR(self, node:AST.Command):
+    def _emit_EXIT_FOR(self, node:AST.Command) -> None:
         """
         Interrupts a FOR ... NEXT loop and transfers the control to the line
         just after the NEXT keyword.
@@ -1385,7 +1385,7 @@ class CPCEmitter:
         self._emit_code(f"jp      {fornode.end_label}")
         self._emit_code(";")
     
-    def _emit_EXIT_WHILE(self, node:AST.Command):
+    def _emit_EXIT_WHILE(self, node:AST.Command) -> None:
         """
         Interrupts a WHILE ... WEND loop and transfers the control to the line
         just after the WEND keyword.
@@ -1395,7 +1395,7 @@ class CPCEmitter:
         self._emit_code(f"jp      {wnode.end_label}")
         self._emit_code(";")
 
-    def _emit_EXP(self, node:AST.Function):
+    def _emit_EXP(self, node:AST.Function) -> None:
         """
         Calculates E to the power given in numeric expression, where E is approximately
         2.7182818 - the number whose natural logarithm is 1. 
@@ -1411,7 +1411,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_FILL(self, node:AST.Command):
+    def _emit_FILL(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Fills an area of the screen starting from the current graphics position
@@ -1425,7 +1425,7 @@ class CPCEmitter:
         self._emit_code("call    rt_fill")
         self._emit_code(";")
 
-    def _emit_FIX(self, node:AST.Function):
+    def _emit_FIX(self, node:AST.Function) -> None:
         """
         Unlike CINT, FIX merely removes the part of the numeric expression, to
         the right of the decimal point, and leaves an integer result, rounding
@@ -1443,7 +1443,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_FOR(self, node:AST.ForLoop):
+    def _emit_FOR(self, node:AST.ForLoop) -> None:
         """
         Execute a body of program a given number of times, stepping a control
         variable between a start and an end value. If not specified, STEP
@@ -1490,7 +1490,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f"undeclared variable {node.var.name}")
 
-    def _emit_FRAME(self, node:AST.Statement):
+    def _emit_FRAME(self, node:AST.Statement) -> None:
         """
         Only available with BASIC 1.1
         Synchronises the writing of the graphics on the screen with the frame
@@ -1505,7 +1505,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.MC_WAIT_FLYBACK}", info="MC_WAIT_FLYBACK")
         self._emit_code(";")
 
-    def _emit_FRE(self, node:AST.Command):
+    def _emit_FRE(self, node:AST.Command) -> None:
         """
         Establishes how much memory remains unused by BASIC. The form FRE("")
         forces a garbage collection before returning a value for available space. 
@@ -1537,7 +1537,7 @@ class CPCEmitter:
         self._emit_code("sbc     hl,de")
         self._emit_code(";")
 
-    def _emit_FUNCTION(self, node:AST.DefFUN):
+    def _emit_FUNCTION(self, node:AST.DefFUN) -> None:
         """
         Adopted from Locomotive BASIC 2 Plus, FUNCTION allows the program to define
         and use simple functions ended with END FUNCTION. Values are turned using
@@ -1566,7 +1566,7 @@ class CPCEmitter:
                 self._raise_error(2,node)
 
 
-    def _emit_GOSUB(self, node:AST.Command):
+    def _emit_GOSUB(self, node:AST.Command) -> None:
         """
         Call a BASIC subroutine by branching to the specified line number or
         label. 
@@ -1581,7 +1581,7 @@ class CPCEmitter:
                 self._raise_error(38, label)
         self._emit_code(";")
 
-    def _emit_GOTO(self, node:AST.Command):
+    def _emit_GOTO(self, node:AST.Command) -> None:
         """
         Branch to specified line number or label. 
         """
@@ -1595,7 +1595,7 @@ class CPCEmitter:
                 self._raise_error(38, label)
         self._emit_code(";")
 
-    def _emit_GRAPHICS_PAPER(self, node:AST.Command):
+    def _emit_GRAPHICS_PAPER(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Sets the <ink> of the graphics paper, ie. the area behind graphics drawn
@@ -1610,7 +1610,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_SET_PAPER}", info="GRA_SET_PAPER")
         self._emit_code(";")
 
-    def _emit_GRAPHICS_PEN(self, node:AST.Command):
+    def _emit_GRAPHICS_PEN(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Set the <ink> (in the range 0 to 15) to be used for drawing lines and
@@ -1632,7 +1632,7 @@ class CPCEmitter:
             self._emit_code(f"call    {FWCALL.GRA_SET_BACK}", info="GRA_SET_BACK")
         self._emit_code(";")
 
-    def _emit_HEXSS(self, node:AST.Function):
+    def _emit_HEXSS(self, node:AST.Function) -> None:
         """
         Converts the number given into Hexadecimal form. The second <int expr>
         can be used to specify the minimum length of the result. 
@@ -1653,7 +1653,7 @@ class CPCEmitter:
         self._emit_code("call    rt_int2hex")
         self._emit_code(";")
 
-    def _emit_HIMEM(self, node:AST.Function):
+    def _emit_HIMEM(self, node:AST.Function) -> None:
         """
         Gives the address of the highest byte of memory used by BASIC, and can
         be used in numeric expressions in the usual way.
@@ -1664,7 +1664,7 @@ class CPCEmitter:
         self._emit_code("ld      hl,_program_end_")
         self._emit_code(";")
 
-    def _emit_IF(self, node:AST.If):
+    def _emit_IF(self, node:AST.If) -> None:
         """
         It is used to conditionally determine branch points in a program. The
         logical part is evaluated, and if true the THEN or GOTO part is executed,
@@ -1701,7 +1701,7 @@ class CPCEmitter:
         else:
             self.ifblocks.append(node)
 
-    def _emit_END_FUNCTION(self, node:AST.Command):
+    def _emit_END_FUNCTION(self, node:AST.Command) -> None:
         """
         Signals the end of a user defined FUNCTION. BASIC returns to continue
         processing at the point after the expression which invoked it. Arriving
@@ -1742,7 +1742,7 @@ class CPCEmitter:
                 entry.heapused = 0
         self.context = ""
 
-    def _emit_END_IF(self, node:AST.BlockEnd):
+    def _emit_END_IF(self, node:AST.BlockEnd) -> None:
         if len(self.ifblocks) > 0:
             ifnode = self.ifblocks.pop()
             self._emit_code("; END IF")
@@ -1751,7 +1751,7 @@ class CPCEmitter:
         else:
             self._raise_error(36, node)
 
-    def _emit_END_SELECT(self, node:AST.BlockEnd):
+    def _emit_END_SELECT(self, node:AST.BlockEnd) -> None:
         if len(self.selectblocks):
             sel = self.selectblocks.pop()
             self._emit_code("; END SELECT")
@@ -1760,7 +1760,7 @@ class CPCEmitter:
         else:
             self._raise_error(46, node)
 
-    def _emit_END_SUB(self, node:AST.Command):
+    def _emit_END_SUB(self, node:AST.Command) -> None:
         """
         Signals the end of a subroutine. BASIC returns to continue processing at
         the point after the CALL which invoked it.
@@ -1783,7 +1783,7 @@ class CPCEmitter:
                 entry.heapused = 0
         self.context = ""
 
-    def _emit_INK(self, node:AST.Command):
+    def _emit_INK(self, node:AST.Command) -> None:
         """
         Assigns colour(s) to a given ink. The <ink> parameter describes the ink
         reference, which must be an integer expression in the range 0 to 15, for
@@ -1814,7 +1814,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SCR_SET_INK}", info="SCR_SET_INK")
         self._emit_code(";")
 
-    def _emit_INKEY(self, node:AST.Function):
+    def _emit_INKEY(self, node:AST.Function) -> None:
         """
         This function interrogates the keyboard to report which keys are being
         pressed. The keyboard is scanned at 1/50 sec. The function is particularly
@@ -1834,7 +1834,7 @@ class CPCEmitter:
         self._emit_code("call    rt_inkey")
         self._emit_code(";")
 
-    def _emit_INKEYSS(self, node:AST.Function):
+    def _emit_INKEYSS(self, node:AST.Function) -> None:
         """
         Reads a key from the keyboard to provide operator interaction without
         hitting [ENTER] after every answer. If there is a key pressed, then the
@@ -1848,7 +1848,7 @@ class CPCEmitter:
         self._emit_code("call    rt_inkeys")
         self._emit_code(";")
 
-    def _emit_INP(self, node:AST.Function):
+    def _emit_INP(self, node:AST.Function) -> None:
         """
         A function that returns the input value from the I/O port specified in the address. 
         """
@@ -1861,7 +1861,7 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_INPUT(self, node:AST.Input, carriage=True):
+    def _emit_INPUT(self, node:AST.Input, carriage=True) -> None:
         """
         Reads data from the stated stream. A semicolon after INPUT suppresses the
         carriage return typed at the end of the line being entered. A semicolon
@@ -1918,7 +1918,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_input_str(self): 
+    def _emit_input_str(self) -> None: 
         self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("ld      (hl),c", info="string len")
         self._emit_code("inc     hl")
@@ -1926,7 +1926,7 @@ class CPCEmitter:
         self._emit_code("ld      b,0")
         self._emit_code("ldir")
 
-    def _emit_input_int(self):
+    def _emit_input_int(self) -> None:
         self._emit_import("rt_strz2num")
         self._emit_code("push    hl")
         self._emit_code("ld      de,rt_scratch_pad")
@@ -1937,7 +1937,7 @@ class CPCEmitter:
         self._emit_code("inc     hl")
         self._emit_code("ld      (hl),d")
         
-    def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry):
+    def _emit_input_real(self, v:AST.Variable | AST.ArrayItem, var: SymEntry) -> None:
         self._emit_import("rt_strz2real")
         self._emit_import("rt_move_real")
         self._emit_pushcontext()
@@ -1948,7 +1948,7 @@ class CPCEmitter:
         self._emit_code("call    rt_move_real")
         self._emit_popcontext()
 
-    def _emit_INSTR(self, node:AST.Function):
+    def _emit_INSTR(self, node:AST.Function) -> None:
         """
         Searches the first string expression, for the first occurance of the second
         string expression), where the optional number at the start indicates where
@@ -1971,7 +1971,7 @@ class CPCEmitter:
         self._emit_code("call    rt_findstr")
         self._emit_code(";")
 
-    def _emit_INT(self, node:AST.Function):
+    def _emit_INT(self, node:AST.Function) -> None:
         """
         Rounds the number to the nearest lower integer, removing any fractional
         part. The same as FIX for positive numbers, but returns one less than FIX
@@ -1989,7 +1989,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_JOY(self, node:AST.Function):
+    def _emit_JOY(self, node:AST.Function) -> None:
         """
         The JOY function reads a bit-significant result from the joystick specified
         in the <integer expression> (either 0 or 1).
@@ -2012,7 +2012,7 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_KEY(self, node:AST.Command):
+    def _emit_KEY(self, node:AST.Command) -> None:
         """
         Fixes a new function key definition. There are thirty two keyboard expansion
         characters in the range 128-159. When one of these characters is read it is
@@ -2024,7 +2024,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "KEY is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_KEY_DEF(self, node:AST.Command):
+    def _emit_KEY_DEF(self, node:AST.Command) -> None:
         """
         DEFines the KEY values to be returned by the specified <key number> in the
         range 0 to 79. The <normal>, <shifted> and <control> parameters should contain
@@ -2038,7 +2038,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "KEY DEF is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_LABEL(self, node:AST.Label):
+    def _emit_LABEL(self, node:AST.Label) -> None:
         """
         Only available on BASIC 2.0
         """
@@ -2048,7 +2048,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
-    def _emit_LEFTSS(self, node:AST.Function):
+    def _emit_LEFTSS(self, node:AST.Function) -> None:
         """
         Extracts characters to the left of, and including the position specified
         in the <integer expression> from the the given <string expression>. If the
@@ -2065,7 +2065,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strleft")
         self._emit_code(";")
 
-    def _emit_LEN(self, node:AST.Function):
+    def _emit_LEN(self, node:AST.Function) -> None:
         """
         Returns a number corresponding to the number of all types of characters,
         including spaces, in the <string expression>. 
@@ -2077,7 +2077,7 @@ class CPCEmitter:
         self._emit_code("ld      h,0")
         self._emit_code(";")
 
-    def _emit_LET(self, node:AST.Command):
+    def _emit_LET(self, node:AST.Command) -> None:
         """
         A remnant from early BASICS where variable assignments had to be seen coming.
         No use apart from providing compatibility with the programs supplied in
@@ -2085,7 +2085,7 @@ class CPCEmitter:
         """
         self._emit_code("; LET - NOTHING TO DO")
 
-    def _emit_LINE_INPUT(self, node:AST.LineInput):
+    def _emit_LINE_INPUT(self, node:AST.LineInput) -> None:
         """
         Reads an entire line from the stream indicated. The first optional semicolon suppresses
         the echo of carriage return / line feed. The default <stream expression> is, as always,
@@ -2125,7 +2125,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_LIST(self, node:AST.Command):
+    def _emit_LIST(self, node:AST.Command) -> None:
         """
         List program lines to the given stream. 0 is the default screen, 8 is
         the printer.
@@ -2134,7 +2134,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, "LIST is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_LOAD(self, node:AST.Command):
+    def _emit_LOAD(self, node:AST.Command) -> None:
         """
         To read a BASIC program from disc or cassette into memory, replacing any
         existing program. Specifying the optional <address expression> will cause
@@ -2158,7 +2158,7 @@ class CPCEmitter:
             self._emit_code("call    rt_loadaddr")
         self._emit_code(";")
 
-    def _emit_LOCATE(self, node:AST.Command):
+    def _emit_LOCATE(self, node:AST.Command) -> None:
         """
         Moves the text cursor at the stream indicated, to the position specified
         by the x and y co-ordinates, which are relative to the origin of the
@@ -2180,7 +2180,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_LOG(self, node:AST.Function):
+    def _emit_LOG(self, node:AST.Function) -> None:
         """
         Calculates the natural logarithm of numeric expression. 
         """
@@ -2195,7 +2195,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_LOG10(self, node:AST.Function):
+    def _emit_LOG10(self, node:AST.Function) -> None:
         """
         Calculates the base 10 logarithm of numeric expression. 
         """
@@ -2210,7 +2210,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_LOWERSS(self, node:AST.Function):
+    def _emit_LOWERSS(self, node:AST.Function) -> None:
         """
         Returns a new string expression the same as the input string expression but
         in which all upper case characters are converted to lower case. Useful for
@@ -2223,7 +2223,7 @@ class CPCEmitter:
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
-    def _emit_MASK(self, node:AST.Command):
+    def _emit_MASK(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
         Sets the mask or template to be used when drawing lines. The binary value
@@ -2248,7 +2248,7 @@ class CPCEmitter:
             self._emit_code(f"call     {FWCALL.GRA_SET_FIRST}", info="GRA_SET_FIRST")
         self._emit_code(";")
 
-    def _emit_MAX(self, node:AST.Function):
+    def _emit_MAX(self, node:AST.Function) -> None:
         """
         Extracts the largest value from the list of numeric expressions. 
         """
@@ -2273,7 +2273,7 @@ class CPCEmitter:
             self._moveflo_heap(node)
         self._emit_code(";")
 
-    def _emit_MEMORY(self, node:AST.Command):
+    def _emit_MEMORY(self, node:AST.Command) -> None:
         """
         Reset BASIC memory parameters to change the amount of BASIC memory
         available by setting the address of the highest byte. See the description
@@ -2289,10 +2289,10 @@ class CPCEmitter:
             self._raise_error(2, node, "MEMORY can be evaluated only at compiling time")
         self._emit_code(";")
 
-    def _emit_MERGE(self, node:AST.Statement):
+    def _emit_MERGE(self, node:AST.Statement) -> None:
         self._raise_error(2, node, 'not implemented yet')
 
-    def _emit_MIDSS(self, node:AST.Function):
+    def _emit_MIDSS(self, node:AST.Function) -> None:
         """
         MID$ specifies part of a string (a sub-string) which can be used either as
         the destination of an assignment (MID$ as a command) or as an argument in
@@ -2317,7 +2317,7 @@ class CPCEmitter:
         self._emit_code("call    rt_substr")
         self._emit_code(";")
 
-    def _emit_MIN(self, node:AST.Function):
+    def _emit_MIN(self, node:AST.Function) -> None:
         """
         Extracts the smallest value from the list of numeric expressions. 
         """
@@ -2343,7 +2343,7 @@ class CPCEmitter:
             self._moveflo_heap(node)
         self._emit_code(";")
 
-    def _emit_MODE(self, node:AST.Command):
+    def _emit_MODE(self, node:AST.Command) -> None:
         """
         Change the screen mode (0,1 or 2), and clear the screen to INK 0, which
         may not be the current PAPER ink. All text and graphics WINDOWS are reset
@@ -2355,7 +2355,7 @@ class CPCEmitter:
         self._emit_code("ld      a,l")
         self._emit_code(f"call    {FWCALL.SCR_SET_MODE}", info="SCR_SET_MODE")
 
-    def _emit_MOVE(self, node:AST.Command):
+    def _emit_MOVE(self, node:AST.Command) -> None:
         """
         <ink> and <ink mode> are only available with BASIC 1.1
         To move the graphics cursor to a position specified by the absolute co-ordinates.
@@ -2386,7 +2386,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_MOVE_ABSOLUTE}", info="GRA_MOVE_ABSOLUTE")
         self._emit_code(";")
 
-    def _emit_MOVER(self, node:AST.Command):
+    def _emit_MOVER(self, node:AST.Command) -> None:
         """
         <ink> and <ink mode> are only available with BASIC 1.1
         To move the graphics cursor to a position relative to the current co-ordinates.
@@ -2416,7 +2416,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_MOVE_RELATIVE}", info="GRA_MOVE_RELATIVE")
         self._emit_code(";")
 
-    def _emit_NEW(self, node:AST.Statement):
+    def _emit_NEW(self, node:AST.Statement) -> None:
         """
         Delete current program and variables. KEY definitions are not lost,
         and the display is not cleared.
@@ -2426,7 +2426,7 @@ class CPCEmitter:
         self._emit_code("call    0", info="MACHINE RESET")
         self._emit_code(";")
 
-    def _emit_NEXT(self, node:AST.BlockEnd):
+    def _emit_NEXT(self, node:AST.BlockEnd) -> None:
         fornode = self.forloops.pop()
         self._emit_code("; NEXT [<variable>]")
         self._emit_code(f"ld      hl,({fornode.var_label})")
@@ -2444,7 +2444,7 @@ class CPCEmitter:
         self._emit_code("pop     hl")
         self._emit_code(";")
 
-    def _emit_ON_GOSUB(self, node:AST.Command):
+    def _emit_ON_GOSUB(self, node:AST.Command) -> None:
         """
         GOSUB to the subroutine as directed by the result of the <int expr>.
         If the result is 1, then the first line number in the list is chosen,
@@ -2455,7 +2455,7 @@ class CPCEmitter:
         self._emit_code("call    rt_onjump")
         self._emit_code(";")
 
-    def _emit_ON_GOTO(self, node:AST.Command):
+    def _emit_ON_GOTO(self, node:AST.Command) -> None:
         """
         GOTO to the statement as directed by the result of the <int expr>.
         If the result is 1, then the first line number in the list is chosen,
@@ -2466,7 +2466,7 @@ class CPCEmitter:
         self._emit_code("jp      rt_onjump")
         self._emit_code(";")
 
-    def _emit_onjump(self, node:AST.Command):
+    def _emit_onjump(self, node:AST.Command) -> None:
         self._emit_import("rt_onjump")
         addresses = self._get_onjump_label()
         datastr = ""
@@ -2485,16 +2485,36 @@ class CPCEmitter:
         addresses = addresses + f": dw {datastr[:-1]}"
         self._emit_data(addresses, section=DataSec.CONST)
 
-    def _emit_ON_BREAK(self, node:AST.Command):
+    def _emit_ON_BREAK_STOP(self, node:AST.Command) -> None:
+        """
+        ON BREAK CONT disables the option to break a program pressing
+        the escape key twice.
+        """
+        # This is the default state and we don't support ON BREAK GOSUB
+        # so we do nothing here.
+        self._emit_code("; ON BREAK CONT")
+        self._emit_code(";")
+
+    def _emit_ON_BREAK_STOP(self, node:AST.Command) -> None:
+        """
+        ON BREAK STOP disables the trap created by ON BREAK GOSUB,
+        but has no other immediate effect.
+        """
+        # This is the default state and we don't support ON BREAK GOSUB
+        # so we do nothing here.
+        self._emit_code("; ON BREAK STOP")
+        self._emit_code(";")
+
+    def _emit_ON_BREAK_GOSUB(self, node:AST.Command) -> None:
         """
         Calls a subroutine on breaking from program execution by pressing [ESC]
-        twice. ON BREAK STOP disables the trap, but has no other immediate effect.
+        twice.
         """
         self._emit_code("; ON BREAK GOSUB <line number> | STOP")
-        self._raise_warning(WL.MEDIUM, "ON BREAK is ignored and has not effect", node)
+        self._raise_warning(WL.MEDIUM, "ON BREAK GOSUB is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_ON_ERROR_GOTO(self, node:AST.Command):
+    def _emit_ON_ERROR_GOTO(self, node:AST.Command) -> None:
         """
         Go to a specified line number in the program on detecting an error. 
         """
@@ -2512,7 +2532,7 @@ class CPCEmitter:
                 self._raise_error(38, label)
         self._emit_code(";")
 
-    def _emit_ON_SQ(self, node:AST.Command):
+    def _emit_ON_SQ(self, node:AST.Command) -> None:
         """
         Enable an interrupt for when there is a free slot in the given sound queue.
         The <channel> is an integer expression yielding one of the values:
@@ -2534,7 +2554,7 @@ class CPCEmitter:
         self._emit_code("call    rt_onsq")
         self._emit_code(";")
 
-    def _emit_OPENIN(self, node:AST.Command):
+    def _emit_OPENIN(self, node:AST.Command) -> None:
         """
         Opens an input file from disc or cassette which contains information for
         use in the current program in the computer's memory.
@@ -2559,7 +2579,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_OPENOUT(self, node:AST.Command):
+    def _emit_OPENOUT(self, node:AST.Command) -> None:
         """
         Opens an output file onto disc or cassette. If the tape deck is selected
         and the first character in the <file name> is ! then the displayed cassette
@@ -2582,7 +2602,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_ORIGIN(self, node:AST.Command):
+    def _emit_ORIGIN(self, node:AST.Command) -> None:
         """
         Determines the start point for the graphics cursor. The [optional part]
         of the command contains the instructions to set a new graphics window,
@@ -2612,7 +2632,7 @@ class CPCEmitter:
             self._emit_code(f"call    {FWCALL.GRA_WIN_HEIGHT}", info="GRA_WIN_HEIGHT")
         self._emit_code(";")
 
-    def _emit_OUT(self, node:AST.Command):
+    def _emit_OUT(self, node:AST.Command) -> None:
         """
         Sends the value in the <integer expression> (which must lie in the range
         0 to 255) to the port address specified in the <port number>.
@@ -2626,7 +2646,7 @@ class CPCEmitter:
         self._emit_code("out     (c),a")
         self._emit_code(";")
 
-    def _emit_PAPER(self, node:AST.Command):
+    def _emit_PAPER(self, node:AST.Command) -> None:
         """
         Sets the background ink for characters. When characters are written to
         the text screen, the character cell is filled with the PAPER ink before
@@ -2646,7 +2666,7 @@ class CPCEmitter:
         self._emit_code(";")
 
 
-    def _emit_PEEK(self, node:AST.Function):
+    def _emit_PEEK(self, node:AST.Function) -> None:
         """
         Examine the contents of a memory location specified in the <address>
         which should be in the range &0000 to &FFFF (0 to 65535). In all cases
@@ -2660,7 +2680,7 @@ class CPCEmitter:
         self._emit_code("ld      l,a")
         self._emit_code(";")
 
-    def _emit_PEN(self, node:AST.Command):
+    def _emit_PEN(self, node:AST.Command) -> None:
         """
         PEN sets the ink to be used when drawing at the given screen stream,
         defaulting to screen #0. 
@@ -2678,7 +2698,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_PI(self, node:AST.Statement):
+    def _emit_PI(self, node:AST.Statement) -> None:
         """
         The value of the ratio between the circumference and the diameter of a circle.
         It is used extensively in graphics routines such as the one listed above. 
@@ -2693,7 +2713,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
     
-    def _emit_PLOT(self, node:AST.Command):
+    def _emit_PLOT(self, node:AST.Command) -> None:
         """
         <ink mode> is only available with BASIC 1.1
         Plots a point on the graphics screen at the absolute position specified
@@ -2722,7 +2742,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_PLOT_ABSOLUTE}", info="GRA_PLOT_ABSOLUTE")
         self._emit_code(";")
 
-    def _emit_PLOTR(self, node:AST.Command):
+    def _emit_PLOTR(self, node:AST.Command) -> None:
         """
         <ink> and <ink mode> are only available with BASIC 1.1
         Plots a point on the graphics screen at the specified position <x offset>
@@ -2750,7 +2770,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_PLOT_RELATIVE}", info="GRA_PLOT_RELATIVE")
         self._emit_code(";")
 
-    def _emit_POKE(self, node:AST.Command):
+    def _emit_POKE(self, node:AST.Command) -> None:
         """
         Provides direct access to the machine memory. Writes the <int expr> in
         the range 0 to 255 directly into the machine memory (RAM) at the
@@ -2764,7 +2784,7 @@ class CPCEmitter:
         self._emit_code("ld      (hl),e")
         self._emit_code(";")
 
-    def _emit_POS(self, node:AST.Function):
+    def _emit_POS(self, node:AST.Function) -> None:
         """
         Reports the current horizontal POSition of the text cursor relative to
         the leftedge of the text window. The <stream expression> MUST be specified,
@@ -2783,7 +2803,7 @@ class CPCEmitter:
         self._emit_code("pop     hl")
         self._emit_code(";")
 
-    def _emit_PRINT(self, node:AST.Print):
+    def _emit_PRINT(self, node:AST.Print) -> None:
         """
         Prints the list of: <print items>s to the given stream (to stream #0 if
         <stream expression> is not specified). Note that when a semicolon is
@@ -2821,34 +2841,33 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _print_cmd(self, item:AST.Command):
+    def _print_cmd(self, item:AST.Command) -> None:
         if item.name in ("SPC", "TAB", "USING"):
             self._emit_command(item)
-        
         else:
             self._raise_error(2, item, "unexpected command")
     
-    def _print_str(self, item:AST.Statement):
+    def _print_str(self, item:AST.Statement) -> None:
         self._emit_import("rt_print_str")
         self._emit_code("; PRINT string item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_str")
 
-    def _print_int(self, item:AST.Statement):
+    def _print_int(self, item:AST.Statement) -> None:
         # Integers always print one space before and after
         self._emit_import("rt_print_int")
         self._emit_code("; PRINT INT item")
         self._emit_expression(item)
         self._emit_code("call    rt_print_int")
     
-    def _print_pointer(self, item:AST.Pointer):
+    def _print_pointer(self, item:AST.Pointer) -> None:
         # Pointer are always an address (int 16 bits)
         self._emit_import("rt_print_int")
         self._emit_code("; PRINT pointer item")
         self._emit_pointer(item.var)
         self._emit_code("call    rt_print_int")
 
-    def _print_real(self, item:AST.Statement):
+    def _print_real(self, item:AST.Statement) -> None:
         self._emit_import("rt_print_real")
         self._emit_code("; PRINT REAL item")
         self._emit_pushcontext()
@@ -2857,7 +2876,7 @@ class CPCEmitter:
         self._emit_code("call    rt_print_real")
         self._emit_popcontext()
 
-    def _print_separator(self, item:AST.Separator):
+    def _print_separator(self, item:AST.Separator) -> None:
         self._emit_code(f"; PRINT separator [{item.sym}]")
         if item.sym == ',':
             self._emit_import("rt_print_nextzone")
@@ -2867,7 +2886,7 @@ class CPCEmitter:
         self._emit_import("rt_print_nl")
         self._emit_code("call    rt_print_nl")
 
-    def _emit_RAD(self, node:AST.Statement):
+    def _emit_RAD(self, node:AST.Statement) -> None:
         """
         Set Radians Mode (see DEG).
         """
@@ -2880,7 +2899,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_RANDOMIZE(self, node:AST.Command):
+    def _emit_RANDOMIZE(self, node:AST.Command) -> None:
         """
         BASIC's random number generator produces a pseudo random sequence in which each
         number depends on the previous number - starting from a given number, the sequence
@@ -2903,7 +2922,7 @@ class CPCEmitter:
         self._emit_code("call    rt_randomize")
         self._emit_code(";")
 
-    def _emit_READ(self, node:AST.Command):
+    def _emit_READ(self, node:AST.Command) -> None:
         """
         READ fetches data from the list of constants supplied in the corresponding
         DATA statements and assigns it to variables, automatically stepping to the
@@ -2929,7 +2948,7 @@ class CPCEmitter:
                 self._emit_code("call    rt_read_real")
         self._emit_code(";")
 
-    def _emit_READIN(self, node:AST.ReadIn):
+    def _emit_READIN(self, node:AST.ReadIn) -> None:
         """
         READIN is an alias of an INPUT #9,<list of vars> command. Used
         to read from a file open using OPENIN keyword.
@@ -2964,7 +2983,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_RECORD(self, node:AST.Command):
+    def _emit_RECORD(self, node:AST.Command) -> None:
         """
         Imported from Locomotive BASIC 2 Plus
         Defines a series of patterns that can be used to access specific parts
@@ -2975,7 +2994,7 @@ class CPCEmitter:
         # this is managed through the symbols table
         self._emit_code(";")
 
-    def _emit_RELEASE(self, node:AST.Command):
+    def _emit_RELEASE(self, node:AST.Command) -> None:
         """
         When a sound is placed on a sound queue it may include a hold state. If
         any of the channels specified in this channel are in hold state, then they
@@ -2990,7 +3009,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.SOUND_RELEASE}", info="SOUND_RELEASE")
         self._emit_code(";")
 
-    def _emit_REMAIN(self, node:AST.Function):
+    def _emit_REMAIN(self, node:AST.Function) -> None:
         """
         Returns the REMAINing count from the delay timer specified in <int expr>
         (in the range 0 to 3) and disable it. 
@@ -3012,7 +3031,7 @@ class CPCEmitter:
         self._emit_code("inc     hl", info="user count starts in 1 but system in 0")
         self._emit_code(";") 
 
-    def _emit_RENUM(self, node:AST.Statement):
+    def _emit_RENUM(self, node:AST.Statement) -> None:
         """
         Renumber program lines from the line specified, using the increment specified.
         The <new line number> gives the first number for the new sequence, defaulting to 10.
@@ -3027,7 +3046,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "RENUM is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_REPLACESS(self, node:AST.Command):
+    def _emit_REPLACESS(self, node:AST.Command) -> None:
         """
         ABASC representation for the MID$() keyword as a command:
         MID$(...) = <str expression>
@@ -3045,7 +3064,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strreplace")
         self._emit_code(";")
 
-    def _emit_RESTORE(self, node:AST.Command):
+    def _emit_RESTORE(self, node:AST.Command) -> None:
         """
         Restores the position of the reading pointer back to the beginning of the
         DATA statement specified in the optional <line number> or <label>. Omitting
@@ -3069,7 +3088,7 @@ class CPCEmitter:
         self._emit_code("ld      (rt_data_ptr),hl")
         self._emit_code(";")
 
-    def _emit_RESUME(self, node:AST.Command):
+    def _emit_RESUME(self, node:AST.Command) -> None:
         """
         When an error has been trapped by an ON ERROR GOTO command, and has been
         processed, RESUME allows normal program execution to continue, the resuming
@@ -3080,7 +3099,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "RESUME is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_RETURN(self, node:AST.Command):
+    def _emit_RETURN(self, node:AST.Command) -> None:
         """
         Signals the end of a subroutine. BASIC returns to continue processing at
         the point after the GOSUB which invoked it.
@@ -3095,7 +3114,7 @@ class CPCEmitter:
         self._emit_code("ret")
         self._emit_code(";")
 
-    def _emit_RIGHTSS(self, node:AST.Function):
+    def _emit_RIGHTSS(self, node:AST.Function) -> None:
         """
         Extracts the number of characters specified by the <int expression> from
         the right of the str expression. If the str expression is shorter than
@@ -3111,7 +3130,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strright")
         self._emit_code(";")
 
-    def _emit_RND(self, node:AST.Function):
+    def _emit_RND(self, node:AST.Function) -> None:
         """
         Fetches a random number, which may be the next in sequence, a repeat of
         the last one, or the first in a new sequence. RND(0) returns a copy of
@@ -3130,7 +3149,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_ROUND(self, node:AST.Function):
+    def _emit_ROUND(self, node:AST.Function) -> None:
         """
         Rounds <numeric expression> to a number of decimal places or power of ten
         specified in <integer expression>. If the <integer expression> is less
@@ -3153,7 +3172,7 @@ class CPCEmitter:
         self._moveflo_heap(node)   
         self._emit_code(";")
 
-    def _emit_RUN(self, node:AST.Command):
+    def _emit_RUN(self, node:AST.Command) -> None:
         """
         Loads a program (BASIC or binary) from disc or tape and start executing it.
         """
@@ -3173,7 +3192,7 @@ class CPCEmitter:
             self._raise_error(2, node, "RUN file is not supported")
         self._emit_code(";")
 
-    def _emit_SAVE(self, node:AST.Command):
+    def _emit_SAVE(self, node:AST.Command) -> None:
         """
         Saves the current BASIC program or an area of memory to tape or disc.
         """
@@ -3202,7 +3221,7 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_SELECT_CASE(self, node:AST.SelectCase):
+    def _emit_SELECT_CASE(self, node:AST.SelectCase) -> None:
         """
         """
         self._emit_code("; SELECT CASE <int_expression>")
@@ -3213,7 +3232,7 @@ class CPCEmitter:
         self.selectblocks.append(node)
         self._emit_code(";")
 
-    def _emit_SGN(self, node:AST.Function):
+    def _emit_SGN(self, node:AST.Function) -> None:
         """
         Determines the sign of the <numeric expression>. Returns -1 if
         <numeric expression> is less than 0. Returns 0 if <numeric expression>
@@ -3233,7 +3252,7 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_SHARED(self, node:AST.Command):
+    def _emit_SHARED(self, node:AST.Command) -> None:
         """
         Imported from Locomotive BASIC 2 Plus
         Sometimes is necessary to allow routines to access global variables declared
@@ -3253,7 +3272,7 @@ class CPCEmitter:
         self._emit_code(";")
         pass
 
-    def _emit_SIN(self, node:AST.Function):
+    def _emit_SIN(self, node:AST.Function) -> None:
         """
         Calculates the SINE of a given value. The function defaults to radian
         measure unless specifically instructed otherwise by the DEG command. 
@@ -3269,7 +3288,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_SOUND(self, node:AST.Command):
+    def _emit_SOUND(self, node:AST.Command) -> None:
         """
         Each SOUND channel has a queue of SOUND s to play. There is space in this queue for five
         separate SOUND commands: one active and four waiting. The operating system of the CPC464
@@ -3301,7 +3320,7 @@ class CPCEmitter:
         self._emit_code("call    rt_sound")
         self._emit_code(";")
 
-    def _emit_SPACESS(self, node:AST.Function):
+    def _emit_SPACESS(self, node:AST.Function) -> None:
         """
         Creates a string of spaces of the given length.
         """
@@ -3313,7 +3332,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
 
-    def _emit_SPC(self, node:AST.Command):
+    def _emit_SPC(self, node:AST.Command) -> None:
         """
         SPC prints the number of spaces specified in the <integer expression>,
         and will print any following <print item> immediately next to the spaces
@@ -3326,7 +3345,7 @@ class CPCEmitter:
         self._emit_code("call    rt_print_spc")
         self._emit_code(";")
 
-    def _emit_SPEED_INK(self, node:AST.Command):
+    def _emit_SPEED_INK(self, node:AST.Command) -> None:
         """
         The INK and BORDER commands allow two colours to be associated with each Ink,
         in which case the INK alternates between the two colours. The first integer
@@ -3343,7 +3362,7 @@ class CPCEmitter:
         self._emit_code(f"call   {FWCALL.SCR_SET_FLASHING}", info="SCR_SET_FLASHING")
         self._emit_code(";")
 
-    def _emit_SPEED_KEY(self, node:AST.Command):
+    def _emit_SPEED_KEY(self, node:AST.Command) -> None:
         """
         If held down continuously, the keys auto repeat at the <repeat period> after
         the given <start delay> period. The setting is made in 1/50 sec units, in
@@ -3363,7 +3382,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KM_SET_DELAY}")
         self._emit_code(";")
 
-    def _emit_SPEED_WRITE(self, node:AST.Command):
+    def _emit_SPEED_WRITE(self, node:AST.Command) -> None:
         """
         The cassette can be witten at either 2000 baud (where <int expr> is 1),
         or the default of 1000 baud (where the <integer expression> is 0). When
@@ -3379,7 +3398,7 @@ class CPCEmitter:
         self._emit_code("call    rt_speedwrite")
         self._emit_code(";")
 
-    def _emit_SQ(self, node:AST.Function):
+    def _emit_SQ(self, node:AST.Function) -> None:
         """
         The SQ function is used to check the number of free entries in the queue for
         a given channel, where channel A is 1, B is 2, and C is 4. The function
@@ -3399,7 +3418,7 @@ class CPCEmitter:
         self._emit_code("ld      l,a\n")
         self._emit_code(";")
 
-    def _emit_SQR(self, node:AST.Function):
+    def _emit_SQR(self, node:AST.Function) -> None:
         """
         Returns the square root of <numeric expression>.
         """
@@ -3414,7 +3433,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_STOP(self, node:AST.Statement):
+    def _emit_STOP(self, node:AST.Statement) -> None:
         """
         To stop execution of a program, but leave BASIC in a state where the program
         can be restarted after the STOP command by using the CONT command. This may
@@ -3425,7 +3444,7 @@ class CPCEmitter:
         self._emit_code("call    0")
         self._emit_code(";")
 
-    def _emit_STRINGSS(self, node:AST.Function):
+    def _emit_STRINGSS(self, node:AST.Function) -> None:
         """
         Delivers a <string expression> consisting of the specified character
         repeated a number of times. 
@@ -3446,7 +3465,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
 
-    def _emit_STRSS(self, node:AST.Function):
+    def _emit_STRSS(self, node:AST.Function) -> None:
         """
         Converts the numeric expression) to a decimal string representation in the
         same form as used in the PRINT command.
@@ -3473,7 +3492,7 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_SUB(self, node:AST.DefSUB):
+    def _emit_SUB(self, node:AST.DefSUB) -> None:
         """
         Adopted from Locomotive BASIC 2 Plus, SUB allows the program to define
         and use simple procedures ended with END SUB.
@@ -3500,7 +3519,7 @@ class CPCEmitter:
             else:
                 self._raise_error(2,node)
 
-    def _emit_SYMBOL(self, node:AST.Command):
+    def _emit_SYMBOL(self, node:AST.Command) -> None:
         """
         The SYMBOL command redefines the representation of a given character that
         has first been specified in the SYMBOL AFTER command. The character number,
@@ -3527,7 +3546,7 @@ class CPCEmitter:
         data = data + ','.join(values)
         self._emit_data(data)
 
-    def _emit_SYMBOL_AFTER(self, node:AST.Command):
+    def _emit_SYMBOL_AFTER(self, node:AST.Command) -> None:
         """
         The number of user definable characters is set by the SYMBOL AFTER command.
         The default setting is 240, giving 16 user defined characters. If the
@@ -3553,7 +3572,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, arg, 'an integer value was expected')
 
-    def _emit_TAB(self, node:AST.Command):
+    def _emit_TAB(self, node:AST.Command) -> None:
         """
         TAB prints the number of spaces relative to the left efge of the text window,
         and will print any following <print item> immediately next to the spaces
@@ -3577,7 +3596,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_SET_CURSOR}", info="TXT_SET_CURSOR")
         self._emit_code(";")
 
-    def _emit_TAG(self, node:AST.Command):
+    def _emit_TAG(self, node:AST.Command) -> None:
         """
         Text sent to a given stream may be redirected to be written at the graphics
         cursor position. This allows text and symbols to be mixed with graphics.
@@ -3596,7 +3615,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_TAGOFF(self, node:AST.Command):
+    def _emit_TAGOFF(self, node:AST.Command) -> None:
         """
         Cancels the TAG for a given stream, and sends the text to the previous
         text cursor position at the point at which TAG was invoked. 
@@ -3611,7 +3630,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_TAN(self, node:AST.Function):
+    def _emit_TAN(self, node:AST.Function) -> None:
         """
         Calculates the tangent for the angle given in <numeric expression>, which
         must be in the range -200,000….+200,000, defaulting to radian measure
@@ -3628,7 +3647,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_TEST(self, node:AST.Function):
+    def _emit_TEST(self, node:AST.Function) -> None:
         """
         Reports the value of the ink currently at the specified graphics screen location. 
         """
@@ -3642,7 +3661,7 @@ class CPCEmitter:
         self._emit_code("ld      l,a")
         self._emit_code(";")
 
-    def _emit_TESTR(self, node:AST.Function):
+    def _emit_TESTR(self, node:AST.Function) -> None:
         """
         Moves the graphics cursor relatively from it's current location and reports
         the value of the ink at the new location. 
@@ -3657,7 +3676,7 @@ class CPCEmitter:
         self._emit_code("ld      l,a")
         self._emit_code(";")
 
-    def _emit_TIME(self, node:AST.Function):
+    def _emit_TIME(self, node:AST.Function) -> None:
         """
         Holds the elapsed time since switch-on, excluding periods when reading or writing
         the cassette (interrupts off). The units of time are 1/300th of a second.
@@ -3683,7 +3702,7 @@ class CPCEmitter:
             self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_TROFF(self, node:AST.Statement):
+    def _emit_TROFF(self, node:AST.Statement) -> None:
         """
         BASIC includes the facility to trace the execution of a program, by
         reporting the number of each line in square brackets [ ] , just before it
@@ -3693,7 +3712,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "TROFF is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_TRON(self, node:AST.Statement):
+    def _emit_TRON(self, node:AST.Statement) -> None:
         """
         BASIC includes the facility to trace the execution of a program, by
         reporting the number of each line in square brackets [ ] , just before it
@@ -3703,7 +3722,7 @@ class CPCEmitter:
         self._raise_warning(WL.LOW, "TRON is ignored and has not effect", node)
         self._emit_code("; IGNORED")
 
-    def _emit_UNT(self, node:AST.Function):
+    def _emit_UNT(self, node:AST.Function) -> None:
         """
         Converts an unsigned 16-bit integer in the range 0 to 65535. Returns an
         integer value in the range -32768 to +32767.
@@ -3712,7 +3731,7 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code(";")
 
-    def _emit_UPPERSS(self, node:AST.Function):
+    def _emit_UPPERSS(self, node:AST.Function) -> None:
         """
         Returns a new string expression the same as the input string expression)
         but in which all lower case characters are converted to upper case.
@@ -3724,7 +3743,7 @@ class CPCEmitter:
         self._emit_code("call    rt_upper")
         self._emit_code(";")
 
-    def _emit_USING(self, node:AST.Command):
+    def _emit_USING(self, node:AST.Command) -> None:
         """
         PRINT USING enables you to specify the print format of the expression
         returned by the PRINT command. This is achieved by specifying a
@@ -3744,7 +3763,7 @@ class CPCEmitter:
                 self._raise_error(2, a, "type not supported by USING")
         self._emit_code(";")
 
-    def _emit_VAL(self, node:AST.Function):
+    def _emit_VAL(self, node:AST.Function) -> None:
         """
         Extracts a <numeric expression> from the beginning of the string expression.
         The opposite of STR$. 
@@ -3766,7 +3785,7 @@ class CPCEmitter:
         self._emit_code("call    rt_strz2num")
         self._emit_code(";")
     
-    def _emit_VPOS(self, node:AST.Function):
+    def _emit_VPOS(self, node:AST.Function) -> None:
         """
         Reports the current vertical POSition of the text cursor relative to
         the leftedge of the text window. The <stream expression> MUST be specified,
@@ -3784,7 +3803,7 @@ class CPCEmitter:
         self._emit_code("pop     hl")
         self._emit_code(";")
 
-    def _emit_WAIT(self, node:AST.Command):
+    def _emit_WAIT(self, node:AST.Command) -> None:
         """
         Suspends operation until a given I/O port returns a particular value in
         the range 0 to 255. BASIC loops whilst reading the I/O port. The value-read
@@ -3813,14 +3832,14 @@ class CPCEmitter:
         self._emit_code("jr      z,$-4")
         self._emit_code(";")
 
-    def _emit_WEND(self, node:AST.Statement):
+    def _emit_WEND(self, node:AST.Statement) -> None:
         wnode = self.wloops.pop()
         self._emit_code("; WEND")
         self._emit_code(f"jp      {wnode.start_label}")
         self._emit_code(f"{wnode.end_label}:", 0)
         self._emit_code(";")
 
-    def _emit_WHILE(self, node:AST.WhileLoop):
+    def _emit_WHILE(self, node:AST.WhileLoop) -> None:
         """
         A WHILE loop repeatedly executes a body of program until a given
         condition is true. The WHILE command defines the head of the loop, and
@@ -3841,7 +3860,7 @@ class CPCEmitter:
         self._emit_code("; WHILE BODY")
         self.wloops.append(node)
     
-    def _emit_WIDTH(self, node:AST.Command):
+    def _emit_WIDTH(self, node:AST.Command) -> None:
         """
         Tells BASIC how wide the printer is in characters, this information allows
         BASIC to insert carriage returns as required when printing. 
@@ -3850,7 +3869,7 @@ class CPCEmitter:
         self._raise_warning(WL.MEDIUM, 'WIDTH is ignored and has not effect', node)
         self._emit_code("; IGNORED")
 
-    def _emit_WINDOW(self, node:AST.Command):
+    def _emit_WINDOW(self, node:AST.Command) -> None:
         """
         Sets a text window for a given screen stream. 
         """
@@ -3880,7 +3899,7 @@ class CPCEmitter:
             self._emit_stream_0()
         self._emit_code(";")
 
-    def _emit_WINDOW_SWAP(self, node:AST.Command):
+    def _emit_WINDOW_SWAP(self, node:AST.Command) -> None:
         """
         Exchanges the text windows. For example, BASIC messages sent to stream #0
         may be swapped with another window to highlight aspects of program development
@@ -3896,7 +3915,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.TXT_SWAP_STREAMS}", info="TXT_SWAP_STREAMS")
         self._emit_code(";")
 
-    def _emit_WRITE(self, node:AST.Write):
+    def _emit_WRITE(self, node:AST.Write) -> None:
         """
         Prints the values of a number of expressions to the given stream, separating them
         by commas and enclosing strings in double quotes. Used mainly for outputting data
@@ -3929,7 +3948,7 @@ class CPCEmitter:
         self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_XPOS(self, node:AST.Function):
+    def _emit_XPOS(self, node:AST.Function) -> None:
         """
         Establishes the horizontal position of the graphics cursor.
         """
@@ -3938,7 +3957,7 @@ class CPCEmitter:
         self._emit_code("ex      de,hl")
         self._emit_code(";")
 
-    def _emit_YPOS(self, node:AST.Function):
+    def _emit_YPOS(self, node:AST.Function) -> None:
         """
         Establishes the vertical position of the graphics cursor.
         """
@@ -3946,7 +3965,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_ASK_CURSOR}", info="GRA_ASK_CURSOR")
         self._emit_code(";")
 
-    def _emit_ZONE(self, node:AST.Command):
+    def _emit_ZONE(self, node:AST.Command) -> None:
         """
         Changes the width of the Print Zone used in PRINT, from the default value
         of 13 to a new value in the range 1 to 255. Reset by NEW, LOAD, CHAIN
@@ -3961,7 +3980,7 @@ class CPCEmitter:
 
     # ----------------- Expressions -----------------
 
-    def _emit_expression(self, node: AST.Statement):
+    def _emit_expression(self, node: AST.Statement) -> None:
         if isinstance(node, AST.Integer):
             self._emit_code(f"ld      hl,{node.value & 0xFFFF}")
         elif isinstance(node, AST.String):
@@ -3985,7 +4004,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, 'expression not supported yet')
 
-    def _emit_const_str(self, node: AST.String):
+    def _emit_const_str(self, node: AST.String) -> None:
         if node.value not in self.issued_str_constants:
             label = self._get_conststr_label()
             values = ""
@@ -4000,7 +4019,7 @@ class CPCEmitter:
             label = self.issued_str_constants[node.value]
         self._emit_code(f"ld      hl,{label}")
 
-    def _emit_const_real(self, node: AST.Real):
+    def _emit_const_real(self, node: AST.Real) -> None:
         vstr = str(node.value)
         if vstr not in self.issued_real_constants:
             label = self._get_constreal_label()
@@ -4015,7 +4034,7 @@ class CPCEmitter:
             label = self.issued_real_constants[vstr]
         self._emit_code(f"ld      hl,{label}")
 
-    def _emit_record(self, node: AST.Variable):
+    def _emit_record(self, node: AST.Variable) -> None:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
@@ -4028,7 +4047,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
-    def _emit_variable(self, node: AST.Variable):
+    def _emit_variable(self, node: AST.Variable) -> None:
         """
         Params are special variables because they don't have permanent reserved
         memory but are stored in the call stack frame and accessed through IX.
@@ -4056,7 +4075,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
-    def _emit_arrayitem(self, node: AST.ArrayItem):
+    def _emit_arrayitem(self, node: AST.ArrayItem) -> None:
             self._emit_arrayitem_ptr(node)
             if node.etype == AST.ExpType.Integer:
                 self._emit_code("ld      e,(hl)")
@@ -4064,7 +4083,7 @@ class CPCEmitter:
                 self._emit_code("ld      d,(hl)")
                 self._emit_code("ex      de,hl")
 
-    def _emit_variable_recordptr(self, node: AST.Variable):
+    def _emit_variable_recordptr(self, node: AST.Variable) -> None:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
@@ -4074,7 +4093,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
-    def _emit_variable_ptr(self, node: AST.Variable):
+    def _emit_variable_ptr(self, node: AST.Variable) -> None:
         """
         variables can be local to a DEF FN, SUB or FUNCTION if they are parameters
         so we check that case bacause their address is relative to IX.
@@ -4094,7 +4113,7 @@ class CPCEmitter:
                 else:
                     self._raise_error(38, node)
     
-    def _emit_arrayitem_ptr(self, node: AST.ArrayItem):
+    def _emit_arrayitem_ptr(self, node: AST.ArrayItem) -> None:
         """
         Emit code to compute the address of an array element (multi-dimensional).
         Each array type has a different element size:
@@ -4162,7 +4181,7 @@ class CPCEmitter:
             self._emit_code(f"ld      de,{var.label}", info=f"base address of {node.name}") # type: ignore [union-attr]
         self._emit_code("add     hl,de", info="final address of this item element")
 
-    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label | AST.String):
+    def _emit_pointer(self, node: AST.ArrayItem | AST.Variable | AST.Label | AST.String) -> None:
         if isinstance(node, AST.ArrayItem):
             self._emit_arrayitem_ptr(node)
         elif isinstance(node, AST.Variable):
@@ -4183,7 +4202,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, "unsupported type")
 
-    def _emit_binaryop(self, node: AST.BinaryOp):
+    def _emit_binaryop(self, node: AST.BinaryOp) -> None:
         """ 
         Develops right side and pushes the result, develops left 
         and leaves it in HL
@@ -4201,7 +4220,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'{node.etype} operations are not supported yet')
     
-    def _emit_unaryop(self, node: AST.UnaryOp):
+    def _emit_unaryop(self, node: AST.UnaryOp) -> None:
         self._emit_expression(node.operand)
         if node.etype == AST.ExpType.Integer:
             if node.op == 'NOT':
@@ -4230,7 +4249,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'{node.etype} unary operations are not supported yet')
 
-    def _emit_int_op(self, node: AST.BinaryOp):
+    def _emit_int_op(self, node: AST.BinaryOp) -> None:
         """ HL = left value, DE = right value """
         op = node.op.upper()
         if op == '+':
@@ -4274,7 +4293,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'unknown "{op}" INT op')
     
-    def _emit_str_op(self, node: AST.BinaryOp):
+    def _emit_str_op(self, node: AST.BinaryOp) -> None:
         """ HL = left value, DE = right value """
         op = node.op.upper()
         if op == '+':
@@ -4289,7 +4308,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'unknown "{op}" string op')
 
-    def _emit_real_op(self, node: AST.BinaryOp):
+    def _emit_real_op(self, node: AST.BinaryOp) -> None:
         """
         HL = left value, DE = right value
         WARNING: move to accum destroys DE and BC
@@ -4321,7 +4340,7 @@ class CPCEmitter:
         self._moveflo_heap(node)
         self._emit_popcontext()
 
-    def _emit_comparation(self, node: AST.BinaryOp):
+    def _emit_comparation(self, node: AST.BinaryOp) -> None:
         if node.left.etype == AST.ExpType.String:
             self._emit_str_comparation(node)
         elif node.left.etype == AST.ExpType.Real:
@@ -4367,7 +4386,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'INT "{node.op}" op not implemented yet')
 
-    def _emit_str_comparation(self, node: AST.BinaryOp):
+    def _emit_str_comparation(self, node: AST.BinaryOp) -> None:
         self._emit_import("rt_strcmp")
         if node.op == '=':
             self._emit_code("call    rt_strcmp")
@@ -4404,7 +4423,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, f'STRING "{node.op}" op not implemented yet')
 
-    def _emit_real_comparation(self, node: AST.BinaryOp):
+    def _emit_real_comparation(self, node: AST.BinaryOp) -> None:
         """
         HL = left value, DE = right value
         WARNING: move to accum destroys DE and BC
@@ -4472,10 +4491,10 @@ class CPCEmitter:
 
     # ----------------- AST Trasversal functions -----------------
 
-    def _emit_comment(self, node: AST.Comment):
+    def _emit_comment(self, node: AST.Comment) -> None:
         pass
 
-    def _emit_assigment_arrayitem(self, node: AST.ArrayItem):
+    def _emit_assigment_arrayitem(self, node: AST.ArrayItem) -> None:
         var = self.symtable.find(node.name, SymType.Array, self.context)
         if var is None:
             var = self.symtable.find(node.name, SymType.ArrayParam, self.context)
@@ -4502,7 +4521,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
-    def _emit_assigment_record(self, node: AST.Variable):
+    def _emit_assigment_record(self, node: AST.Variable) -> None:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
@@ -4522,7 +4541,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
     
-    def _emit_assigment_param(self, param: SymEntry):
+    def _emit_assigment_param(self, param: SymEntry) -> None:
         """
         self._emit_code(f"ld      l,(ix+{entry.memoff})")
         self._emit_code(f"ld      h,(ix+{entry.memoff+1})")
@@ -4543,7 +4562,7 @@ class CPCEmitter:
             self._emit_code("inc     c")
             self._emit_code("ldir")
 
-    def _emit_assigment_variable(self, node: AST.Variable):
+    def _emit_assigment_variable(self, node: AST.Variable) -> None:
         """
         Params are special variables because they don't have permanent reserved
         memory but are stored in the call stack frame and accessed through IX.
@@ -4570,7 +4589,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node)
 
-    def _emit_assigment(self, node: AST.Assignment):
+    def _emit_assigment(self, node: AST.Assignment) -> None:
         self._emit_expression(node.source)
         if isinstance(node.target, AST.ArrayItem):
             self._emit_assigment_arrayitem(node.target)
@@ -4582,7 +4601,7 @@ class CPCEmitter:
         else:
             self._raise_error(38, node.target)
 
-    def _emit_RSX(self, node: AST.RSX):
+    def _emit_RSX(self, node: AST.RSX) -> None:
         """
         |<RSX command>[,<argument>[,<argument>]*]
         """
@@ -4618,7 +4637,7 @@ class CPCEmitter:
                 self._emit_popcontext()
         self._emit_code(";")
 
-    def _emit_blockend(self, node: AST.BlockEnd):
+    def _emit_blockend(self, node: AST.BlockEnd) -> None:
         if node.name == "NEXT":
             self._emit_NEXT(node)
         elif node.name == "WEND":
@@ -4632,7 +4651,7 @@ class CPCEmitter:
         else:
             self._raise_error(2, node, "not implemented yet")
 
-    def _emit_userfun(self, node: AST.UserFun):
+    def _emit_userfun(self, node: AST.UserFun) -> None:
         self._emit_code(f"; Calling USER FUN {node.name}")
         if len(node.args):
             self._emit_pushcontext()
@@ -4668,7 +4687,7 @@ class CPCEmitter:
                     self.max_heap_memory = maxconsumed        
         self._emit_code(";")
 
-    def _emit_function(self, node: AST.Function):
+    def _emit_function(self, node: AST.Function) -> None:
         """
         Function's result will be placed in HL
         """
@@ -4679,7 +4698,7 @@ class CPCEmitter:
             self._raise_error(2, node, f"unknown keyword {keyword}")
         return emit_keyword(node) # type: ignore[misc]
 
-    def _emit_command(self, node: AST.Command):
+    def _emit_command(self, node: AST.Command) -> None:
         keyword = node.name
         funcname = "_emit_" + keyword.replace('$','SS').replace(' ', '_')
         emit_keyword = getattr(self, funcname , None)
@@ -4687,7 +4706,7 @@ class CPCEmitter:
             self._raise_error(2, node, f"unknown keyword {keyword}")
         return emit_keyword(node) # type: ignore[misc]
 
-    def _emit_statement(self, stmt: AST.Statement):
+    def _emit_statement(self, stmt: AST.Statement) -> None:
         if isinstance(stmt, AST.Comment):
             self._emit_comment(stmt)
         elif isinstance(stmt, AST.Assignment):
@@ -4739,7 +4758,7 @@ class CPCEmitter:
             self._raise_error(2, stmt, "unexpected statement")
         self._emit_free_heapmem()
 
-    def _emit_line(self, line: AST.Line):
+    def _emit_line(self, line: AST.Line) -> None:
         self._emit_line_label(line)
         for stmt in line.statements:
             self._emit_statement(stmt)

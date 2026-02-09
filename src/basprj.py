@@ -28,7 +28,7 @@ import platform
 import stat
 import re
 import sys
-from typing import Tuple
+from typing import List
 
 WINDOWS_TEMPLATE: str = r"""@echo off
 
@@ -132,7 +132,7 @@ LABEL mainloop
     GOTO mainloop
 """
 
-def script_tools_paths() -> list[str]:
+def script_tools_paths() -> List[str]:
     script_dir: str = os.path.dirname(os.path.abspath(__file__))
     return [
         os.path.join(script_dir, "abasc.py"),
@@ -145,7 +145,7 @@ def script_tools_paths() -> list[str]:
 def target_name_from_dir(path: str) -> str:
     return os.path.basename(os.path.normpath(path))
 
-def update_project_win(content: str, paths: list[str]) -> str:
+def update_project_win(content: str, paths: List[str]) -> str:
     """
     We have to use lamda functions to avoid the problem with Windows paths and re.sub calls
     raising errors like 're.error: bad escape'
@@ -166,7 +166,7 @@ def update_project_win(content: str, paths: list[str]) -> str:
         )
     return content
 
-def update_project_unix(content: str, paths: list[str]) -> str:
+def update_project_unix(content: str, paths: List[str]) -> str:
     """ 
     Linux shouldn't have the same problem than Windows with bars in the path, but
     lets use the lambda workaround just in case.
