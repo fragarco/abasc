@@ -19,13 +19,13 @@
 chain merge "cpcrslib/cpcrslib.bas"
 
 label MAIN
-	call rsUseFontNanako()
+	call rsSelectFontNanako()
 	call rsDisableFirmware() ' Now, I don't gonna use any firmware routine so I modify interrupts jump to nothing
 	call rsClrScr()			 ' Fills scr with ink 0
 	call rsSetMode(1)		 ' Hardware call to set mode 1
 
-    call rsSetColour(0, 20)  ' Set background = black
-    call rsSetColour(16, 20) ' Set border = black
+    call rsSetColour(0, RSHW.BLACK)  ' Set background = black
+    call rsSetColour(16, RSHW.BLACK) ' Set border = black
 
 	' Parameters: pen, text, adress
 	call rsPrintGphStrStd(1, "THIS IS A SMALL DEMO", &C050)	

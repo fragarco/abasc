@@ -21,14 +21,14 @@
 read 'asm/cpcrslib/video/getscraddress.asm'
 
 ; CPC_PRINT_M1
-; Prints a null-terminated string using a custom font and direct
-; hardware access in the video memory indicated (ONLY MODE 1).
+; Prints an ABASC string (len in first byte ) using a custom font and
+; direct hardware access in the video memory indicated (ONLY MODE 1).
 ; Requires a designed custom font like the example provided in
 ; font_nanako.asm
 ; Inputs:
 ;     A  pen color (1-4)
 ;     HL video memory address
-;     DE address to the null-terminated string 
+;     DE address to the ABASC type string 
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.
@@ -40,14 +40,14 @@ cpc_Print_M1:
 
 
 ; CPC_PRINTXY_M1
-; Prints a null-terminated string using a custom font and direct
+; Prints an ABASC string (len in first byte) using a custom font and direct
 ; hardware access in the video memory indicated by X and Y coords.
 ; (ONLY MODE 1).
 ; Inputs:
 ;     A  pen color (1-4)
 ;     L  X coord.
 ;     H  Y coord.
-;     DE address to the null-terminated string 
+;     DE address to the ABASC type string 
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.
@@ -93,14 +93,17 @@ __rslib_applycolor:
 	ret	
 
 ; AUXILIAR ROUTINE
-; Prints a null-terminated string in MODE 1
+; Prints an ABASC type string (len in first byte) in MODE 1
 ; HL points to the string.
 _rslib_printstr:
+	ld      a,(hl) ; string length
+	inc     hl     ; first char
+	ld      b,a
+_rslib_printstr_loop:
+	push    bc     ; store remaining characters	
 	ld      a,(cpc_charfont_first)
 	ld      b,a	   ; lets substract the first char in the table
 	ld      a,(hl) ; to find the character index in the
-	or      a      ; 
-	ret     z      ;
 	sub     b      ;
 	ld      bc,cpc_charfont	; chars table
 	push    hl
@@ -120,7 +123,8 @@ _rslib_printstr:
 	ld      (_rslib_memaddr),hl
 	pop     hl
 	inc     hl
-	jr      _rslib_printstr
+	pop     bc
+	djnz    _rslib_printstr_loop
 
 ; PRIVATE ROUTINE
 ; Draws the char shape

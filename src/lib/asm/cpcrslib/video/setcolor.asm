@@ -60,5 +60,7 @@
 cpc_SetColor:
   	ld      bc,&7F00 ; Gate Array port number
 	out     (c),h    ; Send ink number
-	out     (c),l	 ; Send HW color number
+	ld      a,&40    ; Command to set the INK of a previously
+	or      l		 ; selected PEN register in the PAL chip
+	out     (c),a	 ; Send HW color number
 	ret
