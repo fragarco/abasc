@@ -1,7 +1,5 @@
 ' MODULE CPCTELERA/EASYTILEMAPS
 
-' Functions and Procedures:
-
 SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap) ASM
     ASM "ld      l,(ix+0)     ; tilemap - Pointer to the start of the tilemap"
     ASM "ld      h,(ix+1)"
@@ -17,6 +15,17 @@ SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap) ASM
     ASM "call    cpct_etm_drawTileBox2x4"
     ASM "ret"
     ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTileBox2x4.asm'"
+END SUB
+
+SUB cpctetmSetDrawTilemap2x4f(vieww, viewh, vmem, tiles) ASM
+    ASM "ld      l,(ix+0)     ; tiles - Pointer to the start of the tileset definition (2D tile-index matrix)"
+    ASM "ld      h,(ix+1)"
+    ASM "ld      e,(ix+2)     ; vmem - Pointer to video memory location where the tilemap is to be drawn"
+    ASM "ld      d,(ix+3)"
+    ASM "ld      c,(ix+4)     ; Height of the tilemap in tiles"
+    ASM "ld      a,(ix+6)     ; Width of the tilemap in tiles"
+    ASM "jp      cpct_etm_setDrawTilemap2x4_f"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setDrawTilemap2x4_f.asm'"
 END SUB
 
 SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles) ASM

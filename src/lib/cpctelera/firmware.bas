@@ -1,14 +1,9 @@
 ' MODULE CPCTELERA/FIRMWARE
 
-' Functions and Procedures:
-'   command   cpctDisableLowerROM()
-'   command   cpctDisableUpperROM()
-'   command   cpctEnableLowerROM()
-'   command   cpctEnableUpperROM()
-'
-'   function  cpctRemoveInterruptHandler()
-'   command   cpctSetInterruptHandler(cbaddress)
-
+FUNCTION cpctDisableFirmware ASM
+    ASM "jp      cpct_removeInterruptHandler ; returns in HL current callback address"
+    ASM "read 'asm/cpctelera/firmware/cpct_removeInterruptHandler.asm'"
+END FUNCTION
 
 SUB cpctDisableLowerROM ASM
     ASM "jp      cpct_disableLowerROM"
@@ -28,6 +23,11 @@ END SUB
 SUB cpctEnableUpperROM ASM
     ASM "jp      cpct_enableUpperROM"
     ASM "read 'asm/cpctelera/firmware/cpct_enableDisableROMs.asm'"
+END SUB
+
+SUB cpctReenableFirmware ASM
+    ASM "jp      cpct_reenableFirmware"
+    ASM "read 'asm/cpctelera/firmware/cpct_reenableFirmware.asm'"
 END SUB
 
 FUNCTION cpctRemoveInterruptHandler ASM

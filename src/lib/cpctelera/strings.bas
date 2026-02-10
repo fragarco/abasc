@@ -1,7 +1,5 @@
 ' MODULE CPCTELERA/STRINGS
 
-' Functions and Procedures:
-
 SUB cpctDrawCharM0(vmem, chnum) ASM
     ASM "ld      e,(ix+0)"
     ASM "ld      l,(ix+2)"

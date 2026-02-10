@@ -207,8 +207,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read "cpctelera/macros/cpct_undocumentedOpcodes.asm"
-read "cpctelera/macros/cpct_maths.asm"
+read "asm/cpctelera/macros/cpct_undocumentedOpcodes.asm"
+read "asm/cpctelera/macros/cpct_maths.asm"
 
 cpct_drawToSpriteBufferMaskedAlignedTable:
    ;; Calculate offset to be added to Destiny pointer (DE, BackBuffer Pointer)

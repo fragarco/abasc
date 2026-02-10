@@ -160,9 +160,9 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
-read 'cpctelera/macros/cpct_maths.asm'
-read 'cpctelera/macros/cpct_reverseBits.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_maths.asm'
+read 'asm/cpctelera/macros/cpct_reverseBits.asm'
 
 cpct_drawSpriteHFlipM2:
    ;; Use IXL as counter for sprite rows (B will be used for other operations)

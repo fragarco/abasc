@@ -142,7 +142,7 @@
 ;;    W = *width* in bytes, H = *height* in bytes, HH = [(H-1)/8]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 cpct_drawSpriteMaskedAlignedTable:
    ;; Save Width in a placeholder for easy recovering it later

@@ -152,7 +152,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Conversion table from PEN to 4-pixels-byte screen pixel format
-read 'cpctelera/sprites/cpct_pen2fourPixelM1_table.asm'
+read 'asm/cpctelera/sprites/cpct_pen2fourPixelM1_table.asm'
 
 cpct_pen2pixelPatternM1:
    ld    bc, cpct_pen2fourPixelM1_table  ;; [3] BC Points to the start of the Replace Colours Pattern Conversion Array

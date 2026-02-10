@@ -155,7 +155,7 @@
 ;;   *WW* = (int)(*width*/2), *H* = *height*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_reverseBits.asm'
+read 'asm/cpctelera/macros/cpct_reverseBits.asm'
 
 cpct_hflipSpriteMaskedM0:  
    ;; We need HL to point to the byte previous to the start of the sprite array.

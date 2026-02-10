@@ -118,7 +118,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/sprites/cpct_pen2twoPixelM0_table.asm'
+read 'asm/cpctelera/sprites/cpct_pen2twoPixelM0_table.asm'
 
 cpct_pens2pixelPatternPairM0:
    ;; Get Pixel Pattern for NewPen (E) -> Put it temporarily in A

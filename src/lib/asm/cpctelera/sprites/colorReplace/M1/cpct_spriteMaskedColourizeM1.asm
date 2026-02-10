@@ -150,7 +150,7 @@
 ;; Thanks to all who participated in the discussion for their help and support.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 cpct_spriteMaskedColourizeM1:
 ;; Calculante E = (FindPat ^ InsrPat). This will be used at the end of the routine

@@ -169,7 +169,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read "cpctelera/macros/cpct_maths.asm"
+read "asm/cpctelera/macros/cpct_maths.asm"
 
 cpct_drawToSpriteBuffer:
    ;; Calculate offset to be added to Destiny pointer (DE, BackBuffer Pointer)

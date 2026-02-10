@@ -1,13 +1,5 @@
 ' MODULE CPCTELERA/KEYBOARD
 
-' Functions and Commands:
-'   function  cpctGetKeypressedAsASCII()
-'   function  cpctIsAnyKeyPressed()
-'   function  cpctIsAnyKeyPressedf()
-'   function  cpctIsKeyPressed(keyid)
-'   command   cpctScanKeyboard()
-'   command   cpctScanKeyboardf()
-
 CONST KEY.UP           = &0100
 CONST KEY.RIGHT        = &0200
 CONST KEY.DOWN         = &0400
@@ -135,4 +127,14 @@ END SUB
 SUB cpctScanKeyboardf ASM
     ASM "jp      cpct_scanKeyboard_f"
     ASM "read    'asm/cpctelera/keyboard/cpct_scanKeyboard_f.asm'"
+END SUB
+
+SUB cpctScanKeyboardi ASM
+    ASM "jp      cpct_scanKeyboard_i"
+    ASM "read    'asm/cpctelera/keyboard/cpct_scanKeyboard_i.asm'"
+END SUB
+
+SUB cpctScanKeyboardif ASM
+    ASM "jp      cpct_scanKeyboard_if"
+    ASM "read    'asm/cpctelera/keyboard/cpct_scanKeyboard_if.asm'"
 END SUB

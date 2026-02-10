@@ -152,7 +152,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 cpct_drawSpriteVFlipMasked:
    ;; Modify code using width inside drawing loops

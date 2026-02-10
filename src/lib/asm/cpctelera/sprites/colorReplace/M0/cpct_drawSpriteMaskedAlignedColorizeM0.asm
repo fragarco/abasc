@@ -110,10 +110,9 @@
 ;; Thanks to all of them for their help and support.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_undocumentedOpcodes.asm'
+read 'asm/cpctelera/macros/cpct_undocumentedOpcodes.asm'
 
 cpct_drawSpriteMaskedAlignedColorizeM0:
-   push  af        ;; [4] Save AF (Source Sprite Pointer) in Stack
    ld   (dspmacm0_aligned_mask_table), ix ;; [6] Set Aligned Mask Table pointer in placeholder
 
    ;; Compute E = (FindPat ^ InsrPat). This will be used at the end of the routine

@@ -1,14 +1,5 @@
 ' MODULE CPCTELERA/MEMUTILS
 
-' Functions and Commands:
-'   command   cpctMemcpy(toptr, fromptr, bytes)
-'   command   cpctMemset(arrayptr, value, bytes)
-'   command   cpctMemsetf8(arrayptr, value, bytes)
-'   command   cpctMemsetf64(arrayptr, value, bytes)
-'   command   cpctPageMemory(bankvalue)
-'   command   cpctSetStackLocation(halts)
-'   command   cpctWaitHalts(halts)
-
 SUB cpctMemcpy(toptr, fromptr, bytes) ASM
     ASM "ld      c,(ix+0) ; bytes  - Number of bytes to be set (>= 1)"
     ASM "ld      b,(ix+1)"
@@ -42,7 +33,7 @@ SUB cpctMemsetf8(arrayptr, value, bytes) ASM
 END SUB
 
 SUB cpctMemsetf64(arrayptr, value, bytes) ASM
-    ASM "ld      c,(ix+0) ; size  - Number of bytes to be set (>= 64, multiple of 64)"
+    ASM "ld      c,(ix+0) ; bytes  - Number of bytes to be set (>= 64, multiple of 64)"
     ASM "ld      b,(ix+1)"
     ASM "ld      e,(ix+2) ; value - 16-bit value to be set (Pair of bytes)"
     ASM "ld      d,(ix+3)"
@@ -50,6 +41,17 @@ SUB cpctMemsetf64(arrayptr, value, bytes) ASM
     ASM "ld      h,(ix+5)"
     ASM "jp      cpct_memset_f64"
     ASM "read 'asm/cpctelera/memutils/cpct_memset_f64.asm'"
+END SUB
+
+SUB cpctMemsetf64i(arrayptr, value, bytes) ASM
+    ASM "ld      c,(ix+0) ; bytes  - Number of bytes to be set (>= 64, multiple of 64)"
+    ASM "ld      b,(ix+1)"
+    ASM "ld      e,(ix+2) ; value - 16-bit value to be set (Pair of bytes)"
+    ASM "ld      d,(ix+3)"
+    ASM "ld      l,(ix+4) ; arrayptr - Pointer to the first byte of the array to be filled up (starting point in memory)"
+    ASM "ld      h,(ix+5)"
+    ASM "jp      cpct_memset_f64_i"
+    ASM "read 'asm/cpctelera/memutils/cpct_memset_f64_i.asm'"
 END SUB
 
 SUB cpctPageMemory(bankvalue) ASM

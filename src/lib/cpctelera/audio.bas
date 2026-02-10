@@ -1,23 +1,5 @@
 ' MODULE CPCTELERA/AUDIO
 
-' Functions and Commands:
-'   function  cpctakpDigidrumStatus()
-'
-'   command   cpctakpMusicInit(songdata)
-'   command   cpctakpMusicPlay(array$, index)
-'
-'   command   cpctakpSetFadeVolume(fadelevel)
-' 
-'   function  cpctakpSFXGetInstrument(channel)
-'   command   cpctakpSFXInit(songdata)
-'   command   cpctakpSFXPlay(sfxnum, vol, note, nspeed, invertedpitch, channelbitmask)
-'   command   cpctakpSFXStop(chbitmask)
-'   command   cpctakpSFXStopAll()
-'
-'   function  cpctakpSongLoopTimes()
-'
-'   command   cpctakpStop()
-
 CONST AY.CHANNELA   = 1
 CONST AY.CHANNELB   = 2
 CONST AY.CHANNELC   = 4

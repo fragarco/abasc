@@ -82,7 +82,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Keyboard Status Buffer defined in an external file
-read 'cpctelera/keyboard/keyboard.asm'
+read 'asm/cpctelera/keyboard/keyboard.asm'
 
 cpct_scanKeyboard_i:     ;; Assembly entry point
 

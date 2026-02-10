@@ -1,8 +1,5 @@
 ' MODULE CPCTELERA/VIDEO
 
-' Functions and Procedures:
-
-
 ' read once all the video macros as they don't consume space if are not used
 ASM "read 'asm/cpctelera/video/video_macros.asm'"
 
@@ -152,6 +149,12 @@ SUB cpctSetPalette(palptr, items) ASM
     ASM "ld      h,(ix+3)"
     ASM "jp      cpct_setPalette"
     ASM "read 'asm/cpctelera/video/cpct_setPalette.asm'"
+END SUB
+
+SUB cpctSetVideoMemoryOffset(offset) ASM
+    ASM "ld      l,(ix+0) ; New starting offset for Video Memory (8 Least Significant bits)"
+    ASM "jp      cpct_setVideoMemoryOffset"
+    ASM "read 'asm/cpctelera/video/cpct_setVideoMemoryOffset.asm'"
 END SUB
 
 SUB cpctSetVideoMemoryPage(pageid) ASM
