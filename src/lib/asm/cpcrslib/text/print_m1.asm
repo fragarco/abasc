@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/video/getscraddress.asm'
+read 'asm/cpcrslib/video/getscraddress.asm'
 
 ; CPC_PRINT_M1
 ; Prints a null-terminated string using a custom font and direct

@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/keyboard/testkeyboard.asm'
+read 'asm/cpcrslib/keyboard/testkeyboard.asm'
 
 ; CPC_ANYKEYPRESSED
 ; Checks if any key in the keyboard is pressed. If so, it returns -1 (True)
