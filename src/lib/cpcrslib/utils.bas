@@ -1,8 +1,7 @@
 ' MODULE CPCRSLIB/UTILS
 
 SUB rsPause(halts) ASM
-    ASM "ld      l,(ix+0)    ; Number of interrupts"
-    ASM "ld      h,(ix+1)    ; 6 interrupts per frame in PAL systems"
+    ASM "ld      b,(ix+0)    ; Number of interrupts 1-255"
     ASM "jp      cpc_Pause"
     ASM "read 'asm/cpcrslib/utils/pause.asm'"
 END SUB

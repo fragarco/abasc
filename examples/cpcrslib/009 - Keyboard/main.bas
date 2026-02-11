@@ -20,7 +20,9 @@ chain merge "cpcrslib/cpcrslib.bas"
 
 label MAIN
 	mode 1
-	
+	' Lets remove all default assignments and
+	' assign ESC key to exit
+	call rsDeleteKeys()
 	call rsAssignKey(4, RSKEY.ESC)
 	
 	print "Welcome to cpcrslib keyboard utilities."
@@ -38,15 +40,13 @@ label MAIN
 	print "Press any key to continue"
 	while rsAnyKeyPressed() = 0: wend
 
-
 	print "Press a Key to redefine as #3"
 	call rsRedefineKey(3)		'redefine key. There are 12 available keys (0..11)
 	print "Done!"
+    call rsPause(200)
 
-    call rsPause(100)
 	mode 1
 	border 3
-
 	print "Now let's test the selected keys. Press ESC to EXIT"
 	
 	print "Press a Key to test it.."

@@ -22,13 +22,12 @@
 ; Waits for a number of interrupts equal to the number passed in B.
 ; The Amstrad CPC executes 300 interrupts per second (in a PAL machine).
 ; Inputs:
-;     HL number of interrupts to wait.
+;     B number of interrupts to wait.
 ; Outputs:
 ;	  None
 ;     HL gets modified.
 cpc_Pause:
 __cpcpause_loop:
     halt
-    dec     hl
-    ret     z
-    jr      __cpcpause_loop
+    djnz    __cpcpause_loop
+    ret
