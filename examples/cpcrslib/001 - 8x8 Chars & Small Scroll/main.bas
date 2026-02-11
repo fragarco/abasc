@@ -19,7 +19,6 @@
 chain merge "cpcrslib/cpcrslib.bas"
 
 label MAIN
-	call rsSelectFontNanako()
 	call rsDisableFirmware() ' Now, I don't gonna use any firmware routine so I modify interrupts jump to nothing
 	call rsClrScr()			 ' Fills scr with ink 0
 	call rsSetMode(1)		 ' Hardware call to set mode 1
