@@ -18,8 +18,8 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/tilemap/constants.asm'
-read 'cpcrslib/tilemap/showtilemap.asm'
+read 'asm/cpcrslib/tilemap/constants.asm'
+read 'asm/cpcrslib/tilemap/showtilemap.asm'
 
 ; CPC_RENDERTILEMAP
 ; Renders the tilemap in the double buffer and

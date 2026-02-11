@@ -18,8 +18,8 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/keyboard/testkeyboard.asm'
-read 'cpcrslib/keyboard/vars.asm'
+read 'asm/cpcrslib/keyboard/testkeyboard.asm'
+read 'asm/cpcrslib/keyboard/vars.asm'
 
 ; CPC_REDEFINEKEY
 ; Waits until a valid key (a key that is not already in the assignment table)

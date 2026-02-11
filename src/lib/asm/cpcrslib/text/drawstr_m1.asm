@@ -18,29 +18,30 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/video/getscraddress.asm'
+read 'asm/cpcrslib/video/getscraddress.asm'
 
 ; CPC_DRAWSTR_M1
-; Prints a null-terminated string using a custom font and direct
-; hardware access in the video memory indicated (ONLY MODE 1).
+; Prints an ABASC type string (len in the first byte) using a custom
+; font and direct hardware access in the video memory indicated (MODE 1).
 ; Requires a designed custom font like the example provided in
 ; font_color.asm
 ; The text is drawn using 4 colours as described in cpc_SetTextColors_M0
 ; Inputs:
 ;     HL video memory address
-;     DE address to the null-terminated string 
+;     DE address to the ABASC type string 
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.
 cpc_DrawStr_M1:
 	ld      (_rslib_drawm1_dest),hl
 	ex      de,hl
+	ld      b,(hl)  ; string lenght
+	inc     hl
 __drawstr_m1loop:
+	push    bc
 	ld      a,(cpc_colorfont_first)
 	ld      b,a
 	ld      a,(hl)
-	or      a
-	ret     z
 	sub     b	   ; lets substract first available letter
 	ld      bc,cpc_colorchars
 	push    hl
@@ -61,17 +62,19 @@ __drawstr_m1loop:
 	ld      (_rslib_drawm1_dest),hl
 	pop     hl
 	inc     hl
-	jr      __drawstr_m1loop:
+	pop     bc
+	djnz    __drawstr_m1loop
+	ret
 
 ; CPC_DRAWSTRXY_M1
-; Prints a null-terminated string using a custom font and direct
+; Prints an ABASC type string using a custom font and direct
 ; hardware access in the X and Y position (ONLY MODE 1).
 ; Requires a designed custom font like the example provided in
 ; font_color.asm
 ; Inputs:
 ;     L  X coord.
 ;     H  Y coord.
-;     DE address to the null-terminated string 
+;     DE address to the ABASC type string 
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.

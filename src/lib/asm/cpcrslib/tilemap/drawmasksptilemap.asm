@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/tilemap/constants.asm'
+read 'asm/cpcrslib/tilemap/constants.asm'
 
 ; cpc_DrawMaskSpTileMap assumes that HL points to a structure that defines
 ; a sprite as follows:

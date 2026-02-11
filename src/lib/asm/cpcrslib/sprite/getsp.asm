@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-; CPC_PUTSP
+; CPC_GETSP
 ; Captures a rectangle from the video memory and stores it in the
 ; memory address pointed by DE.
 ; Inputs:

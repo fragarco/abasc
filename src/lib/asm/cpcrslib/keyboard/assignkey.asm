@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/keyboard/vars.asm'
+read 'asm/cpcrslib/keyboard/vars.asm'
 
 ; CPC_ASSIGNKEY
 ; Writes in the key assigment table a new key (Line + Byte matrix values).

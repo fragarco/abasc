@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/video/getscraddress.asm'
+read 'asm/cpcrslib/video/getscraddress.asm'
 
 ; CPC_DRAWSTR_M0
 ; Prints a null-terminated string using a custom font and direct
@@ -35,7 +35,10 @@ read 'cpcrslib/video/getscraddress.asm'
 cpc_DrawStr_M0:
 	ld      (_rslib_drawm0_dest),hl
 	ex      de,hl
+	ld      b,(hl) ; string length
+	inc     hl
 __drawstr_m0loop:
+	push    bc
 	ld      a,(cpc_colorfont_first)
 	ld      b,a
 	ld      a,(hl)
@@ -61,7 +64,9 @@ __drawstr_m0loop:
 	ld      (_rslib_drawm0_dest),hl
 	pop     hl
 	inc     hl
-	Jr      __drawstr_m0loop
+	pop     bc
+	djnz    __drawstr_m0loop
+	ret
 
 ; CPC_DRAWSTRXY_M0
 ; Prints a null-terminated string using a custom font and direct

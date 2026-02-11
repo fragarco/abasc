@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/tilemap/constants.asm'
+read 'asm/cpcrslib/tilemap/constants.asm'
 
 ; CPC_RESTORETILEMAP
 ; Goes through all the dirty (touched) tiles and restores the double buffer

@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/video/getscraddress.asm'
+read 'asm/cpcrslib/video/getscraddress.asm'
 
 ; CPC_PUTSP_XOR
 ; Draws a sprite in the video memory pointed by HL using a XOR mode.

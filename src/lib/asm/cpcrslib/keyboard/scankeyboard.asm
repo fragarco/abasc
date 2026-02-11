@@ -18,7 +18,7 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/keyboard/vars.asm'
+read 'asm/cpcrslib/keyboard/vars.asm'
 
 ; CPC_SCANKEYBOARD
 ; Reads all keyboard matrix lines and leaves the resulting bytes

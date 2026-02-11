@@ -96,9 +96,8 @@ __rslib_applycolor:
 ; Prints an ABASC type string (len in first byte) in MODE 1
 ; HL points to the string.
 _rslib_printstr:
-	ld      a,(hl) ; string length
+	ld      b,(hl) ; string length
 	inc     hl     ; first char
-	ld      b,a
 _rslib_printstr_loop:
 	push    bc     ; store remaining characters	
 	ld      a,(cpc_charfont_first)
@@ -125,6 +124,7 @@ _rslib_printstr_loop:
 	inc     hl
 	pop     bc
 	djnz    _rslib_printstr_loop
+	ret
 
 ; PRIVATE ROUTINE
 ; Draws the char shape

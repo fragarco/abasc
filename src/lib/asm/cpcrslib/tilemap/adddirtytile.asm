@@ -36,7 +36,7 @@
 ;   list of color bytes (for non masked sprites)
 ; There is a tool called Sprot that allows to generate masked sprites for z88dk.
 
-read 'cpcrslib/tilemap/constants.asm'
+read 'asm/cpcrslib/tilemap/constants.asm'
 
 ; CPC_ADDDIRTYTILE
 ; Checks if the given tile X and Y position is already in the dirty table.
@@ -46,7 +46,7 @@ read 'cpcrslib/tilemap/constants.asm'
 ; Outputs:
 ;	  None
 ;     AF and HL are modified.
-cpc_AddDirtyTile::
+cpc_AddDirtyTile:
 	ld      hl,tiles_dirty
 __updatedirty_lastloop:
 	ld      a,(hl)

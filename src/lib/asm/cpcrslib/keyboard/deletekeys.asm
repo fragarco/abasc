@@ -18,9 +18,9 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ; DEALINGS IN THE SOFTWARE.
 
-read 'cpcrslib/keyboard/vars.asm'
+read 'asm/cpcrslib/keyboard/vars.asm'
 
-; CPC_DELETEKEY
+; CPC_DELETEKEYS
 ; Deletes all entries in the key assignment table leaving their values 
 ; set to &FFFF.
 ; Inputs:

@@ -37,7 +37,7 @@
 ;   list of color bytes (for non masked sprites)
 ; There is a tool called Sprot that allows to generate masked sprites for z88dk.
 
-read 'cpcrslib/tilemap/adddirtytile.asm'
+read 'asm/cpcrslib/tilemap/adddirtytile.asm'
 
 ; CPC_PUTSPTILEMAP
 ; Transfer current coordinates to old coordinates and marks the
