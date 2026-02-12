@@ -23,14 +23,14 @@ SUB rsWyzSetTempo(tempo) ASM
     ASM "read 'asm/cpcrslib/player/wyz.asm'"
 END SUB
 
-SUB rsWyzStartEffect(effect, channel) ASM
-    ASM "ld      c,(ix+0)"
-    ASM "ld      b,(ix+2)"
+SUB rsWyzStartEffect(channel, effect) ASM
+    ASM "ld      b,(ix+0)"
+    ASM "ld      c,(ix+2)"
     ASM "jp      cpc_WyzStartEffect"
     ASM "read 'asm/cpcrslib/player/wyz.asm'"
 END SUB
 
-FUNCTION rsWyzStartEffect ASM
+FUNCTION rsWyzTestPlayer ASM
     ASM "jp      cpc_WyzTestPlayer  ; interruptores in L"
     ASM "read 'asm/cpcrslib/player/wyz.asm'"
 END FUNCTION

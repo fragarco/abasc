@@ -10,3 +10,8 @@ FUNCTION rsRandom ASM
     ASM "jp      cpc_Random  ; integer value in the range 0-255"
     ASM "read 'asm/cpcrslib/utils/random.asm'"
 END FUNCTION
+
+SUB rsWaitVSync ASM
+    ASM "jp      cpc_waitVSYNC"
+    ASM "read 'asm/cpcrslib/utils/waitvsync.asm'"
+END SUB

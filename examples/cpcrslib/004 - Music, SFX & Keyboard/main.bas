@@ -18,217 +18,135 @@
 
 chain merge "cpcrslib/cpcrslib.bas"
 
-
-extern char texto00[];
-extern char texto01[];
-extern char texto02[];
-extern char texto03[];
-extern char texto04[];
-extern char texto05[];
-extern char texto06[];
-extern char texto07[];
-extern char texto08[];
-extern char texto09[];
-extern char texto10[];
-extern char texto11[];
-
-
-void datos(void) {
-	__asm
-	_texto00:
-	.asciz "SFX & MUSIC DEMO. CPCRSLIB 2012"
-	_texto01:
-	.asciz "PSG PROPLAYER BY WYZ 2010"
-	_texto02:
-    .asciz "Press keys 1 to 4 to play SFX"
-	_texto03:
-	.asciz "ESC to Quit"
-	_texto04:
-	.asciz "RED;ALERT"
-	_texto05:
-	.asciz "CANCION;NUEVA"
-	_texto06:
-	.asciz "GOTHIC"
-	_texto07:
-	.asciz "MARYJANE"
-	_texto08:
-	.asciz "MIDNIGHT;XPRES"
-	_texto09:
-	.asciz ";;;;;;;;;;;;;;;"
-	_texto10:
-	.asciz "AHORA;SONANDO:"
-	_texto11:
-	.asciz "Up & Down to change song"
-__endasm;
-}
-
 label MAIN
-	unsigned char tema=0;
-	unsigned char nuevotema=0;
-
-   	 char MinX,MinY,MaxX, MaxY,HorzSpd,VertSpd,gravityAccel;
-   	char cx,cy,ox,oy;
-
-   	MaxX=60;
-   	MaxY=110;
-   	MinX=0;
-   	MinY=5;
-	VertSpd=1;
-	HorzSpd=1;
-	gravityAccel=2;
-
+   	const MaxX = 60
+   	const MaxY = 110
+   	const MinX = 0
+   	const MinY = 5
+	const GravityAccel = 2
 
 	call rsClrScr()
+	' Text writting using firmware:
+	print "SFX & MUSIC DEMO. CPCRSLIB 2012"
+	print "PSG PROPLAYER BY WYZ 2010"
+	print "Press keys 1 to 4 to play SFX"
+	print "Up & Down to change song"
+	print "ESC to Quit"
 
-	// Text writting using firmware:
-	//cpc_PrintStr();
+	call rsDisableFirmware()
+	' Assign keys to key number (not numberpad keys)
+	call rsAssignKey(0, RSKEY.1)
+	call rsAssignKey(1, RSKEY.2)
+	call rsAssignKey(2, RSKEY.3)
+	call rsAssignKey(3, RSKEY.4)
+	call rsAssignKey(4, RSKEY.ESC)
+	call rsAssignKey(5, RSKEY.UP)
+	call rsAssignKey(6, RSKEY.DOWN)
 
-	cpc_PrintStr(texto00);
-	cpc_PrintStr(texto01);
-	cpc_PrintStr(texto02);
-	cpc_PrintStr(texto11);
-	cpc_PrintStr(texto03);
+	' Initialize player data
+	' Lets retrieve the addresses for the estuctures defined in songs.asm
+	' which is imported and the end of this file with the command ASM
+	sounds  = @LABEL("_SOUND_TABLE_0")
+	rules   = @LABEL("_RULE_TABLE_0")
+	effects = @LABEL("_EFFECT_TABLE")
+	songs   = @LABEL("_SONG_TABLE_0")
+	call rsWyzInitPlayer(songs, effects, rules, sounds)
+	call rsWyzLoadSong(0)	' Select song to play (uncompress it and the start to play)
+	call rsWyzSetPlayerOn() ' Start music and sound effects (SFX)
+	
+	tema = 0
+	nuevotema = 1
+  	cx = 28
+   	cy = 20
+	ox = cx
+	oy = cy
+	VertSpd = 1
+	HorzSpd = 1
+	pelota  = @LABEL("_pelota")' Retrieve address to the sprite defined in sprites.asm
+	const SP.W = 3
+	const SP.H = 11
 
+	call rsScanKeyboard()	  ' Reads whole keyboard. It's requiered in order to use rsTestKey
+	while rsTestKey(4) = 0	  ' rsTestKey is faster when more than 3 keys are gonna be tested
+		call rsWaitVSync()
+		
+		if cx >= MaxX then HorzSpd = -HorzSpd: cx = MaxX
+		if cx <= MinX then HorzSpd = -HorzSpd: cx = MinX
+		if cy >= MaxY then VertSpd = -VertSpd: cy = MaxY
+		if cy <= MinY then VertSpd = -VertSpd: cy = MinY
 
-	cpc_DisableFirmware();
-	// Assign keys to key number (not numberpad keys)
-	cpc_AssignKey(0,0x4801);		// key "1" assigned to 0
-	cpc_AssignKey(1,0x4802);		// key "2"
-	cpc_AssignKey(2,0x4702);		// key "3"
-	cpc_AssignKey(3,0x4701);		// key "4"
-	cpc_AssignKey(4,0x4804);		// key "ESC"
-	cpc_AssignKey(5,0x4001);		// key "Up"
-	cpc_AssignKey(6,0x4004);		// key "Down"
+		VertSpd = VertSpd + GravityAccel - 1
+		call rsPutSpXOR(pelota, SP.W, SP.H, rsGetScrAddress(cx,cy))
+		call rsPutSpXOR(pelota, SP.W, SP.H, rsGetScrAddress(ox,oy))
+		ox = cx
+		oy = cy
+		cx = cx + HorzSpd
+		cy = cy + VertSpd
 
+		call rsScanKeyboard()
+		' Test if bit 3 is 0 in order to allow another effect.
+		if (rsWyzTestPlayer() and 8) = 0 then
+			' When a  1-4 key is pressed, a SFX is played
+			if rsTestKey(0) then call rsWyzStartEffect(0,0)	' Channel, SFX #
+			if rsTestKey(1) then call rsWyzStartEffect(1,1)
+			if rsTestKey(2) then call rsWyzStartEffect(2,2)
+			if rsTestKey(3) then call rsWyzStartEffect(1,3)
+			if rsTestKey(5) then 
+				if tema > 0 then tema = tema - 1: nuevotema = 1
+			end if
+			if rsTestKey(6) then
+				if tema < 4 then tema = tema + 1: nuevotema = 1
+			end if
+			if nuevotema = 1 then
+				call rsWyzSetPlayerOff()
+				call rsPrintGphStrXYM1("AHORA;SONANDO:", 0, 0)
+				select case tema
+					case 0
+						sounds = @LABEL("_SOUND_TABLE_0")
+						rules  = @LABEL("_RULE_TABLE_0")
+						songs  = @LABEL("_SONG_TABLE_0")
+						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
+						call rsPrintGphStrXYM1("RED;ALERT", 2, 10)
+					case 1
+						sounds = @LABEL("_SOUND_TABLE_1")
+						rules  = @LABEL("_RULE_TABLE_1")
+						songs  = @LABEL("_SONG_TABLE_1")
+						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
+						call rsPrintGphStrXYM1("CANCION;NUEVA", 2, 10)
+					case 2
+						sounds = @LABEL("_SOUND_TABLE_2")
+						rules  = @LABEL("_RULE_TABLE_2")
+						songs  = @LABEL("_SONG_TABLE_2")
+						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
+						call rsPrintGphStrXYM1("GOTHIC", 2, 10)
+					case 3
+						sounds = @LABEL("_SOUND_TABLE_3")
+						rules  = @LABEL("_RULE_TABLE_3")
+						songs  = @LABEL("_SONG_TABLE_3")
+						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
+						call rsPrintGphStrXYM1("MARYJANE", 2, 10)
+					case 4
+						sounds = @LABEL("_SOUND_TABLE_4")
+						rules  = @LABEL("_RULE_TABLE_4")
+						songs  = @LABEL("_SONG_TABLE_4")
+						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
+						call rsPrintGphStrXYM1("MIDNIGHT;XPRES", 2, 10)
+				end select
+				call rsWyzInitPlayer(songs, effects, rules, sounds)
+				call rsWyzLoadSong(0)
+				call rsWyzSetPlayerOn()
+		
+				nuevotema = 0
+				VertSpd = 1: HorzSpd = 1
+				cx = 28: cy = 20
+			end if
+		end if
+	wend
 
-
-
-	cpc_WyzInitPlayer(SOUND_TABLE_0, RULE_TABLE_0, EFFECT_TABLE, SONG_TABLE_0);		//initialize data
-	cpc_WyzLoadSong(0);	//Select song to play (uncompress it and the start to play)
-	cpc_WyzSetPlayerOn();		//start music and sound effects (SFX)
-	nuevotema=1;
-
-
-  	cx=28;
-
-   	cy=20;
-
-	ox=cx;
-	oy=cy;
-
-
-	cpc_ScanKeyboard();			//Reads whole keyboard. It's requiered in order to use cpc_TestKeyF
-	while (!cpc_TestKeyF(4)) {	//cpc_TestKeyF is faster when more than 3 keys gonna be tested
-
-			pause();
-
-            if (cx >= MaxX)
-            {
-                HorzSpd = -HorzSpd;
-                cx = MaxX;
-            }
-            else if (cx <= MinX)
-            {
-                HorzSpd = -HorzSpd;
-                cx = MinX;
-            }
-
-            if (cy >= MaxY)
-            {
-                VertSpd = -VertSpd;
-                cy = MaxY;
-            }
-            else if (cy <= MinY)
-            {
-                VertSpd = -VertSpd;
-                cy = MinY;
-            }
-
-            VertSpd += gravityAccel - 1;
-
-            cpc_PutSpXOR(pelota, 11, 3, cpc_GetScrAddress(cx,cy));
-            cpc_PutSpXOR(pelota, 11, 3, cpc_GetScrAddress(ox,oy));
-
-			ox=cx;
-			oy=cy;
-
-
-            cx += HorzSpd;
-            cy += VertSpd;
-
-
-
-		cpc_ScanKeyboard();
-		if ((cpc_WyzTestPlayer()&8)==0) {	//test if bit 3 is 0 in order to allow another effect.
-			// When a  1-4 key is pressed, a SFX is played
-			if (cpc_TestKeyF(0)==1) 	cpc_WyzStartEffect(0,0);	//(Channel, SFX #)
-			if (cpc_TestKeyF(1)==1) 	cpc_WyzStartEffect(1,1);
-			if (cpc_TestKeyF(2)==1) 	cpc_WyzStartEffect(2,2);
-			if (cpc_TestKeyF(3)==1) 	cpc_WyzStartEffect(1,3);
-			if (cpc_TestKeyF(5)==1)	{
-				if (tema>0) {
-					tema--;
-					nuevotema=1;
-				}
-			}
-			if (cpc_TestKeyF(6)==1)	{
-				if (tema<4) {
-					tema++;
-					nuevotema=1;
-				}
-			}
-			if (nuevotema==1){
-				cpc_WyzSetPlayerOff();
-				cpc_PrintGphStrXYM1(texto10,0,0);
-				switch (tema) {
-					case 0:
-						cpc_WyzInitPlayer(SOUND_TABLE_0, RULE_TABLE_0, EFFECT_TABLE, SONG_TABLE_0);	//initialize data
-						cpc_PrintGphStrXYM12X(texto09,2,10);
-						cpc_PrintGphStrXYM12X(texto04,2,10);
-						break;
-					case 1:
-						cpc_WyzInitPlayer(SOUND_TABLE_1, RULE_TABLE_1, EFFECT_TABLE, SONG_TABLE_1);		//initialize data
-						cpc_PrintGphStrXYM12X(texto09,2,10);
-						cpc_PrintGphStrXYM12X(texto05,2,10);
-						break;
-					case 2:
-						cpc_WyzInitPlayer(SOUND_TABLE_2, RULE_TABLE_2, EFFECT_TABLE, SONG_TABLE_2);		//initialize data
-						cpc_PrintGphStrXYM12X(texto09,2,10);
-						cpc_PrintGphStrXYM12X(texto06,2,10);
-						break;
-					case 3:
-						cpc_WyzInitPlayer(SOUND_TABLE_3, RULE_TABLE_3, EFFECT_TABLE, SONG_TABLE_3);		//initialize data
-						cpc_PrintGphStrXYM12X(texto09,2,10);
-						cpc_PrintGphStrXYM12X(texto07,2,10);
-						break;
-					case 4:
-						cpc_WyzInitPlayer(SOUND_TABLE_4, RULE_TABLE_4, EFFECT_TABLE, SONG_TABLE_4);		//initialize data
-						cpc_PrintGphStrXYM12X(texto09,2,10);
-						cpc_PrintGphStrXYM12X(texto08,2,10);
-						break;
-				}
-				cpc_WyzLoadSong(0);			//Select song to play
-				cpc_WyzSetPlayerOn();		//start music and sound effects (SFX)
-				nuevotema=0;
-
-
-			   	MaxX=60;
-			   	MaxY=110;
-			   	MinX=0;
-			   	MinY=5;
-				VertSpd=1;
-				HorzSpd=1;
-				gravityAccel=2;
-
-				cx=28;
-				cy=20;
-			}
-		}
-	}
-	//while(1);
-	cpc_WyzSetPlayerOff();	//stop music and SFX
-	cpc_EnableFirmware();
-	return 0;
+	call rsWyzSetPlayerOff() ' Stop music and SFX
+	call rsEnableFirmware()
+	call 0 ' machine restart
 end
 
 asm "read 'assets/songs.asm'"
+asm "read 'assets/sprites.asm'"

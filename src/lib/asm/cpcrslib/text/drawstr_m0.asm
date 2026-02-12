@@ -42,8 +42,6 @@ __drawstr_m0loop:
 	ld      a,(cpc_colorfont_first)
 	ld      b,a
 	ld      a,(hl)
-	or      a
-	ret     z
 	sub     b	   ; lets substract first available letter
 	ld      bc,cpc_colorchars
 	push    hl
