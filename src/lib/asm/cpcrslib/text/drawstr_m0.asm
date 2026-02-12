@@ -28,11 +28,13 @@ read 'asm/cpcrslib/video/getscraddress.asm'
 ; The text is drawn using 4 colours as described in cpc_SetTextColors_M0
 ; Inputs:
 ;     HL video memory address
-;     DE address to the null-terminated string 
+;     DE address to the null-terminated string
+;      A letter size: 0 (regular) 1 (double)
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.
 cpc_DrawStr_M0:
+	ld      (_rslib_drawm0_doublesz),a
 	ld      (_rslib_drawm0_dest),hl
 	ex      de,hl
 	ld      b,(hl) ; string length
@@ -52,9 +54,21 @@ __drawstr_m0loop:
 	add     hl,hl  ; each letter is 8 bytes
 	add     hl,bc  ; HL ends pointing to the start of our letter
 	call    _rslib_decodech_m0
+	ld      a,(_rslib_drawm0_doublesz)
+	or      a
+	push    af
+	call    nz,_drawstr_doublesize_m0
 	ld      hl,(_rslib_drawm0_dest)
+	pop     af
+	or      a
 	ld      a,8
+	jr      nz,__drawstr_m0_doublesz
 	ld      de,_colorfont_chm0_decoded
+	jr		__drawstr_m0_regularsz
+__drawstr_m0_doublesz:
+	sla     a
+	ld      de,_colorfont_chm0_decoded_double
+__drawstr_m0_regularsz:
 	call    cpc_DrawChar_M0
 	ld      hl,(_rslib_drawm0_dest)
 	inc     hl
@@ -82,6 +96,7 @@ cpc_DrawStrXY_M0:
 	push    de
 	call    cpc_GetScrAddress
 	pop     de
+	xor     a
 	jp      cpc_DrawStr_M0
 
 TXT0_PEN0  equ &00
@@ -199,9 +214,36 @@ apply_draw0_colors_pixel:
 	ld      d,a
 	ret
 
-_rslib_drawm0_colors: 	db &00,&88,&80,&08
-_rslib_drawm0_dest:   	dw 0
-_colorfont_chm0_decoded:defs 16
+; PRIVATE ROUTINE
+; Decodes the char as double the regular size.
+_drawstr_doublesize_m0:
+	ld      hl,_colorfont_chm0_decoded
+	ld      de,_colorfont_chm0_decoded_double
+	ld      b,8
+__drawstr_doublesize_m0loop:
+	ld      a,(hl)
+	inc     hl
+	ld      (de),a
+	inc     de
+	inc     de
+	ld      (de),a
+	dec     de
+	ld      a,(hl)
+	inc     hl
+	ld      (de),a
+	inc     de
+	inc     de
+	ld      (de),a
+	inc     de
+	djnz __drawstr_doublesize_m0loop
+	ret
+
+
+_rslib_drawm0_colors: 	 db   &00,&88,&80,&08
+_rslib_drawm0_dest:   	 dw   0
+_rslib_drawm0_doublesz:  db   0
+_colorfont_chm0_decoded: defs 16
+_colorfont_chm0_decoded_double: defs 32
 
 
 	

@@ -1,5 +1,9 @@
 ' MODULE CPCRSLIB/PLAYER
 
+const RSCH.A = 0
+const RSCH.B = 1
+const RSCH.C = 2
+
 SUB rsWyzConfigurePlayer(bitflags) ASM
     ASM "ld      a,(ix+0)               ; b0 = load song on/off, b1 = player on/off"
     ASM "jp      cpc_WyzConfigurePlayer ; b2 = sounds on/of, b3 = sfx on/off"

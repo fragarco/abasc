@@ -28,11 +28,13 @@ read 'asm/cpcrslib/video/getscraddress.asm'
 ; The text is drawn using 4 colours as described in cpc_SetTextColors_M0
 ; Inputs:
 ;     HL video memory address
-;     DE address to the ABASC type string 
+;     DE address to the ABASC type string
+;      A letter size: 0 (regular) 1 (double)
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC, IX and IY are modified.
 cpc_DrawStr_M1:
+	ld      (_rslib_drawm1_doublesz),a
 	ld      (_rslib_drawm1_dest),hl
 	ex      de,hl
 	ld      b,(hl)  ; string lenght
@@ -52,10 +54,23 @@ __drawstr_m1loop:
 	add     hl,hl  ; each letter is 8 bytes
 	add     hl,bc  ; HL ends pointing to the start of our letter
 	call    _rslib_decodech_m1
+	ld      a,(_rslib_drawm1_doublesz)
+	or      a
+	push    af
+	call    nz,_drawstr_doublesize_m1
 	ld      hl,(_rslib_drawm1_dest)
+	pop     af
+	or      a
+	jr      nz,__drawstr_m1_doublesz
 	ld      de,_colorfont_chm1_decoded
 	db      &FD	   ; Extended opcode IY
 	ld      h,8    ; ld iyh,8
+	jr      __drawstr_m1_regularsz
+__drawstr_m1_doublesz:
+	ld      de,_colorfont_chm1_decoded_double
+	db      &FD
+	ld      h,16	
+__drawstr_m1_regularsz:
 	call    cpc_DrawChar_M1
 	ld      hl,(_rslib_drawm1_dest)
 	inc     hl
@@ -82,6 +97,7 @@ cpc_DrawStrXY_M1:
 	push    de
 	call    cpc_GetScrAddress
 	pop     de
+	xor     a
 	jp      cpc_DrawStr_M1
 
 TXT1_PEN0 equ &00
@@ -187,8 +203,26 @@ __apply_no_rotate:
 	ld      (ix+0),a
 	ret
 
-_rslib_drawm1_colors: 	db 	 &00,&88,&80,&08
-_rslib_drawm1_dest: 	dw   0
-_rslib_drawm1_bytedata: db 	 0b00011011
-_rslib_drawm1_temp:		defs 3
-_colorfont_chm1_decoded:defs 16
+; PRIVATE ROUTINE
+; Decodes the char as double the regular size.
+_drawstr_doublesize_m1:
+	ld      hl,_colorfont_chm1_decoded
+	ld      de,_colorfont_chm1_decoded_double
+	ld      b,8
+__drawstr_doublesize_m1loop:
+	ld      a,(hl)
+	inc     hl
+	ld      (de),a
+	inc     de
+	ld      (de),a
+	inc     de
+	djnz __drawstr_doublesize_m1loop
+	ret
+
+_rslib_drawm1_colors: 	 db 	 &00,&88,&80,&08
+_rslib_drawm1_doublesz:  db   0
+_rslib_drawm1_dest: 	 dw   0
+_rslib_drawm1_bytedata:  db 	 0b00011011
+_rslib_drawm1_temp:		 defs 3
+_colorfont_chm1_decoded: defs 8
+_colorfont_chm1_decoded_double: defs 16
