@@ -1,10 +1,10 @@
 ' MODULE CPCRSLIB/TILEMAP
 
-SUB rsInitTileMap() ASM
+SUB rsInitTileMap ASM
     ASM "ld      hl,0                  ; pointer to tiles = nullptr"
     ASM "ld      (tiles_tilearray),hl  ; define in tmapdef.asm by the user"
     ASM "ret"
-SUB
+END SUB
 
 SUB rsSetTile(x, y, tile) ASM
     ASM "ld      c,(ix+0)   ; Tile number"
@@ -73,7 +73,7 @@ FUNCTION rsGetDoubleBufferAddress(x, y) ASM
     ASM "ld      l,(ix+0)   ; Y"
     ASM "ld      h,(ix+2)   ; X"
     ASM "jp      cpc_GetDoubleBufferAddress"
-    ASM "read 'asm/cpcrslib/tilemap/getdoublebufferaddress.asm'"
+    ASM "read 'asm/cpcrslib/tilemap/getdblbufferaddress.asm'"
 END FUNCTION
 
 SUB rsScrollLeft00 ASM

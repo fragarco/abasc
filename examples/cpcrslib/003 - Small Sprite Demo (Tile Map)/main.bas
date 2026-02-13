@@ -37,6 +37,7 @@ sub Init
     INK 8,10: INK 9,22: INK 10,14: INK 11,3
     INK 12,18: INK 13,4: INK 14,11: INK 15,25
     BORDER 0
+    call rsPause(200)
     call rsSetInkGphStrM0(0, 0)
 end sub
 
@@ -90,14 +91,13 @@ label MAIN
     sprites$(2).rssp.opos = BytePosSet(20, 100)
     sprites$(2).rssp.cpos = BytePosSet(20, 100)
     sprites$(2).rssp.movedir = BytePosSet(3, 2)
-    call rsSuperbufferAddress(@sprites$(2))
-    sprites$(6).rssp.mem0 = rsGetDoubleBufferAddress(20,100)
+    sprites$(2).rssp.mem0 = rsGetDoubleBufferAddress(20,100)
 
     call DrawTilemap()      ' Drawing the tile map
     call rsShowTileMap()    ' Show entire tile map in the screen
     call PrintCredits()
     call rsSetTile(0, 1, 2)
-    call rsShowTileMap()    ' Show entire tile map in the screen
+    call rsShowTileMap2()    ' Show entire tile map in the screen
     while 1 
         ' We use by default the cursor keys to move the character sprite
         ' 0: cursor right
@@ -187,4 +187,4 @@ label MAIN
 end
 
 asm "read 'assets/sprites.asm'"
-asm "read 'assets/tilemap_config.asm'"
+asm "read 'assets/tilemap.asm'"
