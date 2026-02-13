@@ -113,12 +113,6 @@ SUB rsAssignKey(entry, keyid) ASM
     ASM "read 'asm/cpcrslib/keyboard/assignkey.asm'"
 END SUB
 
-FUNCTION rsCheckKey(entry) ASM
-    ASM "ld      l,(ix+0)     ; Entry in the assigment table"
-    ASM "jp      cpc_CheckKey ; HL = -1 (true) or 0 (false)"
-    ASM "read 'asm/cpcrslib/keyboard/checkkey.asm'"
-END FUNCTION
-
 SUB rsDeleteKeys ASM
     ASM "jp      cpc_DeleteKeys"
     ASM "read 'asm/cpcrslib/keyboard/deletekeys.asm'"
@@ -139,6 +133,12 @@ FUNCTION rsTestKey(entry) ASM
     ASM "ld      l,(ix+0)     ; Entry in the assigment table"
     ASM "jp      cpc_TestKey  ; HL = -1 (true) HL = 0 (false)"
     ASM "read 'asm/cpcrslib/keyboard/testkey.asm'"
+END FUNCTION
+
+FUNCTION rsTestKeyF(entry) ASM
+    ASM "ld      l,(ix+0)     ; Entry in the assigment table"
+    ASM "jp      cpc_CheckKey ; HL = -1 (true) or 0 (false)"
+    ASM "read 'asm/cpcrslib/keyboard/checkkey.asm'"
 END FUNCTION
 
 FUNCTION rsTestKeyboard(kbline) ASM

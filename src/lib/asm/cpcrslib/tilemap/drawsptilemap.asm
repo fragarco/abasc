@@ -20,7 +20,7 @@
 
 read 'asm/cpcrslib/tilemap/constants.asm'
 
-; cpc_DrawMaskSpTileMap assumes that HL points to a structure that defines
+; cpc_DrawSpTileMap assumes that DE points to a structure that defines
 ; a sprite as follows:
 ; sprite:
 ;    sprite1_sp0: dw _spritedata
@@ -39,9 +39,9 @@ read 'asm/cpcrslib/tilemap/constants.asm'
 ;   list of data: mask, sprite, mask, sprite...
 ; There is a tool called Sprot that allows to generate masked sprites for z88dk.
 
-; CPC_DRAWMASKSPTILEMAP
-; The sprite content is written in the double buffer using its mask information.
-; This routine expects that HL points to a structure like the one present just
+; CPC_DRAWSPTILEMAP
+; The sprite content is written in the double buffer.
+; This routine expects that DE points to a structure like the one present just
 ; above. The sprite information will be drawn in the current X,Y coordenates.
 ; This routine doesn't mark the occupied tiles as "dirty" (touched). That
 ; must be done calling the routine cpc_PutSpTileMap.
@@ -50,7 +50,7 @@ read 'asm/cpcrslib/tilemap/constants.asm'
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC and IX are modified.
-cpc_DrawMaskSpTileMap:
+cpc_DrawSpTileMap:
 	db      &DD        ; IX extended opcodes 
 	ld      l,e        ; IXL = E
 	db      &DD
@@ -60,12 +60,12 @@ cpc_DrawMaskSpTileMap:
     ld	    hl,T_WSIZE_BYTES * 256
     ld      d,l
     ld      b,8
-__putmasksp_multloop:
+__drawsp_multloop:
 	add     hl,hl
-	jr      nc,__putmasksp_next
+	jr      nc,__drawsp_next
     add     hl,de
-__putmasksp_next:
-	djnz    __putmasksp_multloop
+__drawsp_next:
+	djnz    __drawsp_multloop
 	ld      e,a
 	add     hl,de
 	ld      de,T_DOUBLEBUFFER_ADDR
@@ -75,7 +75,7 @@ __putmasksp_next:
 	ld      e,(ix+0)
     ld      d,(ix+1)   ; DE points to the sprite data
     ld      a,(de)     ; A = width
-    ld      (__putmasksp_hloop+2),a ; self modifying code
+    ld      (__drawsp_hloop+2),a ; self modifying code
     ld      b,a
     ld      a,T_WSIZE_BYTES
     sub     b
@@ -83,24 +83,21 @@ __putmasksp_next:
 	inc     de
 	ld      a,(de)
 	inc     de
-__putmasksp_maskv:    ; mark for self modifying code
+__drawsp_maskv:    ; mark for self modifying code
 	ld      b,0
 	db      &DD       ; IX extended opcodes
 	ld      h,a		  ; IXH = A
-__putmasksp_hloop:
+__drawsp_hloop:
 	db      &DD       ; IX extended opcodes
 	ld      l,4		  ; IXL = 4  but is self modifying code
 	ex      de,hl
 __putmasksp_wloop:
-	ld      a,(de)	  ; background byte
-	and     (hl)	  ; apply mask
-	inc     hl
-	or      (hl)	  ; add sprite byte
+	ld      a,(hl)	  ; background byte
 	ld      (de),a	  ; write the result
 	inc     de
 	inc     hl
 	db      &DD       ; IX extended opcodes
-	dec     l		  ; dec IXL
+	dec     h		  ; dec IXH
 	jr      nz,__putmasksp_wloop
    	db      &DD       ; IX extended opcodes
    	dec     h         ; dec IXH

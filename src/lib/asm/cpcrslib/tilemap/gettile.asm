@@ -20,29 +20,32 @@
 
 read 'asm/cpcrslib/tilemap/constants.asm'
 
-; CPC_GETDPUBLEBUFFERADDRESS
-; Given a X and Y position, returns in HL the address in the Tilemap
-; double buffer.
+; CPC_GETTILE
+; Retrieves from the "tiles game screen" the index or "tile"
+; that is rendered in the given X,Y position.
 ; Inputs:
-;     H  X position
-;     L  Y position
+;     D  X position
+;     E  Y position
+;     C  Tile number (index in the tiles_tilearray structure)
 ; Outputs:
-;	  HL Address in the tilemap double buffer.
+;	  None
 ;     AF, HL, DE and B are modified.
-cpc_GetDoubleBufferAddress:
-	ld      a,h
-    ld      e,l
-    ld	    hl,T_WSIZE_BYTES * 256
-    ld      d,l
-	ld		b,8
-__getdouble_loop:
+cpc_GetTile:
+	ld      a,d
+    ld      e,e
+    ld	    hl,T_WIDTH * 256 ; h = 40, l = 0
+    ld      d,l              ; de = Y
+	ld		b,8              ; a  = X
+__gettile_loop:
 	add     hl,hl
-    jr      nc,__getdouble_next
+    jr      nc,__gettile_next
     add     hl,de
-__getdouble_next:
-	djnz    __getdouble_loop
+__gettile_next:
+	djnz    __gettile_loop
 	ld      e,a
+	add     hl,de				  ; add X
+	ld      de,tiles_bgmap
 	add     hl,de
-	ld      de,T_DOUBLEBUFFER_ADDR
-	add     hl,de
+	ld      l,(hl)
+	ld      h,0
     ret

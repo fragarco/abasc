@@ -14,9 +14,16 @@ SUB rsSetTile(x, y, tile) ASM
     ASM "read 'asm/cpcrslib/tilemap/settile.asm'"
 END SUB
 
+FUNCTION rsReadTile(x, y) ASM
+    ASM "ld      e,(ix+0)   ; Y"
+    ASM "ld      d,(ix+2)   ; X"
+    ASM "jp      cpc_GetTile"
+    ASM "read 'asm/cpcrslib/tilemap/gettile.asm'"
+END FUNCTION
+
 SUB rsShowTileMap ASM
     ASM "jp      cpc_RenderTileMap"
-    ASM "read 'asm/cpcrslib/tilemap/renderyilemap.asm'"
+    ASM "read 'asm/cpcrslib/tilemap/rendertilemap.asm'"
 END SUB
 
 SUB rsShowTileMap2 ASM
@@ -30,8 +37,8 @@ SUB rsResetTouchedTiles ASM
 END SUB
 
 SUB rsPutSpTileMap(rssprite$) ASM
-    ASM "ld      l,(ix+0)   ; pointer to RSPRITE RECORD"
-    ASM "ld      h,(ix+1)"
+    ASM "ld      e,(ix+0)   ; pointer to RSPRITE RECORD"
+    ASM "ld      d,(ix+1)"
     ASM "jp      cpc_PutSpTileMap"
     ASM "read 'asm/cpcrslib/tilemap/putsptilemap.asm'"
 END SUB
@@ -41,22 +48,25 @@ SUB rsUpdScr ASM
     ASM "read 'asm/cpcrslib/tilemap/restoretilemap.asm'"
 END SUB
 
+SUB rsPutSpTileMap2b(rssprite$) ASM
+    ASM "ld      e,(ix+0)   ; pointer to RSPRITE RECORD"
+    ASM "ld      d,(ix+1)"
+    ASM "jp      cpc_DrawSpTileMap"
+    ASM "read 'asm/cpcrslib/tilemap/drawsptilemap.asm'"
+END SUB
 
+SUB rsPutMaskSpTileMap2b(rssprite$) ASM
+    ASM "ld      e,(ix+0)   ; pointer to RSPRITE RECORD"
+    ASM "ld      d,(ix+1)"
+    ASM "jp      cpc_DrawMaskSpTileMap"
+    ASM "read 'asm/cpcrslib/tilemap/drawmasksptilemap.asm'"
+END SUB
 
-SUB rsSetTouchTileXY(x, y) ASM
+SUB rsUpdTileTable(x, y) ASM
     ASM "ld      e,(ix+0) ; Y"
     ASM "ld      d,(ix+2) ; X"
     ASM "jp      cpc_AddDirtyTile"
     ASM "read 'asm/cpcrslib/tilemap/adddirtytile.asm'"
-END SUB
-
-
-
-SUB rsDrawMaskSpTileMap(rssprite$) ASM
-    ASM "ld      l,(ix+0)   ; pointer to RSPRITE RECORD"
-    ASM "ld      h,(ix+1)"
-    ASM "jp      cpc_DrawMaskSpTileMap"
-    ASM "read 'asm/cpcrslib/tilemap/drawmasksptilemap.asm'"
 END SUB
 
 FUNCTION rsGetDoubleBufferAddress(x, y) ASM
@@ -65,18 +75,6 @@ FUNCTION rsGetDoubleBufferAddress(x, y) ASM
     ASM "jp      cpc_GetDoubleBufferAddress"
     ASM "read 'asm/cpcrslib/tilemap/getdoublebufferaddress.asm'"
 END FUNCTION
-
-
-
-SUB rsRenderTileMap ASM
-    ASM "jp      cpc_RenderTileMap"
-    ASM "read 'asm/cpcrslib/tilemap/rendertilemap.asm'"
-END SUB
-
-SUB rsRestoreTileMap ASM
-    ASM "jp      cpc_RestoreTileMap"
-    ASM "read 'asm/cpcrslib/tilemap/restoretilemap.asm'"
-END SUB
 
 SUB rsScrollLeft00 ASM
     ASM "jp      cpc_ScrollLeft00"
