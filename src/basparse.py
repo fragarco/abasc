@@ -590,7 +590,7 @@ class LocBasParser:
             if vartype == AST.ExpType.String:
                 if self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
                     self._advance()
-                    num = self._expect(TokenType.INT)
+                    num = self._parse_int_or_constant()
                     datasz = cast(int, num.value) + 1
                     if datasz > 255 or datasz < 2:
                         self._raise_error(6, num, info="valid string size range is [1 - 254]")
@@ -779,6 +779,20 @@ class LocBasParser:
                 self._raise_error(10, tk)
         return AST.Command(name="DIM", args=args)
 
+    def _parse_int_or_constant(self) -> Token:
+        """ <const_int> ::= IDENT.const | INT """
+        if self._current_is(TokenType.INT):
+            return self._advance()
+        tk = self._current()
+        if tk.type == TokenType.IDENT:
+            self._advance()
+            entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
+            if entry is not None and entry.const is not None:
+                inttk = AST.Integer(value=entry.const)
+                inttk.set_origin(tk.line, tk.col)
+                return inttk
+        self._raise_error(2, tk, "literal integer or constant was expected")
+
     @astnode
     def _parse_array_declaration(self, start = TokenType.LPAREN, end = TokenType.RPAREN) -> AST.Array:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
@@ -788,18 +802,18 @@ class LocBasParser:
         sizes = [10]
         self._expect(start)
         if not self._current_is(TokenType.RPAREN):
-            tk = self._expect(TokenType.INT)
+            tk = self._parse_int_or_constant()
             sizes = [cast(int, tk.value)]
             if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
             while self._current_is(TokenType.COMMA):
                 self._advance()
-                tk = self._expect(TokenType.INT)
+                tk = self._parse_int_or_constant()
                 sizes.append(cast(int, tk.value))
                 if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
         self._expect(end)
         if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
             self._advance()
-            num = self._expect(TokenType.INT)
+            num = self._parse_int_or_constant()
             datasz = cast(int, num.value) + 1
             if datasz > 255 or datasz < 1:
                 self._raise_error(6, num, info="valid string size range is [1 - 255]")
@@ -2055,7 +2069,7 @@ class LocBasParser:
             datasz = AST.exptype_memsize(vartype)
             if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
                 self._advance()
-                num = self._expect(TokenType.INT)
+                num = self._parse_int_or_constant()
                 datasz = cast(int, num.value) + 1
             inserted = self.symtable.add(
                 ident=var,
