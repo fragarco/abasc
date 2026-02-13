@@ -43,12 +43,11 @@ read 'asm/cpcrslib/tilemap/adddirtytile.asm'
 ; Transfer current coordinates to old coordinates and marks the
 ; tiles occupied by the sprite as "dirty" (touched).
 ; Inputs:
-;     HL  address to the sprite structure.
+;     DE  address to the sprite structure.
 ; Outputs:
 ;	  None
 ;     AF, HL, DE, BC and IX are modified.
 cpc_PutSpTileMap:
-    ex      de,hl
     db      &DD       ; IX extended opcodes
     ld      l,e       ; IXL = E
     db      &DD       ; IX extended opcodes

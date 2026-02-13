@@ -103,3 +103,27 @@ SUB rsPrintGphStrXYM1x2(text$, x, y) ASM
     ASM "read 'asm/cpcrslib/text/drawstr_m1x2.asm'"
     ASM "read 'asm/cpcrslib/text/font_color.asm'"
 END SUB
+
+SUB rsSetInkGphStrM0(indind, color) ASM
+    ASM "ld      hl,_rslib_drawm0_colors"
+    ASM "ld      b,0"
+    ASM "ld      c,(ix+2)"
+    ASM "add     hl,bc"
+    ASM "ld      a,(ix+0)"
+    ASM "ld      (hl),a"
+    ASM "ret"
+    ASM "read 'asm/cpcrslib/text/drawstr_m0.asm'"
+    ASM "read 'asm/cpcrslib/text/font_color.asm'"
+END SUB
+
+SUB rsSetInkGphStrM1(indind, color) ASM
+    ASM "ld      hl,_rslib_drawm1_colors"
+    ASM "ld      b,0"
+    ASM "ld      c,(ix+2)"
+    ASM "add     hl,bc"
+    ASM "ld      a,(ix+0)"
+    ASM "ld      (hl),a"
+    ASM "ret"
+    ASM "read 'asm/cpcrslib/text/drawstr_m1.asm'"
+    ASM "read 'asm/cpcrslib/text/font_color.asm'"
+END SUB
