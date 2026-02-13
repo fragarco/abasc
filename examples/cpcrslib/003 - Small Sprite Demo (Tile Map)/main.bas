@@ -74,14 +74,16 @@ label MAIN
     sprites$(0).rssp.opos = BytePosSet(50, 70)
     sprites$(0).rssp.cpos = BytePosSet(50, 70)
     sprites$(0).rssp.movedir = BytePosSet(3, 0)
-    call rsSuperbufferAddress(@sprites$(0)) ' First time it's important to do this
+    ' First time it's important to do this to set
+    ' the position of this sprite in the doublebuffer/superbuffer
+    sprites$(0).rssp.mem0 = rsGetDoubleBufferAddress(50,70)
 
     sprites$(1).rssp.sp0 = SPRITE2
     sprites$(1).rssp.sp1 = SPRITE2
     sprites$(1).rssp.opos = BytePosSet(50, 106)
     sprites$(1).rssp.cpos = BytePosSet(50, 106)
     sprites$(1).rssp.movedir = BytePosSet(3, 1)
-    call rsSuperbufferAddress(@sprites$(1))
+    sprites$(1).rssp.mem0 = rsGetDoubleBufferAddress(50,106)
 
     sprites$(2).rssp.sp0 = SPRITE2
     sprites$(2).rssp.sp1 = SPRITE2
@@ -89,6 +91,7 @@ label MAIN
     sprites$(2).rssp.cpos = BytePosSet(20, 100)
     sprites$(2).rssp.movedir = BytePosSet(3, 2)
     call rsSuperbufferAddress(@sprites$(2))
+    sprites$(6).rssp.mem0 = rsGetDoubleBufferAddress(20,100)
 
     call DrawTilemap()      ' Drawing the tile map
     call rsShowTileMap()    ' Show entire tile map in the screen
@@ -178,8 +181,8 @@ label MAIN
         call rsShowTileMap2() ' Show the touched tiles-> show the new sprite situatuion
 
         ' Test if there is collision between sprite00 and sprite01
-        if rsCollideSp(sprites$(0), sprites$(1)) then call ShowCollision()
-        if rsCollideSp(sprites$(0), sprites$(2)) then call ShowCollision()
+        if rsCollSp(sprites$(0), sprites$(1)) then call ShowCollision()
+        if rsCollSp(sprites$(0), sprites$(2)) then call ShowCollision()
     wend
 end
 
