@@ -98,14 +98,34 @@ class SymTable:
             return f"RSX_{ident}"
         return ident
 
+    def _checkrecord_access(self, ident, info) -> bool:
+        parts = ident.split('$.')
+        ident = parts[0].upper() + "$"
+        recorditem = parts[1].upper()
+        if self.find(recorditem, SymType.Record, "") is None:
+            # Undefined record item
+            return False
+        recordtype = AST.exptype_fromname(recorditem)
+        if recordtype != info.exptype:
+            # Type mismatch
+            return False
+        keyident = self._code_symtype(ident, info.symtype)
+        if keyident not in self.syms:
+            # String variable undefined
+            return False
+        if not self.syms[keyident].symtype in (SymType.Variable, SymType.Param):
+            # Ident exists but is not a variable or a parameter
+            return False
+        self.syms[keyident].writes += 1
+        return True
+
     def add(self, ident: str, info: SymEntry, context: str = "", prefix: str = "") -> bool:
         """ 
         Returns FALSE if the symbol exists and is not a VARIABLE or ARRAY which
         can be added multiple times (extra writes)
         """
         if "$." in ident:
-            # check for Record pattern
-            ident = ident.split('.')[0]
+            return self._checkrecord_access(ident, info)
         ident = ident.upper()
         keyident = self._code_symtype(ident, info.symtype)
         context = context.upper()
@@ -121,10 +141,9 @@ class SymTable:
                 # must be incremented
                 if not self.syms[keyident].symtype in (SymType.Variable, SymType.Array, SymType.Param):
                     return False
-                # Check values is of the same type and also that this is not a constant
+                # Check values are of the same type and variable is not a constant 
                 if self.syms[keyident].exptype == info.exptype and self.syms[keyident].const is None:
                     self.syms[keyident].writes += 1
-                    return True
         else:
             # Local contexts
             for ftype in [SymType.Function, SymType.Procedure]:

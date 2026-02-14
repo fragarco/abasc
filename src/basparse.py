@@ -635,7 +635,10 @@ class LocBasParser:
                 info.nargs = len(param.sizes)    # type: ignore [union-attr]
                 info.indexes = list(param.sizes) # type: ignore [union-attr]
             else:
-                paramname = self._expect(TokenType.IDENT).lexeme
+                tk = self._expect(TokenType.IDENT)
+                paramname = tk.lexeme
+                if "$." in paramname:
+                    self._raise_error(2, tk, "unexpected record access")
                 paramtype = AST.exptype_fromname(paramname)
                 param = AST.Variable(name=paramname, etype=paramtype)
                 paramsym = SymType.Param
@@ -2057,7 +2060,9 @@ class LocBasParser:
     @astnode
     def _parse_RECORD(self) -> AST.Command:
         """ <RECORD> ::= RECORD IDENT; IDENT[,IDENT]* """
-        self._advance()
+        tk = self._advance()
+        if self.context != "":
+            self._raise_error(2, tk, "records must be declared in the global scope")
         tk = self._expect(TokenType.IDENT)
         offset = 0
         root = tk.lexeme
@@ -2080,7 +2085,6 @@ class LocBasParser:
                     datasz=datasz,
                     memoff=offset
                 ),
-                context=self.context
             )
             if not inserted:
                 self._raise_error(2, tk, info="record redifinition")
@@ -3029,11 +3033,13 @@ class LocBasParser:
             varname = tkvar.lexeme
             vartype = etype
             tk = self._current()
-            if etype == AST.ExpType.String and tk.type == TokenType.IDENT and '.' in tk.lexeme:
+            if etype == AST.ExpType.String and tk.type == TokenType.IDENT and tk.lexeme[0] == '.':
                 # This is a record
                 tk = self._advance()
                 varname = varname + tk.lexeme
                 vartype = AST.exptype_fromname(varname)
+                if self.symtable.find(tk.lexeme[1:], SymType.Record) is None:
+                    self._raise_error(2, tk, "undefined record item")
             return AST.ArrayItem(name=varname, etype=vartype, args=indexes) # type: ignore[union-attr]
         # regular variable
         return AST.Variable(name=tkvar.lexeme, etype=etype)
@@ -3183,7 +3189,7 @@ class LocBasParser:
         if isinstance(target, AST.Variable):
             # Simple variables are declared through assinements so we
             # have to add them to the symtable now but let's check that it
-            # is not a constant or a parameter
+            # is not a constant, a parameter or a record access
             self._check_noconst(target.name, tk)
             entry = self.symtable.find(target.name, SymType.Param, self.context)
             if entry is None:

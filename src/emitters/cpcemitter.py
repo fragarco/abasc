@@ -4038,14 +4038,29 @@ class CPCEmitter:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
-        entry = self.symtable.find(rname, SymType.Record, self.context)
+        entry = self.symtable.find(rname, SymType.Record)
         if entry is not None and var is not None:
             if node.etype == AST.ExpType.Integer:  
                 self._emit_code(f"ld      hl,({var.label}+{entry.memoff})")
             else:
                 self._emit_code(f"ld      hl,{var.label}+{entry.memoff}")
         else:
-            self._raise_error(38, node)
+            var = self.symtable.find(varname, SymType.Param, self.context)
+            if entry is not None and var is not None:
+                self._emit_code(f"ld      l,(ix+{var.memoff})")
+                self._emit_code(f"ld      h,(ix+{var.memoff+1})")
+                self._emit_code(f"ld      de,{entry.memoff}", info="record offset")
+                self._emit_code("add     hl,de")
+                if node.etype == AST.ExpType.Integer:
+                    self._emit_code("ld      e,(hl)")
+                    self._emit_code("inc     hl")
+                    self._emit_code("ld      d,(hl)")
+                    self._emit_code("ex      de,hl")
+            else:
+                self._raise_error(38, node)
+
+
+
 
     def _emit_variable(self, node: AST.Variable) -> None:
         """
@@ -4087,11 +4102,18 @@ class CPCEmitter:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
-        entry = self.symtable.find(rname, SymType.Record, self.context)
+        entry = self.symtable.find(rname, SymType.Record)
         if entry is not None and var is not None:
             self._emit_code(f"ld      hl,{var.label}+{entry.memoff}")
         else:
-            self._raise_error(38, node)
+            var = self.symtable.find(varname, SymType.Param, self.context)
+            if entry is not None and var is not None:
+                self._emit_code(f"ld      l,(ix+{var.memoff})")
+                self._emit_code(f"ld      h,(ix+{var.memoff+1})")
+                self._emit_code(f"ld      de,{entry.memoff}", info="record offset")
+                self._emit_code("add     hl,de")
+            else:
+                self._raise_error(38, node)
 
     def _emit_variable_ptr(self, node: AST.Variable) -> None:
         """
@@ -4161,7 +4183,7 @@ class CPCEmitter:
             self._emit_code("call    rt_mul16_A", info="index * length bytes")
             if record != "":
                 # this is a record so we have to apply the final offset
-                entry = self.symtable.find(record, SymType.Record, context=self.context)
+                entry = self.symtable.find(record, SymType.Record)
                 if entry is not None:
                     self._emit_code(f"ld      de,{entry.memoff}", info="record memory offset")
                     self._emit_code("add     hl,de", info="apply record attribute offset")
@@ -4501,17 +4523,18 @@ class CPCEmitter:
         if var is not None:
             self._emit_code("push    hl")
             self._emit_arrayitem_ptr(node)
-            if var.exptype == AST.ExpType.Integer:    
+            exptype = AST.exptype_fromname(node.name) if "$." in node.name else var.exptype
+            if exptype == AST.ExpType.Integer:
                 self._emit_code("pop     de")
                 self._emit_code("ld      (hl),e")
                 self._emit_code("inc     hl")
                 self._emit_code("ld      (hl),d")
-            elif var.exptype == AST.ExpType.Real:
+            elif exptype == AST.ExpType.Real:
                 self._emit_code("ex      de,hl")
                 self._emit_code("pop     hl")
                 self._emit_code("ld      bc,5")
                 self._emit_code("ldir")
-            elif var.exptype == AST.ExpType.String:
+            elif exptype == AST.ExpType.String:
                 self._emit_code("ex      de,hl")
                 self._emit_code("pop     hl")
                 self._emit_code("ld      b,0")
@@ -4525,7 +4548,7 @@ class CPCEmitter:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
-        entry = self.symtable.find(rname, SymType.Record, self.context)
+        entry = self.symtable.find(rname, SymType.Record)
         if entry is not None and var is not None:
             if entry.exptype == AST.ExpType.Integer:
                 self._emit_code(f"ld      ({var.label}+{entry.memoff}),hl")
@@ -4539,7 +4562,30 @@ class CPCEmitter:
                     self._emit_code(f"ld      c,{entry.datasz}")
                 self._emit_code("ldir")
         else:
-            self._raise_error(38, node)
+            var = self.symtable.find(varname, SymType.Param, self.context)
+            if entry is not None and var is not None:
+                self._emit_code("push    hl")
+                self._emit_code(f"ld      l,(ix+{var.memoff})")
+                self._emit_code(f"ld      h,(ix+{var.memoff+1})")
+                self._emit_code(f"ld      de,{entry.memoff}", info="record offset")
+                self._emit_code("add     hl,de")
+                if node.etype == AST.ExpType.Integer:
+                    self._emit_code("pop     de")
+                    self._emit_code("ld      (hl),e")
+                    self._emit_code("inc     hl")
+                    self._emit_code("ld      (hl),d")
+                else:
+                    self._emit_code("ex      de,hl")
+                    self._emit_code("pop     hl")
+                    self._emit_code("ld      b,0")
+                    if entry.exptype == AST.ExpType.String:
+                        self._emit_code(f"ld      c,(hl)")
+                        self._emit_code("inc     c")
+                    else:
+                        self._emit_code(f"ld      c,{entry.datasz}")
+                    self._emit_code("ldir")
+            else:
+                self._raise_error(38, node)
     
     def _emit_assigment_param(self, param: SymEntry) -> None:
         """

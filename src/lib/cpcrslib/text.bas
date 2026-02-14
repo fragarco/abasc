@@ -104,6 +104,23 @@ SUB rsPrintGphStrXYM1x2(text$, x, y) ASM
     ASM "read 'asm/cpcrslib/text/font_color.asm'"
 END SUB
 
+const RSTXT0.PEN0  = &00
+const RSTXT0.PEN1  = &80
+const RSTXT0.PEN2  = &08
+const RSTXT0.PEN3  = &88
+const RSTXT0.PEN4  = &20
+const RSTXT0.PEN5  = &A0
+const RSTXT0.PEN6  = &28
+const RSTXT0.PEN7  = &A8
+const RSTXT0.PEN8  = &02
+const RSTXT0.PEN9  = &82
+const RSTXT0.PEN10 = &0A
+const RSTXT0.PEN11 = &8A
+const RSTXT0.PEN12 = &22
+const RSTXT0.PEN13 = &A2
+const RSTXT0.PEN14 = &2A
+const RSTXT0.PEN15 = &AA
+
 SUB rsSetInkGphStrM0(indind, color) ASM
     ASM "ld      hl,_rslib_drawm0_colors"
     ASM "ld      b,0"
@@ -115,6 +132,11 @@ SUB rsSetInkGphStrM0(indind, color) ASM
     ASM "read 'asm/cpcrslib/text/drawstr_m0.asm'"
     ASM "read 'asm/cpcrslib/text/font_color.asm'"
 END SUB
+
+const RSTXT1.PEN0 = &00
+const RSTXT1.PEN1 = &80
+const RSTXT1.PEN2 = &08
+const RSTXT1.PEN3 = &88
 
 SUB rsSetInkGphStrM1(indind, color) ASM
     ASM "ld      hl,_rslib_drawm1_colors"
