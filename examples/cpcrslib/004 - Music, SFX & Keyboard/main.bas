@@ -87,10 +87,10 @@ label MAIN
 		' Test if bit 3 is 0 in order to allow another effect.
 		if (rsWyzTestPlayer() and 8) = 0 then
 			' When a  1-4 key is pressed, a SFX is played
-			if rsTestKey(0) then call rsWyzStartEffect(0,0)	' Channel, SFX #
-			if rsTestKey(1) then call rsWyzStartEffect(1,1)
-			if rsTestKey(2) then call rsWyzStartEffect(2,2)
-			if rsTestKey(3) then call rsWyzStartEffect(1,3)
+			if rsTestKey(0) then call rsWyzStartEffect(RSCH.A,0)	' Channel, SFX #
+			if rsTestKey(1) then call rsWyzStartEffect(RSCH.B,1)
+			if rsTestKey(2) then call rsWyzStartEffect(RSCH.A,2)
+			if rsTestKey(3) then call rsWyzStartEffect(RSCH.B,3)
 			if rsTestKey(5) then 
 				if tema > 0 then tema = tema - 1: nuevotema = 1
 			end if
@@ -99,38 +99,38 @@ label MAIN
 			end if
 			if nuevotema = 1 then
 				call rsWyzSetPlayerOff()
-				call rsPrintGphStrXYM1("AHORA;SONANDO:", 0, 0)
+				call rsPrintGphStrXYM1("AHORA;SONANDO:", 2, 130)
 				select case tema
 					case 0
 						sounds = @LABEL("_SOUND_TABLE_0")
 						rules  = @LABEL("_RULE_TABLE_0")
 						songs  = @LABEL("_SONG_TABLE_0")
-						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
-						call rsPrintGphStrXYM1("RED;ALERT", 2, 10)
+						call rsPrintGphStrXYM1x2(";;;;;;;;;;;;;;;", 2, 140)
+						call rsPrintGphStrXYM1x2("RED;ALERT", 2, 140)
 					case 1
 						sounds = @LABEL("_SOUND_TABLE_1")
 						rules  = @LABEL("_RULE_TABLE_1")
 						songs  = @LABEL("_SONG_TABLE_1")
-						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
-						call rsPrintGphStrXYM1("CANCION;NUEVA", 2, 10)
+						call rsPrintGphStrXYM1x2(";;;;;;;;;;;;;;;", 2, 140)
+						call rsPrintGphStrXYM1x2("CANCION;NUEVA", 2, 140)
 					case 2
 						sounds = @LABEL("_SOUND_TABLE_2")
 						rules  = @LABEL("_RULE_TABLE_2")
 						songs  = @LABEL("_SONG_TABLE_2")
-						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
-						call rsPrintGphStrXYM1("GOTHIC", 2, 10)
+						call rsPrintGphStrXYM1x2(";;;;;;;;;;;;;;;", 2, 140)
+						call rsPrintGphStrXYM1x2("GOTHIC", 2, 140)
 					case 3
 						sounds = @LABEL("_SOUND_TABLE_3")
 						rules  = @LABEL("_RULE_TABLE_3")
 						songs  = @LABEL("_SONG_TABLE_3")
-						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
-						call rsPrintGphStrXYM1("MARYJANE", 2, 10)
+						call rsPrintGphStrXYM1x2(";;;;;;;;;;;;;;;", 2, 140)
+						call rsPrintGphStrXYM1x2("MARYJANE", 2, 140)
 					case 4
 						sounds = @LABEL("_SOUND_TABLE_4")
 						rules  = @LABEL("_RULE_TABLE_4")
 						songs  = @LABEL("_SONG_TABLE_4")
-						call rsPrintGphStrXYM1(";;;;;;;;;;;;;;;", 2, 10)
-						call rsPrintGphStrXYM1("MIDNIGHT;XPRES", 2, 10)
+						call rsPrintGphStrXYM1x2(";;;;;;;;;;;;;;;", 2, 140)
+						call rsPrintGphStrXYM1x2("MIDNIGHT;XPRES", 2, 140)
 				end select
 				call rsWyzInitPlayer(songs, effects, rules, sounds)
 				call rsWyzLoadSong(0)

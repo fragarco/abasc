@@ -30,6 +30,7 @@ SPRITE2 = @LABEL("_sp_2")
 DIM sprites$(2) FIXED RSPRITE.SIZE  
 
 sub Init
+    shared RSTXT0.PEN0, RSTXT0.PEN4, RSTXT0.PEN5, RSTXT0.PEN6
     MODE 0
     ' set sprites palette
     INK 0,0: INK 1,13: INK 2,1: INK 3,6
@@ -37,13 +38,20 @@ sub Init
     INK 8,10: INK 9,22: INK 10,14: INK 11,3
     INK 12,18: INK 13,4: INK 14,11: INK 15,25
     BORDER 0
-    call rsPause(200)
-    call rsSetInkGphStrM0(0, 0)
+    ' Leave some time so the Firmware can pass the above values
+    ' to the CRTC before we disable the firmware interrupt
+    call rsPause(10)
+    call rsDisableFirmware()
+
+    call rsSetInkGphStrM0(0, RSTXT0.PEN0)
+    call rsSetInkGphStrM0(1, RSTXT0.PEN4)
+    call rsSetInkGphStrM0(2, RSTXT0.PEN5)
+    call rsSetInkGphStrM0(3, RSTXT0.PEN6)
 end sub
 
 sub ShowCollision
     INK 16,1
-    call rsPause(200)
+    call rsPause(80)
     INK 16,9
 end sub
 
@@ -68,13 +76,12 @@ end sub
 
 label MAIN
     call Init()
-    call rsDisableFirmware()
     ' All the sprite values are initilized
     sprites$(0).rssp.sp0 = SPRITE1
     sprites$(0).rssp.sp1 = SPRITE1
     sprites$(0).rssp.opos = BytePosSet(50, 70)
     sprites$(0).rssp.cpos = BytePosSet(50, 70)
-    sprites$(0).rssp.movedir = BytePosSet(3, 0)
+    sprites$(0).rssp.movdir = BytePosSet(3, 0)
     ' First time it's important to do this to set
     ' the position of this sprite in the doublebuffer/superbuffer
     sprites$(0).rssp.mem0 = rsGetDoubleBufferAddress(50,70)
@@ -83,21 +90,20 @@ label MAIN
     sprites$(1).rssp.sp1 = SPRITE2
     sprites$(1).rssp.opos = BytePosSet(50, 106)
     sprites$(1).rssp.cpos = BytePosSet(50, 106)
-    sprites$(1).rssp.movedir = BytePosSet(3, 1)
+    sprites$(1).rssp.movdir = BytePosSet(3, 1)
     sprites$(1).rssp.mem0 = rsGetDoubleBufferAddress(50,106)
 
     sprites$(2).rssp.sp0 = SPRITE2
     sprites$(2).rssp.sp1 = SPRITE2
     sprites$(2).rssp.opos = BytePosSet(20, 100)
     sprites$(2).rssp.cpos = BytePosSet(20, 100)
-    sprites$(2).rssp.movedir = BytePosSet(3, 2)
+    sprites$(2).rssp.movdir = BytePosSet(3, 2)
     sprites$(2).rssp.mem0 = rsGetDoubleBufferAddress(20,100)
 
     call DrawTilemap()      ' Drawing the tile map
     call rsShowTileMap()    ' Show entire tile map in the screen
     call PrintCredits()
-    call rsSetTile(0, 1, 2)
-    call rsShowTileMap2()    ' Show entire tile map in the screen
+    call rsShowTileMap2()
     while 1 
         ' We use by default the cursor keys to move the character sprite
         ' 0: cursor right
@@ -105,26 +111,27 @@ label MAIN
         ' 2: cursor up
         ' 3: cursor down
         ' For example., if key 0 is pressed, and the sprite is inside tilemap, then
-        ' the sprite is moved one byte to the right:
-        if rsTestKey(0) then
+        ' the sprite is moved one byte to the right
+        call rsScanKeyboard()
+        if rsTestKeyF(0) then
             posx = BytePosGetX(sprites$(0).rssp.cpos)
             posy = BytePosGetY(sprites$(0).rssp.cpos)
             if posx < 60 then sprites$(0).rssp.cpos = BytePosSet(posx+1, posy)
         end if
-        if rsTestKey(1) then
+        if rsTestKeyF(1) then
             posx = BytePosGetX(sprites$(0).rssp.cpos)
             posy = BytePosGetY(sprites$(0).rssp.cpos)
             if posx > 0 then sprites$(0).rssp.cpos = BytePosSet(posx-1, posy)
         end if
-        if rsTestKey(2) then
+        if rsTestKeyF(2) then
             posx = BytePosGetX(sprites$(0).rssp.cpos)
             posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posy > 0 then sprites$(0).rssp.posy = BytePosSet(posx, posy-2)
+            if posy > 0 then sprites$(0).rssp.cpos = BytePosSet(posx, posy-2)
         end if
-        if rsTestKey(3) then
+        if rsTestKeyF(3) then
             posx = BytePosGetX(sprites$(0).rssp.cpos)
             posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posy < 112 then sprites$(0).rssp.posy = BytePosSet(posx, posy+2)
+            if posy < 112 then sprites$(0).rssp.cpos = BytePosSet(posx, posy+2)
         end if
 
         ' The enemy sprites are automatically moved
