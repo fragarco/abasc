@@ -2,7 +2,7 @@
 
 const RSPRITE.SIZE = 14 ' RSPRITE size in bytes
 
-RECORD rssp; sp0, sp1, mem0, mem1, cpos, opos, movdir
+RECORD rssp; sp0, sp1, vmem0, vmem1, cpos, opos, movdir
 
 FUNCTION rsCollSp(sprite1$, sprite2$) ASM
     ASM "ld      e,(ix+0)   ; sprite2 - Address to sprite2 structure"

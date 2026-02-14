@@ -50,9 +50,9 @@ sub Init
 end sub
 
 sub ShowCollision
-    INK 16,1
+    call rsSetColour(16, 1)
     call rsPause(80)
-    INK 16,9
+    call rsSetColour(16,9)
 end sub
 
 sub DrawTilemap
@@ -74,31 +74,23 @@ sub PrintCredits
     call rsPrintGphStrXYM0("ESPSOFT<AMSTRAD<ES", 10*2+3-3, 24*8)
 end sub
 
+sub InitSpriteStruct(sprite$, spaddr, x, y, movx, movy)
+    sprite$.rssp.sp0 = spaddr
+    sprite$.rssp.sp1 = spaddr
+    sprite$.rssp.opos = BytePosSet(x, y)
+    sprite$.rssp.cpos = BytePosSet(x, y)
+    sprite$.rssp.movdir = BytePosSet(movx, movy)
+    ' First time it's important to do this to set
+    ' the position of this sprite in the doublebuffer/superbuffer
+    sprite$.rssp.vmem0 = rsGetDoubleBufferAddress(movx, movy)
+end sub
+
 label MAIN
     call Init()
     ' All the sprite values are initilized
-    sprites$(0).rssp.sp0 = SPRITE1
-    sprites$(0).rssp.sp1 = SPRITE1
-    sprites$(0).rssp.opos = BytePosSet(50, 70)
-    sprites$(0).rssp.cpos = BytePosSet(50, 70)
-    sprites$(0).rssp.movdir = BytePosSet(3, 0)
-    ' First time it's important to do this to set
-    ' the position of this sprite in the doublebuffer/superbuffer
-    sprites$(0).rssp.mem0 = rsGetDoubleBufferAddress(50,70)
-
-    sprites$(1).rssp.sp0 = SPRITE2
-    sprites$(1).rssp.sp1 = SPRITE2
-    sprites$(1).rssp.opos = BytePosSet(50, 106)
-    sprites$(1).rssp.cpos = BytePosSet(50, 106)
-    sprites$(1).rssp.movdir = BytePosSet(3, 1)
-    sprites$(1).rssp.mem0 = rsGetDoubleBufferAddress(50,106)
-
-    sprites$(2).rssp.sp0 = SPRITE2
-    sprites$(2).rssp.sp1 = SPRITE2
-    sprites$(2).rssp.opos = BytePosSet(20, 100)
-    sprites$(2).rssp.cpos = BytePosSet(20, 100)
-    sprites$(2).rssp.movdir = BytePosSet(3, 2)
-    sprites$(2).rssp.mem0 = rsGetDoubleBufferAddress(20,100)
+    call InitSpriteStruct(sprites$(0), SPRITE1, 50, 70, 0, 3)
+    call InitSpriteStruct(sprites$(1), SPRITE2, 50, 106, 0, 1)
+    call InitSpriteStruct(sprites$(2), SPRITE2, 20, 100, 0, 2)
 
     call DrawTilemap()      ' Drawing the tile map
     call rsShowTileMap()    ' Show entire tile map in the screen
@@ -139,17 +131,17 @@ label MAIN
         posy = BytePosGetY(sprites$(1).rssp.cpos)
         diry = BytePosGetY(sprites$(1).rssp.movdir)
         if diry = 0 then ' 0 = left, 1 = right
-            if xpos > 0 then
+            if posx > 0 then
                 sprites$(1).rssp.cpos = BytePosSet(posx-1, posy)
             else
-                sprites$(1).rssp.movdir = BytePosSet(3, 1)
+                sprites$(1).rssp.movdir = BytePosSet(0, 1)
             end if
         end if
         if diry = 1 then ' 0 = left, 1 = right
             if posx < 60 then
                 sprites$(1).rssp.cpos = BytePosSet(posx+1, posy)
             else
-                sprites$(1).rssp.movdir = BytePosSet(3, 0)
+                sprites$(1).rssp.movdir = BytePosSet(0, 0)
             end if
         end if
 
@@ -157,17 +149,17 @@ label MAIN
         posy = BytePosGetY(sprites$(2).rssp.cpos)
         diry = BytePosGetY(sprites$(2).rssp.movdir)
         if diry = 2 then   ' 2 = up, 3 = down
-            if ypos > 0 then 
+            if posy > 0 then 
                 sprites$(2).rssp.cpos = BytePosSet(posx, posy-2)
             else
-                sprites$(2).rssp.movdir = BytePosSet(3, 3)
+                sprites$(2).rssp.movdir = BytePosSet(0, 3)
             end if
         end if
         if diry = 3 then  ' 2 = up, 3 = down
             if posy < 106 then
                 sprites$(2).rssp.cpos = BytePosSet(posx, posy+2)
             else
-                sprites$(2).rssp.movdir = BytePosSet(3, 2)
+                sprites$(2).rssp.movdir = BytePosSet(0, 2)
             end if
         end if
 
