@@ -791,9 +791,7 @@ class LocBasParser:
             self._advance()
             entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
             if entry is not None and entry.const is not None:
-                inttk = AST.Integer(value=entry.const)
-                inttk.set_origin(tk.line, tk.col)
-                return inttk
+                return Token(TokenType.INT, "", tk.line, tk.col, entry.const)
         self._raise_error(2, tk, "literal integer or constant was expected")
 
     @astnode

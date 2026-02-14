@@ -144,6 +144,7 @@ class SymTable:
                 # Check values are of the same type and variable is not a constant 
                 if self.syms[keyident].exptype == info.exptype and self.syms[keyident].const is None:
                     self.syms[keyident].writes += 1
+                    return True
         else:
             # Local contexts
             for ftype in [SymType.Function, SymType.Procedure]:
