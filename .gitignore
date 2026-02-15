@@ -164,6 +164,7 @@ cython_debug/
 
 # custom personal directories
 extras/
+projects/
 .vscode
 
 # abasc intermediate files

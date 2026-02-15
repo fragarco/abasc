@@ -1921,6 +1921,9 @@ class CPCEmitter:
     def _emit_input_str(self) -> None: 
         self._emit_code("ld      de,rt_scratch_pad")
         self._emit_code("ld      (hl),c", info="string len")
+        self._emit_code("ld      a,c", info="empty string?")
+        self._emit_code("or      a")
+        self._emit_code("jr      z,$+9")
         self._emit_code("inc     hl")
         self._emit_code("ex      de,hl")
         self._emit_code("ld      b,0")
