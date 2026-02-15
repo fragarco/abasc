@@ -210,8 +210,9 @@ ABASC: MANUAL DEL USUARIO
   - [Depuración paso a paso de nuestro código](#depuración-paso-a-paso-de-nuestro-código)
 - [Apéndice II: Ampliando el compilador](#apéndice-ii-ampliando-el-compilador)
 - [Apéndice III: CPCTELERA](#apéndice-iii-cpctelera)
+  - [Constantes y funciones de CPCTelera:](#constantes-y-funciones-de-cpctelera)
 - [Apéndice IV: CPCRSLIB](#apéndice-iv-cpcrslib)
-  - [Constantes y funciones:](#constantes-y-funciones)
+  - [Constantes y funciones de CPCRSlib:](#constantes-y-funciones-de-cpcrslib)
 
 ---
 
@@ -2310,7 +2311,7 @@ Finalmente, el directorio `examples` incluye varios programas de ejemplo que pue
 
 CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El *Framework* original, incluyendo un gran número de herramientas adicionles, se pude consultar aquí:
 
-* https://github.com/lronaldo/cpctelera
+* [Página de CPCTelera en Github](https://github.com/lronaldo/cpctelera)
 
 Entre el contenido, se puede acceder a una documentación muy completa. Además, `ABASC` incluye muchos de los ejemplos originales adaptados y listos para su consulta en el directorio `examples/cpctelera`.
 
@@ -2320,7 +2321,7 @@ Para incluir su contenido en cualquier proyecto basta con añadir la línea:
 chain merge "cpctelera/cpctelera.bas"
 ```
 
-## Métodos y funciones disponibles:
+## Constantes y funciones de CPCTelera:
 
 * `cpctelera/audio.bas`:
 
@@ -2677,7 +2678,7 @@ SUB         cpctWaitVSYNCStart
 
 La librería original puede descargarse desde:
 
-* https://sourceforge.net/p/cpcrslib/wiki/Home/
+* [Página de CPCRSlib en Sourceforge](https://sourceforge.net/p/cpcrslib/wiki/Home/)
 
 `ABASC` incluye varios de los ejemplos originales adaptados y listos para su consulta en el directorio `examples/cpcrslib`.
 
@@ -2687,7 +2688,7 @@ Para utilizar la librería en cualquier proyecto de `ABASC` basta con añadir la
 chain merge "cpcrslib/cpcrslib.bas"
 ```
 
-## Constantes y funciones:
+## Constantes y funciones de CPCRSlib:
 
 * `cpcrslib/firmware`
 

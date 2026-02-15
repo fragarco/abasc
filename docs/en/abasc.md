@@ -210,8 +210,9 @@ ABASC: USER MANUAL
   - [Debugging our Code](#debugging-our-code)
 - [Appendix II: Extending the Compiler](#appendix-ii-extending-the-compiler)
 - [Apéndice III: CPCTELERA](#apéndice-iii-cpctelera)
-  - [Constants and routines:](#constants-and-routines)
+  - [CPCTelera Constants and routines](#cpctelera-constants-and-routines)
 - [Apéndice IV: CPCRSLIB](#apéndice-iv-cpcrslib)
+  - [**CPCRSlib Constants and routines**](#cpcrslib-constants-and-routines)
 
 
 ---
@@ -2368,21 +2369,21 @@ Finally, the `examples` directory contains several sample programs that can be c
 
 CPCtelera is an integrated development framework for creating Amstrad CPC games and content. The original distribution, including several additional tools, can be downloaded from:
 
-* https://github.com/lronaldo/cpctelera
+* [CPCTelera Github page](https://github.com/lronaldo/cpctelera)
 
 The package includes a very complehensive documentation. Additionally, `ABASC` offers several of the original examples already translated to `ABASC` syntax in the directory `examples/cpctelera`.
 
 To incorporate the library to any `ABASC` project the user only need to reference the main module file with the following command:
 
-```
+```basic
 chain merge "cpctelera/cpctelera.bas"
 ```
 
-## Constants and routines:
+## CPCTelera Constants and routines
 
 * `cpctelera/audio.bas`:
 
-```
+```basic
 CONST AY.CHANNELA
 CONST AY.CHANNELB
 CONST AY.CHANNELC
@@ -2403,7 +2404,7 @@ SUB         cpctakpStop
 
 * `cpctelera/bitarray.bas`
 
-```
+```basic
 FUNCTION    cpctGetBit(array$, index)
 FUNCTION    cpctGet2Bits(array$, index)
 FUNCTION    cpctGet4Bits(array$, index)
@@ -2416,7 +2417,7 @@ SUB         cpctSet6Bits(array$, value, index)
 
 * `cpctelera/easytilemaps`
 
-```
+```basic
 SUB     cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap)
 SUB     cpctetmSetDrawTilemap2x4f(vieww, viewh, vmem, tiles)
 SUB     cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles)
@@ -2426,7 +2427,7 @@ SUB     cpctetmSetTileset2x4(tileset)
 
 * `cpctelera/firmware`
 
-```
+```basic
 FUNCTION    cpctDisableFirmware
 SUB         cpctDisableLowerROM
 SUB         cpctDisableUpperROM
@@ -2439,7 +2440,7 @@ SUB         cpctSetInterruptHandler(cbaddress)
 
 * `cpctelera/keyboard`
 
-```
+```basic
 CONST KEY.UP           
 CONST KEY.RIGHT        
 CONST KEY.DOWN         
@@ -2540,7 +2541,7 @@ SUB         cpctScanKeyboardif
 
 * `cpctelera/memutils`
 
-```
+```basic
 SUB         cpctMemcpy(toptr, fromptr, bytes)
 SUB         cpctMemset(arrayptr, value, bytes)
 SUB         cpctMemsetf8(arrayptr, value, bytes)
@@ -2553,14 +2554,14 @@ SUB         cpctWaitHalts(halts)
 
 * `cpctelera/random`
 
-```
+```basic
 SUB         cpctSRand(seed)
 FUNCTION    cpctRand
 ```
 
 * `cpctelera/sprites`
 
-```
+```basic
 const CPCTBLEND.XOR
 const CPCTBLEND.AND
 const CPCTBLEND.OR 
@@ -2631,7 +2632,7 @@ FUNCTION    cpctpx2byteM1(px0, px1, px2, px3)
 
 * `cpctelera/strings`
 
-```
+```basic
 SUB         cpctDrawCharM0(vmem, chnum)
 SUB         cpctDrawCharM1(vmem, chnum)
 SUB         cpctDrawCharM2(vmem, chnum)
@@ -2645,7 +2646,7 @@ SUB         cpctSetDrawCharM2(fg, bg)
 
 * `cpctelera/video`
 
-```
+```basic
 CONST CPCT.VMEMSTART
 
 CONST FWC.BLACK         
@@ -2729,34 +2730,36 @@ SUB         cpctWaitVSYNCStart
 
 ---
 
+
 # Apéndice IV: CPCRSLIB
 
 `CPCRSlib` is a C library containing routines and functions that allow to the handling of sprites and tile-mapping in Amstrad CPC. The library is written to be used with Z88DK compiler or with SDCC complier.
 
 Last release of the library can be downloaded at:
 
-* https://sourceforge.net/p/cpcrslib/wiki/Home/
+* [CPCRSlib Sourceforge page](https://sourceforge.net/p/cpcrslib/wiki/Home/)
 
 `ABASC` includes several adapted examples from the original `CPCRSlib` distribution. They can be found in the directory `examples/cpcrslib`.
 
 To incorporate the library to any `ABASC` project the user only need to reference the main module file with the following command:
 
-```
+```basic
 chain merge "cpcrslib/cpcrslib.bas"
 ```
 
-## Constants and routines:
+## **CPCRSlib Constants and routines**
+
 
 * `cpcrslib/firmware`
 
-```
+```basic
 SUB rsDisableFirmware
 SUB rsEnableFirmware
 ```
 
 * `cpcrslib/keyboard`
 
-```
+```basic
 const RSKEY.EMPTY   
 const RSKEY.FDOT    
 const RSKEY.FENTER  
@@ -2869,7 +2872,7 @@ FUNCTION        rsTestKeyboard(kbline)
 
 * `cpcrslib/player`
 
-```
+```basic
 const RSCH.A
 const RSCH.B
 const RSCH.C
@@ -2886,7 +2889,7 @@ SUB         rsWyzSetPlayerOff
 
 * `cpcrslib/sprite`
 
-```
+```basic
 const RSPRITE.SIZE = 14
 RECORD rssp; sp0, sp1, vmem0, vmem1, cpos, opos, movdir
 
@@ -2903,7 +2906,7 @@ SUB         rsPutSpXORXY(sprite, w, h, x, y)
 
 * `cpcrslib/text`
 
-```
+```basic
 SUB         rsPrintGphStrStd(npen, text$, vmem)
 SUB         rsPrintGphStrStdXY(npen, text$, x, y)
 
@@ -2946,7 +2949,7 @@ SUB rsSetInkGphStrM1(indind, color)
 
 * `cpcrslib/tilemap`
 
-```
+```basic
 SUB         rsInitTileMap
 SUB         rsSetTile(x, y, tile)
 FUNCTION    rsReadTile(x, y)
@@ -2965,7 +2968,7 @@ SUB         rsScrollRight00
 
 * `cpcrslib/utils`
 
-```
+```basic
 SUB         rsPause(halts)
 FUNCTION    rsRandom
 SUB         rsWaitVSync
@@ -2973,7 +2976,7 @@ SUB         rsWaitVSync
 
 * `cpcrslib/video`
 
-```
+```basic
 CONST RSFW.BLACK        
 CONST RSFW.BLUE         
 CONST RSFW.BRIGHTBLUE   
@@ -3037,3 +3040,5 @@ SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)
 ```
+
+---
