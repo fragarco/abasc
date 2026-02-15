@@ -1179,16 +1179,8 @@ __a2bin_loop:
     ret
 """
 ),
-    "rt_strz2real": ([],"",
-f"""
-; RT_STRZ2REAL
-; DE address to the null-terminated string, ends pointing to first
-; char not converted.
-; Inputs:
-;     DE address to the source null-terminated string
-; Outputs:
-;     HL ponts to rt_strz2real_buf with the 5-bytes real
-;     HL, BC, DE, IX, IY and AF are modified
+    "rt_strz2real": ([],
+"""
 rt_strz2real_buf: defs 5
 __strz2real_0: db &00,&00,&00,&28,&00
 __strz2real_1: db &00,&00,&00,&00,&81
@@ -1200,6 +1192,16 @@ __strz2real_6: db &00,&00,&00,&40,&83
 __strz2real_7: db &00,&00,&00,&60,&83
 __strz2real_8: db &00,&00,&00,&00,&84
 __strz2real_9: db &00,&00,&00,&10,&84
+""",
+f"""
+; RT_STRZ2REAL
+; DE address to the null-terminated string, ends pointing to first
+; char not converted.
+; Inputs:
+;     DE address to the source null-terminated string
+; Outputs:
+;     HL ponts to rt_strz2real_buf with the 5-bytes real
+;     HL, BC, DE, IX, IY and AF are modified
 rt_strz2real:
     push    de
     ld      de,rt_strz2real_buf
