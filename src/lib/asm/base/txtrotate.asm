@@ -86,7 +86,7 @@ __fwrotright_nextbyte:
 __fwrotright_nextbit:
     add     d
     rr      (hl)
-    dec     hl
+    inc     hl
     or      e
     srl     d
     sra     e
