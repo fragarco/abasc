@@ -7,11 +7,11 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python3 /Users/javi/workspace/github/abasc/src/abasc.py"
-DSK="python3 /Users/javi/workspace/github/abasc/src/utils/dsk.py"
-CDT="python3 /Users/javi/workspace/github/abasc/src/utils/cdt.py"
-IMG="python3 /Users/javi/workspace/github/abasc/src/utils/img.py"
-ASM="python3 /Users/javi/workspace/github/abasc/src/utils/abasm.py"
+BASC="python3 ../../src/abasc.py"
+DSK="python3  ../../src/utils/dsk.py"
+CDT="python3  ../../src/utils/cdt.py"
+IMG="python3  ../../src/utils/img.py"
+ASM="python3  ../../src/utils/abasm.py"
 
 SOURCE=main
 TARGET=screen
