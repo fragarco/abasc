@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Amstrad Locomotive BASIC compiler.
 

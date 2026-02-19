@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 BASPRJ.PY by Javier Garcia
 
@@ -40,11 +40,11 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python3 "{BASC}"
-set DSK=python3 "{DSK}"
-set CDT=python3 "{CDT}"
-set IMG=python3 "{IMG}"
-set ASM=python3 "{ASM}"
+set BASC=python "{BASC}"
+set DSK=python "{DSK}"
+set CDT=python "{CDT}"
+set IMG=python "{IMG}"
+set ASM=python "{ASM}"
 
 set SOURCE=main
 set TARGET={TARGET}
@@ -88,11 +88,11 @@ UNIX_TEMPLATE: str = r"""#!/bin/sh
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python3 {BASC}"
-DSK="python3 {DSK}"
-CDT="python3 {CDT}"
-IMG="python3 {IMG}"
-ASM="python3 {ASM}"
+BASC="python {BASC}"
+DSK="python {DSK}"
+CDT="python {CDT}"
+IMG="python {IMG}"
+ASM="python {ASM}"
 
 SOURCE=main
 TARGET={TARGET}
@@ -151,11 +151,11 @@ def update_project_win(content: str, paths: List[str]) -> str:
     raising errors like 're.error: bad escape'
     """
     expressions = [
-        (r'^set BASC=.*$', 'set BASC=python3 '),
-        (r'^set DSK=.*$',  'set DSK=python3 '),
-        (r'^set CDT=.*$',  'set CDT=python3 '),
-        (r'^set IMG=.*$',  'set IMG=python3 '),
-        (r'^set ASM=.*$',  'set ASM=python3 ')
+        (r'^set BASC=.*$', 'set BASC=python '),
+        (r'^set DSK=.*$',  'set DSK=python '),
+        (r'^set CDT=.*$',  'set CDT=python '),
+        (r'^set IMG=.*$',  'set IMG=python '),
+        (r'^set ASM=.*$',  'set ASM=python ')
     ]
     for i,exp in enumerate(expressions):
         content = re.sub(
@@ -172,11 +172,11 @@ def update_project_unix(content: str, paths: List[str]) -> str:
     lets use the lambda workaround just in case.
     """
     expressions = [
-        (r'^BASC=.*$', 'BASC="python3 '),
-        (r'^DSK=.*$',  'DSK="python3 '),
-        (r'^CDT=.*$',  'CDT="python3 '),
-        (r'^IMG=.*$',  'IMG="python3 '),
-        (r'^ASM=.*$',  'ASM="python3 ')
+        (r'^BASC=.*$', 'BASC="python '),
+        (r'^DSK=.*$',  'DSK="python '),
+        (r'^CDT=.*$',  'CDT="python '),
+        (r'^IMG=.*$',  'IMG="python '),
+        (r'^ASM=.*$',  'ASM="python ')
     ]
     for i,exp in enumerate(expressions):
         content = re.sub(
