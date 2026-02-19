@@ -29,8 +29,8 @@ __bigletter_nextchr:
     ld      e, l
     ld      d, h
     call    &BB75    ; SET CURSOR
-__bigletter_pen2:
-    ld      a,2      ; Self modifying code
+__bigletter_pen1:
+    ld      a,0      ; Self modifying code
     call    &BB90    ; SET PEN
     ld      a,b
     call    &BB5A    ; TXT_OUT
@@ -40,8 +40,8 @@ __bigletter_pen2:
     ld      h,d
     inc     l
     call    &BB75    ; SET CURSOR
-__bigletter_pen1:
-    ld      a,3      ; Self modifying code
+__bigletter_pen2:
+    ld      a,0      ; Self modifying code
     call    &BB90    ; SET PEN
     ld      a,b
     inc     a

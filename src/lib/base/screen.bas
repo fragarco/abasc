@@ -4,37 +4,37 @@ SUB ScrInitialize ASM
     ASM "jp      &BBFF    ; SCR INITIALISE"
 END SUB
 
-SUB ScrDotPos(x, y) ASM
+FUNCTION ScrDotPos(x, y) ASM
     ASM "ld      e,(ix+2) ; x-pos"
     ASM "ld      d,(ix+3)"
     ASM "ld      l,(ix+0) ; y-pos"
     ASM "ld      h,(ix+1)"
     ASM "jp      &BC1D    ; SCR_DOT_POSITION"
-END SUB
+END FUNCTION
 
-SUB ScrNextByte(vmem) ASM
+FUNCTION ScrNextByte(vmem) ASM
     ASM "ld      l,(ix+0) ; video memory address"
     ASM "ld      h,(ix+1)"
     ASM "jp      &BC20    ; SCR NEXT BYTE"
-END SUB
+END FUNCTION
 
-SUB ScrPrevByte(vmem) ASM
+FUNCTION ScrPrevByte(vmem) ASM
     ASM "ld      l,(ix+0) ; video memory address"
     ASM "ld      h,(ix+1)"
     ASM "jp      &BC23    ; SCR PREV BYTE"
-END SUB
+END FUNCTION
 
-SUB ScrNextLine(vmem) ASM
+FUNCTION ScrNextLine(vmem) ASM
     ASM "ld      l,(ix+0) ; video memory address"
     ASM "ld      h,(ix+1)"
     ASM "jp      &BC26    ; SCR NEXT LINE"
-END SUB
+END FUNCTION
 
-SUB ScrPrevLine(vmem) ASM
+FUNCTION ScrPrevLine(vmem) ASM
     ASM "ld      l,(ix+0) ; video memory address"
     ASM "ld      h,(ix+1)"
     ASM "jp      &BC29    ; SCR PREV LINE"
-END SUB
+END FUNCTION
 
 SUB ScrFillBox(x1, y1, x2, y2, npen) ASM
     ASM "ld      a,(ix+0)"

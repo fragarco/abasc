@@ -15,13 +15,14 @@ fwRotateString:
 __fwrotstr_nextchr:
     push    bc        ; store remaining chars
     push    hl        ; store X Y position
-    call    &BB75     ; CURSOR
+    call    &BB75     ; TXT_SET_CURSOR
     ld      a,(de)
 __fwrotstr_funcb:
     call    &0000     ; self modifying code
     inc     de
     pop     hl
-    dec     l
+__fwrotstr_incdec:
+    dec     l         ; self modifying: dec rotleft, inc rotright
     pop     bc
     djnz    __fwrotstr_nextchr
     ret
@@ -29,15 +30,15 @@ __fwrotstr_funcb:
 ; PRIVATE ROUTINE
 fwRotChLeft:
     push    de
-    call    &BBA5    ; MATRIX
+    call    &BBA5    ; TXT_GET_MATRIX
     ex      de,hl
-    call    &BBAE    ; TABLE
+    call    &BBAE    ; TXT_GET_M_TABLE
     ld      b, 7
 __fwrotleft_add7:
     inc     hl
     djnz    __fwrotleft_add7
     push    af
-    call    &B906    ; ROM ENABLE
+    call    &B906    ; KL_L_ROM_ENABLE
     ld      c, 8
 __fwrotleft_nextbyte:
     ld      a, (de)
@@ -60,28 +61,28 @@ __fwrotleft_nextbit:
     pop     de
     dec     c
     jr      nz, __fwrotleft_nextbyte
-    call    &B909    ; ROM DISABLE
+    call    &B909    ; KL_L_ROM_DISABLE
     pop     af
-    call    &BB5A    ; TXT_OUT
+    call    &BB5A    ; TXT_OUTPUT
     pop     de
     ret
 
 ; PRIVATE ROUTINE
 fwRotChRight:
     push    de
-    call    &BBA5    ; MATRIX
+    call    &BBA5    ; TXT_GET_MATRIX
     ex      de,hl
-    call    &BBAE    ; TABLE
+    call    &BBAE    ; TXT_GET_M_TABLE
     push    af
-    call    &B906    ; ROM ENABLE
+    call    &B906    ; KL_L_ROM_ENABLE
     ld      c,8
 __fwrotright_nextbyte:
     ld      a,(de)
     inc     de
     push    de
     push    hl
-    ld      d,80
-    ld      e,80
+    ld      d,128
+    ld      e,128
     ld      b,8
 __fwrotright_nextbit:
     add     d
@@ -96,8 +97,8 @@ __fwrotright_nextbit:
     pop     de
     dec     c
     jr      nz, __fwrotright_nextbyte
-    call    &B909    ; ROM DISABLE
+    call    &B909    ; KL_L_ROM_DISABLE
     pop     af
-    call    &BB5A    ; TXT_OUT
+    call    &BB5A    ; TXT_OUTPUT
     pop     de
     ret
