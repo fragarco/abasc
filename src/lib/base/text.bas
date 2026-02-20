@@ -47,3 +47,17 @@ SUB txtPrintBig(text$, x, y, pen1, pen2) ASM
     ASM "jp      fwBigLetters"
     ASM "read 'asm/base/txtbig.asm'"
 END SUB
+
+SUB txtScrollUp ASM
+    ASM "call    &BB99"
+    ASM "call    &BC2C"
+    ASM "ld      b,1"
+    ASM "jp      &BC4D"
+END SUB
+
+SUB txtScrollDown ASM
+    ASM "call    &BB99"
+    ASM "call    &BC2C"
+    ASM "ld      b,0"
+    ASM "jp      &BC4D"
+END SUB
