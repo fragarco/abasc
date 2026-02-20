@@ -16,35 +16,21 @@ FUNCTION txtReadAsc(x, y) ASM
 END FUNCTION
 
 SUB txtRotateLeft(text$, x, y) ASM
-    ASM "ld      hl,__fwrotstr_incdec"
-    ASM "ld      (hl),&2D    ; dec l"
-    ASM "ld      hl,__fwrotstr_funcb+1"
-    ASM "ld      de,fwRotChLeft"
-    ASM "ld      (hl),e"
-    ASM "inc     hl"
-    ASM "ld      (hl),d"
     ASM "ld      e,(ix+4)"
     ASM "ld      d,(ix+5)"
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+2)"
-    ASM "jp      fwRotateString"
-    ASM "read 'asm/base/txtrotate.asm'"
+    ASM "jp      fwRotateStringLeft"
+    ASM "read 'asm/base/txtrotl.asm'"
 END SUB
 
 SUB txtRotateRight(text$, x, y) ASM
-    ASM "ld      hl,__fwrotstr_incdec"
-    ASM "ld      (hl),&2C    ; inc l"
-    ASM "ld      hl,__fwrotstr_funcb+1"
-    ASM "ld      de,fwRotChRight"
-    ASM "ld      (hl),e"
-    ASM "inc     hl"
-    ASM "ld      (hl),d"
     ASM "ld      e,(ix+4)"
     ASM "ld      d,(ix+5)"
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+2)"
-    ASM "jp      fwRotateString"
-    ASM "read 'asm/base/txtrotate.asm'"
+    ASM "jp      fwRotateStringRight"
+    ASM "read 'asm/base/txtrotr.asm'"
 END SUB
 
 SUB txtPrintBig(text$, x, y, pen1, pen2) ASM
