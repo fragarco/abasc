@@ -209,10 +209,12 @@ ABASC: USER MANUAL
   - [Verifying BASIC Code](#verifying-basic-code)
   - [Debugging our Code](#debugging-our-code)
 - [Appendix II: Extending the Compiler](#appendix-ii-extending-the-compiler)
-- [Apéndice III: CPCTELERA](#apéndice-iii-cpctelera)
+- [Appendix III: The BASE Library](#appendix-iii-the-base-library)
+  - [BASE Constants and routines](#base-constants-and-routines)
+- [Appendix IV: CPCTELERA](#appendix-iv-cpctelera)
   - [CPCTelera Constants and routines](#cpctelera-constants-and-routines)
-- [Apéndice IV: CPCRSLIB](#apéndice-iv-cpcrslib)
-  - [**CPCRSlib Constants and routines**](#cpcrslib-constants-and-routines)
+- [Appendix V: CPCRSLIB](#appendix-v-cpcrslib)
+  - [CPCRSlib Constants and routines](#cpcrslib-constants-and-routines)
 
 
 ---
@@ -2365,7 +2367,101 @@ Finally, the `examples` directory contains several sample programs that can be c
 
 ---
 
-# Apéndice III: CPCTELERA
+# Appendix III: The BASE Library
+
+`BASE` is a library that exposes some useful routines previously published in books such as "Ready made machine language routines for the Amstrad" or available as firmware calls.
+
+To include its content in any project, simply add the line:
+
+```basic
+chain merge "base/base.bas"
+```
+
+## BASE Constants and routines
+
+* `base/bytepos.bas`
+
+' In `ABASC` there is no support for byte-type data. All integers are
+' 16 bits. These routines allow you to encode a position
+' X,Y where each component occupies a byte. For example:
+' DIM positions(1)
+' positions(0) = bytePosSet(5,5)
+' positions(1) = bytePosSet(5,6)
+FUNCTION bytePosSet(x, y)
+FUNCTION bytePosGetX(bytepos)
+FUNCTION bytePosGetY(intvalue)
+FUNCTION bytePosSetX(bytepos, x)
+FUNCTION bytePosSetY(intvalue, y)
+
+* `base/memory.bas`
+
+SUB memCopy(dest, src, nbytes)
+SUB memSet(dest, size, bytevalue)
+
+* `base/screen.bas`
+
+' Equivalent to calling the firmware routine SCR INITIALIZE
+SUB scrInitialize
+
+' Routines that return video memory positions
+FUNCTION scrDotPos(x, y)
+FUNCTION scrNextByte(vmem)
+FUNCTION scrPrevByte(vmem)
+FUNCTION scrNextLine(vmem)
+FUNCTION scrPrevLine(vmem)
+
+' Drawing routines for shapes
+SUB scrFillBox(x1, y1, x2, y2, npen)
+SUB scrDrawBox(x1, y1, x2, y2)
+SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
+SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
+
+' Draws a sprite of W bytes x H lines at position X,Y
+' on the screen. Expects that the information for this sprite
+' has been added to the program via DATA, so that before calling
+' this routine, the sprite to be painted is chosen via a RESTORE.
+' The first two bytes of sprite information indicate its
+' size (W and H).
+SUB scrDrawSprite(x, y)()
+FUNCTION scrPeekColor(x, y)()
+
+' Routines that use the firmware to provide support for a
+' double buffer. The second video buffer uses memory starting
+' at position 0x4000. Programs that use these routines must
+' be compiled with the --data=0x8000 option to leave space for this buffer.
+SUB scrInitDoubleBuffer()
+SUB scrSwapDoubleBuffer()
+
+' Routines that use the firmware to set the video memory start address
+' or its offset.
+SUB scrSetLocation(memaddr)
+FUNCTION scrGetLocation()
+SUB scrSetOffset(offset)
+FUNCTION scrGetOffset()
+SUB scrSetVideoLocation(base, offset)
+
+' Routines that scroll the screen
+SUB scrScrollUp()
+SUB scrScrollDown()
+
+* `base/text.bas`
+
+' Returns the ASCII code of the screen character at position x,y
+FUNCTION txtReadAsc(x, y)
+
+' Prints the text$ string rotated 90 degrees to the left. Overwrites the first available UDG, so it cannot be used with SYMBOL AFTER 256
+SUB txtRotateLeft(text$, x, y)
+
+' Prints the text$ string rotated 90 degrees to the right. Overwrites the first available UDG, so it cannot be used with SYMBOL AFTER 256
+SUB txtRotateRight(text$, x, y)
+
+' Prints the text$ string doubled in size. The top part is pointed with pen1 ink,
+' while the bottom part uses pen2 ink.
+SUB txtPrintBig(text$, x, y, pen1, pen2)
+
+---
+
+# Appendix IV: CPCTELERA
 
 CPCtelera is an integrated development framework for creating Amstrad CPC games and content. The original distribution, including several additional tools, can be downloaded from:
 
@@ -2731,7 +2827,7 @@ SUB         cpctWaitVSYNCStart
 ---
 
 
-# Apéndice IV: CPCRSLIB
+# Appendix V: CPCRSLIB
 
 `CPCRSlib` is a C library containing routines and functions that allow to the handling of sprites and tile-mapping in Amstrad CPC. The library is written to be used with Z88DK compiler or with SDCC complier.
 
@@ -2747,7 +2843,7 @@ To incorporate the library to any `ABASC` project the user only need to referenc
 chain merge "cpcrslib/cpcrslib.bas"
 ```
 
-## **CPCRSlib Constants and routines**
+## CPCRSlib Constants and routines
 
 
 * `cpcrslib/firmware`

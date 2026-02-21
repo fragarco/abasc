@@ -209,9 +209,11 @@ ABASC: MANUAL DEL USUARIO
   - [Comprobación del código BASIC](#comprobación-del-código-basic)
   - [Depuración paso a paso de nuestro código](#depuración-paso-a-paso-de-nuestro-código)
 - [Apéndice II: Ampliando el compilador](#apéndice-ii-ampliando-el-compilador)
-- [Apéndice III: CPCTELERA](#apéndice-iii-cpctelera)
+- [Apéndice III: LA LIBRERÍA BASE](#apéndice-iii-la-librería-base)
+  - [Constantes y funciones de Base:](#constantes-y-funciones-de-base)
+- [Apéndice IV: CPCTELERA](#apéndice-iv-cpctelera)
   - [Constantes y funciones de CPCTelera:](#constantes-y-funciones-de-cpctelera)
-- [Apéndice IV: CPCRSLIB](#apéndice-iv-cpcrslib)
+- [Apéndice V: CPCRSLIB](#apéndice-v-cpcrslib)
   - [Constantes y funciones de CPCRSlib:](#constantes-y-funciones-de-cpcrslib)
 
 ---
@@ -2307,7 +2309,103 @@ Finalmente, el directorio `examples` incluye varios programas de ejemplo que pue
 
 ---
 
-# Apéndice III: CPCTELERA
+# Apéndice III: LA LIBRERÍA BASE 
+
+BASE es una librería que expone algunas rutinas útiles publicadas en su día en libros como "Ready made machine language routines for the Amstrad" o que están disponibles como llamadas al Firmware.
+
+Para incluir su contenido en cualquier proyecto basta con añadir la línea:
+
+```
+chain merge "base/base.bas"
+```
+
+## Constantes y funciones de Base:
+
+* `base/bytepos.bas`
+
+' En `ABASC` no hay soporte para datos de tipo byte. Todos los enteros son
+' de 16 bits. Estas rutinas permiten codificar en un entero una posición
+' X,Y donde cada componente ocupe un byte. Por ejemplo:
+' DIM positions(1)
+' positions(0) = bytePosSet(5,5)
+' positions(1) = bytePosSet(5,6)
+FUNCTION bytePosSet(x, y)
+FUNCTION bytePosGetX(bytepos)
+FUNCTION bytePosGetY(intvalue)
+FUNCTION bytePosSetX(bytepos, x)
+FUNCTION bytePosSetY(intvalue, y)
+
+* `base/memory.bas`
+
+SUB memCopy(dest, src, nbytes)
+SUB memSet(dest, size, bytevalue)
+
+* `base/screen.bas`
+
+' Equivalente a llamar a la rutina del firmware SCR INITIALISE
+SUB scrInitialize
+
+' Rutinas que devuelven posiciones de la memoria de video
+FUNCTION scrDotPos(x, y)
+FUNCTION scrNextByte(vmem)
+FUNCTION scrPrevByte(vmem)
+FUNCTION scrNextLine(vmem)
+FUNCTION scrPrevLine(vmem)
+
+' Rutinas de dibujo de formas
+SUB scrFillBox(x1, y1, x2, y2, npen)
+SUB scrDrawBox(x1, y1, x2, y2)
+SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
+SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
+
+' Dibuja un sprite de W bytes x H lines en la posición X,Y
+' de la pantalla. Espera que la información de dicho sprite
+' se añada al programa mediante DATA, de forma que antes de llamar
+' a esta rutina se elija el sprite a pintar mediante un RESTORE.
+' Los dos primeros bytes de información del sprite indican su 
+' tamaño (W y H).
+SUB scrDrawSprite(x, y)()
+FUNCTION scrPeekColor(x, y)()
+
+' Rutinas que utilizan el firmware para proporcionar soporte para un
+' doble buffer. El segundo buffer de vídeo utiliza la memoria desde
+' la posición 0x4000. Los programas que usen estas rutinas deben
+' compilarse con la opción --data=0x8000 para dejar espacio a dicho buffer.
+SUB scrInitDoubleBuffer()
+SUB scrSwapDoubleBuffer()
+
+' Rutinas que usan el firmware para establecer la dirección de inicio
+' de la memoria de video o su offset. 
+SUB      scrSetLocation(memaddr)
+FUNCTION scrGetLocation()
+SUB      scrSetOffset(offset)
+FUNCTION scrGetOffset()
+SUB      scrSetVideoLocation(base, offset)
+
+' Rutinas que hacen scroll de la pantalla
+SUB scrScrollUp()
+SUB scrScrollDown()
+
+* `base/text.bas`
+
+' Devuelve el código ASCII del caracter de la pantalla en la posición x,y
+FUNCTION txtReadAsc(x, y) 
+
+' Imprime la cadena text$ rotada hacía la izquierda 90º. Sobreescribe el
+' primer UDG disponible, por lo que no puede usarse cono SYMBOL AFTER 256
+SUB txtRotateLeft(text$, x, y)
+
+' Imprime la cadena text$ rotada hacía la derecha 90º. Sobreescribe el
+' primer UDG disponible, por lo que no puede usarse cono SYMBOL AFTER 256
+SUB txtRotateRight(text$, x, y)
+
+' Imprime la cadena text$ a doble tamaño. La parte superior se punta con
+' la tinta pen1, mientras que la parte baja usa la tinta pen2.
+SUB txtPrintBig(text$, x, y, pen1, pen2)
+
+---
+
+# Apéndice IV: CPCTELERA
 
 CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El *Framework* original, incluyendo un gran número de herramientas adicionles, se pude consultar aquí:
 
@@ -2672,7 +2770,7 @@ SUB         cpctWaitVSYNCStart
 
 ---
 
-# Apéndice IV: CPCRSLIB
+# Apéndice V: CPCRSLIB
 
 `CPCRSlib` es una librería de C que contiene rutinas y funciones que permiten la gestión de sprites y el uso de *tilemaps* en Amstrad CPC. Está diseñada para usarse con los compiladores z88dk y SDCC.
 
