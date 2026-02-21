@@ -15,6 +15,7 @@ hero.x = 140
 const HEROY = 30
 
 MODE 1
+INK 0,0
 BORDER 0
 LABEL MAIN
     hero.oldx = hero.x
