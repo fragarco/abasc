@@ -2358,7 +2358,7 @@ rt_mul16:
     call    rt_umul16
     pop     af
     ret     nc
-    jr      __sign_strip_neghl
+    jp      __sign_strip_neghl
 """
 ),
     "rt_div16": (["rt_compute_sign", "rt_sign_strip", "rt_udiv16"],"",
@@ -2381,7 +2381,7 @@ rt_div16:
     call    rt_udiv16
     pop     af
     ret     nc
-    jr      __sign_strip_neghl
+    jp      __sign_strip_neghl
 """
 ),
     "rt_comp16": ([],"",

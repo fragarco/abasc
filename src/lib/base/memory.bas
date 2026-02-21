@@ -4,7 +4,7 @@
 ' MEMCOPY(destination, source, number of bytes)
 ' MEMSET(destination, number of bytes, value to write)
 
-SUB MEMCOPY(dest, src, size) ASM
+SUB memCopy(dest, src, size) ASM
     ' Copies size bytes from src into dest
     ASM "ld      c,(ix+0)"
     ASM "ld      b,(ix+1)"
@@ -16,7 +16,7 @@ SUB MEMCOPY(dest, src, size) ASM
     ASM "ret"
 END SUB
 
-SUB MEMSET(dest, size, value) ASM
+SUB memSet(dest, size, value) ASM
     ' Fills size bytes from dest with value (1 byte)
     ASM "ld      a,(ix+0)"
     ASM "ld      c,(ix+2)"
