@@ -215,6 +215,7 @@ ABASC: USER MANUAL
   - [CPCTelera Constants and routines](#cpctelera-constants-and-routines)
 - [Appendix V: CPCRSLIB](#appendix-v-cpcrslib)
   - [CPCRSlib Constants and routines](#cpcrslib-constants-and-routines)
+- [Changelog](#changelog)
 
 
 ---
@@ -3143,3 +3144,8 @@ SUB         rsSetMode(nmode)
 ```
 
 ---
+
+# Changelog
+
+- Version 1.0.0 - 23/02/2026
+  * First released version.

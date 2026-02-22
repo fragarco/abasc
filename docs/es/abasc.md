@@ -215,6 +215,7 @@ ABASC: MANUAL DEL USUARIO
   - [Constantes y funciones de CPCTelera:](#constantes-y-funciones-de-cpctelera)
 - [Apéndice V: CPCRSLIB](#apéndice-v-cpcrslib)
   - [Constantes y funciones de CPCRSlib:](#constantes-y-funciones-de-cpcrslib)
+- [Historial de cambios](#historial-de-cambios)
 
 ---
 
@@ -3083,3 +3084,8 @@ SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)
 ```
+
+# Historial de cambios
+
+- Versión 1.0.0 - 23/02/2026
+  * Primera versión liberada.
