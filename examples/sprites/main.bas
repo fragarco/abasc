@@ -5,31 +5,45 @@
 
 CHAIN MERGE "base/base.bas"
 
-enemy.x = 10
-enemy.y = 200
-enemy.times = 0
-enemy.movx  = 4
-enemy.movy  = -2
-
-hero.x = 140
+DIM enemy.x(5)
+DIM enemy.y(5)
+DIM enemy.active(5)
 const HEROY = 30
-
-bullet.active = 0
-bullet.x = 0
-bullet.y = 0
 
 MODE 1
 INK 0,0
 BORDER 0
+GOSUB INITGAME
 LABEL MAIN
+    GOSUB CHECKCOLLISIONS
+    GOSUB CHECKEND
     GOSUB MOVHERO
     GOSUB MOVBULLET
     GOSUB MOVENEMIES
-    
     GOSUB DRAWBULLET
     GOSUB DRAWENEMIES
     GOSUB DRAWHERO
 GOTO MAIN
+
+LABEL INITGAME
+    FOR i=0 TO 5
+        enemy.x(i) = 10 + (i*30)
+        enemy.y(i) = 200
+        enemy.active(i) = 1
+    NEXT
+
+    enemy.times = 0
+    enemy.movx  = 4
+    enemy.movy  = -2
+
+    hero.x = 140
+
+    bullet.active = 0
+    bullet.x = 0
+    bullet.y = 0
+    bulletsfired = 0
+    CLS
+RETURN
 
 LABEL MOVHERO
     IF INKEY(1) = 0 THEN hero.x = hero.x + 4
@@ -38,6 +52,7 @@ LABEL MOVHERO
         bullet.active = 1
         bullet.x = hero.x+ 14
         bullet.y = HEROY + 8
+        bulletsfired = bulletsfired + 1
         GOSUB PLAYSHOOT
     END IF
     IF hero.x < 1  THEN hero.x = 1
@@ -47,14 +62,16 @@ RETURN
 LABEL MOVENEMIES
     IF enemy.times = 5 THEN
         enemy.times = 0
-        enemy.y = enemy.y + enemy.movy
-        enemy.x = enemy.x + enemy.movx
+        FOR i=0 to 5
+            enemy.y(i) = enemy.y(i) + enemy.movy
+            enemy.x(i) = enemy.x(i) + enemy.movx
+        NEXT
     END IF
     enemy.times = enemy.times + 1
-    IF enemy.y < 100 THEN enemy.movy = 2
-    IF enemy.y > 196 THEN enemy.movy = -2
-    IF enemy.x > 100 THEN enemy.movx = -4
-    IF enemy.x < 10  THEN enemy.movx = 4
+    IF enemy.y(0) < 100 THEN enemy.movy = 2
+    IF enemy.y(0) > 196 THEN enemy.movy = -2
+    IF enemy.x(0) > 100 THEN enemy.movx = -4
+    IF enemy.x(0) < 10  THEN enemy.movx = 4
 RETURN
 
 LABEL MOVBULLET
@@ -63,18 +80,34 @@ LABEL MOVBULLET
         IF bullet.y > 200 THEN
             bullet.active = 0
             RESTORE CLRBULLET: call scrDrawSprite(bullet.x, bullet.y-2)
-            GOSUB PLAYEXPLOSION
         END IF
     END IF
 RETURN
 
+LABEL CHECKCOLLISIONS
+    ' Lets fine-tuning a little bit more the bounding box for the bullet
+    bx = bullet.x + 2
+    IF bullet.active THEN
+        FOR i=0 to 5
+            IF enemy.active(i) THEN
+                IF scrCheckRectRect(bx, bullet.y, 2, 6, enemy.x(i), enemy.y(i), 32, 15) THEN
+                    RESTORE CLRBULLET: call scrDrawSprite(bullet.x, bullet.y-2)
+                    GOSUB PLAYEXPLOSION
+                    bullet.active = 0
+                    enemy.active(i) = 0
+                    RESTORE EXPLOSION: call scrDrawSprite(enemy.x(i), enemy.y(i))
+                    EXIT FOR
+                END IF
+            END IF
+        NEXT
+    END IF
+RETURN
 
 LABEL DRAWENEMIES
-    RESTORE ENEMY: xoffset = enemy.x
+    RESTORE ENEMY
     FOR i=0 TO 5
         ' The sprite has a blank frame so it erases itself
-        call scrDrawSprite(xoffset, enemy.y)
-        xoffset = xoffset + 30
+        IF enemy.active(i) THEN call scrDrawSprite(enemy.x(i), enemy.y(i))
     NEXT
 RETURN
 
@@ -96,6 +129,18 @@ RETURN
 LABEL PLAYSHOOT
     ENT -5,7,10,1,7,-10,1
     SOUND 1,25,20,12,0,5
+RETURN
+
+LABEL CHECKEND
+    eactives = 0
+    FOR i=0 to 5: eactives = eactives + enemy.active(i): NEXT
+    IF eactives = 0 THEN
+        LOCATE 5,10: PRINT "WELL DONE! YOU FIRED";bulletsfired;"BULLETS"
+        LOCATE 7,11: PRINT "PRESS ANY KEY TO PLAY AGAIN"
+        CLEAR INPUT
+        WHILE INKEY$="": WEND
+        GOSUB INITGAME
+    END IF
 RETURN
 
 ' scrDrawSprite expects the sprite to be define using
@@ -160,4 +205,23 @@ DATA &0000
 DATA &0000
 DATA &0000
 DATA &0000
+
+LABEL EXPLOSION
+DATA &0F08
+DATA &0000, &0060, &0000, &C000
+DATA &0000, &0060, &0000, &C000
+DATA &0000, &0000, &0801, &0000
+DATA &0000, &0000, &0801, &0000
+DATA &0000, &CC00, &0000, &0000
+DATA &0000, &CC00, &0000, &000C
+DATA &0000, &0000, &0000, &000C
+DATA &0060, &0000, &0000, &0000
+DATA &0060, &0000, &0000, &0000
+DATA &0000, &0003, &0060, &0000
+DATA &0000, &0003, &0060, &0000
+DATA &0801, &0000, &0000, &8811
+DATA &0801, &0000, &0300, &8811
+DATA &0000, &0000, &0300, &0000
+DATA &0000, &0100, &0008, &0000
+
 
