@@ -2444,6 +2444,11 @@ SUB scrSetVideoLocation(base, offset)
 SUB scrScrollUp()
 SUB scrScrollDown()
 
+' Routines to check for collision between point and a rectangle or
+' rectangle agains rectangle
+FUNCTION scrCheckPointRect(pointx, pointy, recx, recy, recwidth, recheight)
+FUNCTION scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2, rech2)
+
 * `base/text.bas`
 
 ' Returns the ASCII code of the screen character at position x,y
