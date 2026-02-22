@@ -241,3 +241,14 @@ SUB scrScrollDown ASM
     ASM "jp      &BC4D   ; SCR_HW_SCROLL"
 END SUB
 
+FUNCTION scrCheckPointRect(px, py, rx, ry, rw, rh) ASM
+    ASM "jp      checkPointRect"
+    ASM "read 'asm/base/pointcoll.asm'"
+END FUNCTION
+
+
+FUNCTION scrCheckRectRect(rx1, ry1, rw1, rh1, rx2, ry2, rw2, rh2) ASM
+    ASM "jp      checkRectRect"
+    ASM "read 'asm/base/rectcoll.asm'"
+END FUNCTION
+
