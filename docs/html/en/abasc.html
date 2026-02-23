@@ -3789,9 +3789,34 @@ SUB         rsSetMode(nmode)</code></pre>
 <hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
-<li>Version 1.0.0 - 23/02/2026
+<li>Version v1.0.1
 <ul>
-<li>First released version.</li>
+<li>Improvements in the handling of CONST variables</li>
+<li>Doublecheck of all examples on MacOS</li>
+</ul></li>
+<li>Version v1.0.0
+<ul>
+<li>Supports Locomotive BASIC 1.0 and 1.1 syntax</li>
+<li>Supports real numbers</li>
+<li>Supports Locomotive BASIC 2 and BASIC 2 plus syntax
+<ul>
+<li>LABEL, SUB, FUNCTION, SELECT CASE, etc.</li>
+</ul></li>
+<li>Allows embedding assembly code using the ASM command</li>
+<li>Includes adapted versions of the CPCTELERA and CPCRSLIB
+libraries</li>
+<li>Includes multiple examples to test the compiler</li>
+<li>Includes several additional tools to create DSK, CDT files, or
+convert images</li>
+<li>Includes a syntax highlighting plug-in for Visual Code
+(abasc-vscode.vsix)</li>
+<li>Limitations:
+<ul>
+<li>Arrays always start at 0</li>
+<li>Only integer numbers can be used as indices in array
+declarations</li>
+<li>USING command patterns are not supported</li>
+</ul></li>
 </ul></li>
 </ul>
 </body>

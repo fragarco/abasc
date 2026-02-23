@@ -3796,11 +3796,36 @@ SUB         rsRLI(vmem, w, h)
 SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)</code></pre>
+<hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li>Versión 1.0.0 - 23/02/2026
+<li>Versión v1.0.1
 <ul>
-<li>Primera versión liberada.</li>
+<li>Mejoras en el manejo de variables CONST</li>
+<li>Revisión de los ejemplos en MacOS</li>
+</ul></li>
+<li>Versión v1.0.0
+<ul>
+<li>Soporta la sintaxis de Locomotive BASIC 1.0 y 1.1</li>
+<li>Soporta números reales</li>
+<li>Soporta la sintaxis de Locomotive BASIC 2 y BASIC 2 plus
+<ul>
+<li>LABEL, SUB, FUNCTION, SELECT CASE, etc.</li>
+</ul></li>
+<li>Permite incrustar código en ensamblador mediante el comando ASM</li>
+<li>Incluye versiones adaptadas de las librerías CPCTELERA y
+CPCRSLIB</li>
+<li>Incluye múltiples ejemplos para probar el compilador</li>
+<li>Incluye varias herramientas adicionales para crear ficheros DSK, CDT
+o convertir imágenes.</li>
+<li>Incluye un plug-in para Visual Code (abasc-vscode.vsix)</li>
+<li>Limitaciones:
+<ul>
+<li>Los arrays siempre empizan en 0</li>
+<li>Solo se pueden usar números enteros como índices en la declaración
+de un array.</li>
+<li>No se soportan los patrones del comando USING</li>
+</ul></li>
 </ul></li>
 </ul>
 </body>
