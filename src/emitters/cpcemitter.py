@@ -807,6 +807,8 @@ class CPCEmitter:
         which may enable compiler optimizations.
         """
         self._emit_code("; CONST IDENT = INT")
+        if not isinstance(node.args[1], AST.Integer):
+            self._raise_error(2, node, "const requires a literal integer")
         self._emit_code(";")
 
     def _emit_CONT(self, node:AST.Command) -> None:

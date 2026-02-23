@@ -74,6 +74,15 @@ class BasOptimizer:
             return nnode
         return node
     
+    def _op_CONST(self, node: AST.Command) -> AST.Statement:
+        if not isinstance(node.args[1], AST.Integer):
+            node.args[1] = self._op_statement(node.args[1])
+            if isinstance(node.args[1], AST.Integer):
+                entry = self.syms.find(node.args[0].name, SYM.SymType.Variable, self.context)
+                if entry is not None:
+                    entry.const = node.args[1]
+        return node
+
     def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
         self.context = ""
         return node
@@ -141,9 +150,9 @@ class BasOptimizer:
         """
         entry = self.syms.find(node.name, SYM.SymType.Variable, self.context)
         if entry is not None and entry.writes == 1:
-            if entry.const is not None:
+            if isinstance(entry.const, AST.Integer):
                 self.modified = True
-                nnode = AST.Integer(value=entry.const)
+                nnode = AST.Integer(value=entry.const.value)
                 nnode.line = node.line
                 nnode.col = node.col
                 return nnode
@@ -155,7 +164,7 @@ class BasOptimizer:
             if isinstance(node.source, AST.Integer):
                 entry = self.syms.find(node.target.name, SYM.SymType.Variable, self.context)
                 if entry is not None and entry.writes == 1 and entry.const is None:
-                    entry.const = node.source.value
+                    entry.const = node.source
                     self.modified = True
                     nnode = AST.Nop()
                     nnode.line = node.line

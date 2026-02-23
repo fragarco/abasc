@@ -442,32 +442,25 @@ class LocBasParser:
         self._advance()
         tk = self._expect(TokenType.IDENT)
         vartype = AST.exptype_fromname(tk.lexeme)
-        self._expect(TokenType.COMP, lex="=")
-        if not self._current_is(TokenType.INT):
-            self._raise_error(2, tk, "integer number expected")
-        val = self._expect(TokenType.INT)
         entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
         if entry is not None:
             self._raise_error(2, tk, "constant redefinition")
-        if vartype != AST.ExpType.Integer:
-            self._raise_error(13, tk)
-        # Add the variable as a regular one
+        self._expect(TokenType.COMP, lex="=")
+        value = self._parse_int_expression(allowcast=False)
         self.symtable.add(
             ident=tk.lexeme,
             info=SymEntry(
                 symtype=SymType.Variable,
                 exptype=AST.ExpType.Integer,
                 locals=SymTable(),
-                datasz= AST.exptype_memsize(AST.ExpType.Integer)
+                datasz= AST.exptype_memsize(AST.ExpType.Integer),
+                const=value
             ),
             context=self.context
         )
-        # Set its constant properties
-        entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
-        entry.const = cast(int, val.value)  # type: ignore [union-attr]
         args: list[AST.Statement] = []
         args.append(AST.Variable(tk.lexeme, AST.ExpType.Integer))
-        args.append(AST.Integer(value=entry.const)) # type: ignore [union-attr]
+        args.append(value)
         return AST.Command(name="CONST", args=args)
 
     @astnode
