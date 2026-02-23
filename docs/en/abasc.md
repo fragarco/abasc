@@ -215,6 +215,7 @@ ABASC: USER MANUAL
   - [CPCTelera Constants and routines](#cpctelera-constants-and-routines)
 - [Appendix V: CPCRSLIB](#appendix-v-cpcrslib)
   - [CPCRSlib Constants and routines](#cpcrslib-constants-and-routines)
+- [Changelog](#changelog)
 
 
 ---
@@ -3143,3 +3144,24 @@ SUB         rsSetMode(nmode)
 ```
 
 ---
+
+# Changelog
+
+* Version v1.0.1
+  - Improvements in the handling of CONST variables
+  - Doublecheck of all examples on MacOS
+
+* Version v1.0.0
+  - Supports Locomotive BASIC 1.0 and 1.1 syntax
+  - Supports real numbers
+  - Supports Locomotive BASIC 2 and BASIC 2 plus syntax
+    * LABEL, SUB, FUNCTION, SELECT CASE, etc.
+  - Allows embedding assembly code using the ASM command
+  - Includes adapted versions of the CPCTELERA and CPCRSLIB libraries
+  - Includes multiple examples to test the compiler
+  - Includes several additional tools to create DSK, CDT files, or convert images
+  - Includes a syntax highlighting plug-in for Visual Code (abasc-vscode.vsix)
+  - Limitations:
+    * Arrays always start at 0
+    * Only integer numbers can be used as indices in array declarations
+    * USING command patterns are not supported
