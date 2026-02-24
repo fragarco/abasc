@@ -215,8 +215,9 @@ ABASC: USER MANUAL
   - [CPCTelera Constants and routines](#cpctelera-constants-and-routines)
 - [Appendix V: CPCRSLIB](#appendix-v-cpcrslib)
   - [CPCRSlib Constants and routines](#cpcrslib-constants-and-routines)
+- [Appendix VI: Installing the Visual Code Extension](#appendix-vi-installing-the-visual-code-extension)
+  - [Installation](#installation)
 - [Changelog](#changelog)
-
 
 ---
 
@@ -3145,13 +3146,28 @@ SUB         rsSetMode(nmode)
 
 ---
 
+# Appendix VI: Installing the Visual Code Extension
+
+`ABASC` includes a separate extension for Visual Code: `abascbasic-1.0.0.vsix`. The extension allows Visual Code users to enjoy syntax highlighting, including all reserved words from Locomotive BASIC versions 1.0 and 1.1 but also from Locomotive BASIC version 2 and version 2 plus.
+
+## Installation
+
+1. Launch VS Code Command Palette (Ctrl+Shift+P)
+2. Type install extension from Location
+3. Select the `abascbasic` VSIX file.
+
+---
+
 # Changelog
 
-* Version v1.0.1
+* Version 1.0.2
+  - CONST variables were not working properly in DIM and FIXED statements.
+
+* Version 1.0.1
   - Improvements in the handling of CONST variables
   - Doublecheck of all examples on MacOS
 
-* Version v1.0.0
+* Version 1.0.0
   - Supports Locomotive BASIC 1.0 and 1.1 syntax
   - Supports real numbers
   - Supports Locomotive BASIC 2 and BASIC 2 plus syntax

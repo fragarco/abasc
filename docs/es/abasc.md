@@ -215,6 +215,8 @@ ABASC: MANUAL DEL USUARIO
   - [Constantes y funciones de CPCTelera:](#constantes-y-funciones-de-cpctelera)
 - [Apéndice V: CPCRSLIB](#apéndice-v-cpcrslib)
   - [Constantes y funciones de CPCRSlib:](#constantes-y-funciones-de-cpcrslib)
+- [Apéndice VI: La extensión para Visual Code](#apéndice-vi-la-extensión-para-visual-code)
+  - [Instalación](#instalación)
 - [Historial de cambios](#historial-de-cambios)
 
 ---
@@ -3087,13 +3089,28 @@ SUB         rsSetMode(nmode)
 
 ---
 
+# Apéndice VI: La extensión para Visual Code
+
+`ABASC` incluye una extensión a parte para Visual Code. Dicha extensión permite resaltar la sintaxis de Locomotive Basic en ese editor. En concreto, la extensión soporta las palabras clave de Locomotive BASIC 1.0 y 1.1, además de muchas de las incluidas en Locomotive BASIC 2 y Locomotive BASIC 2 Plus. La extensión se instala a partir del fichero `abascbasic-1.0.0.vsix`, tal y como se describe a continuación.
+
+## Instalación
+
+1. Arranca VS Code y abre la Paleta de Comandos (Ctrl+Shift+P)
+2. Escribe `install extension from Location`
+3. Selecciona el fichero `abascbasic-1.0.0.vsix`.
+
+---
+
 # Historial de cambios
 
-* Versión v1.0.1
+* Versión 1.0.2
+  - Arreglado un problema con las variables CONST en sentencias DIM o FIXED
+
+* Versión 1.0.1
   - Mejoras en el manejo de variables CONST
   - Revisión de los ejemplos en MacOS
   
-* Versión v1.0.0
+* Versión 1.0.0
   - Soporta la sintaxis de Locomotive BASIC 1.0 y 1.1
   - Soporta números reales
   - Soporta la sintaxis de Locomotive BASIC 2 y BASIC 2 plus

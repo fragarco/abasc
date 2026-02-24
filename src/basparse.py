@@ -784,8 +784,9 @@ class LocBasParser:
             self._advance()
             entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
             if entry is not None and entry.const is not None:
-                return Token(TokenType.INT, "", tk.line, tk.col, entry.const)
-        self._raise_error(2, tk, "literal integer or constant was expected")
+                if isinstance(entry.const, AST.Integer):
+                    return Token(TokenType.INT, "", tk.line, tk.col, entry.const.value)
+        self._raise_error(2, tk, "constant or literal integer was expected")
 
     @astnode
     def _parse_array_declaration(self, start = TokenType.LPAREN, end = TokenType.RPAREN) -> AST.Array:

@@ -557,6 +557,11 @@ funciones de CPCTelera:</a></li>
 <li><a href="#constantes-y-funciones-de-cpcrslib">Constantes y funciones
 de CPCRSlib:</a></li>
 </ul></li>
+<li><a href="#apéndice-vi-la-extensión-para-visual-code">Apéndice VI: La
+extensión para Visual Code</a>
+<ul>
+<li><a href="#instalación">Instalación</a></li>
+</ul></li>
 <li><a href="#historial-de-cambios">Historial de cambios</a></li>
 </ul>
 <hr />
@@ -3797,14 +3802,35 @@ SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)</code></pre>
 <hr />
+<h1 id="apéndice-vi-la-extensión-para-visual-code">Apéndice VI: La
+extensión para Visual Code</h1>
+<p><code>ABASC</code> incluye una extensión a parte para Visual Code.
+Dicha extensión permite resaltar la sintaxis de Locomotive Basic en ese
+editor. En concreto, la extensión soporta las palabras clave de
+Locomotive BASIC 1.0 y 1.1, además de muchas de las incluidas en
+Locomotive BASIC 2 y Locomotive BASIC 2 Plus. La extensión se instala a
+partir del fichero <code>abascbasic-1.0.0.vsix</code>, tal y como se
+describe a continuación.</p>
+<h2 id="instalación">Instalación</h2>
+<ol type="1">
+<li>Arranca VS Code y abre la Paleta de Comandos (Ctrl+Shift+P)</li>
+<li>Escribe <code>install extension from Location</code></li>
+<li>Selecciona el fichero <code>abascbasic-1.0.0.vsix</code>.</li>
+</ol>
+<hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li>Versión v1.0.1
+<li>Versión 1.0.2
+<ul>
+<li>Arreglado un problema con las variables CONST en sentencias DIM o
+FIXED</li>
+</ul></li>
+<li>Versión 1.0.1
 <ul>
 <li>Mejoras en el manejo de variables CONST</li>
 <li>Revisión de los ejemplos en MacOS</li>
 </ul></li>
-<li>Versión v1.0.0
+<li>Versión 1.0.0
 <ul>
 <li>Soporta la sintaxis de Locomotive BASIC 1.0 y 1.1</li>
 <li>Soporta números reales</li>

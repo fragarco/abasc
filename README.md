@@ -12,13 +12,14 @@ Por último, además del compilador propiamente dicho, se incluyen otras utilida
 
  * [Manual del compilador ABASC](docs/es/abasc.md)
  * [Manual del ensamblador ABASM](docs/es/abasm.md)
+ * [Manual de la utilidad BASPRJ](docs/es/basprj.md) 
  * [Manual de la utilidad DSK](docs/es/dsk.md)
  * [Manual de la utilidad CDT](docs/es/cdt.md)
  * [Manual del conversor de imágenes](docs/es/img.md)
   
 ### Una prueba rápida
 
-1. Descarga el ZIP con la *release* de `BASC`.
+1. Descarga el ZIP con la *release* de `ABASC`.
 2. Si no tienes Python, obten el instalador de https://www.python.org/
 3. Una vez instalado Python, descomprime `ABASC`donde cosideres oportuno.
 4. Crear una carpeta *projects* junto a la carpeta *examples*
@@ -45,13 +46,14 @@ In addition to the compiler itself, the ABASC package includes several auxiliary
 
 * [ABASC Compiler Manual](docs/en/abasc.md)
 * [ABASM Assembler Manual](docs/en/abasm.md)
+* [BASPRJ Utility Manual](docs/en/basprj.md)
 * [DSK Utility Manual](docs/en/dsk.md)
 * [CDT Utility Manual](docs/en/cdt.md)
 * [Image Converter Manual](docs/en/img.md)
 
 ### QuickStart
 
-1.  Download the ZIP with the `BASC` release.
+1.  Download the ZIP with the `ABASC` release.
 2.  If you don't have Python, get the installer from https://www.python.org/.
 3.  Once Python is installed, unzip `ABASC` to an appropriate location.
 4.  Create a *projects* folder next to the *examples* folder.

@@ -558,6 +558,11 @@ routines</a></li>
 <li><a href="#cpcrslib-constants-and-routines">CPCRSlib Constants and
 routines</a></li>
 </ul></li>
+<li><a href="#appendix-vi-installing-the-visual-code-extension">Appendix
+VI: Installing the Visual Code Extension</a>
+<ul>
+<li><a href="#installation">Installation</a></li>
+</ul></li>
 <li><a href="#changelog">Changelog</a></li>
 </ul>
 <hr />
@@ -3787,14 +3792,33 @@ SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)</code></pre>
 <hr />
+<h1 id="appendix-vi-installing-the-visual-code-extension">Appendix VI:
+Installing the Visual Code Extension</h1>
+<p><code>ABASC</code> includes a separate extension for Visual Code:
+<code>abascbasic-1.0.0.vsix</code>. The extension allows Visual Code
+users to enjoy syntax highlighting, including all reserved words from
+Locomotive BASIC versions 1.0 and 1.1 but also from Locomotive BASIC
+version 2 and version 2 plus.</p>
+<h2 id="installation">Installation</h2>
+<ol type="1">
+<li>Launch VS Code Command Palette (Ctrl+Shift+P)</li>
+<li>Type install extension from Location</li>
+<li>Select the <code>abascbasic</code> VSIX file.</li>
+</ol>
+<hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
-<li>Version v1.0.1
+<li>Version 1.0.2
+<ul>
+<li>CONST variables were not working properly in DIM and FIXED
+statements.</li>
+</ul></li>
+<li>Version 1.0.1
 <ul>
 <li>Improvements in the handling of CONST variables</li>
 <li>Doublecheck of all examples on MacOS</li>
 </ul></li>
-<li>Version v1.0.0
+<li>Version 1.0.0
 <ul>
 <li>Supports Locomotive BASIC 1.0 and 1.1 syntax</li>
 <li>Supports real numbers</li>
