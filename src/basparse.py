@@ -441,7 +441,6 @@ class LocBasParser:
         """ <CONST> := IDENT = INT """
         self._advance()
         tk = self._expect(TokenType.IDENT)
-        vartype = AST.exptype_fromname(tk.lexeme)
         entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
         if entry is not None:
             self._raise_error(2, tk, "constant redefinition")
