@@ -122,7 +122,7 @@ SUB cpctDrawSpriteMaskedColorizeM1(sprite, vmem, w, h, rplcpat) ASM
     ASM "read 'asm/cpctelera/sprites/colorReplace/M1/cpct_drawSpriteMaskedColorizeM1.asm'"
 END SUB
 
-SUB cpctDrawSpriteColorizeM0(rplcpat, size, sprite) ASM
+SUB cpctSpriteColorizeM0(rplcpat, size, sprite) ASM
     ASM "ld      l,(ix+0)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
     ASM "ld      h,(ix+1)"
     ASM "ld      c,(ix+2)  ; size - Size of the Array/Sprite in bytes (if it is a sprite, width*height) "
@@ -133,7 +133,7 @@ SUB cpctDrawSpriteColorizeM0(rplcpat, size, sprite) ASM
     ASM "read 'asm/cpctelera/sprites/colorReplace/M0/cpct_spriteColourizeM0.asm'"
 END SUB
 
-SUB cpctDrawSpriteColorizeM1(rplcpat, size, sprite) ASM
+SUB cpctSpriteColorizeM1(rplcpat, size, sprite) ASM
     ASM "ld      l,(ix+0)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
     ASM "ld      h,(ix+1)"
     ASM "ld      c,(ix+2)  ; size - Size of the Array/Sprite in bytes (if it is a sprite, width*height) "
@@ -144,7 +144,7 @@ SUB cpctDrawSpriteColorizeM1(rplcpat, size, sprite) ASM
     ASM "read 'asm/cpctelera/sprites/colorReplace/M1/cpct_spriteColourizeM1.asm'"
 END SUB
 
-SUB cpctDrawSpriteMaskedColorizeM0(rplcpat, size, sprite) ASM
+SUB cpctSpriteMaskedColorizeM0(rplcpat, size, sprite) ASM
     ASM "ld      l,(ix+0)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
     ASM "ld      h,(ix+1)"
     ASM "ld      c,(ix+2)  ; size - Size of the Array/Sprite in bytes (if it is a sprite, width*height) "
@@ -155,7 +155,7 @@ SUB cpctDrawSpriteMaskedColorizeM0(rplcpat, size, sprite) ASM
     ASM "read 'asm/cpctelera/sprites/colorReplace/M0/cpct_spriteMAskedColourizeM0.asm'"
 END SUB
 
-SUB cpctDrawSpriteMaskedColorizeM1(rplcpat, size, sprite) ASM
+SUB cpctSpriteMaskedColorizeM1(rplcpat, size, sprite) ASM
     ASM "ld      l,(ix+0)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
     ASM "ld      h,(ix+1)"
     ASM "ld      c,(ix+2)  ; size - Size of the Array/Sprite in bytes (if it is a sprite, width*height) "
@@ -430,17 +430,6 @@ SUB cpctHFlipSpriteMaskedM2(w, h, sprite) ASM
     ASM "ld      c,(ix+4)  ; w - Width of the sprite in *bytes* (*NOT* in pixels!). Must be >= 1."
     ASM "jp      cpct_hflipSpriteMaskedM2"
     ASM "read 'asm/cpctelera/sprites/flipping/cpct_hflipSpriteMaskedM2.asm'"
-END SUB
-
-SUB cpctDrawSpriteVFlip(sprite, vmem, w, h) ASM
-    ASM "ld      b,(ix+0)  ; h - Sprite Height in bytes (>0)"
-    ASM "ld      a,(ix+2)  ; w - Sprite Width in *bytes* (>0) (Beware, *not* in pixels!)"
-    ASM "ld      l,(ix+4)  ; vmem - Destination video memory pointer"
-    ASM "ld      h,(ix+5)"
-    ASM "ld      e,(ix+6)  ; sprite - Source Sprite Pointer (array with pixel and mask data)"
-    ASM "ld      d,(ix+7)"
-    ASM "jp      cpct_drawSpriteVFlip"
-    ASM "read 'asm/cpctelera/sprites/flipping/cpct_drawSpriteVFlip.asm'"
 END SUB
 
 
