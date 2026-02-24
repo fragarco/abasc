@@ -3355,10 +3355,11 @@ SUB         cpctDrawSpriteMaskedAlignedColorizeM0(sprite, vmem, w, h, masktable,
 SUB         cpctDrawSpriteMaskedAlignedColorizeM1(sprite, vmem, w, h, masktable, rplcpat)
 SUB         cpctDrawSpriteMaskedColorizeM0(sprite, vmem, w, h, rplcpat)
 SUB         cpctDrawSpriteMaskedColorizeM1(sprite, vmem, w, h, rplcpat)
-SUB         cpctDrawSpriteColorizeM0(rplcpat, size, sprite)
-SUB         cpctDrawSpriteColorizeM1(rplcpat, size, sprite)
-SUB         cpctDrawSpriteMaskedColorizeM0(rplcpat, size, sprite)
-SUB         cpctDrawSpriteMaskedColorizeM1(rplcpat, size, sprite)
+
+SUB         cpctSpriteColorizeM0(rplcpat, size, sprite)
+SUB         cpctSpriteColorizeM1(rplcpat, size, sprite)
+SUB         cpctSpriteMaskedColorizeM0(rplcpat, size, sprite)
+SUB         cpctSpriteMaskedColorizeM1(rplcpat, size, sprite)
 
 SUB         cpctDrawTileAligned2x4f(tile, vmem)
 SUB         cpctDrawTileAligned2x8(tile, vmem)
@@ -3388,7 +3389,6 @@ SUB         cpctHFlipSpriteM2r(sprite, w, h)
 SUB         cpctHFlipSpriteMaskedM0(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM1(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM2(w, h, sprite)
-SUB         cpctDrawSpriteVFlip(sprite, vmem, w, h)
 
 SUB         cpctGetScreenToSprite(vmem, sprite, w, h)
 
@@ -3812,6 +3812,7 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>CONST variables were not working properly in DIM and FIXED
 statements.</li>
+<li>Fixes a typo in cpctelera/sprites.bas</li>
 </ul></li>
 <li>Version 1.0.1
 <ul>
