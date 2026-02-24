@@ -3162,6 +3162,7 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.2
   - CONST variables were not working properly in DIM and FIXED statements.
+  - Fixes a typo in cpctelera/sprites.bas
 
 * Version 1.0.1
   - Improvements in the handling of CONST variables

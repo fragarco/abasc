@@ -3104,7 +3104,8 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.2
-  - Arreglado un problema con las variables CONST en sentencias DIM o FIXED
+  - Arregla un problema con las variables CONST en sentencias DIM o FIXED
+  - Arregla un error tipográfico en cpctelera/sprites.bas
 
 * Versión 1.0.1
   - Mejoras en el manejo de variables CONST
