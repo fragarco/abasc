@@ -1,0 +1,189 @@
+' Code adapted to ABASM syntax by Javier "Dwayne Hicks" Garcia
+' Based on CPCRSLIB:
+' Copyright (c) 2008-2015 Raúl Simarro <artaburu@hotmail.com>
+'
+' Permission is hereby granted, free of charge, to any person obtaining a copy of
+' this software and associated documentation files (the "Software"), to deal in the
+' Software without restriction, including without limitation the rights to use, copy,
+' modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+' and to permit persons to whom the Software is furnished to do so, subject to the
+' following conditions:
+'
+' The above copyright notice and this permission notice shall be included in all copies
+' or substantial portions of the Software.
+' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+' INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+' PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+' FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+' OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+' DEALINGS IN THE SOFTWARE.
+
+chain merge "cpcrslib/cpcrslib.bas"
+chain merge "base/bytepos.bas"
+
+' addresses to our sprites data included through sprites.asm
+SPRITE1 = @LABEL("_sp_1")
+SPRITE2 = @LABEL("_sp_2")
+
+' cpcrslib defines a basic structure to manage sprites
+' that structure is defined as an Abasc RECORD
+DIM sprites$(2) FIXED RSPRITE.SIZE  
+
+sub Init
+    shared RSTXT0.PEN0, RSTXT0.PEN4, RSTXT0.PEN5, RSTXT0.PEN6
+    MODE 0
+    ' set sprites palette
+    INK 0,0: INK 1,13: INK 2,1: INK 3,6
+    INK 4,26: INK 5,24: INK 6,15: INK 7,8
+    INK 8,10: INK 9,22: INK 10,14: INK 11,3
+    INK 12,18: INK 13,4: INK 14,11: INK 15,25
+    BORDER 0
+    ' Leave some time so the Firmware can pass the above values
+    ' to the CRTC before we disable the firmware interrupt
+    call rsPause(10)
+    call rsDisableFirmware()
+
+    call rsSetInkGphStrM0(0, RSTXT0.PEN0)
+    call rsSetInkGphStrM0(1, RSTXT0.PEN4)
+    call rsSetInkGphStrM0(2, RSTXT0.PEN5)
+    call rsSetInkGphStrM0(3, RSTXT0.PEN6)
+end sub
+
+sub ShowCollision
+    call rsSetColour(16, 1)
+    call rsPause(80)
+    call rsSetColour(16,9)
+end sub
+
+sub DrawTilemap
+    ' Set the tiles of the map. In this example, the tile map is 32x16 tile
+    ' Tile Map configuration file: TileMapConf.asm
+    y = 0
+    for x=0 to 31: call rsSetTile(x, y, 1): next
+    for y=1 to 14
+        for x=0 to 31: call rsSetTile(x, y, 0): next
+    next
+    y = 15
+    for x=0 to 31: call rsSetTile(x, y, 2): next
+end sub
+
+sub PrintCredits
+    call rsPrintGphStrXYM0("SMALL;SPRITE;DEMO", 9*2+3, 20*8)
+    call rsPrintGphStrXYM0("SDCC;;;CPCRSLIB", 10*2+3, 21*8)
+    call rsPrintGphStrXYM0("BY;ARTABURU;2015", 10*2+2, 22*8)
+    call rsPrintGphStrXYM0("ESPSOFT<AMSTRAD<ES", 10*2+3-3, 24*8)
+end sub
+
+sub InitSpriteStruct(sprite$, spaddr, x, y, movx, movy)
+    sprite$.rssp.sp0 = spaddr
+    sprite$.rssp.sp1 = spaddr
+    sprite$.rssp.opos = BytePosSet(x, y)
+    sprite$.rssp.cpos = BytePosSet(x, y)
+    sprite$.rssp.movdir = BytePosSet(movx, movy)
+    ' First time it's important to do this to set
+    ' the position of this sprite in the doublebuffer/superbuffer
+    sprite$.rssp.vmem0 = rsGetDoubleBufferAddress(movx, movy)
+end sub
+
+label MAIN
+    call Init()
+    ' All the sprite values are initilized
+    call InitSpriteStruct(sprites$(0), SPRITE1, 50, 70, 0, 3)
+    call InitSpriteStruct(sprites$(1), SPRITE2, 50, 106, 0, 1)
+    call InitSpriteStruct(sprites$(2), SPRITE2, 20, 100, 0, 2)
+
+    call DrawTilemap()      ' Drawing the tile map
+    call rsShowTileMap()    ' Show entire tile map in the screen
+    call PrintCredits()
+    call rsShowTileMap2()
+    while 1 
+        ' We use by default the cursor keys to move the character sprite
+        ' 0: cursor right
+        ' 1: cursor left
+        ' 2: cursor up
+        ' 3: cursor down
+        ' For example., if key 0 is pressed, and the sprite is inside tilemap, then
+        ' the sprite is moved one byte to the right
+        call rsScanKeyboard()
+        if rsTestKeyF(0) then
+            posx = BytePosGetX(sprites$(0).rssp.cpos)
+            posy = BytePosGetY(sprites$(0).rssp.cpos)
+            if posx < 60 then sprites$(0).rssp.cpos = BytePosSet(posx+1, posy)
+        end if
+        if rsTestKeyF(1) then
+            posx = BytePosGetX(sprites$(0).rssp.cpos)
+            posy = BytePosGetY(sprites$(0).rssp.cpos)
+            if posx > 0 then sprites$(0).rssp.cpos = BytePosSet(posx-1, posy)
+        end if
+        if rsTestKeyF(2) then
+            posx = BytePosGetX(sprites$(0).rssp.cpos)
+            posy = BytePosGetY(sprites$(0).rssp.cpos)
+            if posy > 0 then sprites$(0).rssp.cpos = BytePosSet(posx, posy-2)
+        end if
+        if rsTestKeyF(3) then
+            posx = BytePosGetX(sprites$(0).rssp.cpos)
+            posy = BytePosGetY(sprites$(0).rssp.cpos)
+            if posy < 112 then sprites$(0).rssp.cpos = BytePosSet(posx, posy+2)
+        end if
+
+        ' The enemy sprites are automatically moved
+        posx = BytePosGetX(sprites$(1).rssp.cpos)
+        posy = BytePosGetY(sprites$(1).rssp.cpos)
+        diry = BytePosGetY(sprites$(1).rssp.movdir)
+        if diry = 0 then ' 0 = left, 1 = right
+            if posx > 0 then
+                sprites$(1).rssp.cpos = BytePosSet(posx-1, posy)
+            else
+                sprites$(1).rssp.movdir = BytePosSet(0, 1)
+            end if
+        end if
+        if diry = 1 then ' 0 = left, 1 = right
+            if posx < 60 then
+                sprites$(1).rssp.cpos = BytePosSet(posx+1, posy)
+            else
+                sprites$(1).rssp.movdir = BytePosSet(0, 0)
+            end if
+        end if
+
+        posx = BytePosGetX(sprites$(2).rssp.cpos)
+        posy = BytePosGetY(sprites$(2).rssp.cpos)
+        diry = BytePosGetY(sprites$(2).rssp.movdir)
+        if diry = 2 then   ' 2 = up, 3 = down
+            if posy > 0 then 
+                sprites$(2).rssp.cpos = BytePosSet(posx, posy-2)
+            else
+                sprites$(2).rssp.movdir = BytePosSet(0, 3)
+            end if
+        end if
+        if diry = 3 then  ' 2 = up, 3 = down
+            if posy < 106 then
+                sprites$(2).rssp.cpos = BytePosSet(posx, posy+2)
+            else
+                sprites$(2).rssp.movdir = BytePosSet(0, 2)
+            end if
+        end if
+
+        call rsResetTouchedTiles()	' Clear touched tile table
+
+        ' Sprite phase 1
+        ' Search the tiles where is and was the sprite
+        call rsPutSpTileMap(sprites$(0))
+        call rsPutSpTileMap(sprites$(1))
+        call rsPutSpTileMap(sprites$(2))
+
+        call rsUpdScr()	' Update the screen to new situation (show the touched tiles)
+
+        ' Sprite phase 2
+        call rsPutMaskSpTileMap2b(sprites$(0))
+        call rsPutMaskSpTileMap2b(sprites$(1))
+        call rsPutMaskSpTileMap2b(sprites$(2))
+        call rsShowTileMap2() ' Show the touched tiles-> show the new sprite situatuion
+
+        ' Test if there is collision between sprite00 and sprite01
+        if rsCollSp(sprites$(0), sprites$(1)) then call ShowCollision()
+        if rsCollSp(sprites$(0), sprites$(2)) then call ShowCollision()
+    wend
+end
+
+asm "read 'assets/cpcrslib_sprites.asm'"
+asm "read 'assets/cpcrslib_tilemap.asm'"

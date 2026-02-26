@@ -30,7 +30,7 @@ Por último, además del compilador propiamente dicho, se incluyen otras utilida
 
 ### Licencia 
 
-El conjunto de utilidades ABASC, ABASM, IMG, DSK y CDT son software libre; puedes redistribuirlo y/o modificarlo bajo los términos de la General Public License de GNU en su versión 3, tal como fue publicada por la Free Software Foundation.
+El conjunto de utilidades ABASC, ABASM, BASPRJ, IMG, DSK y CDT son software libre; puedes redistribuirlo y/o modificarlo bajo los términos de la General Public License de GNU en su versión 3, tal como fue publicada por la Free Software Foundation.
 
 Este paquete se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA; ni siquiera la garantía implícita de COMERCIABILIDAD o IDONEIDAD PARA UN PROPÓSITO PARTICULAR. Consulta la General Public License de GNU para más detalles (en el archivo LICENSE).
 
@@ -64,6 +64,6 @@ In addition to the compiler itself, the ABASC package includes several auxiliary
 
 ### License
 
-The ABASC, ABASM, IMG, DSK, and CDT tools are free software; you may redistribute and/or modify them under the terms of the GNU General Public License version 3, as published by the Free Software Foundation.
+The ABASC, ABASM, BASPRJ, IMG, DSK, and CDT tools are free software; you may redistribute and/or modify them under the terms of the GNU General Public License version 3, as published by the Free Software Foundation.
 
 This package is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License (included in the LICENSE file) for more details.

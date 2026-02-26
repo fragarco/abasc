@@ -3160,6 +3160,10 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+* Version 1.0.3
+  - Intermediate files are now generated along the destination file instead of along the source file.
+  - New automated tests to check the code emitter.
+
 * Version 1.0.2
   - CONST variables were not working properly in DIM and FIXED statements.
   - Fixes a typo in cpctelera/sprites.bas

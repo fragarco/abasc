@@ -1,0 +1,1 @@
+This directory is the destination of binaries generated while testing the emitter module.

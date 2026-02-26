@@ -22,6 +22,7 @@ import sys, os
 import argparse
 import time
 import traceback
+from dataclasses import dataclass
 from baserror import WarningLevel as WL
 from baspp import LocBasPreprocessor, CodeLine
 from baslex import LocBasLexer, Token
@@ -34,8 +35,18 @@ from basopt import BasOptimizer
 import json
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__= "1.0.2"
+__version__= "1.0.3"
 
+
+@dataclass
+class AbascOptions:
+    infile: str
+    outfile: str
+    dataaddr: int = 0x4000
+    optlevel: int = 2
+    warninglevel: WL = WL.ALL
+    verbose: bool = False
+    debug: bool = False
 
 def aux_int(param: Any) -> int:
     """
@@ -44,7 +55,7 @@ def aux_int(param: Any) -> int:
     """
     return int(param, 0)
 
-def process_args() -> argparse.Namespace:
+def process_args() -> AbascOptions:
     parser = argparse.ArgumentParser(
         prog='basc.py',
         description='A Locomotive BASIC compiler for the Amstrad CPC'
@@ -58,7 +69,17 @@ def process_args() -> argparse.Namespace:
     parser.add_argument('--version', action='version', version=f' ABASC (Locomotive BASIC Cross Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
     args = parser.parse_args()
-    return args
+
+    outfile = args.out if args.out is not None else args.infile.rsplit('.')[0]
+    infile = args.infile
+    if ".bin" not in outfile.lower(): outfile = outfile + ".bin"
+    if ".bas" not in infile.lower():  infile = infile + ".bas"
+    opts = AbascOptions(infile, outfile)
+    opts.optlevel = args.O if args.O in [0,1,2] else 2
+    opts.warninglevel = args.W if args.W in [0,1,2,3] else WL.ALL
+    opts.debug = args.debug
+    opts.dataaddr = args.data
+    return opts
 
 def clear(sourcefile: str) -> None:
     basefile = sourcefile.upper() 
@@ -127,47 +148,51 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
-    asmfile = infile.upper().replace('BAS','ASM')
+    asmfile = outfile.upper().replace('BIN','ASM')
     with open(asmfile, "w", encoding="utf-8") as fd:
             fd.write(asmcode)
     # library path for read 'asmfile' directive
+    # we add the src/lib directory and also
+    # the path to the BAS source file because the output ASM
+    # file may be placed in a different directory.
     basepath = os.path.dirname(os.path.abspath(__file__))
     libpaths = [
         os.path.join(basepath, "lib"),
+        os.path.join(os.path.dirname(infile))
     ]
     ABASM.assemble(asmfile, outfile, libpaths=libpaths)
 
+def compile(opts: AbascOptions) -> int:
+    clear(opts.infile)
+    bascontent = readsourcefile(opts.infile)
+    codelines, code = preprocess(opts.infile, bascontent, opts.verbose)
+    tokens = lexpass(opts.infile, code, opts.verbose)
+    ast, symtable = parser(opts.infile, codelines, tokens, opts.verbose, opts.warninglevel)
+    optimizer = BasOptimizer()
+    if opts.optlevel > 1:
+        ast, symtable = optimizer.optimize_ast(ast, symtable)
+    asmcode, heapused = emit(codelines, ast, symtable, opts.verbose, opts.warninglevel, opts.dataaddr)
+    if opts.optlevel > 0:
+        asmcode = optimizer.optimize_peephole(asmcode)
+    assemble(opts.infile, opts.outfile, asmcode)
+    if opts.verbose:
+        ABASM.dump_assembledcode()
+    return heapused
+    
+
 def main() -> None:
     start_t = time.process_time()
-    args = process_args()
-    outfile = args.out if args.out is not None else args.infile.rsplit('.')[0]
-    infile = args.infile
-    if ".bin" not in outfile.lower(): outfile = outfile + ".bin"
-    if ".bas" not in infile.lower():  infile = infile + ".bas"
-    optlevel = args.O if args.O in [0,1,2] else 2
-    wlevel = args.W if args.W in [0,1,2,3] else WL.ALL
     try:
-        clear(infile)
-        bascontent = readsourcefile(infile)
-        codelines, code = preprocess(infile, bascontent, args.verbose)
-        tokens = lexpass(infile, code, args.verbose)
-        ast, symtable = parser(infile, codelines, tokens, args.verbose, wlevel)
-        optimizer = BasOptimizer()
-        if optlevel > 1:
-            ast, symtable = optimizer.optimize_ast(ast, symtable)
-        asmcode, heapused = emit(codelines, ast, symtable, args.verbose, wlevel, args.data)
-        if optlevel > 0:
-            asmcode = optimizer.optimize_peephole(asmcode)
-        assemble(infile, outfile, asmcode)
-        if args.verbose:
-            ABASM.dump_assembledcode()
+        opts: AbascOptions = process_args()
+        heapused = compile(opts)
     except Exception as e:
         print(str(e))
-        if args.debug:
+        if opts.debug:
             print(traceback.format_exc())
         sys.exit(1)
     print(f"Done in {time.process_time()-start_t:.2f} seconds ({heapused} bytes of heap memory used)")
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
-    sys.exit(0)
+    

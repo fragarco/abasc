@@ -3103,6 +3103,10 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+* Versión 1.0.3
+  - Generación de los ficheros intermedios junto al destino en vez de junto al fichero fuente.
+  - Añadidos tests automáticos para cubrir la parte de emisión de código.
+
 * Versión 1.0.2
   - Arregla un problema con las variables CONST en sentencias DIM o FIXED
   - Arregla un error tipográfico en cpctelera/sprites.bas
