@@ -2751,6 +2751,7 @@ SUB         cpctSetDrawCharM2(fg, bg)
 
 ```basic
 CONST CPCT.VMEMSTART
+CONST CPCT.VMEMSIZE
 
 CONST FWC.BLACK         
 CONST FWC.BLUE          
@@ -3162,6 +3163,7 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.3
   - Intermediate files are now generated along the destination file instead of along the source file.
+  - FOR index variables could be optimized as const by mistake.
   - New automated tests to check the code emitter.
 
 * Version 1.0.2

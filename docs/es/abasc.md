@@ -2696,6 +2696,7 @@ SUB         cpctSetDrawCharM2(fg, bg)
 
 ```
 CONST CPCT.VMEMSTART
+CONST CPCT.VMEMSIZE
 
 CONST FWC.BLACK         
 CONST FWC.BLUE          
@@ -3105,6 +3106,7 @@ SUB         rsSetMode(nmode)
 
 * Versión 1.0.3
   - Generación de los ficheros intermedios junto al destino en vez de junto al fichero fuente.
+  - Arreglado un problema con variables índice de bucles FOR no utilizadas en el propio bucle.
   - Añadidos tests automáticos para cubrir la parte de emisión de código.
 
 * Versión 1.0.2
