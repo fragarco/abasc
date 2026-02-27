@@ -1045,23 +1045,23 @@ class LocBasParser:
         vartype = AST.exptype_fromname(var)
         if not AST.exptype_isint(vartype):
             self._raise_error(13, tk)
-        self._expect(TokenType.COMP, "=")
-        info = self.symtable.find(ident=var, stype=SymType.Variable, context=self.context)
-        if info is None:
-            # Lets add the FOR variable to the symtable as it persists
-            # in Locomotive BASIC after the loop ends. But check that we are not
-            # dealing with a constant
-            self._check_noconst(var, tk)
-            self.symtable.add(
+        # Let's check that we are not dealing with a constant
+        self._check_noconst(var, tk)
+        # FOR can declare variables so add it (or increase writes)
+        inserted = self.symtable.add(
                 ident=var,
                 info=SymEntry(
                     symtype=SymType.Variable,
                     exptype=vartype,
                     locals=SymTable(),
-                    datasz=AST.exptype_memsize(vartype)
+                    datasz=AST.exptype_memsize(vartype),
+                    writes=2    # do not consider this as only one write so we block "optimizations"
                 ),
                 context=self.context
             )
+        if not inserted:
+            self._raise_error(2, tk)
+        self._expect(TokenType.COMP, "=")
         start = self._parse_int_expression()
         self._expect(TokenType.KEYWORD, "TO")
         end = self._parse_int_expression()
