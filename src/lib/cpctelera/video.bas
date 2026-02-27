@@ -4,6 +4,7 @@
 ASM "read 'asm/cpctelera/video/video_macros.asm'"
 
 CONST CPCT.VMEMSTART    = &C000
+CONST CPCT.VMEMSIZE     = &4000
 
 CONST FWC.BLACK         =  0
 CONST FWC.BLUE          =  1
