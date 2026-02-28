@@ -83,10 +83,10 @@ def process_args() -> AbascOptions:
 
 def clear(srcfile: str) -> None:
     files: list[str] = [
-        pathlib.Path(srcfile).with_suffix('.bpp'),
-        pathlib.Path(srcfile).with_suffix('.lex'),
-        pathlib.Path(srcfile).with_suffix('.ast'),
-        pathlib.Path(srcfile).with_suffix('.sym')
+        str(pathlib.Path(srcfile).with_suffix('.bpp')),
+        str(pathlib.Path(srcfile).with_suffix('.lex')),
+        str(pathlib.Path(srcfile).with_suffix('.ast')),
+        str(pathlib.Path(srcfile).with_suffix('.sym'))
     ]
     for f in files:
         if os.path.exists(f):
