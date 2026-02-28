@@ -1,3 +1,13 @@
+' RUDOLPHS RACE
+' Based on the runner game created by:
+' Copyright (c) 2019 Héctor Linares Pérez (Twitter @Hec_Linares) [ByteRealms, Cheesetea]
+' Copyright (c) 2019 Francisco J. Gallego-Durán (Twitter @FranGallegoBR) [ByteRealms, Cheesetea]
+' Developed under MIT license during the Christmas Special 2025 episode of CPC GameDec Challenge
+' The episode can be seen here:
+'      https://www.youtube.com/watch?v=bOR93yef3po
+'
+' This version was adapted by Javier "Dwayne Hicks" Garcia
+
 chain merge "cpctelera/cpctelera.bas"
 chain merge "base/base.bas"
 
