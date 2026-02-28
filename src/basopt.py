@@ -213,13 +213,7 @@ class BasOptimizer:
         return stmt
 
     def _op_statement(self, stmt: AST.Statement) -> AST.Statement:
-        if isinstance(stmt, AST.Variable):
-            stmt = self._op_variable(stmt)
-        elif isinstance(stmt, AST.BinaryOp):
-            stmt = self._op_binaryop(stmt)
-        elif isinstance(stmt, AST.Assignment):
-            stmt = self._op_assignment(stmt)
-        elif isinstance(stmt, AST.If):
+        if isinstance(stmt, AST.If):
             stmt = self._op_IF(stmt)
         elif isinstance(stmt, AST.ForLoop):
             stmt = self._op_FOR(stmt)
@@ -236,9 +230,14 @@ class BasOptimizer:
                 stmt.args[i] = self._op_statement(stmt.args[i])
             stmt = self._op_keyword(stmt)
         elif isinstance(stmt, AST.Command):
-            for i in range(0, len(stmt.args)):
-                stmt.args[i] = self._op_statement(stmt.args[i])
-            stmt = self._op_keyword(stmt)
+            if stmt.name == "CONST":
+                # CONST is special because the first argument is the variable
+                # and should not be go through normal optimization
+                stmt = self._op_CONST(stmt)
+            else:
+                for i in range(0, len(stmt.args)):
+                    stmt.args[i] = self._op_statement(stmt.args[i])
+                stmt = self._op_keyword(stmt)
         elif isinstance(stmt, AST.DefSUB):
             self.context = stmt.name
         elif isinstance(stmt, AST.DefFUN):
@@ -246,6 +245,12 @@ class BasOptimizer:
         elif isinstance(stmt, AST.RSX):
             for i in range(0, len(stmt.args)):
                 stmt.args[i] = self._op_statement(stmt.args[i])
+        elif isinstance(stmt, AST.Assignment):
+            stmt = self._op_assignment(stmt)
+        elif isinstance(stmt, AST.BinaryOp):
+            stmt = self._op_binaryop(stmt)
+        elif isinstance(stmt, AST.Variable):
+            stmt = self._op_variable(stmt)
         return stmt
       
     def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:
