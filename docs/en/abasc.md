@@ -3165,6 +3165,7 @@ SUB         rsSetMode(nmode)
   - Generates intermediate files along the destination file instead of the source file.
   - Fixes a problem with paths containing the substring 'BAS'.
   - FOR index variables could be optimized as const by mistake.
+  - Includes a new example: examples/cpctelera/games/runner
   - New automated tests to check the code emitter.
 
 * Version 1.0.2

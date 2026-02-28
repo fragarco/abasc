@@ -3429,6 +3429,7 @@ SUB         cpctSetDrawCharM2(fg, bg)</code></pre>
 <li><code>cpctelera/video</code></li>
 </ul>
 <pre><code>CONST CPCT.VMEMSTART
+CONST CPCT.VMEMSIZE
 
 CONST FWC.BLACK         
 CONST FWC.BLUE          
@@ -3822,11 +3823,14 @@ describe a continuación.</p>
 <ul>
 <li>Versión 1.0.3
 <ul>
-<li>Generación de los ficheros intermedios junto al destino en vez de
-junto al fichero fuente.</li>
-<li>Arreglado un problema con variables índice de bucles FOR no
-utilizadas en el propio bucle.</li>
-<li>Añadidos tests automáticos para cubrir la parte de emisión de
+<li>Genera los ficheros intermedios junto al destino en vez de junto al
+fichero fuente.</li>
+<li>Arregla un error si la ruta del fichero contenía la subcadena
+‘BAS’.</li>
+<li>Arregla un error optimizando variables índice de los bucles
+FOR.</li>
+<li>Incluye un nuevo ejemplo: examples/cpctelera/games/runner</li>
+<li>Añade tests automáticos para cubrir la parte de emisión de
 código.</li>
 </ul></li>
 <li>Versión 1.0.2

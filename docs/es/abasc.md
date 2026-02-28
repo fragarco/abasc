@@ -3108,6 +3108,7 @@ SUB         rsSetMode(nmode)
   - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.
   - Arregla un error si la ruta del fichero contenía la subcadena 'BAS'.
   - Arregla un error optimizando variables índice de los bucles FOR.
+  - Incluye un nuevo ejemplo: examples/cpctelera/games/runner
   - Añade tests automáticos para cubrir la parte de emisión de código.
 
 * Versión 1.0.2

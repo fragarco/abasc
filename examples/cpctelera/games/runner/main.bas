@@ -1,4 +1,5 @@
 chain merge "cpctelera/cpctelera.bas"
+chain merge "base/base.bas"
 
 const GRDY = 170
 const PLAYERY = 170 - 16
@@ -29,8 +30,8 @@ ENT 2,5,-1,4,5,1,4,5,-1,4,5,1,4
 ' hit sound
 ENT 3,100,5,3
 
-
-gosub init
+gosub gameIntro
+gosub initGame
 label MAIN
     gosub resetGame
     while alive
@@ -41,9 +42,25 @@ label MAIN
     goto MAIN
 end
 
-label init
+label gameIntro
+    mode 1
+    call txtPrintBig("RUDOLPH'S RACE", 6, 2, 1, 3)
+    locate 2,8
+    print "It's Christmas Eve and Rudolph is late"
+    print "for his annual appointment! Help him  "
+    print "cross the forest so he can fulfill his"
+    print "important mission. Use the spacebar to"
+    print "make Rudolph jump."
+    clear input
+    locate 12,20: print "PRESS S TO START"
+    while INKEY$<>"s": wend
+return
+
+label initGame
     mode 0
     INK 0,1: INK 1,12: INK 2,9: INK 3,24: INK 4,6: INK 5,17: INK 6,26
+    INK 7,9,18
+    INK 8,18,9
     border 1
 return
 
@@ -71,7 +88,7 @@ return
 label endGame
     pen 3
     locate 2,10: PRINT "THAT TREE HIT YOU!"
-    locate 3,11: PRINT "PRESS S TO START"
+    locate 4,11: PRINT "PRESS S TO START"
     clear input
     while alive = 0
         call cpctScanKeyboard()
@@ -143,9 +160,9 @@ label renderGround
     ' Amstrad CPC has 80 bytes of screen width
     ' cpctDrawSolidBox has a limitation of 63 bytes width max
     ' so let's draw two boxes
-    colorpatter = cpctpx2byteM0(4,5)
-    call cpctDrawSolidBox(pvmem, colorpatter, 40, 4)
-    call cpctDrawSolidBox(pvmem+40, colorpatter, 40, 4)    
+    colorpatter = cpctpx2byteM0(7,8)
+    call cpctDrawSolidBox(pvmem, colorpatter, 40, 8)
+    call cpctDrawSolidBox(pvmem+40, colorpatter, 40, 8)    
 return
 
 label renderPlayer

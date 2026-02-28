@@ -3418,6 +3418,7 @@ SUB         cpctSetDrawCharM2(fg, bg)</code></pre>
 <li><code>cpctelera/video</code></li>
 </ul>
 <pre class="basic"><code>CONST CPCT.VMEMSTART
+CONST CPCT.VMEMSIZE
 
 CONST FWC.BLACK         
 CONST FWC.BLUE          
@@ -3810,9 +3811,11 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>Version 1.0.3
 <ul>
-<li>Intermediate files are now generated along the destination file
-instead of along the source file.</li>
+<li>Generates intermediate files along the destination file instead of
+the source file.</li>
+<li>Fixes a problem with paths containing the substring ‘BAS’.</li>
 <li>FOR index variables could be optimized as const by mistake.</li>
+<li>Includes a new example: examples/cpctelera/games/runner</li>
 <li>New automated tests to check the code emitter.</li>
 </ul></li>
 <li>Version 1.0.2
