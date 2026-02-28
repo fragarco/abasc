@@ -1,0 +1,32 @@
+FILE: sprites.asm
+WIDTH: 16
+HEIGHT: 16
+MODE: 0
+PALETTE COLORS: 7
+
+FW		HW		RGB
+11		0x17	(0, 128, 255)
+12		0x1E	(128, 128, 0)
+9		0x16	(0, 128, 0)
+24		0x0A	(255, 255, 0)
+6		0x0C	(255, 0, 0)
+17		0x0F	(255, 128, 255)
+26		0x0B	(255, 255, 255)
+
+; ASM HW palette
+db 0x17, 0x1E, 0x16, 0x0A, 0x0C, 0x0F, 0x0B
+; ASM FW palette
+db 11, 12, 9, 24, 6, 17, 26
+
+' BAS palette
+INK 0,11: INK 1,12: INK 2,9: INK 3,24: INK 4,6: INK 5,17: INK 6,26
+
+// C HW palette
+hwpal = { 0x17, 0x1E, 0x16, 0x0A, 0x0C, 0x0F, 0x0B }
+// C FW palette
+fwpal = { 0x0B, 0x0C, 0x09, 0x18, 0x06, 0x11, 0x1A }
+
+# Python HW palette
+{ 'type': 'HW', 'pal': [0x17, 0x1E, 0x16, 0x0A, 0x0C, 0x0F, 0x0B]}
+# Python FW palette
+{ 'type': 'FW', 'pal': [11, 12, 9, 24, 6, 17, 26]}
