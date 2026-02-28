@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 from __future__ import annotations
 from typing import Any
-import sys, os
+import sys, os, pathlib
 import argparse
 import time
 import traceback
@@ -81,13 +81,12 @@ def process_args() -> AbascOptions:
     opts.dataaddr = args.data
     return opts
 
-def clear(sourcefile: str) -> None:
-    basefile = sourcefile.upper() 
+def clear(srcfile: str) -> None:
     files: list[str] = [
-        basefile.replace('.BAS', '.BPP'),
-        basefile.replace('.BAS', '.LEX'),
-        basefile.replace('.BAS', '.AST'),
-        basefile.replace('.BAS', '.SYM'),
+        pathlib.Path(srcfile).with_suffix('.bpp'),
+        pathlib.Path(srcfile).with_suffix('.lex'),
+        pathlib.Path(srcfile).with_suffix('.ast'),
+        pathlib.Path(srcfile).with_suffix('.sym')
     ]
     for f in files:
         if os.path.exists(f):
@@ -113,7 +112,7 @@ def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine]
     else:
         codelines, code = pp.preprocess(infile, content, 10)
     if verbose:
-        ppfile = infile.upper().replace('BAS', 'BPP')
+        ppfile = str(pathlib.Path(infile).with_suffix('.bpp'))
         pp.save_output(ppfile, code)
     return (codelines, code)
 
@@ -121,7 +120,7 @@ def lexpass(infile: str, code: str, verbose: bool) -> list[Token]:
     lx = LocBasLexer(code)
     lexjson, tokens = lx.tokens_json()
     if verbose:
-        lexfile = infile.upper().replace('BAS','LEX')
+        lexfile: str = str(pathlib.Path(infile).with_suffix('.lex'))
         with open(lexfile, "w", encoding="utf-8") as fd:
             fd.write(lexjson)
     return tokens
@@ -131,10 +130,10 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
     ast, symtable = parser.parse_program()
     if verbose:
         astjson = ast.to_json()
-        astfile = infile.upper().replace('BAS','AST')
+        astfile: str = str(pathlib.Path(infile).with_suffix('.ast'))
         with open(astfile, "w") as fd:
             fd.write(json.dumps(astjson, indent=4))
-        symfile = infile.upper().replace('BAS','SYM')
+        symfile: str = str(pathlib.Path(infile).with_suffix('.sym'))
         symjson = symsto_json(symtable.syms)
         with open(symfile, "w", encoding="utf-8") as fd:
             fd.write(json.dumps(symjson, indent=4))
@@ -148,7 +147,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
-    asmfile = outfile.upper().replace('BIN','ASM')
+    asmfile: str = str(pathlib.Path(outfile).with_suffix('.asm'))
     with open(asmfile, "w", encoding="utf-8") as fd:
             fd.write(asmcode)
     # library path for read 'asmfile' directive

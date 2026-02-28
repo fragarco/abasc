@@ -3105,9 +3105,10 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.3
-  - Generación de los ficheros intermedios junto al destino en vez de junto al fichero fuente.
-  - Arreglado un problema con variables índice de bucles FOR no utilizadas en el propio bucle.
-  - Añadidos tests automáticos para cubrir la parte de emisión de código.
+  - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.
+  - Arregla un error si la ruta del fichero contenía la subcadena 'BAS'.
+  - Arregla un error optimizando variables índice de los bucles FOR.
+  - Añade tests automáticos para cubrir la parte de emisión de código.
 
 * Versión 1.0.2
   - Arregla un problema con las variables CONST en sentencias DIM o FIXED

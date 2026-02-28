@@ -3162,7 +3162,8 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.3
-  - Intermediate files are now generated along the destination file instead of along the source file.
+  - Generates intermediate files along the destination file instead of the source file.
+  - Fixes a problem with paths containing the substring 'BAS'.
   - FOR index variables could be optimized as const by mistake.
   - New automated tests to check the code emitter.
 
