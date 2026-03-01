@@ -35,21 +35,21 @@ label MAIN
    ' which is physical address &10000. 
    poke firstByteInPage, cpctpx2byteM1(2, 2, 2, 2)	' Set the first byte in page to all pixels with colour 2 (cyan by default ).
 
-   call cpctPageMemory(RAM.CFG5 or RAM.BANK0)				' Set the 4th page (64kb to 80kb) in &4000-&7FFF
+   call cpctPageMemory(RAM.CFG5 or RAM.BANK0)				' Set the 4th page (80kb to 96kb) in &4000-&7FFF
    ' RAM.CFG5: 0000-3FFF -> RAM_0, 4000-7FFF -> RAM_5, 8000-BFFF -> RAM_2, C000-FFFF -> RAM_3
    ' firstByteInPage point to address &4000. With this memory 
    ' configuration, &4000 is the first byte in RAM.BANK0, RAM_5, 
    ' which is physical address &14000. 
    poke firstByteInPage, cpctpx2byteM1(3, 3, 3, 3)	' Set the first byte in page to all pixels with colour 3 (red by default ).
 
-   call cpctPageMemory(RAM.CFG6 or RAM.BANK0)				' Set the 4th page (64kb to 80kb) in &4000-&7FFF
+   call cpctPageMemory(RAM.CFG6 or RAM.BANK0)				' Set the 4th page (96kb to 112kb) in &4000-&7FFF
    ' RAM.CFG6: 0000-3FFF -> RAM_0, 4000-7FFF -> RAM_6, 8000-BFFF -> RAM_2, C000-FFFF -> RAM_3
    ' firstByteInPage point to address &4000. With this memory 
    ' configuration, &4000 is the first byte in RAM.BANK0, RAM_6, 
    ' which is physical address &18000. 
    poke firstByteInPage, cpctpx2byteM1(1, 1, 2, 2)	' Set the first byte in page to all pixels with colours 1, 2 (yellow, cyan by default ).
 
-   call cpctPageMemory(RAM.CFG7 or RAM.BANK0)				' Set the 4th page (64kb to 80kb) in &4000-&7FFF
+   call cpctPageMemory(RAM.CFG7 or RAM.BANK0)				' Set the 4th page (112kb to 128kb) in &4000-&7FFF
    ' RAM.CFG7: 0000-3FFF -> RAM_0, 4000-7FFF -> RAM_7, 8000-BFFF -> RAM_2, C000-FFFF -> RAM_3
    ' firstByteInPage point to address &4000. With this memory 
    ' configuration, &4000 is the first byte in RAM.BANK0, RAM_7, 
@@ -64,32 +64,32 @@ label MAIN
    ' Let's make visible the values we stored.
    call cpctPageMemory(RAM.CFG0 or RAM.BANK0) ' Not needed, sets the memory with the first 64kb accesible, in consecutive banks.
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 0)
-   call cpctDrawSolidBox(pvmem, firstByteInPage, 2, 8)
+   call cpctDrawSolidBox(pvmem, peek(firstByteInPage), 2, 8)
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 4, 0)
    call cpctSetDrawCharM1(1, 0)
    call cpctDrawStringM1("RAM.CFG0", pvmem)
 
    call cpctPageMemory(RAM.CFG4 or RAM.BANK0) ' Set the 4th page (64kb to 80kb) in &4000-&7FFF
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 16)
-   call cpctDrawSolidBox(pvmem, firstByteInPage, 2, 8)
+   call cpctDrawSolidBox(pvmem, peek(firstByteInPage), 2, 8)
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 4, 16)
    call cpctDrawStringM1("RAM.CFG4", pvmem)
 
    call cpctPageMemory(RAM.CFG5 or RAM.BANK0) ' Set the 4th page (64kb to 80kb) in &4000-&7FFF
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 32)
-   call cpctDrawSolidBox(pvmem, firstByteInPage, 2, 8)
+   call cpctDrawSolidBox(pvmem, peek(firstByteInPage), 2, 8)
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 4, 32)
    call cpctDrawStringM1("RAM.CFG5", pvmem)
 
    call cpctPageMemory(RAM.CFG6 or RAM.BANK0) ' Set the 4th page (64kb to 80kb) in &4000-&7FFF
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 48)
-   call cpctDrawSolidBox(pvmem, firstByteInPage, 2, 8)
+   call cpctDrawSolidBox(pvmem, peek(firstByteInPage), 2, 8)
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 4, 48)
    call cpctDrawStringM1("RAM.CFG6", pvmem)
 
    call cpctPageMemory(RAM.CFG7 or RAM.BANK0) ' Set the 4th page (64kb to 80kb) in &4000-&7FFF
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 0, 64)
-   call cpctDrawSolidBox(pvmem, firstByteInPage, 2, 8)
+   call cpctDrawSolidBox(pvmem, peek(firstByteInPage), 2, 8)
    pvmem = cpctGetScreenPtr(CPCT.VMEMSTART, 4, 64)
    call cpctDrawStringM1("RAM.CFG7", pvmem)
 
