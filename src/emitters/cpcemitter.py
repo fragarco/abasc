@@ -1458,28 +1458,34 @@ class CPCEmitter:
         hasstep = node.step is not None
         if sym is not None:
             self._emit_code("; FOR <variable> = <start> TO <end> [STEP <size>]")
-            self._emit_code("; START calculation")
             self._emit_expression(node.start)
-            self._emit_code(f"ld      ({sym.label}),hl")
-            self._emit_code("; END calculation")
-            self._emit_expression(node.end)
-            self._emit_code("push    hl")
-            if hasstep:
-                self._emit_code("; STEP calculation")
+            self._emit_code(f"ld      ({sym.label}),hl", info = "index initial value")
+            if not isinstance(node.end, AST.Integer):
+                # A variable or expression that may even change as a result of the
+                # FOR body needs to record its actual value to be cosistent with the
+                # Locomotive BASIC behaviour
+                self._emit_expression(node.end)
+                self._emit_code("push    hl", info = "store calculated END value")
+            if hasstep and not isinstance(node.step, AST.Integer):
+                # Same as FOR end value with expressions
                 self._emit_expression(node.step) # type: ignore [arg-type]
-                self._emit_code("push    hl")           
+                self._emit_code("push    hl", info="store calculated STEP value")           
             # clear temporal memory used by the expressions
             self._emit_free_heapmem()
 
-            self._emit_code("; FOR condition check")
-            self._emit_code(startlab, 0)
-            self._emit_code(f"ld      de,({sym.label})", info="current value")
+            self._emit_code(startlab, 0, info="FOR LOOP BODY")
+            self._emit_code(f"ld      de,({sym.label})", info="current index value")
+            if isinstance(node.end, AST.Integer):
+                self._emit_code(f"ld      hl,{node.end.value}", info="END value")
+            else:
+                self._emit_code("pop     hl", info="END value")
+                self._emit_code("push    hl")               
             if hasstep:
-                self._emit_code("pop     bc", info="STEP value")
-            self._emit_code("pop     hl", info="END value")
-            self._emit_code("push    hl")
-            if hasstep:
-                self._emit_code("push    bc")
+                if isinstance(node.step, AST.Integer):
+                    self._emit_code(f"ld      bc,{node.step.value}", info="STEP value")
+                else:
+                    self._emit_code("pop     bc", info="STEP value")
+                    self._emit_code("push    bc")
                 self._emit_code("bit     7,b", info="STEP sign")
                 self._emit_code("jr      z,$+3")
                 self._emit_code("ex      de,hl")
@@ -2436,17 +2442,21 @@ class CPCEmitter:
         self._emit_code("; NEXT [<variable>]")
         self._emit_code(f"ld      hl,({fornode.var_label})")
         if fornode.step is not None:
-            self._emit_code("pop     bc", info="STEP value")
+            if isinstance(fornode.step, AST.Integer):
+                self._emit_code(f"ld      bc,{fornode.step.value}", info="STEP value")
+            else:
+                self._emit_code("pop     bc", info="STEP value")
+                self._emit_code("push    bc")               
             self._emit_code("add     hl,bc")
-            self._emit_code("push    bc")
         else:
             self._emit_code("inc     hl")
         self._emit_code(f"ld      ({fornode.var_label}),hl")
         self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(f"{fornode.end_label}:", 0)
-        if fornode.step is not None:
+        if fornode.step is not None and not isinstance(fornode.step, AST.Integer):
             self._emit_code("pop     bc")
-        self._emit_code("pop     hl")
+        if not isinstance(fornode.end, AST.Integer):
+            self._emit_code("pop     hl")
         self._emit_code(";")
 
     def _emit_ON_GOSUB(self, node:AST.Command) -> None:
@@ -3116,6 +3126,12 @@ class CPCEmitter:
                 self._raise_error(3, node)
             self._emit_expression(node.args[0])
             self._emit_free_heapmem()
+        # We could be leaving FOR loops with pushed values so let's address it
+        for fornode in reversed(self.forloops):
+            if fornode.step is not None and not isinstance(fornode.step, AST.Integer):
+                self._emit_code("pop     hl", info="remove STEP value from stack")
+            if not isinstance(fornode.end, AST.Integer):
+                self._emit_code("pop     hl", info="remove END value from stack")
         self._emit_code("ret")
         self._emit_code(";")
 
