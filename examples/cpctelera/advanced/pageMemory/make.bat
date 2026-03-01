@@ -16,7 +16,7 @@ set TARGET=pagemem
 
 set LOADADDR=0x0040
 
-set RUNBAS=%BASC% %SOURCE%.bas
+set RUNBAS=%BASC% %SOURCE%.bas --data=0x8000
 set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
