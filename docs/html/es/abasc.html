@@ -1724,7 +1724,9 @@ se producirán errores inesperados durante la ejecución. La forma
 adecuada de abandonar un bucle <code>FOR</code> antes de su terminación
 es utilizando el comando <code>EXIT FOR</code>, que saltará a la
 siguiente instrucción tras el <code>NEXT</code>. Este comando fue
-introducido con la versión 2 de Locomotive BASIC.</p>
+introducido con la versión 2 de Locomotive BASIC. Otra opción permitida
+es el uso de <code>RETURN</code> dentro de un bucle <code>FOR</code>
+cuando estamos en una subrutina.</p>
 <pre class="basic"><code>FOR I=0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
@@ -3821,6 +3823,12 @@ describe a continuación.</p>
 <hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
+<li>Versión 1.0.4
+<ul>
+<li>Optimiza los bucles FOR cuando el valor final se puede simplificar a
+una constante.</li>
+<li>Arregla un fallo si se usaba RETURN dentro de un bucle FOR.</li>
+</ul></li>
 <li>Versión 1.0.3
 <ul>
 <li>Genera los ficheros intermedios junto al destino en vez de junto al

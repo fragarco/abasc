@@ -1674,7 +1674,8 @@ with ABASC, using <code>GOTO</code> to exit loops may cause unexpected
 runtime errors. The proper way to exit a <code>FOR</code> loop early is
 to use <code>EXIT FOR</code>, which jumps to the statement immediately
 after the corresponding <code>NEXT</code>. This command was introduced
-in Locomotive BASIC 2.</p>
+in Locomotive BASIC 2. Another safe way to leave a <code>FOR</code> loop
+is to use <code>RETURN</code> in subroutine loops.</p>
 <pre class="basic"><code>FOR I = 0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
@@ -3809,6 +3810,12 @@ version 2 and version 2 plus.</p>
 <hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
+<li>Version 1.0.4
+<ul>
+<li>FOR optimization when the end value can be reduced to a
+constant</li>
+<li>Fixes the call of RETURN inside FOR loops.</li>
+</ul></li>
 <li>Version 1.0.3
 <ul>
 <li>Generates intermediate files along the destination file instead of

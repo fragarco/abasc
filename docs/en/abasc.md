@@ -1079,7 +1079,7 @@ RETURN
 
 ### `EXIT FOR`
 
-**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with ABASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2.
+**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with ABASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2. Another safe way to leave a `FOR` loop is to use `RETURN` in subroutine loops.
 
 ```basic
 FOR I = 0 TO 100
@@ -3161,6 +3161,10 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+* Version 1.0.4
+  - FOR optimization when the end value can be reduced to a constant
+  - Fixes the call of RETURN inside FOR loops.
+  
 * Version 1.0.3
   - Generates intermediate files along the destination file instead of the source file.
   - Fixes a problem with paths containing the substring 'BAS'.
