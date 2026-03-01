@@ -31,7 +31,6 @@ LABEL INITGAME
         enemy.y(i) = 200
         enemy.active(i) = 1
     NEXT
-
     enemy.times = 0
     enemy.movx  = 4
     enemy.movy  = -2
