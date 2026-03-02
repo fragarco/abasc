@@ -727,6 +727,9 @@ peephole, 2 = completa).<br />
 mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media
 importancia, 3 = todas).<br />
 </li>
+<li><code>--start &lt;n&gt;</code>— dirección de inicio del programa
+(por defecto es 0x0040, ver sección sobre
+<code>Gestión de la memoria</code>).</li>
 <li><code>--data &lt;n&gt;</code>— dirección de inicio para el área de
 datos del programa (por defecto es 0x4000, ver sección sobre
 <code>Gestión de la memoria</code>).</li>
@@ -1089,7 +1092,8 @@ siguiente:</p>
 <tr>
 <td><strong>0x0040</strong></td>
 <td>Comienzo del área para la inicialización de la aplicación y reserva
-de memoria temporal (montículo).</td>
+de memoria temporal (montículo). Este valor se puede cambiar mediante el
+flag <code>--start</code>.</td>
 </tr>
 <tr>
 <td><strong>_code_</strong></td>
@@ -3338,8 +3342,29 @@ SUB         cpctMemset(arrayptr, value, bytes)
 SUB         cpctMemsetf8(arrayptr, value, bytes)
 SUB         cpctMemsetf64(arrayptr, value, bytes)
 SUB         cpctMemsetf64i(arrayptr, value, bytes)
+
+CONST RAM.BANK0
+CONST RAM.BANK1
+CONST RAM.BANK2
+CONST RAM.BANK3
+CONST RAM.BANK4
+CONST RAM.BANK5
+CONST RAM.BANK6
+CONST RAM.BANK7
+
+CONST RAM.CFG0
+CONST RAM.CFG1
+CONST RAM.CFG2
+CONST RAM.CFG3
+CONST RAM.CFG4
+CONST RAM.CFG5
+CONST RAM.CFG6
+CONST RAM.CFG7
+
+CONST RAM.DEFAULTCFG &#39; RAMCFG_0 or BANK_0
+
 SUB         cpctPageMemory(bankvalue)
-SUB         cpctSetStackLocation(halts)
+SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)</code></pre>
 <ul>
 <li><code>cpctelera/random</code></li>
@@ -3489,11 +3514,6 @@ CONST HWC.BRIGHTYELLOW
 CONST HWC.PASTELYELLOW 
 CONST HWC.BRIGHTWHITE  
 
-CONST VMP.PAGEC0
-CONST VMP.PAGE80
-CONST VMP.PAGE40
-CONST VMP.PAGE00
-
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
 FUNCTION    cpctCount2VSYNC
@@ -3506,6 +3526,12 @@ SUB         cpctSetCRTCReg(regnum, newval)
 SUB         cpctSetPALColour(ipen, hwcolor)
 SUB         cpctSetPalette(palptr, items)
 SUB         cpctSetVideoMemoryOffset(offset)
+
+CONST VMP.PAGEC0
+CONST VMP.PAGE80
+CONST VMP.PAGE40
+CONST VMP.PAGE00
+
 SUB         cpctSetVideoMemoryPage(pageid)
 SUB         cpctSetVideoMode(vmode)
 SUB         cpctWaitVSYNC
@@ -3825,9 +3851,13 @@ describe a continuación.</p>
 <ul>
 <li>Versión 1.0.4
 <ul>
+<li>Incluye un nuevo flag <code>--start</code> que permite establecer la
+dirección de inicio del programa.</li>
 <li>Optimiza los bucles FOR cuando el valor final se puede simplificar a
 una constante.</li>
 <li>Arregla un fallo si se usaba RETURN dentro de un bucle FOR.</li>
+<li>Incluye nuevos ejemplos de uso de CPCTELERA en el directorio
+<code>examples/cpctelera/advanced</code>.</li>
 </ul></li>
 <li>Versión 1.0.3
 <ul>

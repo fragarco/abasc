@@ -46,7 +46,7 @@ class CPCEmitter:
         self.warning_level = WL.ALL
         self.verbose = False
         self.dataaddr = 0x4000
-        self.startaddr = 0x040
+        self.startaddr = 0x0040
         self.symbolafter = 9999
         self.memlimit = 99999
 

@@ -342,6 +342,7 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 -   `--version` --- muestra la versión del compilador.
 -   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
 -   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
+-   `--start <n>`--- dirección de inicio del programa (por defecto es 0x0040, ver sección sobre `Gestión de la memoria`).
 -   `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
 -   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
 -   `-o`, `--out` --- nombre de salida sin extensión.\
@@ -597,7 +598,7 @@ El mapa de memoria de un programa compilado con ABASC es el siguiente:
 
 | Dirección         | Descripción                                                |
 | ----------------- | ---------------------------------------------------------- |
-| **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo).|
+| **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo). Este valor se puede cambiar mediante el flag `--start`.|
 | **\_code\_**      | Comienzo del área para el código de la aplicación. Comienza justo después del código de initialización y del montículo. |
 | **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador. |
 | **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, ya que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). En cualquier caso, se puede configurar mediante el parámetros `--data`. Si el código que precede a esta área ocupa la dirección designada para los datos, el compilador moverá esta zona a la primera dirección de memoria posterior que esté disponible.|
@@ -2595,8 +2596,29 @@ SUB         cpctMemset(arrayptr, value, bytes)
 SUB         cpctMemsetf8(arrayptr, value, bytes)
 SUB         cpctMemsetf64(arrayptr, value, bytes)
 SUB         cpctMemsetf64i(arrayptr, value, bytes)
+
+CONST RAM.BANK0
+CONST RAM.BANK1
+CONST RAM.BANK2
+CONST RAM.BANK3
+CONST RAM.BANK4
+CONST RAM.BANK5
+CONST RAM.BANK6
+CONST RAM.BANK7
+
+CONST RAM.CFG0
+CONST RAM.CFG1
+CONST RAM.CFG2
+CONST RAM.CFG3
+CONST RAM.CFG4
+CONST RAM.CFG5
+CONST RAM.CFG6
+CONST RAM.CFG7
+
+CONST RAM.DEFAULTCFG ' RAMCFG_0 or BANK_0
+
 SUB         cpctPageMemory(bankvalue)
-SUB         cpctSetStackLocation(halts)
+SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)
 ```
 
@@ -2754,11 +2776,6 @@ CONST HWC.BRIGHTYELLOW
 CONST HWC.PASTELYELLOW 
 CONST HWC.BRIGHTWHITE  
 
-CONST VMP.PAGEC0
-CONST VMP.PAGE80
-CONST VMP.PAGE40
-CONST VMP.PAGE00
-
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
 FUNCTION    cpctCount2VSYNC
@@ -2771,6 +2788,12 @@ SUB         cpctSetCRTCReg(regnum, newval)
 SUB         cpctSetPALColour(ipen, hwcolor)
 SUB         cpctSetPalette(palptr, items)
 SUB         cpctSetVideoMemoryOffset(offset)
+
+CONST VMP.PAGEC0
+CONST VMP.PAGE80
+CONST VMP.PAGE40
+CONST VMP.PAGE00
+
 SUB         cpctSetVideoMemoryPage(pageid)
 SUB         cpctSetVideoMode(vmode)
 SUB         cpctWaitVSYNC
@@ -3105,8 +3128,10 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.4
+  - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
   - Optimiza los bucles FOR cuando el valor final se puede simplificar a una constante.
   - Arregla un fallo si se usaba RETURN dentro de un bucle FOR.
+  - Incluye nuevos ejemplos de uso de CPCTELERA en el directorio `examples/cpctelera/advanced`.
   
 * Versión 1.0.3
   - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.

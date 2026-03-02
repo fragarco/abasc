@@ -342,7 +342,8 @@ python abasc.py [options] file.bas [-o output]
 * `--version` — Displays the compiler version.
 * `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
 * `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
-* `--data <n>` — Starting address for the data area (0x4000 by default)
+* `--start <n>` — Program area starting address (0x0040 by default)
+* `--data <n>` — Data area starting address (0x4000 by default)
 * `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
 * `-o`, `--out` — Output file name (without extension).
 
@@ -595,7 +596,7 @@ The memory map for a program compiled with ABASC is structured as follows:
 
 | Address             | Description                                                                |
 | ------------------- | -------------------------------------------------------------------------- |
-| **0x0040**          | Start of the application-initialization area and temporary memory space (heap).|
+| **0x0040**          | Start of the application-initialization area and temporary memory space (heap). This address can be changed (if neccesary) using the flag `--start`.|
 | **\_code\_**        | Program main source code. Starts just after the heap and the startup code.       |
 | **\_runtime\_**     | Label marking the beginning of compiler-generated support routines.         |
 | **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware. The initial address, however, can be set using the parameter `--data`. if the preceding code overpasses the configured starting address for the data area, it will be allocated to start from the first free address. |
@@ -2650,8 +2651,29 @@ SUB         cpctMemset(arrayptr, value, bytes)
 SUB         cpctMemsetf8(arrayptr, value, bytes)
 SUB         cpctMemsetf64(arrayptr, value, bytes)
 SUB         cpctMemsetf64i(arrayptr, value, bytes)
+
+CONST RAM.BANK0
+CONST RAM.BANK1
+CONST RAM.BANK2
+CONST RAM.BANK3
+CONST RAM.BANK4
+CONST RAM.BANK5
+CONST RAM.BANK6
+CONST RAM.BANK7
+
+CONST RAM.CFG0
+CONST RAM.CFG1
+CONST RAM.CFG2
+CONST RAM.CFG3
+CONST RAM.CFG4
+CONST RAM.CFG5
+CONST RAM.CFG6
+CONST RAM.CFG7
+
+CONST RAM.DEFAULTCFG ' RAMCFG_0 or BANK_0
+
 SUB         cpctPageMemory(bankvalue)
-SUB         cpctSetStackLocation(halts)
+SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)
 ```
 
@@ -2809,11 +2831,6 @@ CONST HWC.BRIGHTYELLOW
 CONST HWC.PASTELYELLOW 
 CONST HWC.BRIGHTWHITE  
 
-CONST VMP.PAGEC0
-CONST VMP.PAGE80
-CONST VMP.PAGE40
-CONST VMP.PAGE00
-
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
 FUNCTION    cpctCount2VSYNC
@@ -2826,6 +2843,12 @@ SUB         cpctSetCRTCReg(regnum, newval)
 SUB         cpctSetPALColour(ipen, hwcolor)
 SUB         cpctSetPalette(palptr, items)
 SUB         cpctSetVideoMemoryOffset(offset)
+
+CONST VMP.PAGEC0
+CONST VMP.PAGE80
+CONST VMP.PAGE40
+CONST VMP.PAGE00
+
 SUB         cpctSetVideoMemoryPage(pageid)
 SUB         cpctSetVideoMode(vmode)
 SUB         cpctWaitVSYNC
@@ -3162,9 +3185,11 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.4
+  - Adds the flag `--start` which allows users to specify the starting address for the program area.
   - FOR optimization when the end value can be reduced to a constant
   - Fixes the call of RETURN inside FOR loops.
-  
+  - Adds new CPCTELERA examples under `examples/cpctelera/advanced` directory.
+
 * Version 1.0.3
   - Generates intermediate files along the destination file instead of the source file.
   - Fixes a problem with paths containing the substring 'BAS'.

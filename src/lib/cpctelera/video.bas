@@ -62,11 +62,6 @@ CONST HWC.BRIGHTYELLOW  = 10
 CONST HWC.PASTELYELLOW  =  3
 CONST HWC.BRIGHTWHITE   = 11
 
-CONST VMP.PAGEC0 = &30
-CONST VMP.PAGE80 = &20
-CONST VMP.PAGE40 = &10
-CONST VMP.PAGE00 = &00
-
 SUB cpctClearScreen(color) ASM
     ASM "ld      a,(ix+0)"
     ASM "cpctm_clearScreen a"
@@ -157,6 +152,11 @@ SUB cpctSetVideoMemoryOffset(offset) ASM
     ASM "jp      cpct_setVideoMemoryOffset"
     ASM "read 'asm/cpctelera/video/cpct_setVideoMemoryOffset.asm'"
 END SUB
+
+CONST VMP.PAGEC0 = &30
+CONST VMP.PAGE80 = &20
+CONST VMP.PAGE40 = &10
+CONST VMP.PAGE00 = &00
 
 SUB cpctSetVideoMemoryPage(pageid) ASM
     ASM "ld      l,(ix+0)"

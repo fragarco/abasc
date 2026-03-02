@@ -710,8 +710,10 @@ href="cdt.html">manual</a></li>
 peephole, 2 = full).</li>
 <li><code>-W &lt;n&gt;</code> — Warning level (0 = none, 1 = important,
 2 = important and medium, 3 = all).</li>
-<li><code>--data &lt;n&gt;</code> — Starting address for the data area
-(0x4000 by default)</li>
+<li><code>--start &lt;n&gt;</code> — Program area starting address
+(0x0040 by default)</li>
+<li><code>--data &lt;n&gt;</code> — Data area starting address (0x4000
+by default)</li>
 <li><code>-v</code>, <code>--verbose</code> — Generates auxiliary
 compilation files (preprocessed output, symbol table, syntax tree,
 etc.).</li>
@@ -1060,7 +1062,8 @@ follows:</p>
 <tr>
 <td><strong>0x0040</strong></td>
 <td>Start of the application-initialization area and temporary memory
-space (heap).</td>
+space (heap). This address can be changed (if neccesary) using the flag
+<code>--start</code>.</td>
 </tr>
 <tr>
 <td><strong>_code_</strong></td>
@@ -3326,8 +3329,29 @@ SUB         cpctMemset(arrayptr, value, bytes)
 SUB         cpctMemsetf8(arrayptr, value, bytes)
 SUB         cpctMemsetf64(arrayptr, value, bytes)
 SUB         cpctMemsetf64i(arrayptr, value, bytes)
+
+CONST RAM.BANK0
+CONST RAM.BANK1
+CONST RAM.BANK2
+CONST RAM.BANK3
+CONST RAM.BANK4
+CONST RAM.BANK5
+CONST RAM.BANK6
+CONST RAM.BANK7
+
+CONST RAM.CFG0
+CONST RAM.CFG1
+CONST RAM.CFG2
+CONST RAM.CFG3
+CONST RAM.CFG4
+CONST RAM.CFG5
+CONST RAM.CFG6
+CONST RAM.CFG7
+
+CONST RAM.DEFAULTCFG &#39; RAMCFG_0 or BANK_0
+
 SUB         cpctPageMemory(bankvalue)
-SUB         cpctSetStackLocation(halts)
+SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)</code></pre>
 <ul>
 <li><code>cpctelera/random</code></li>
@@ -3477,11 +3501,6 @@ CONST HWC.BRIGHTYELLOW
 CONST HWC.PASTELYELLOW 
 CONST HWC.BRIGHTWHITE  
 
-CONST VMP.PAGEC0
-CONST VMP.PAGE80
-CONST VMP.PAGE40
-CONST VMP.PAGE00
-
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
 FUNCTION    cpctCount2VSYNC
@@ -3494,6 +3513,12 @@ SUB         cpctSetCRTCReg(regnum, newval)
 SUB         cpctSetPALColour(ipen, hwcolor)
 SUB         cpctSetPalette(palptr, items)
 SUB         cpctSetVideoMemoryOffset(offset)
+
+CONST VMP.PAGEC0
+CONST VMP.PAGE80
+CONST VMP.PAGE40
+CONST VMP.PAGE00
+
 SUB         cpctSetVideoMemoryPage(pageid)
 SUB         cpctSetVideoMode(vmode)
 SUB         cpctWaitVSYNC
@@ -3812,9 +3837,13 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>Version 1.0.4
 <ul>
+<li>Adds the flag <code>--start</code> which allows users to specify the
+starting address for the program area.</li>
 <li>FOR optimization when the end value can be reduced to a
 constant</li>
 <li>Fixes the call of RETURN inside FOR loops.</li>
+<li>Adds new CPCTELERA examples under
+<code>examples/cpctelera/advanced</code> directory.</li>
 </ul></li>
 <li>Version 1.0.3
 <ul>

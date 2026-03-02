@@ -42,6 +42,7 @@ __version__= "1.0.3"
 class AbascOptions:
     infile: str
     outfile: str
+    startaddr: int = 0x0040
     dataaddr: int = 0x4000
     optlevel: int = 2
     warninglevel: WL = WL.ALL
@@ -63,6 +64,7 @@ def process_args() -> AbascOptions:
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
     parser.add_argument('-O', type=int, default=2, help="Sets the level of optimization (0-disabled, 1-peephole, 2-all). It's set to 2 by default.")
     parser.add_argument('-W', type=int, default=WL.ALL, help="Sets the warning level (0-disabled, 1-only high level warnings, 2-high and medium, 3-high, medium and low).")
+    parser.add_argument('--start', type=aux_int, default=0x0040, help="Program Start address (0x0040 by default).")
     parser.add_argument('--data', type=aux_int, default=0x4000, help="Start address for the data block (0x4000 by default).")
     parser.add_argument('-o', '--out', help="Target file name without extension. If missing, <infile> name will be used.")
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
@@ -78,6 +80,7 @@ def process_args() -> AbascOptions:
     opts.optlevel = args.O if args.O in [0,1,2] else 2
     opts.warninglevel = args.W if args.W in [0,1,2,3] else WL.ALL
     opts.debug = args.debug
+    opts.startaddr = args.start
     opts.dataaddr = args.data
     return opts
 
@@ -139,11 +142,12 @@ def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose:
             fd.write(json.dumps(symjson, indent=4))
     return (ast, symtable)
 
-def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, verbose: bool, wlevel: WL, dataaddr: int) -> tuple[str,int]:
+def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: AbascOptions) -> tuple[str,int]:
     emitter = CPCEmitter(codelines, ast, symtable)
-    emitter.cfgset_wlevel(wlevel)
-    emitter.cfgset_verbose(verbose)
-    emitter.cfgset_dataaddr(dataaddr)
+    emitter.cfgset_wlevel(opts.warninglevel)
+    emitter.cfgset_verbose(opts.verbose)
+    emitter.cfgset_startaddr(opts.startaddr)
+    emitter.cfgset_dataaddr(opts.dataaddr)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
@@ -170,7 +174,7 @@ def compile(opts: AbascOptions) -> int:
     optimizer = BasOptimizer()
     if opts.optlevel > 1:
         ast, symtable = optimizer.optimize_ast(ast, symtable)
-    asmcode, heapused = emit(codelines, ast, symtable, opts.verbose, opts.warninglevel, opts.dataaddr)
+    asmcode, heapused = emit(codelines, ast, symtable, opts)
     if opts.optlevel > 0:
         asmcode = optimizer.optimize_peephole(asmcode)
     assemble(opts.infile, opts.outfile, asmcode)

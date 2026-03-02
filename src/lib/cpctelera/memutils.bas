@@ -80,7 +80,7 @@ SUB cpctPageMemory(bankvalue) ASM
     ASM "read 'asm/cpctelera/memutils/cpct_pageMemory.asm'"
 END SUB
 
-SUB cpctSetStackLocation(halts) ASM
+SUB cpctSetStackLocation(addr) ASM
     ASM "pop     bc                    ; store current return address"
     ASM "pop     hl                    ; get the new stack address"
     ASM "call    cpct_setStackLocation ; change stack position"
