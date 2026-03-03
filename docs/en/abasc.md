@@ -2522,11 +2522,14 @@ SUB         cpctSet6Bits(array$, value, index)
 * `cpctelera/easytilemaps`
 
 ```basic
-SUB     cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap)
-SUB     cpctetmSetDrawTilemap2x4f(vieww, viewh, vmem, tiles)
-SUB     cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles)
-SUB     cpctetmDrawTilemap4x8ag(memaddress, tileids)
-SUB     cpctetmSetTileset2x4(tileset)
+SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap)
+SUB cpctetmDrawTilemap2x4f(vieww, viewh, vmem, tiles)
+SUB cpctetmDrawTilemap4x8ag(memaddress, tileids)
+SUB cpctetmDrawTilemap4x8agf(memaddress, tileids)
+SUB cpctetmDrawTileRow2x4(ntiles, pvideomem, ptmrow)
+SUB cpctetmSetTileset2x4(tileset)
+SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles)
+SUB cpctetmSetDrawTilemap4x8agf(vieww, viewh, tilemapw, tiles)
 ```
 
 * `cpctelera/firmware`

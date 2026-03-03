@@ -1294,11 +1294,10 @@ class LocBasParser:
     def _parse_END_FUNCTION(self) -> AST.Command:
         """ <END_FUNCTION> ::= END FUNCTION """
         tk = self._advance()
-        cblock = self.codeblocks.pop()
-        if "END FUNCTION" in cblock.until_keywords:               
-            self.context=""
-        else:
+        if len(self.codeblocks) == 0 or not "END FUNCTION" in self.codeblocks[-1].until_keywords:
             self._raise_error(43, tk)
+        cblock = self.codeblocks.pop()
+        self.context=""
         return AST.Command(name="END FUNCTION", args=[cblock.start_node])
 
     @astnode
@@ -1316,11 +1315,10 @@ class LocBasParser:
     def _parse_END_SUB(self) -> AST.Command:
         """ <END_SUB> ::= END SUB """
         tk = self._advance()
-        cblock = self.codeblocks.pop()
-        if "END SUB" in cblock.until_keywords:
-            self.context=""
-        else:
+        if len(self.codeblocks) == 0 or not "END SUB" in self.codeblocks[-1].until_keywords:
             self._raise_error(41, tk)
+        cblock = self.codeblocks.pop()
+        self.context=""
         return AST.Command(name="END SUB", args=[cblock.start_node])
 
     @astnode

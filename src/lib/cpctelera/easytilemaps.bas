@@ -17,15 +17,53 @@ SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap) ASM
     ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTileBox2x4.asm'"
 END SUB
 
-SUB cpctetmSetDrawTilemap2x4f(vieww, viewh, vmem, tiles) ASM
+SUB cpctetmDrawTilemap2x4f(vieww, viewh, vmem, tiles) ASM
     ASM "ld      l,(ix+0)     ; tiles - Pointer to the start of the tileset definition (2D tile-index matrix)"
     ASM "ld      h,(ix+1)"
     ASM "ld      e,(ix+2)     ; vmem - Pointer to video memory location where the tilemap is to be drawn"
     ASM "ld      d,(ix+3)"
     ASM "ld      c,(ix+4)     ; Height of the tilemap in tiles"
     ASM "ld      a,(ix+6)     ; Width of the tilemap in tiles"
-    ASM "jp      cpct_etm_setDrawTilemap2x4_f"
-    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setDrawTilemap2x4_f.asm'"
+    ASM "jp      cpct_etm_drawTilemap2x4_f"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap2x4_f.asm'"
+END SUB
+
+SUB cpctetmDrawTilemap4x8ag(memaddress, tileids) ASM
+    ASM "ld      e,(ix+0)     ; tileids - Pointer to the upper-left tile id of the view to be drawn"
+    ASM "ld      d,(ix+1)"
+    ASM "ld      l,(ix+2)     ; memaddress - Video memory location where to draw the tilemap"
+    ASM "ld      h,(ix+3)"
+    ASM "jp      cpct_etm_drawTilemap4x8_ag"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_ag.asm'"
+END SUB
+
+SUB cpctetmDrawTilemap4x8agf(memaddress, tileids) ASM
+    ASM "ld      e,(ix+0)     ; tileids - Pointer to the upper-left tile id of the view to be drawn"
+    ASM "ld      d,(ix+1)"
+    ASM "ld      l,(ix+2)     ; memaddress - Video memory location where to draw the tilemap"
+    ASM "ld      h,(ix+3)"
+    ASM "jp      cpct_etm_drawTilemap4x8_agf"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_agf.asm'"
+END SUB
+
+
+
+SUB cpctetmDrawTileRow2x4(ntiles, pvideomem, ptmrow) ASM
+    ASM "ld      l,(ix+0)     ; ptmrow - Pointer to the first tile from the tilemap that we want to draw"
+    ASM "ld      h,(ix+1)"
+    ASM "ld      e,(ix+2)     ; pvideomem - Pointer to the video memory byte where to draw the tile row"
+    ASM "ld      d,(ix+3)"
+    ASM "ld      b,(ix+4)     ; ntiles - Number of tiles from the tilemap to draw in a row"
+    ASM "jp      cpct_etm_drawTileRow2x4"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTileRow2x4.asm'"
+END SUB
+
+
+SUB cpctetmSetTileset2x4(tileset) ASM
+    ASM "ld      l,(ix+0)     ; tileset - Pointer to the start of the tileset (array of pointers to tile definitions)"
+    ASM "ld      h,(ix+1)"
+    ASM "jp      cpct_etm_setTileset2x4"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setTileset2x4.asm'"
 END SUB
 
 SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles) ASM
@@ -39,18 +77,14 @@ SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles) ASM
     ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setDrawTilemap4x8_ag.asm'"
 END SUB
 
-SUB cpctetmDrawTilemap4x8ag(memaddress, tileids) ASM
-    ASM "ld      e,(ix+0)     ; tileids - Pointer to the upper-left tile id of the view to be drawn"
-    ASM "ld      d,(ix+1)"
-    ASM "ld      l,(ix+2)     ; memaddress - Video memory location where to draw the tilemap"
-    ASM "ld      h,(ix+3)"
-    ASM "jp      cpct_etm_drawTilemap4x8_ag"
-    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_drawTilemap4x8_ag.asm'"
+SUB cpctetmSetDrawTilemap4x8agf(vieww, viewh, tilemapw, tiles) ASM
+    ASM "ld      l,(ix+0)     ; tiles - Pointer to the start of the tileset definition"
+    ASM "ld      h,(ix+1)"
+    ASM "ld      e,(ix+2)     ; tilemapw - Width in *tiles* of the complete tilemap"
+    ASM "ld      d,(ix+3)"
+    ASM "ld      b,(ix+4)     ; viewh - Height in *tiles* of the view window to be drawn"
+    ASM "ld      c,(ix+6)     ; vieww - Width in *tiles* of the view window to be drawn"
+    ASM "jp      cpct_etm_setDrawTilemap4x8_agf"
+    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setDrawTilemap4x8_agf.asm'"
 END SUB
 
-SUB cpctetmSetTileset2x4(tileset) ASM
-    ASM "ld      l,(ix+0)     ; tileset - Pointer to the start of the tileset (array of pointers to tile definitions)"
-    ASM "ld      h,(ix+1)"
-    ASM "jp      cpct_etm_setTileset2x4"
-    ASM "read 'asm/cpctelera/easytilemaps/cpct_etm_setTileset2x4.asm'"
-END SUB
