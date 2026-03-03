@@ -39,7 +39,10 @@ background = @LABEL("g_background") ' ASM labels included at the
 aliensp = @LABEL("g_alien")         ' end of this file
 tileset = @LABEL("g_tileset")
 palette = @LABEL("g_palette")
-masktable = @LABEL("g_masktable")
+
+' Sets the transparent mask table for color 0, mode 0
+' equivalent to cpctm_createTransparentMaskTable
+masktable = cpctCreateTransparentMaskTablePen0M0()
 
 ''''''''''''''''''''''''''''''''''''''''''''
 ' Wait for n VSYNCs
@@ -112,6 +115,3 @@ asm "read 'img/alien.asm'"
 asm "read 'img/map.asm'"
 asm "read 'img/tiles.asm'"
 
-' Sets the transparent mask table for color 0, mode 0
-' cpctm_createTransparentMaskTable(g_masktable, 0x0100, M0, 0)
-asm "read 'img/mask.asm'"

@@ -559,3 +559,126 @@ END FUNCTION
 
 
 
+
+
+FUNCTION cpctCreateTransparentMaskTablePen0M0 ASM
+    ASM "ld      hl,masktable_pen0M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen0.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen1M0 ASM
+    ASM "ld      hl,masktable_pen1M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen1.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen2M0 ASM
+    ASM "ld      hl,masktable_pen2M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen2.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen3M0 ASM
+    ASM "ld      hl,masktable_pen3M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen3.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen4M0 ASM
+    ASM "ld      hl,masktable_pen4M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen4.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen5M0 ASM
+    ASM "ld      hl,masktable_pen5M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen5.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen6M0 ASM
+    ASM "ld      hl,masktable_pen6M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen6.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen7M0 ASM
+    ASM "ld      hl,masktable_pen7M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen7.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen8M0 ASM
+    ASM "ld      hl,masktable_pen8M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen8.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen9M0 ASM
+    ASM "ld      hl,masktable_pen9M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen9.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen10M0 ASM
+    ASM "ld      hl,masktable_pen10M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen10.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen11M0 ASM
+    ASM "ld      hl,masktable_pen11M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen11.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen12M0 ASM
+    ASM "ld      hl,masktable_pen12M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen12.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen13M0 ASM
+    ASM "ld      hl,masktable_pen13M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen13.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen14M0 ASM
+    ASM "ld      hl,masktable_pen14M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen14.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen15M0 ASM
+    ASM "ld      hl,masktable_pen15M0"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M0/table_pen15.asm'"
+END FUNCTION
+
+
+
+FUNCTION cpctCreateTransparentMaskTablePen0M1 ASM
+    ASM "ld      hl,masktable_pen0M1"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M1/table_pen0.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen1M1 ASM
+    ASM "ld      hl,masktable_pen1M1"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M1/table_pen1.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen2M1 ASM
+    ASM "ld      hl,masktable_pen2M1"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M1/table_pen2.asm'"
+END FUNCTION
+
+FUNCTION cpctCreateTransparentMaskTablePen3M1 ASM
+    ASM "ld      hl,masktable_pen3M1"
+    ASM "ret"
+    ASM "read    'asm/cpctelera/sprites/transparency/M1/table_pen3.asm'"
+END FUNCTION
