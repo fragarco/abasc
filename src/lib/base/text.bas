@@ -1,5 +1,15 @@
 ' MODULE BASE/TEXT
 
+FUNCTION txtFormat$(pattern$, num$, char)
+    lenn = LEN(num$)
+    lenp = LEN(pattern$)
+    IF lenp > lenn THEN
+        txtFormat$ = STRING$(lenp-lenn, char) + num$
+    ELSE
+        txtFormat$ = num$
+    END IF
+END FUNCTION
+
 FUNCTION txtReadAsc(x, y) ASM
     ASM "call    &BB78     ; TXT_GET_CURSOR"
     ASM "push    hl"
