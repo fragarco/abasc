@@ -19,7 +19,7 @@
 ' DEALINGS IN THE SOFTWARE.
 
 chain merge "cpcrslib/cpcrslib.bas"
-chain merge "base/bytepos.bas"
+chain merge "base/base.bas"
 
 ' addresses to our sprites data included through sprites.asm
 SPRITE1 = @LABEL("_sp_1")
@@ -77,9 +77,9 @@ end sub
 sub InitSpriteStruct(sprite$, spaddr, x, y, movx, movy)
     sprite$.rssp.sp0 = spaddr
     sprite$.rssp.sp1 = spaddr
-    sprite$.rssp.opos = BytePosSet(x, y)
-    sprite$.rssp.cpos = BytePosSet(x, y)
-    sprite$.rssp.movdir = BytePosSet(movx, movy)
+    sprite$.rssp.opos = byteCompose(x, y)
+    sprite$.rssp.cpos = byteCompose(x, y)
+    sprite$.rssp.movdir = byteCompose(movx, movy)
     ' First time it's important to do this to set
     ' the position of this sprite in the doublebuffer/superbuffer
     sprite$.rssp.vmem0 = rsGetDoubleBufferAddress(movx, movy)
@@ -106,60 +106,60 @@ label MAIN
         ' the sprite is moved one byte to the right
         call rsScanKeyboard()
         if rsTestKeyF(0) then
-            posx = BytePosGetX(sprites$(0).rssp.cpos)
-            posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posx < 60 then sprites$(0).rssp.cpos = BytePosSet(posx+1, posy)
+            posx = byte0(sprites$(0).rssp.cpos)
+            posy = byte1(sprites$(0).rssp.cpos)
+            if posx < 60 then sprites$(0).rssp.cpos = byteCompose(posx+1, posy)
         end if
         if rsTestKeyF(1) then
-            posx = BytePosGetX(sprites$(0).rssp.cpos)
-            posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posx > 0 then sprites$(0).rssp.cpos = BytePosSet(posx-1, posy)
+            posx = byte0(sprites$(0).rssp.cpos)
+            posy = byte1(sprites$(0).rssp.cpos)
+            if posx > 0 then sprites$(0).rssp.cpos = byteCompose(posx-1, posy)
         end if
         if rsTestKeyF(2) then
-            posx = BytePosGetX(sprites$(0).rssp.cpos)
-            posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posy > 0 then sprites$(0).rssp.cpos = BytePosSet(posx, posy-2)
+            posx = byte0(sprites$(0).rssp.cpos)
+            posy = byte1(sprites$(0).rssp.cpos)
+            if posy > 0 then sprites$(0).rssp.cpos = byteCompose(posx, posy-2)
         end if
         if rsTestKeyF(3) then
-            posx = BytePosGetX(sprites$(0).rssp.cpos)
-            posy = BytePosGetY(sprites$(0).rssp.cpos)
-            if posy < 112 then sprites$(0).rssp.cpos = BytePosSet(posx, posy+2)
+            posx = byte0(sprites$(0).rssp.cpos)
+            posy = byte1(sprites$(0).rssp.cpos)
+            if posy < 112 then sprites$(0).rssp.cpos = byteCompose(posx, posy+2)
         end if
 
         ' The enemy sprites are automatically moved
-        posx = BytePosGetX(sprites$(1).rssp.cpos)
-        posy = BytePosGetY(sprites$(1).rssp.cpos)
-        diry = BytePosGetY(sprites$(1).rssp.movdir)
+        posx = byte0(sprites$(1).rssp.cpos)
+        posy = byte1(sprites$(1).rssp.cpos)
+        diry = byte1(sprites$(1).rssp.movdir)
         if diry = 0 then ' 0 = left, 1 = right
             if posx > 0 then
-                sprites$(1).rssp.cpos = BytePosSet(posx-1, posy)
+                sprites$(1).rssp.cpos = byteCompose(posx-1, posy)
             else
-                sprites$(1).rssp.movdir = BytePosSet(0, 1)
+                sprites$(1).rssp.movdir = byteCompose(0, 1)
             end if
         end if
         if diry = 1 then ' 0 = left, 1 = right
             if posx < 60 then
-                sprites$(1).rssp.cpos = BytePosSet(posx+1, posy)
+                sprites$(1).rssp.cpos = byteCompose(posx+1, posy)
             else
-                sprites$(1).rssp.movdir = BytePosSet(0, 0)
+                sprites$(1).rssp.movdir = byteCompose(0, 0)
             end if
         end if
 
-        posx = BytePosGetX(sprites$(2).rssp.cpos)
-        posy = BytePosGetY(sprites$(2).rssp.cpos)
-        diry = BytePosGetY(sprites$(2).rssp.movdir)
+        posx = byte0(sprites$(2).rssp.cpos)
+        posy = byte1(sprites$(2).rssp.cpos)
+        diry = byte1(sprites$(2).rssp.movdir)
         if diry = 2 then   ' 2 = up, 3 = down
             if posy > 0 then 
-                sprites$(2).rssp.cpos = BytePosSet(posx, posy-2)
+                sprites$(2).rssp.cpos = byteCompose(posx, posy-2)
             else
-                sprites$(2).rssp.movdir = BytePosSet(0, 3)
+                sprites$(2).rssp.movdir = byteCompose(0, 3)
             end if
         end if
         if diry = 3 then  ' 2 = up, 3 = down
             if posy < 106 then
-                sprites$(2).rssp.cpos = BytePosSet(posx, posy+2)
+                sprites$(2).rssp.cpos = byteCompose(posx, posy+2)
             else
-                sprites$(2).rssp.movdir = BytePosSet(0, 2)
+                sprites$(2).rssp.movdir = byteCompose(0, 2)
             end if
         end if
 
