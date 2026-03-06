@@ -376,7 +376,7 @@ class CPCEmitter:
         return f"__symbol_{self.constants}"
 
     def _get_userfun_label(self, name) -> str:
-        symname = name.replace("$", "_S").replace("%", "_I").replace("!", "_R")
+        symname = name.replace("$", "_S").replace("%", "_I").replace("!", "_R").replace(".", "_")
         return f"_userfn_{symname}"
     
     def _get_env_label(self) -> str:
