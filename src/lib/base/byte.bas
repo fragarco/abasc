@@ -1,30 +1,30 @@
-' MODULE BASE/BYTEPOS
+' MODULE BASE/BYTE
 
-FUNCTION bytePosSet(x, y) ASM
-    ASM "ld      l,(ix+2)   ; X"
-    ASM "ld      h,(ix+0)   ; Y"
+FUNCTION byteCompose(b0, b1) ASM
+    ASM "ld      l,(ix+2)   ; LOW"
+    ASM "ld      h,(ix+0)   ; HIGH"
     ASM "ret"
 END FUNCTION
 
-FUNCTION bytePosGetX(bytepos) ASM
+FUNCTION byte0(int16) ASM
     ASM "ld      l,(ix+0)"
     ASM "ld      h,0"
     ASM "ret"    
 END FUNCTION
 
-FUNCTION bytePosGetY(intvalue) ASM
+FUNCTION byte1(int16) ASM
     ASM "ld      l,(ix+1)"
     ASM "ld      h,0"
     ASM "ret"    
 END FUNCTION
 
-FUNCTION bytePosSetX(bytepos, x) ASM
+FUNCTION byteSet0(int16, v) ASM
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+3)"
     ASM "ret"    
 END FUNCTION
 
-FUNCTION bytePosSetY(intvalue, y) ASM
+FUNCTION byteSet1(int16, v) ASM
     ASM "ld      l,(ix+2)"
     ASM "ld      h,(ix+0)"
     ASM "ret"    
