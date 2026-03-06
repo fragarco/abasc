@@ -32,9 +32,9 @@ class TestEmitter(unittest.TestCase):
                 newbin = fd.read()
         except Exception as e:
             self.fail("Error accesing to the binary files " + str(e))
-        self.assertEqual(len(refbin), len(newbin), "binary lengths are different")
+        self.assertEqual(len(refbin), len(newbin), "binary lengths are different (ref/bin)")
         for i in range(0, len(refbin)):
-            self.assertEqual(refbin[i], newbin[i], "binary files content is different")
+            self.assertEqual(refbin[i], newbin[i], f"binary files content is different in byte {i}")
 
     def test_arrays(self):
         self._compare_bins("arrays.bas", "arrays.bin")
