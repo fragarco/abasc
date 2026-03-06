@@ -3095,15 +3095,15 @@ routines for the Amstrad” or available as firmware calls.</p>
 <pre class="basic"><code>chain merge &quot;base/base.bas&quot;</code></pre>
 <h2 id="base-constants-and-routines">BASE Constants and routines</h2>
 <ul>
-<li><code>base/bytepos.bas</code></li>
+<li><code>base/byte.bas</code></li>
 </ul>
 <p>’ In <code>ABASC</code> there is no support for byte-type data. All
-integers are ’ 16 bits. These routines allow you to encode a position ’
-X,Y where each component occupies a byte. For example: ’ DIM
-positions(1) ’ positions(0) = bytePosSet(5,5) ’ positions(1) =
-bytePosSet(5,6) FUNCTION bytePosSet(x, y) FUNCTION bytePosGetX(bytepos)
-FUNCTION bytePosGetY(intvalue) FUNCTION bytePosSetX(bytepos, x) FUNCTION
-bytePosSetY(intvalue, y)</p>
+integers are ’ 16 bits. These routines allow you to encode a retrieve
+bytes as ’ separate data from a regular integer. For example: ’ DIM
+positions(1) ’ positions(0) = byteCompose(5,5) ’ positions(1) =
+byteCompose(5,6)</p>
+<p>FUNCTION byteCompose(b0, b1) FUNCTION byte0(int16) FUNCTION
+byte1(int16) FUNCTION byteSet0(int16, b) FUNCTION byteSet1(int16, b)</p>
 <ul>
 <li><code>base/memory.bas</code></li>
 </ul>
@@ -3140,6 +3140,21 @@ scrScrollDown()</p>
 rectangle agains rectangle FUNCTION scrCheckPointRect(pointx, pointy,
 recx, recy, recwidth, recheight) FUNCTION scrCheckRectRect(recx1, recy1,
 recw1, rech1, recx2, recy2, recw2, rech2)</p>
+<ul>
+<li><code>base/string.bas</code></li>
+</ul>
+<p>’ s$ is left-padded with padchar character totaln times FUNCTION
+strLPad<span class="math inline">(<em>s</em></span>, totaln,
+padchar)</p>
+<p>’ s$ is right-padded with padchar character totaln times FUNCTION
+strRPad<span class="math inline">(<em>s</em></span>, totaln,
+padchar)</p>
+<p>’ Equal to dest$ = dest$ + src$ but more memory optimized SUB
+strAppend(dest<span
+class="math inline">, <em>s</em><em>r</em><em>c</em></span>)</p>
+<p>’ Equal to dest$ = src$ SUB strCopy(dest<span
+class="math inline">, <em>s</em><em>r</em><em>c</em></span>)</p>
+<p>’ Equal to src$ = “” SUB strClear(src$)</p>
 <ul>
 <li><code>base/text.bas</code></li>
 </ul>
@@ -3842,11 +3857,13 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>Adds the flag <code>--start</code> which allows users to specify the
 starting address for the program area.</li>
-<li>FOR optimization when the end value can be reduced to a
+<li>Optimizes FOR loops when the end value can be reduced to a
 constant</li>
-<li>Fixes the call of RETURN inside FOR loops.</li>
+<li>Fixes the use of RETURN inside FOR loops.</li>
+<li>Avoids emitting local variables for non-called routines</li>
 <li>Adds new CPCTELERA examples under
 <code>examples/cpctelera/advanced</code> directory.</li>
+<li>Adds new routines in <code>base</code> library.</li>
 </ul></li>
 <li>Version 1.0.3
 <ul>

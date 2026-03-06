@@ -2382,19 +2382,20 @@ chain merge "base/base.bas"
 
 ## BASE Constants and routines
 
-* `base/bytepos.bas`
+* `base/byte.bas`
 
 ' In `ABASC` there is no support for byte-type data. All integers are
-' 16 bits. These routines allow you to encode a position
-' X,Y where each component occupies a byte. For example:
+' 16 bits. These routines allow you to encode a retrieve bytes as 
+' separate data from a regular integer. For example:
 ' DIM positions(1)
-' positions(0) = bytePosSet(5,5)
-' positions(1) = bytePosSet(5,6)
-FUNCTION bytePosSet(x, y)
-FUNCTION bytePosGetX(bytepos)
-FUNCTION bytePosGetY(intvalue)
-FUNCTION bytePosSetX(bytepos, x)
-FUNCTION bytePosSetY(intvalue, y)
+' positions(0) = byteCompose(5,5)
+' positions(1) = byteCompose(5,6)
+
+FUNCTION byteCompose(b0, b1)
+FUNCTION byte0(int16)
+FUNCTION byte1(int16)
+FUNCTION byteSet0(int16, b)
+FUNCTION byteSet1(int16, b)
 
 * `base/memory.bas`
 
@@ -2451,6 +2452,23 @@ SUB scrScrollDown()
 ' rectangle agains rectangle
 FUNCTION scrCheckPointRect(pointx, pointy, recx, recy, recwidth, recheight)
 FUNCTION scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2, rech2)
+
+* `base/string.bas`
+
+' s$ is left-padded with padchar character totaln times
+FUNCTION strLPad$(s$, totaln, padchar)
+
+' s$ is right-padded with padchar character totaln times
+FUNCTION strRPad$(s$, totaln, padchar)
+
+' Equal to dest$ = dest$  + src$ but more memory optimized
+SUB strAppend(dest$, src$)
+
+' Equal to dest$ = src$
+SUB strCopy(dest$, src$)
+
+' Equal to src$ = ""
+SUB strClear(src$)
 
 * `base/text.bas`
 
@@ -3189,9 +3207,11 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.4
   - Adds the flag `--start` which allows users to specify the starting address for the program area.
-  - FOR optimization when the end value can be reduced to a constant
-  - Fixes the call of RETURN inside FOR loops.
+  - Optimizes FOR loops when the end value can be reduced to a constant
+  - Fixes the use of RETURN inside FOR loops.
+  - Avoids emitting local variables for non-called routines
   - Adds new CPCTELERA examples under `examples/cpctelera/advanced` directory.
+  - Adds new routines in `base` library.
 
 * Version 1.0.3
   - Generates intermediate files along the destination file instead of the source file.

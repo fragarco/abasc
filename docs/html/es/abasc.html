@@ -3155,6 +3155,21 @@ pointy, recx, recy, recwidth, recheight) FUNCTION
 scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2,
 rech2)</p>
 <ul>
+<li><code>base/string.bas</code></li>
+</ul>
+<p>’ A s$ se le añaden totaln caracteres por la izquierda. El caracter
+añadido ’ se indica en padchar FUNCTION strLPad<span
+class="math inline">(<em>s</em></span>, totaln, padchar)</p>
+<p>’ A s$ se le añaden totaln caracteres por la derecha. El caracter
+añadido ’ se indica en padchar FUNCTION strRPad<span
+class="math inline">(<em>s</em></span>, totaln, padchar)</p>
+<p>’ Equivalente ta dest$ = dest$ + src$ pero consume menos memoria SUB
+strAppend(dest<span
+class="math inline">, <em>s</em><em>r</em><em>c</em></span>)</p>
+<p>’ Equivalente a dest$ = src$ SUB strCopy(dest<span
+class="math inline">, <em>s</em><em>r</em><em>c</em></span>)</p>
+<p>’ Equivalente a src$ = “” SUB strClear(src$)</p>
+<ul>
 <li><code>base/text.bas</code></li>
 </ul>
 <p>’ Devuelve el código ASCII del caracter de la pantalla en la posición
@@ -3859,8 +3874,11 @@ dirección de inicio del programa.</li>
 <li>Optimiza los bucles FOR cuando el valor final se puede simplificar a
 una constante.</li>
 <li>Arregla un fallo si se usaba RETURN dentro de un bucle FOR.</li>
+<li>Evita emitir código para las variables locales de rutinas que no se
+usan.</li>
 <li>Incluye nuevos ejemplos de uso de CPCTELERA en el directorio
 <code>examples/cpctelera/advanced</code>.</li>
+<li>Añade nuevas rutinas a la librería <code>BASE</code>.</li>
 </ul></li>
 <li>Versión 1.0.3
 <ul>

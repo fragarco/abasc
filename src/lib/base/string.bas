@@ -1,20 +1,20 @@
 ' MODULE BASE/STRING
 
-FUNCTION strLPad$(num$, totaln, padchar)
-    lenn = LEN(num$)
+FUNCTION strLPad$(s$, totaln, padchar)
+    lenn = LEN(s$)
     IF totaln > lenn THEN
-        strLPad$ = STRING$(totaln-lenn, padchar) + num$
+        strLPad$ = STRING$(totaln-lenn, padchar) + s$
     ELSE
-        strLPad$ = num$
+        strLPad$ = s$
     END IF
 END FUNCTION
 
-FUNCTION strRPad$(num$, totaln, padchar)
-    lenn = LEN(num$)
+FUNCTION strRPad$(s$, totaln, padchar)
+    lenn = LEN(s$)
     IF totaln > lenn THEN
-        strRPad$ = num$ + STRING$(totaln-lenn, padchar)
+        strRPad$ = s$ + STRING$(totaln-lenn, padchar)
     ELSE
-        strRPad$ = num$
+        strRPad$ = s$
     END IF
 END FUNCTION
 

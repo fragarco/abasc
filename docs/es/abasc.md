@@ -2395,6 +2395,25 @@ SUB scrScrollDown()
 FUNCTION scrCheckPointRect(pointx, pointy, recx, recy, recwidth, recheight)
 FUNCTION scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2, rech2)
 
+* `base/string.bas`
+
+' A s$ se le añaden totaln caracteres por la izquierda. El caracter añadido
+' se indica en padchar
+FUNCTION strLPad$(s$, totaln, padchar)
+
+' A s$ se le añaden totaln caracteres por la derecha. El caracter añadido
+' se indica en padchar
+FUNCTION strRPad$(s$, totaln, padchar)
+
+' Equivalente ta dest$ = dest$  + src$ pero consume menos memoria
+SUB strAppend(dest$, src$)
+
+' Equivalente a dest$ = src$
+SUB strCopy(dest$, src$)
+
+' Equivalente a src$ = ""
+SUB strClear(src$)
+
 * `base/text.bas`
 
 ' Devuelve el código ASCII del caracter de la pantalla en la posición x,y
@@ -3134,7 +3153,9 @@ SUB         rsSetMode(nmode)
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
   - Optimiza los bucles FOR cuando el valor final se puede simplificar a una constante.
   - Arregla un fallo si se usaba RETURN dentro de un bucle FOR.
+  - Evita emitir código para las variables locales de rutinas que no se usan.
   - Incluye nuevos ejemplos de uso de CPCTELERA en el directorio `examples/cpctelera/advanced`.
+  - Añade nuevas rutinas a la librería `BASE`.
   
 * Versión 1.0.3
   - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.
