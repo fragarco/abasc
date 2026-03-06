@@ -275,9 +275,9 @@ class CPCEmitter:
                 # last char must have bit 7 set and we have to remove RSX_
                 lastchar = ord(sym[-1]) + 128
                 self._emit_data(f'{entry.label}: db "{sym[4:-1]}",{lastchar}')
-            elif entry.symtype == SymType.Function:
+            elif entry.symtype == SymType.Function and entry.calls > 0:
                 self._emit_symbols(entry.locals.syms, entry)
-            elif entry.symtype == SymType.Procedure:
+            elif entry.symtype == SymType.Procedure and entry.calls > 0:
                 self._emit_symbols(entry.locals.syms, entry)
 
     def _emit_vardecl(self, entry: SymEntry) -> None:
