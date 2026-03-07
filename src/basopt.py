@@ -300,6 +300,14 @@ class BasOptimizer:
             r"ld      hl,([&0-9a-fA-F]+).*:ld      e,l(.*):dec     e",
             r"ld      e,(\1 & 0xFF)-1"
         ),
+        (
+            r"ld      hl,0:add     hl,hl(.*)",
+            r"ld      hl,0"
+        ),
+        (
+            r"ld      hl,0:ld      de,(.*):add     hl,de(.*)",
+            r"ld      hl,\1"
+        )
     ]
 
     def optimize_peephole(self, code: str) -> str:
