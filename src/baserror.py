@@ -115,11 +115,11 @@ TERM = {
     "END": "\033[0m",
 }
 
+""" 
+Not all errorcodes are used as several of them were designed for an
+interpreter and not for a compiler
+"""
 _ERRORCODES = {
-    """ 
-    Not all errorcodes are used as several of them were designed for an
-    interpreter a not for a compiler
-    """
     # -------- Original error codes used by BASIC interpreter ---------
     "001": "Unexpected NEXT",
     "002": "Syntax Error",
