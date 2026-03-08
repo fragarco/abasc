@@ -3151,9 +3151,10 @@ SUB         rsSetMode(nmode)
 
 * Versión 1.0.4
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
-  - Optimiza los bucles FOR cuando el valor final se puede simplificar a una constante.
+  - Optimiza los bucles FOR.
   - Arregla un fallo si se usaba RETURN dentro de un bucle FOR.
   - Evita emitir código para las variables locales de rutinas que no se usan.
+  - Incluye el clásico programa Amthello en la sección de ejemplos.
   - Incluye nuevos ejemplos de uso de CPCTELERA en el directorio `examples/cpctelera/advanced`.
   - Añade nuevas rutinas a la librería `BASE`.
   

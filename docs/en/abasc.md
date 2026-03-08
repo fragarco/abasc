@@ -3207,9 +3207,10 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.4
   - Adds the flag `--start` which allows users to specify the starting address for the program area.
-  - Optimizes FOR loops when the end value can be reduced to a constant
+  - Optimizes FOR loops.
   - Fixes the use of RETURN inside FOR loops.
-  - Avoids emitting local variables for non-called routines
+  - Avoids emitting local variables for non-called routines.
+  - Includes Amthello example.
   - Adds new CPCTELERA examples under `examples/cpctelera/advanced` directory.
   - Adds new routines in `base` library.
 
