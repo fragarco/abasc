@@ -1722,27 +1722,24 @@ LABEL INCA
     A=A+1
     RETURN</code></pre>
 <h3 id="exit-for"><code>EXIT FOR</code></h3>
-<p>Comando. Aunque en Locomotive BASIC era posible abandonar un bucle
-con una sentencia <code>GOTO</code>, en un programa compilado con ABASC
-se producirán errores inesperados durante la ejecución. La forma
-adecuada de abandonar un bucle <code>FOR</code> antes de su terminación
-es utilizando el comando <code>EXIT FOR</code>, que saltará a la
-siguiente instrucción tras el <code>NEXT</code>. Este comando fue
-introducido con la versión 2 de Locomotive BASIC. Otra opción permitida
-es el uso de <code>RETURN</code> dentro de un bucle <code>FOR</code>
-cuando estamos en una subrutina.</p>
+<p>Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un
+bucle FOR con una sentencia <code>GOTO</code> o <code>RETURN</code>, en
+versiones posteriores del lenguaje se introdujo este comando como una
+forma más adecuada de abandonar un bucle <code>FOR</code> antes de su
+terminación. La ejecución del comando <code>EXIT FOR</code> saltará a la
+siguiente instrucción tras el <code>NEXT</code>.</p>
 <pre class="basic"><code>FOR I=0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
 PRINT I</code></pre>
 <h3 id="exit-while"><code>EXIT WHILE</code></h3>
-<p>Comando. Aunque en Locomotive BASIC era posible abandonar un bucle
-con una sentencia <code>GOTO</code>, en un programa compilado con ABASC
-se producirán errores inesperados durante la ejecución. La forma
-adecuada de abandonar un bucle <code>WHILE</code> antes de su
-terminación es utilizando el comando <code>EXIT WHILE</code>, que
-saltará a la siguiente instrucción tras el <code>WEND</code>. Este
-comando fue introducido con la versión 2 de Locomotive BASIC.</p>
+<p>Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un
+bucle WHILE con una sentencia <code>GOTO</code> o <code>RETURN</code>,
+el versiones posteriores del lenguaje se introdujo este comando como una
+forma más adecuada de abandnar un bucle <code>WHILE</code>. La ejecución
+de este comando saltará a la siguiente instrucción tras el
+<code>WEND</code> desde donde se continuará con la ejecución normal del
+programa.</p>
 <pre class="basic"><code>I=0
 WHILE I &lt; 101
     IF I=50 THEN EXIT WHILE

@@ -1168,9 +1168,6 @@ class LocBasParser:
         # THEN and ELSE can arrive here parsing just a number/label so we use 
         # match and not advance
         self._match(TokenType.KEYWORD, "GOTO")
-        for cblock in self.codeblocks:
-            if "NEXT" in cblock.until_keywords:
-                self._raise_warning(WL.HIGH, "GOTO is dangerous inside loops if it jumps outside")
         args: list[AST.Statement] = []
         tk = self._current()
         if self._current_is(TokenType.INT):

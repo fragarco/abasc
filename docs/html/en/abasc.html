@@ -1671,25 +1671,23 @@ LABEL INCA
     A = A + 1
 RETURN</code></pre>
 <h3 id="exit-for"><code>EXIT FOR</code></h3>
-<p><strong>Command</strong>. In Locomotive BASIC, it was possible to
-exit a loop using a <code>GOTO</code> statement. In a program compiled
-with ABASC, using <code>GOTO</code> to exit loops may cause unexpected
-runtime errors. The proper way to exit a <code>FOR</code> loop early is
-to use <code>EXIT FOR</code>, which jumps to the statement immediately
-after the corresponding <code>NEXT</code>. This command was introduced
-in Locomotive BASIC 2. Another safe way to leave a <code>FOR</code> loop
-is to use <code>RETURN</code> in subroutine loops.</p>
+<p><strong>Command</strong>. In Locomotive BASIC 1.0 and 1.1 it’s
+possible to exit a FOR loop using a <code>GOTO</code> or
+<code>RETURN</code> statements. However, later language revisions added
+this command as a better way to terminate these loops. The execution of
+a <code>EXIT FOR</code> command will jump to the next instruction after
+the command <code>NEXT</code>.</p>
 <pre class="basic"><code>FOR I = 0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
 PRINT I</code></pre>
 <h3 id="exit-while"><code>EXIT WHILE</code></h3>
-<p><strong>Command</strong>. Using <code>GOTO</code> to exit a
-<code>WHILE</code> loop in compiled code can lead to runtime errors. To
-exit a <code>WHILE</code> loop correctly, use <code>EXIT WHILE</code>,
-which jumps to the statement immediately after the corresponding
-<code>WEND</code>. This command was introduced in Locomotive BASIC
-2.</p>
+<p><strong>Command</strong>. In Locomotive BASIC 1.0 and 1.1 it’s
+possible to exit a WHILE loop using a <code>GOTO</code> or
+<code>RETURN</code> statements. However, later language revisions added
+this command as a better way to terminate these loops. The execution of
+a <code>EXIT WHILE</code> command will jump to the next instruction
+after the command <code>WEND</code>.</p>
 <pre class="basic"><code>I = 0
 WHILE I &lt; 101
     IF I = 50 THEN EXIT WHILE

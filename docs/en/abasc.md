@@ -1080,7 +1080,7 @@ RETURN
 
 ### `EXIT FOR`
 
-**Command**. In Locomotive BASIC, it was possible to exit a loop using a `GOTO` statement. In a program compiled with ABASC, using `GOTO` to exit loops may cause unexpected runtime errors. The proper way to exit a `FOR` loop early is to use `EXIT FOR`, which jumps to the statement immediately after the corresponding `NEXT`. This command was introduced in Locomotive BASIC 2. Another safe way to leave a `FOR` loop is to use `RETURN` in subroutine loops.
+**Command**. In Locomotive BASIC 1.0 and 1.1 it's possible to exit a FOR loop using a `GOTO` or `RETURN` statements. However, later language revisions added this command as a better way to terminate these loops. The execution of a `EXIT FOR` command will jump to the next instruction after the command `NEXT`.
 
 ```basic
 FOR I = 0 TO 100
@@ -1091,7 +1091,7 @@ PRINT I
 
 ### `EXIT WHILE`
 
-**Command**. Using `GOTO` to exit a `WHILE` loop in compiled code can lead to runtime errors. To exit a `WHILE` loop correctly, use `EXIT WHILE`, which jumps to the statement immediately after the corresponding `WEND`. This command was introduced in Locomotive BASIC 2.
+**Command**. In Locomotive BASIC 1.0 and 1.1 it's possible to exit a WHILE loop using a `GOTO` or `RETURN` statements. However, later language revisions added this command as a better way to terminate these loops. The execution of a `EXIT WHILE` command will jump to the next instruction after the command `WEND`.
 
 ```basic
 I = 0

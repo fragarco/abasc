@@ -1075,7 +1075,7 @@ LABEL INCA
 
 ### `EXIT FOR`
 
-Comando. Aunque en Locomotive BASIC era posible abandonar un bucle con una sentencia `GOTO`, en un programa compilado con ABASC se producirán errores inesperados durante la ejecución. La forma adecuada de abandonar un bucle `FOR` antes de su terminación es utilizando el comando `EXIT FOR`, que saltará a la siguiente instrucción tras el `NEXT`.  Este comando fue introducido con la versión 2 de Locomotive BASIC. Otra opción permitida es el uso de `RETURN` dentro de un bucle `FOR` cuando estamos en una subrutina.
+Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un bucle FOR con una sentencia `GOTO` o `RETURN`, en versiones posteriores del lenguaje se introdujo este comando como una forma más adecuada de abandonar un bucle `FOR` antes de su terminación. La ejecución del comando `EXIT FOR` saltará a la siguiente instrucción tras el `NEXT`.
 
 ``` basic
 FOR I=0 TO 100
@@ -1086,7 +1086,7 @@ PRINT I
 
 ### `EXIT WHILE`
 
-Comando. Aunque en Locomotive BASIC era posible abandonar un bucle con una sentencia `GOTO`, en un programa compilado con ABASC se producirán errores inesperados durante la ejecución. La forma adecuada de abandonar un bucle `WHILE` antes de su terminación es utilizando el comando `EXIT WHILE`, que saltará a la siguiente instrucción tras el `WEND`. Este comando fue introducido con la versión 2 de Locomotive BASIC.
+Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un bucle WHILE con una sentencia `GOTO` o `RETURN`, el versiones posteriores del lenguaje se introdujo este comando como una forma más adecuada de abandnar un bucle `WHILE`. La ejecución de este comando saltará a la siguiente instrucción tras el `WEND` desde donde se continuará con la ejecución normal del programa.
 
 ``` basic
 I=0

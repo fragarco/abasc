@@ -386,6 +386,7 @@ class ForLoop(Statement):
     start_label: str    # used during code generation
     end_label: str      # used during code generation
     var_label: str      # used during code generation
+    step_label: str     # used during code generation
 
     def __init__(self, var: Variable, start: Statement, end: Statement, step: Optional[Statement]=None) -> None:
         super().__init__(etype=ExpType.Void, id="ForLoop")
@@ -395,6 +396,7 @@ class ForLoop(Statement):
         self.step = step
         self.start_label = ""
         self.end_label = ""
+        self.step_label = ""
 
     def to_json(self) -> dict:
         d = super().to_json()

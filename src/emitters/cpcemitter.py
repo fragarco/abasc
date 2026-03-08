@@ -349,31 +349,36 @@ class CPCEmitter:
 
     def _get_conststr_label(self) -> str:
         self.constants +=1
-        return f"__const_str_{self.constants}"
+        return f"__const_str{self.constants}"
     
     def _get_constlong_label(self) -> str:
         self.constants +=1
-        return f"__const_long_{self.constants}"
+        return f"__const_long{self.constants}"
 
     def _get_constreal_label(self) -> str:
         self.constants +=1
-        return f"__const_real_{self.constants}"
+        return f"__const_real{self.constants}"
     
-    def _get_for_labels(self) -> tuple[str,str]:
+    def _get_for_labels(self) -> tuple[str,str,str,str]:
         self.constants +=1
-        return (f"__forloop_start_{self.constants}", f"__forloop_end_{self.constants}")
+        return (
+            f"__forloop_start{self.constants}",
+            f"__forloop_end{self.constants}",
+            f"__forloop_endv{self.constants}",
+            f"__forloop_stepv{self.constants}",
+            )
 
     def _get_while_labels(self) -> tuple[str,str]:
         self.constants +=1
-        return (f"__whileloop_start_{self.constants}", f"__whileloop_end_{self.constants}")
+        return (f"__whileloop_start{self.constants}", f"__whileloop_end_{self.constants}")
 
     def _get_if_labels(self) -> tuple[str,str]:
         self.constants +=1
-        return (f"__if_else_{self.constants}", f"__if_end_{self.constants}")
+        return (f"__if_else_{self.constants}", f"__if_end{self.constants}")
 
     def _get_symbol_label(self) -> str:
         self.constants +=1
-        return f"__symbol_{self.constants}"
+        return f"__symbol{self.constants}"
 
     def _get_userfun_label(self, name) -> str:
         symname = name.replace("$", "_S").replace("%", "_I").replace("!", "_R").replace(".", "_")
@@ -381,15 +386,15 @@ class CPCEmitter:
     
     def _get_env_label(self) -> str:
         self.constants +=1
-        return f"__sound_env_{self.constants}"
+        return f"__sound_env{self.constants}"
     
     def _get_ent_label(self) -> str:
         self.constants +=1
-        return f"__sound_ent_{self.constants}"
+        return f"__sound_ent{self.constants}"
 
     def _get_onjump_label(self) -> str:
         self.constants +=1
-        return f"__on_jump_{self.constants}"
+        return f"__on_jump{self.constants}"
 
     def _set_select_case_labels(self, node:AST.SelectCase) -> None:
         node.case_labels = []
@@ -1452,40 +1457,30 @@ class CPCEmitter:
         defaults to 1. 
         """
         sym = self.symtable.find(node.var.name, SymType.Variable, self.context)
-        startlab, endlab = self._get_for_labels()
+        startlab, endlab, endv, steplab = self._get_for_labels()
         node.start_label = startlab
         node.end_label = endlab
+        node.step_label = steplab
         hasstep = node.step is not None
         if sym is not None:
             self._emit_code("; FOR <variable> = <start> TO <end> [STEP <size>]")
             self._emit_expression(node.start)
             self._emit_code(f"ld      ({sym.label}),hl", info = "index initial value")
-            if not isinstance(node.end, AST.Integer):
-                # A variable or expression that may even change as a result of the
-                # FOR body needs to record its actual value to be cosistent with the
-                # Locomotive BASIC behaviour
-                self._emit_expression(node.end)
-                self._emit_code("push    hl", info = "store calculated END value")
-            if hasstep and not isinstance(node.step, AST.Integer):
-                # Same as FOR end value with expressions
+            self._emit_expression(node.end)
+            self._emit_code(f"ld      ({endv}+1),hl")
+            if hasstep:
                 self._emit_expression(node.step) # type: ignore [arg-type]
-                self._emit_code("push    hl", info="store calculated STEP value")           
+                self._emit_code(f"ld      ({steplab}A+1),hl")
+                self._emit_code(f"ld      ({steplab}B+1),hl")
             # clear temporal memory used by the expressions
             self._emit_free_heapmem()
-
             self._emit_code(startlab, 0, info="FOR LOOP BODY")
             self._emit_code(f"ld      de,({sym.label})", info="current index value")
-            if isinstance(node.end, AST.Integer):
-                self._emit_code(f"ld      hl,{node.end.value}", info="END value")
-            else:
-                self._emit_code("pop     hl", info="END value")
-                self._emit_code("push    hl")               
+            self._emit_code(f"{endv}:")
+            self._emit_code("ld      hl,&BAAD", info="END value (self-modified code)")
             if hasstep:
-                if isinstance(node.step, AST.Integer):
-                    self._emit_code(f"ld      bc,{node.step.value}", info="STEP value")
-                else:
-                    self._emit_code("pop     bc", info="STEP value")
-                    self._emit_code("push    bc")
+                self._emit_code(f"{steplab}A:")
+                self._emit_code("ld      bc,&BAAD", info="STEP value (self-modified code)")
                 self._emit_code("bit     7,b", info="STEP sign")
                 self._emit_code("jr      z,$+3")
                 self._emit_code("ex      de,hl")
@@ -2442,21 +2437,14 @@ class CPCEmitter:
         self._emit_code("; NEXT [<variable>]")
         self._emit_code(f"ld      hl,({fornode.var_label})")
         if fornode.step is not None:
-            if isinstance(fornode.step, AST.Integer):
-                self._emit_code(f"ld      bc,{fornode.step.value}", info="STEP value")
-            else:
-                self._emit_code("pop     bc", info="STEP value")
-                self._emit_code("push    bc")               
+            self._emit_code(f"{fornode.step_label}B:")
+            self._emit_code("ld      bc,&BAAD", info="STEP value (self-modified code)")           
             self._emit_code("add     hl,bc")
         else:
             self._emit_code("inc     hl")
         self._emit_code(f"ld      ({fornode.var_label}),hl")
         self._emit_code(f"jp      {fornode.start_label}")
         self._emit_code(f"{fornode.end_label}:", 0)
-        if fornode.step is not None and not isinstance(fornode.step, AST.Integer):
-            self._emit_code("pop     bc")
-        if not isinstance(fornode.end, AST.Integer):
-            self._emit_code("pop     hl")
         self._emit_code(";")
 
     def _emit_ON_GOSUB(self, node:AST.Command) -> None:
