@@ -3114,12 +3114,6 @@ class CPCEmitter:
                 self._raise_error(3, node)
             self._emit_expression(node.args[0])
             self._emit_free_heapmem()
-        # We could be leaving FOR loops with pushed values so let's address it
-        for fornode in reversed(self.forloops):
-            if fornode.step is not None and not isinstance(fornode.step, AST.Integer):
-                self._emit_code("pop     hl", info="remove STEP value from stack")
-            if not isinstance(fornode.end, AST.Integer):
-                self._emit_code("pop     hl", info="remove END value from stack")
         self._emit_code("ret")
         self._emit_code(";")
 
