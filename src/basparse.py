@@ -794,16 +794,17 @@ class LocBasParser:
         vartype = AST.exptype_fromname(var)
         datasz = AST.exptype_memsize(vartype)
         sizes = [10]
+        sizesexp: list[AST.Statement] = []
         self._expect(start)
         if not self._current_is(TokenType.RPAREN):
-            tk = self._parse_int_or_constant()
-            sizes = [cast(int, tk.value)]
-            if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
+            # We set the current elements to BASIC default 10 and leave
+            # the optimizer and emitter to deal with real dimensions so expressions
+            # can get the oportunity to be reduced to literal integers.
+            sizesexp = [self._parse_int_expression(allowcast=False)]
             while self._current_is(TokenType.COMMA):
                 self._advance()
-                tk = self._parse_int_or_constant()
-                sizes.append(cast(int, tk.value))
-                if sizes[-1] < 0 or sizes[-1] > 255: self._raise_error(9, tk)
+                sizesexp.append(self._parse_int_expression(allowcast=False))
+                sizes.append(10)
         self._expect(end)
         if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
             self._advance()
@@ -811,7 +812,7 @@ class LocBasParser:
             datasz = cast(int, num.value) + 1
             if datasz > 255 or datasz < 1:
                 self._raise_error(6, num, info="valid string size range is [1 - 255]")
-        return AST.Array(name=var, etype=vartype, sizes=sizes, datasz=datasz)
+        return AST.Array(name=var, etype=vartype, sizes=sizes, sizesexp=sizesexp, datasz=datasz)
 
     @astnode
     def _parse_DRAW(self) -> AST.Command:
@@ -2240,7 +2241,6 @@ class LocBasParser:
             tk = self._expect(TokenType.IDENT)
             var = tk.lexeme
             vartype = AST.exptype_fromname(var)
-            datasz = AST.exptype_memsize(vartype)
             added = False
             if self._current_is(TokenType.LBRACK):
                 self._advance()
@@ -3054,7 +3054,7 @@ class LocBasParser:
                 vartype = AST.exptype_fromname(tk.lexeme)
                 self._expect(TokenType.LBRACK)
                 self._expect(TokenType.RBRACK)
-                args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], datasz=2))
+                args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], sizesexp=[], datasz=2))
             else:
                 args.append(self._parse_expression())
             while self._current_is(TokenType.COMMA):
@@ -3064,7 +3064,7 @@ class LocBasParser:
                     vartype = AST.exptype_fromname(tk.lexeme)
                     self._expect(TokenType.LBRACK)
                     self._expect(TokenType.RBRACK)
-                    args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], datasz=2))
+                    args.append(AST.Array(name=tk.lexeme, etype=vartype, sizes=[], sizesexp=[], datasz=2))
                 else:
                     args.append(self._parse_expression()) 
         self._expect(TokenType.RPAREN)

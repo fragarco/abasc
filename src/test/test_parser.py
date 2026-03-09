@@ -459,7 +459,7 @@ class TestParser(unittest.TestCase):
             self.assertEqual(ast.lines[0].statements[0].name, "DIM")
             for arg in ast.lines[0].statements[0].args:
                 self.assertIsInstance(arg, AST.Array)
-        codes = ['10 DIM I("A")', '10 DIM I$(1.5)', '10 DIM I$(3*3)']
+        codes = ['10 DIM I("A")', '10 DIM I$(1.5)']
         for code in codes:
             with self.assertRaises(BasError):
                 self.parse_code(code)

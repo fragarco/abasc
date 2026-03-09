@@ -3152,6 +3152,7 @@ SUB         rsSetMode(nmode)
 * Versión 1.0.4
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
   - Optimiza los bucles FOR.
+  - Permite usar expressiones de resultado constante en la declaración de arrays.
   - Arregla un fallo si se usaba RETURN dentro de un bucle FOR.
   - Evita emitir código para las variables locales de rutinas que no se usan.
   - Incluye el clásico programa Amthello en la sección de ejemplos.

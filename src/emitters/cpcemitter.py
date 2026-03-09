@@ -1112,11 +1112,17 @@ class CPCEmitter:
         or an error will result.
        """
         self._emit_code("; DIM <list of: subscripted variable>")
-        # We don't really emit code here but check that we don't consume 
+        # We don't emit code here but we check that all indexes have
+        # a literal integer as its value and that we don't consume 
         # more than 28K of central memory leaving 4K max for code.
         for var in node.args:
             if isinstance(var, AST.Array):
                 entry = self.symtable.find(var.name, SymType.Array, context=self.context)
+                for i in range(0, len(var.sizesexp)):
+                    if isinstance(var.sizesexp[i], AST.Integer):
+                        entry.indexes[i] = var.sizesexp[i].value # type: ignore [attr-defined, union-attr]
+                    else:
+                        self._raise_error(2, var, info="Array index must be a constant expression")
                 if entry is not None:
                     mem = 1
                     for index in entry.indexes: mem = mem * (index + 1)

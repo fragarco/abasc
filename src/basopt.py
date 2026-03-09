@@ -84,6 +84,13 @@ class BasOptimizer:
                     entry.const = node.args[1]
         return node
 
+    def _op_DIM(self, node:AST.Command) -> AST.Statement:
+        for arg in node.args:
+            if isinstance(arg, AST.Array):
+                for i in range(0, len(arg.sizesexp)):
+                    arg.sizesexp[i] = self._op_statement(arg.sizesexp[i])
+        return node
+
     def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
         self.context = ""
         return node

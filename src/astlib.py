@@ -277,19 +277,22 @@ class Variable(Statement):
     
 class Array(Statement):
     name: str
-    sizes: list[int]
+    sizes: list[int]          # Used by emitter to reserve array's required memory
+    sizesexp: list[Statement] # Expressions that allow emitter to set each index size
     datasz: int
 
-    def __init__(self, name: str, etype: ExpType, sizes: list[int], datasz: int) -> None:
+    def __init__(self, name: str, etype: ExpType, sizes: list[int], sizesexp: list[Statement], datasz: int) -> None:
         super().__init__(etype=etype, id="Array")
         self.name = name
         self.sizes = sizes
+        self.sizesexp = sizesexp
         self.datasz = datasz
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
         d["sizes"] = self.sizes
+        d["sizesexp"] = [a.to_json() for a in self.sizesexp]
         d["datasz"] = self.datasz
         return d
 
