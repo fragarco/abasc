@@ -84,11 +84,19 @@ class BasOptimizer:
                     entry.const = node.args[1]
         return node
 
+    def _op_DECLARE(self, node:AST.Command) -> AST.Statement:
+        for arg in node.args:
+            if isinstance(arg, AST.Variable) and arg.fixedexp is not None:
+                arg.fixedexp = self._op_statement(arg.fixedexp)
+        return node
+
     def _op_DIM(self, node:AST.Command) -> AST.Statement:
         for arg in node.args:
             if isinstance(arg, AST.Array):
                 for i in range(0, len(arg.sizesexp)):
                     arg.sizesexp[i] = self._op_statement(arg.sizesexp[i])
+                if arg.fixedexp is not None:
+                    arg.fixedexp = self._op_statement(arg.fixedexp)
         return node
 
     def _op_END_FUNCTION(self, node: AST.Command) -> AST.Statement:
@@ -145,6 +153,12 @@ class BasOptimizer:
                 nnode.line = node.args[0].line
                 nnode.col = node.args[0].col
                 return nnode
+        return node
+
+    def _op_RECORD(self, node:AST.Command) -> AST.Statement:
+        for arg in node.args:
+            if isinstance(arg, AST.Variable) and arg.fixedexp is not None:
+                arg.fixedexp = self._op_statement(arg.fixedexp)
         return node
 
     def _op_WHILE(self, node:AST.WhileLoop) -> AST.Statement:

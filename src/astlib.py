@@ -265,14 +265,17 @@ class String(Statement):
 
 class Variable(Statement):
     name: str
+    fixedexp: Optional[Statement]
 
-    def __init__(self, name: str, etype: ExpType) -> None:
+    def __init__(self, name: str, etype: ExpType, fixedexp: Optional[Statement] = None) -> None:
         super().__init__(etype=etype, id="Variable")
         self.name = name
+        self.fixedexp = fixedexp
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
+        d["fixedexp"] = self.fixedexp.to_json() if self.fixedexp else None
         return d
     
 class Array(Statement):
@@ -280,13 +283,21 @@ class Array(Statement):
     sizes: list[int]          # Used by emitter to reserve array's required memory
     sizesexp: list[Statement] # Expressions that allow emitter to set each index size
     datasz: int
+    fixedexp: Optional[Statement] 
 
-    def __init__(self, name: str, etype: ExpType, sizes: list[int], sizesexp: list[Statement], datasz: int) -> None:
+    def __init__(self,
+                 name: str,
+                 etype: ExpType,
+                 sizes: list[int],
+                 sizesexp: list[Statement],
+                 datasz: int,
+                 fixedexp: Optional[Statement] = None) -> None:
         super().__init__(etype=etype, id="Array")
         self.name = name
         self.sizes = sizes
         self.sizesexp = sizesexp
         self.datasz = datasz
+        self.fixedexp = fixedexp
 
     def to_json(self) -> dict:
         d = super().to_json()
@@ -294,6 +305,7 @@ class Array(Statement):
         d["sizes"] = self.sizes
         d["sizesexp"] = [a.to_json() for a in self.sizesexp]
         d["datasz"] = self.datasz
+        d["fixedexp"] = self.fixedexp.to_json() if self.fixedexp else None
         return d
 
 class ArrayItem(Statement):

@@ -579,13 +579,11 @@ class LocBasParser:
             var = tk.lexeme
             vartype = AST.exptype_fromname(var)
             datasz = AST.exptype_memsize(vartype)
+            fixedexp: Optional[AST.Statement] = None
             if vartype == AST.ExpType.String:
                 if self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
                     self._advance()
-                    num = self._parse_int_or_constant()
-                    datasz = cast(int, num.value) + 1
-                    if datasz > 255 or datasz < 2:
-                        self._raise_error(6, num, info="valid string size range is [1 - 254]")
+                    fixedexp = self._parse_int_expression(allowcast=False)
             added = self.symtable.add(
                 ident=var,
                 info=SymEntry(
@@ -598,7 +596,9 @@ class LocBasParser:
             )
             if not added:
                 self._raise_error(2, tk)
-            args.append(AST.Variable(var, vartype))
+            varnode = AST.Variable(var, vartype, fixedexp)
+            varnode.set_origin(tk.line, tk.col)
+            args.append(varnode)
             if self._current_is(TokenType.COMMA):
                 self._advance()
             else:
@@ -806,13 +806,11 @@ class LocBasParser:
                 sizesexp.append(self._parse_int_expression(allowcast=False))
                 sizes.append(10)
         self._expect(end)
+        fixedexp: Optional[AST.Statement] = None
         if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
             self._advance()
-            num = self._parse_int_or_constant()
-            datasz = cast(int, num.value) + 1
-            if datasz > 255 or datasz < 1:
-                self._raise_error(6, num, info="valid string size range is [1 - 255]")
-        return AST.Array(name=var, etype=vartype, sizes=sizes, sizesexp=sizesexp, datasz=datasz)
+            fixedexp = self._parse_int_expression(allowcast=False)
+        return AST.Array(var, vartype, sizes, sizesexp, datasz, fixedexp)
 
     @astnode
     def _parse_DRAW(self) -> AST.Command:
@@ -2051,18 +2049,18 @@ class LocBasParser:
         if self.context != "":
             self._raise_error(2, tk, "records must be declared in the global scope")
         tk = self._expect(TokenType.IDENT)
-        offset = 0
         root = tk.lexeme
         self._expect(TokenType.SEMICOLON)
+        args: list[AST.Statement] = [AST.String(value=root)]
         while self._current_is(TokenType.IDENT):
             argtk = self._expect(TokenType.IDENT)
             var = root + "." + argtk.lexeme
             vartype = AST.exptype_fromname(argtk.lexeme)
             datasz = AST.exptype_memsize(vartype)
+            fixedexp: Optional[AST.Statement] = None
             if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
                 self._advance()
-                num = self._parse_int_or_constant()
-                datasz = cast(int, num.value) + 1
+                fixedexp = self._parse_int_expression(allowcast=False)
             inserted = self.symtable.add(
                 ident=var,
                 info=SymEntry(
@@ -2070,17 +2068,18 @@ class LocBasParser:
                     exptype=vartype,
                     locals=SymTable(),
                     datasz=datasz,
-                    memoff=offset
                 ),
             )
             if not inserted:
                 self._raise_error(2, tk, info="record redifinition")
-            offset = datasz + offset
+            recordvar = AST.Variable(var, vartype, fixedexp)
+            recordvar.set_origin(argtk.line, argtk.col)
+            args.append(recordvar)
             if self._current_is(TokenType.COMMA):
                 self._advance()
             else:
                 break
-        return AST.Command(name="RECORD")
+        return AST.Command(name="RECORD", args=args)
 
     @astnode
     def _parse_RELEASE(self) -> AST.Command:

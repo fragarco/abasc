@@ -944,6 +944,19 @@ class CPCEmitter:
         lower than 254 (+1 for size) for strings.
         """
         self._emit_code("; DECLARE list of: <string ident> [FIXED INT] | <ident>")
+        # We don't really emit code here but let's check if we have string variables
+        # using the FIXED command, so we can raise an error if we don't have a
+        # constant value. Otherwise let's update the symbol.
+        for arg in node.args:
+            if isinstance(arg, AST.Variable) and arg.fixedexp is not None:
+                if isinstance(arg.fixedexp, AST.Integer):
+                    entry = self.symtable.find(arg.name, SymType.Variable, self.context)
+                    if entry is not None:
+                        entry.datasz = arg.fixedexp.value
+                    else:
+                        self._raise_error(2, arg)
+                else:
+                    self._raise_error(2, arg, info="FIXED value must be a constant expression")
         self._emit_code(";")
 
     def _emit_DECSS(self, node:AST.Function) -> None:
@@ -1118,12 +1131,17 @@ class CPCEmitter:
         for var in node.args:
             if isinstance(var, AST.Array):
                 entry = self.symtable.find(var.name, SymType.Array, context=self.context)
-                for i in range(0, len(var.sizesexp)):
-                    if isinstance(var.sizesexp[i], AST.Integer):
-                        entry.indexes[i] = var.sizesexp[i].value # type: ignore [attr-defined, union-attr]
-                    else:
-                        self._raise_error(2, var, info="Array index must be a constant expression")
                 if entry is not None:
+                    for i in range(0, len(var.sizesexp)):
+                        if isinstance(var.sizesexp[i], AST.Integer):
+                            entry.indexes[i] = var.sizesexp[i].value # type: ignore [attr-defined, union-attr]
+                        else:
+                            self._raise_error(2, var, info="Array index must be a constant expression")
+                    if var.fixedexp is not None:
+                        if isinstance(var.fixedexp, AST.Integer):
+                            entry.datasz = var.fixedexp.value + 1
+                        else:
+                            self._raise_error(2, var, info="FIXED value must be a constant expression")
                     mem = 1
                     for index in entry.indexes: mem = mem * (index + 1)
                     mem = mem * entry.datasz
@@ -3000,7 +3018,23 @@ class CPCEmitter:
         struct or record.
         """
         self._emit_code("; RECORD IDENT; IDENT[,IDENT]*")
-        # this is managed through the symbols table
+        # We don't really emit code here but we check if we have any FIXED
+        # statement, check that it is constant and update the symbol table
+        # with all the offsets.
+        offset = 0
+        for arg in node.args:
+            if isinstance(arg, AST.Variable):
+                entry = self.symtable.find(arg.name, SymType.Record)
+                if entry is not None:
+                    if arg.fixedexp is not None:
+                        if isinstance(arg.fixedexp, AST.Integer):
+                            entry.datasz = arg.fixedexp.value + 1
+                        else:
+                            self._raise_error(2, arg, info="FIXED value must be a constant expression")
+                    entry.memoff = offset
+                    offset = offset + entry.datasz
+                else:
+                    self._raise_error(2, arg)
         self._emit_code(";")
 
     def _emit_RELEASE(self, node:AST.Command) -> None:
@@ -4043,7 +4077,7 @@ class CPCEmitter:
             label = self.issued_real_constants[vstr]
         self._emit_code(f"ld      hl,{label}")
 
-    def _emit_record(self, node: AST.Variable) -> None:
+    def _emit_recordvar(self, node: AST.Variable) -> None:
         varname, rname = node.name.split('$.')
         varname = varname + "$" # restore data type character
         var = self.symtable.find(varname, SymType.Variable, self.context)
@@ -4077,7 +4111,7 @@ class CPCEmitter:
         memory but are stored in the call stack frame and accessed through IX.
         """
         if "$." in node.name:
-            self._emit_record(node)
+            self._emit_recordvar(node)
             return
         entry = self.symtable.find(node.name, SymType.Param, context=self.context)
         if entry is None:

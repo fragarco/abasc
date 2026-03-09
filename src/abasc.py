@@ -82,6 +82,7 @@ def process_args() -> AbascOptions:
     opts.debug = args.debug
     opts.startaddr = args.start
     opts.dataaddr = args.data
+    opts.verbose = args.verbose
     return opts
 
 def clear(srcfile: str) -> None:
