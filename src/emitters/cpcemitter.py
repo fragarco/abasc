@@ -1360,6 +1360,7 @@ class CPCEmitter:
         """
         self._emit_code("; ERL")
         self._raise_warning(WL.MEDIUM, "ERL is ignored and has no effect", node)
+        self._emit_code("ld      hl,0", info ="ERL always returns 0")
         self._emit_code("; IGNORED")
 
     def _emit_ERR(self, node:AST.Function) -> None:
@@ -1568,12 +1569,12 @@ class CPCEmitter:
         """
         Adopted from Locomotive BASIC 2 Plus, FUNCTION allows the program to define
         and use simple functions ended with END FUNCTION. Values are turned using
-        RETURN call.
-        It may be invoked throughout the program as regular functions. Variable types
-        must be consistent and the FUNCTION command should be written in part of the
-        program outside the execution loop AND BEFORE the function is called. 
+        the statement <function name> = <value>.
+        It may be invoked throughout the program as regular functions. Argument types
+        must be consistent and the FUNCTION command should be written BEFORE the function
+        is called. 
         """
-        self._emit_code("; FUNCTION <name> [(<formal parameters>)]=<general expression>")
+        self._emit_code("; FUNCTION <name>[(<formal parameters>)] [ASM]")
         self._emit_code(";")
         self.context = node.name
         flabel = self._get_userfun_label(node.name)
