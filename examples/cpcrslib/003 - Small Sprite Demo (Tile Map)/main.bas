@@ -93,9 +93,9 @@ label MAIN
     call InitSpriteStruct(sprites$(2), SPRITE2, 20, 100, 0, 2)
 
     call DrawTilemap()      ' Drawing the tile map
-    call rsShowTileMap()    ' Show entire tile map in the screen
+    call rsRenderTileMap()
     call PrintCredits()
-    call rsShowTileMap2()
+    call rsShowTileMap()    ' Show entire tile map in the screen
     while 1 
         ' We use by default the cursor keys to move the character sprite
         ' 0: cursor right
@@ -177,7 +177,7 @@ label MAIN
         call rsPutMaskSpTileMap2b(sprites$(0))
         call rsPutMaskSpTileMap2b(sprites$(1))
         call rsPutMaskSpTileMap2b(sprites$(2))
-        call rsShowTileMap2() ' Show the touched tiles-> show the new sprite situatuion
+        call rsShowTileMap() ' Show the touched tiles-> show the new sprite situatuion
 
         ' Test if there is collision between sprite00 and sprite01
         if rsCollSp(sprites$(0), sprites$(1)) then call ShowCollision()

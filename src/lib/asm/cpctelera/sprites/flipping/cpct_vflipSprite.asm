@@ -99,7 +99,7 @@
 ;;   *W* = *width*, *H* = *height*, *HH* = int(*height*/2)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-read 'cpctelera/macros/cpct_maths.asm'
+read 'asm/cpctelera/macros/cpct_maths.asm'
 
 cpct_vflipSprite:
    ;; Store width in its placeholder. This will enable it

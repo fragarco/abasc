@@ -2761,6 +2761,7 @@ SUB         cpctHFlipSpriteM2r(sprite, w, h)
 SUB         cpctHFlipSpriteMaskedM0(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM1(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM2(w, h, sprite)
+SUB         cpctVFlipSprite(w, h, sptl, spbl)
 
 SUB         cpctGetScreenToSprite(vmem, sprite, w, h)
 
@@ -3101,17 +3102,15 @@ SUB rsSetInkGphStrM1(indind, color)
 SUB         rsInitTileMap
 SUB         rsSetTile(x, y, tile)
 FUNCTION    rsReadTile(x, y)
+SUB         rsRenderTileMap
 SUB         rsShowTileMap
-SUB         rsShowTileMap2
 SUB         rsResetTouchedTiles
 SUB         rsPutSpTileMap(rssprite$)
 SUB         rsUpdScr
 SUB         rsPutSpTileMap2b(rssprite$)
 SUB         rsPutMaskSpTileMap2b(rssprite$)
-SUB         rsUpdTileTable(x, y)
+SUB         rsTouchTileXY(x, y)
 FUNCTION    rsGetDoubleBufferAddress(x, y)
-SUB         rsScrollLeft00
-SUB         rsScrollRight00
 ```
 
 * `cpcrslib/utils`

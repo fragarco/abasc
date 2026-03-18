@@ -37,7 +37,7 @@ label MAIN
 
     z = 0
 	while rsAnyKeyPressed() = 0 ' Small scrolling effect
-	   	z = z = 0
+	   	z = not z
 	   	if z then
 	      	call rsRRI(&E000, 40, 79)
 	      	call rsRRI(&E4B0, 32, 79)

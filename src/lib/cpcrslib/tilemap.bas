@@ -21,12 +21,12 @@ FUNCTION rsReadTile(x, y) ASM
     ASM "read 'asm/cpcrslib/tilemap/gettile.asm'"
 END FUNCTION
 
-SUB rsShowTileMap ASM
+SUB rsRenderTileMap ASM
     ASM "jp      cpc_RenderTileMap"
     ASM "read 'asm/cpcrslib/tilemap/rendertilemap.asm'"
 END SUB
 
-SUB rsShowTileMap2 ASM
+SUB rsShowTileMap ASM
     ASM "jp      cpc_ShowTileMap"
     ASM "read 'asm/cpcrslib/tilemap/showtilemap.asm'"
 END SUB
@@ -62,7 +62,7 @@ SUB rsPutMaskSpTileMap2b(rssprite$) ASM
     ASM "read 'asm/cpcrslib/tilemap/drawmasksptilemap.asm'"
 END SUB
 
-SUB rsUpdTileTable(x, y) ASM
+SUB rsTouchTileXY(x, y) ASM
     ASM "ld      e,(ix+0) ; Y"
     ASM "ld      d,(ix+2) ; X"
     ASM "jp      cpc_AddDirtyTile"
@@ -75,17 +75,3 @@ FUNCTION rsGetDoubleBufferAddress(x, y) ASM
     ASM "jp      cpc_GetDoubleBufferAddress"
     ASM "read 'asm/cpcrslib/tilemap/getdblbufferaddress.asm'"
 END FUNCTION
-
-SUB rsScrollLeft00 ASM
-    ASM "jp      cpc_ScrollLeft00"
-    ASM "read 'asm/cpcrslib/tilemap/scrollleft.asm'"
-END SUB
-
-SUB rsScrollRight00 ASM
-    ASM "jp      cpc_ScrollRight00"
-    ASM "read 'asm/cpcrslib/tilemap/scrollright.asm'"
-END SUB
-
-
-
-

@@ -19,8 +19,8 @@
 ; DEALINGS IN THE SOFTWARE.
 
 ; CPC_RLI
-; Rotates the given number of lines to the right. The lines that go out of the
-; screen are appended on the LEFT.
+; Rotates the given rectangle one byte to the right. The column that goes out of the
+; rectangle is moved to the LEFT.
 ; Inputs:
 ;     HL video memory address
 ;     DE height (D) and width (E)

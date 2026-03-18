@@ -432,8 +432,16 @@ SUB cpctHFlipSpriteMaskedM2(w, h, sprite) ASM
     ASM "read 'asm/cpctelera/sprites/flipping/cpct_hflipSpriteMaskedM2.asm'"
 END SUB
 
-
-
+SUB cpctVFlipSprite(w, h, sptl, spbl) ASM
+    ASM "ld      e,(ix+0)  ; spbl - Pointer to the bottom-left byte of the sprite"
+    ASM "ld      d,(ix+1)"
+    ASM "ld      l,(ix+2)  ; sptl - Pointer to the top-left byte of the sprite"
+    ASM "ld      h,(ix+3)"
+    ASM "ld      b,(ix+4)  ; h - Height of the sprite in pixels / bytes (both are the same). Must be >= 1"
+    ASM "ld      c,(ix+6)  ; w - Width of the sprite in *bytes* (*NOT* in pixels!). Must be >= 1."
+    ASM "jp      cpct_hflipSpriteMaskedM2"
+    ASM "read 'asm/cpctelera/sprites/flipping/cpct_vflipSprite.asm'"
+END SUB
 
 SUB cpctGetScreenToSprite(vmem, sprite, w, h) ASM
     ASM "ld      b,(ix+0)  ; h - Sprite Height in bytes (>0)"
