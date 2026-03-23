@@ -2368,8 +2368,10 @@ SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 ' a esta rutina se elija el sprite a pintar mediante un RESTORE.
 ' Los dos primeros bytes de información del sprite indican su 
 ' tamaño (W y H).
-SUB scrDrawSprite(x, y)()
-FUNCTION scrPeekColor(x, y)()
+SUB scrDrawSprite(x, y)
+SUB scrDRawSpriteXOR(x, y)
+
+FUNCTION scrPeekColor(x, y)
 
 ' Rutinas que utilizan el firmware para proporcionar soporte para un
 ' doble buffer. El segundo buffer de vídeo utiliza la memoria desde

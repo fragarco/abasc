@@ -156,6 +156,41 @@ SUB scrDrawSprite(x, y) ASM
     ASM "ret"
 END SUB
 
+SUB scrDrawSpriteXOR(x, y) ASM
+    ' Draws a sprite of W bytes x H lines in the position X,Y'
+    ' SPRITE data (including W and H) will be read from the current
+    ' DATA pointer so it can be set using RESTORE.
+    ' That address is available in the ABASC variable rt_data_ptr.
+    ASM "ld      e,(ix+2) ; x-pos"
+    ASM "ld      d,(ix+3)"
+    ASM "ld      l,(ix+0) ; y-pos"
+    ASM "ld      h,(ix+1)"
+    ASM "call    &BC1D    ; SCR_DOT_POSITION"
+    ASM "ld      de,(rt_data_ptr)"
+    ASM "ld      a,(de)   ; width in bytes"
+    ASM "ld      b,a"
+    ASM "inc     de"
+    ASM "ld      a,(de)   ; height in lines"
+    ASM "ld      c,a"
+    ASM "inc     de"
+    ASM "__draw_spxor_line:"
+    ASM "push    bc"
+    ASM "push    hl"
+    ASM "__draw_spxor_ldir:"
+    ASM "ld      a,(de)"
+    ASM "xor     (hl)"
+    ASM "ld      (hl),a"
+    ASM "inc     hl"
+    ASM "inc     de"
+    ASM "djnz    __draw_spxor_ldir"
+    ASM "pop     hl"
+    ASM "call    &BC26    ; SCR_NEXT_LINE"
+    ASM "pop     bc"
+    ASM "dec     c"
+    ASM "jr      nz,__draw_spxor_line"
+    ASM "ret"
+END SUB
+
 FUNCTION scrPeekColor(x, y) ASM
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+1)"

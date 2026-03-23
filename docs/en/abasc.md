@@ -2426,8 +2426,10 @@ SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 ' this routine, the sprite to be painted is chosen via a RESTORE.
 ' The first two bytes of sprite information indicate its
 ' size (W and H).
-SUB scrDrawSprite(x, y)()
-FUNCTION scrPeekColor(x, y)()
+SUB scrDrawSprite(x, y)
+SUB scrDrawSpriteXOR(x, y)
+
+FUNCTION scrPeekColor(x, y)
 
 ' Routines that use the firmware to provide support for a
 ' double buffer. The second video buffer uses memory starting
