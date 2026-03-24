@@ -191,6 +191,23 @@ SUB scrDrawSpriteXOR(x, y) ASM
     ASM "ret"
 END SUB
 
+SUB scrSetClippingView(x0, y0, x1, y1) ASM
+    ASM  "ld      l,(ix+0)"
+    ASM  "ld      h,(ix+1)"
+    ASM  "ld      (SCRVIEW_BOTTOM),hl"
+    ASM  "ld      l,(ix+2)"
+    ASM  "ld      h,(ix+3)"
+    ASM  "ld      (SCRVIEW_RIGHT),hl"
+    ASM  "ld      l,(ix+4)"
+    ASM  "ld      h,(ix+5)"
+    ASM  "ld      (SCRVIEW_TOP),hl"
+    ASM  "ld      l,(ix+6)"
+    ASM  "ld      h,(ix+7)"
+    ASM  "ld      (SCRVIEW_LEFT),hl"
+    ASM  "ret"
+    ASM  "read 'asm/base/clipping.asm'"
+END SUB
+
 FUNCTION scrPeekColor(x, y) ASM
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+1)"
