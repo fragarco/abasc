@@ -3134,7 +3134,8 @@ pantalla. Espera que la información de dicho sprite ’ se añada al
 programa mediante DATA, de forma que antes de llamar ’ a esta rutina se
 elija el sprite a pintar mediante un RESTORE. ’ Los dos primeros bytes
 de información del sprite indican su ’ tamaño (W y H). SUB
-scrDrawSprite(x, y)() FUNCTION scrPeekColor(x, y)()</p>
+scrDrawSprite(x, y) SUB scrDRawSpriteXOR(x, y)</p>
+<p>FUNCTION scrPeekColor(x, y)</p>
 <p>’ Rutinas que utilizan el firmware para proporcionar soporte para un
 ’ doble buffer. El segundo buffer de vídeo utiliza la memoria desde ’ la
 posición 0x4000. Los programas que usen estas rutinas deben ’ compilarse
@@ -3441,7 +3442,7 @@ SUB         cpctHFlipSpriteM2r(sprite, w, h)
 SUB         cpctHFlipSpriteMaskedM0(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM1(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM2(w, h, sprite)
-SUB         cpctDrawSpriteVFlip(sprite, vmem, w, h)
+SUB         cpctVFlipSprite(w, h, sptl, spbl)
 
 SUB         cpctGetScreenToSprite(vmem, sprite, w, h)
 
@@ -3763,17 +3764,15 @@ SUB rsSetInkGphStrM1(indind, color)</code></pre>
 <pre><code>SUB         rsInitTileMap
 SUB         rsSetTile(x, y, tile)
 FUNCTION    rsReadTile(x, y)
+SUB         rsRenderTileMap
 SUB         rsShowTileMap
-SUB         rsShowTileMap2
 SUB         rsResetTouchedTiles
 SUB         rsPutSpTileMap(rssprite$)
 SUB         rsUpdScr
 SUB         rsPutSpTileMap2b(rssprite$)
 SUB         rsPutMaskSpTileMap2b(rssprite$)
-SUB         rsUpdTileTable(x, y)
-FUNCTION    rsGetDoubleBufferAddress(x, y)
-SUB         rsScrollLeft00
-SUB         rsScrollRight00</code></pre>
+SUB         rsTouchTileXY(x, y)
+FUNCTION    rsGetDoubleBufferAddress(x, y)</code></pre>
 <ul>
 <li><code>cpcrslib/utils</code></li>
 </ul>
@@ -3877,7 +3876,7 @@ usan.</li>
 <li>Incluye el clásico programa Amthello en la sección de ejemplos.</li>
 <li>Incluye nuevos ejemplos de uso de CPCTELERA en el directorio
 <code>examples/cpctelera/advanced</code>.</li>
-<li>Añade nuevas rutinas a la librería <code>BASE</code>.</li>
+<li>Añade nuevas rutinas a la librería BASE.</li>
 </ul></li>
 <li>Versión 1.0.3
 <ul>

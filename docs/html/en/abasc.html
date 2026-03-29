@@ -3121,8 +3121,9 @@ y3) SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)</p>
 screen. Expects that the information for this sprite ’ has been added to
 the program via DATA, so that before calling ’ this routine, the sprite
 to be painted is chosen via a RESTORE. ’ The first two bytes of sprite
-information indicate its ’ size (W and H). SUB scrDrawSprite(x, y)()
-FUNCTION scrPeekColor(x, y)()</p>
+information indicate its ’ size (W and H). SUB scrDrawSprite(x, y) SUB
+scrDrawSpriteXOR(x, y)</p>
+<p>FUNCTION scrPeekColor(x, y)</p>
 <p>’ Routines that use the firmware to provide support for a ’ double
 buffer. The second video buffer uses memory starting ’ at position
 0x4000. Programs that use these routines must ’ be compiled with the
@@ -3430,6 +3431,7 @@ SUB         cpctHFlipSpriteM2r(sprite, w, h)
 SUB         cpctHFlipSpriteMaskedM0(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM1(w, h, sprite)
 SUB         cpctHFlipSpriteMaskedM2(w, h, sprite)
+SUB         cpctVFlipSprite(w, h, sptl, spbl)
 
 SUB         cpctGetScreenToSprite(vmem, sprite, w, h)
 
@@ -3752,17 +3754,15 @@ SUB rsSetInkGphStrM1(indind, color)</code></pre>
 <pre class="basic"><code>SUB         rsInitTileMap
 SUB         rsSetTile(x, y, tile)
 FUNCTION    rsReadTile(x, y)
+SUB         rsRenderTileMap
 SUB         rsShowTileMap
-SUB         rsShowTileMap2
 SUB         rsResetTouchedTiles
 SUB         rsPutSpTileMap(rssprite$)
 SUB         rsUpdScr
 SUB         rsPutSpTileMap2b(rssprite$)
 SUB         rsPutMaskSpTileMap2b(rssprite$)
-SUB         rsUpdTileTable(x, y)
-FUNCTION    rsGetDoubleBufferAddress(x, y)
-SUB         rsScrollLeft00
-SUB         rsScrollRight00</code></pre>
+SUB         rsTouchTileXY(x, y)
+FUNCTION    rsGetDoubleBufferAddress(x, y)</code></pre>
 <ul>
 <li><code>cpcrslib/utils</code></li>
 </ul>
@@ -3862,7 +3862,7 @@ starting address for the program area.</li>
 <li>Includes Amthello example.</li>
 <li>Adds new CPCTELERA examples under
 <code>examples/cpctelera/advanced</code> directory.</li>
-<li>Adds new routines in <code>base</code> library.</li>
+<li>Adds new routines in BASE library.</li>
 </ul></li>
 <li>Version 1.0.3
 <ul>
