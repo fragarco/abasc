@@ -3214,7 +3214,7 @@ SUB         rsSetMode(nmode)
   - Avoids emitting local variables for non-called routines.
   - Includes Amthello example.
   - Adds new CPCTELERA examples under `examples/cpctelera/advanced` directory.
-  - Adds new routines in `base` library.
+  - Adds new routines in BASE library.
 
 * Version 1.0.3
   - Generates intermediate files along the destination file instead of the source file.

@@ -3157,7 +3157,7 @@ SUB         rsSetMode(nmode)
   - Evita emitir código para las variables locales de rutinas que no se usan.
   - Incluye el clásico programa Amthello en la sección de ejemplos.
   - Incluye nuevos ejemplos de uso de CPCTELERA en el directorio `examples/cpctelera/advanced`.
-  - Añade nuevas rutinas a la librería `BASE`.
+  - Añade nuevas rutinas a la librería BASE.
   
 * Versión 1.0.3
   - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.
