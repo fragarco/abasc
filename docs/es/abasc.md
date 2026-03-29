@@ -3149,6 +3149,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+* Versión 1.0.5
+  -
+
 * Versión 1.0.4
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
   - Optimiza los bucles FOR.

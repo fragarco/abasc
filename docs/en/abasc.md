@@ -3206,6 +3206,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+* Version 1.0.5
+  -
+
 * Version 1.0.4
   - Adds the flag `--start` which allows users to specify the starting address for the program area.
   - Optimizes FOR loops.
