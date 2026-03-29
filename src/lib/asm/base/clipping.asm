@@ -1,6 +1,0 @@
-
-SCRVIEW_TOP:    dw  0
-SCRVIEW_BOTTOM: dw  200
-SCRVIEW_LEFT:   dw  0
-SCRVIEW_RIGHT:  dw  320
-
