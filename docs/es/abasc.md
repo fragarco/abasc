@@ -2362,14 +2362,13 @@ SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 
-' Dibuja un sprite de W bytes x H lines en la posición X,Y
-' de la pantalla. Espera que la información de dicho sprite
-' se añada al programa mediante DATA, de forma que antes de llamar
+' Dibuja un sprite de W bytes x H lines en la posición X (en bytes: 0-79),
+' Y (en lineas: 199-0) de la pantalla. Espera que la información de dicho
+' sprite se añada al programa mediante DATA, de forma que antes de llamar
 ' a esta rutina se elija el sprite a pintar mediante un RESTORE.
-' Los dos primeros bytes de información del sprite indican su 
-' tamaño (W y H).
-SUB scrDrawSprite(x, y)
-SUB scrDRawSpriteXOR(x, y)
+' Los dos primeros bytes de información del sprite indican su tamaño (W y H).
+SUB scrDrawSprite(xbyte, y)
+SUB scrDRawSpriteXOR(xbyte, y)
 
 FUNCTION scrPeekColor(x, y)
 

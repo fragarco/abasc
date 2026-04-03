@@ -125,16 +125,18 @@ SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4) ASM
     ASM "jp      &BBF6    ; GRA LINE ABSOLUTE"
 END SUB
 
-SUB scrDrawSprite(x, y) ASM
-    ' Draws a sprite of W bytes x H lines in the position X,Y'
+SUB scrDrawSprite(xbyte, y) ASM
+    ' Draws a sprite of W bytes x H lines in the position X (in bytes), Y (in lines)
     ' SPRITE data (including W and H) will be read from the current
     ' DATA pointer so it can be set using RESTORE.
     ' That address is available in the ABASC variable rt_data_ptr.
-    ASM "ld      e,(ix+2) ; x-pos"
-    ASM "ld      d,(ix+3)"
-    ASM "ld      l,(ix+0) ; y-pos"
+    ASM "ld      de,0"
+    ASM "ld      l,(ix+0) ; y-pos in lines (199-0)"
     ASM "ld      h,(ix+1)"
     ASM "call    &BC1D    ; SCR_DOT_POSITION"
+    ASM "ld      e,(ix+2) ; x-pos in bytes (0-79)"
+    ASM "ld      d,(ix+3)"
+    ASM "add     hl,de"
     ASM "ld      de,(rt_data_ptr)"
     ASM "ld      a,(de)   ; width in bytes"
     ASM "ld      c,a"
@@ -156,16 +158,18 @@ SUB scrDrawSprite(x, y) ASM
     ASM "ret"
 END SUB
 
-SUB scrDrawSpriteXOR(x, y) ASM
-    ' Draws a sprite of W bytes x H lines in the position X,Y'
+SUB scrDrawSpriteXOR(xbyte, y) ASM
+    ' Draws a sprite of W bytes x H lines in the position X (in bytes), Y (in lines)
     ' SPRITE data (including W and H) will be read from the current
     ' DATA pointer so it can be set using RESTORE.
     ' That address is available in the ABASC variable rt_data_ptr.
-    ASM "ld      e,(ix+2) ; x-pos"
-    ASM "ld      d,(ix+3)"
-    ASM "ld      l,(ix+0) ; y-pos"
+    ASM "ld      de,0"
+    ASM "ld      l,(ix+0) ; y-pos (in lines: 199-0)"
     ASM "ld      h,(ix+1)"
     ASM "call    &BC1D    ; SCR_DOT_POSITION"
+    ASM "ld      e,(ix+2) ; x-pos (in bytes: 0-79)"
+    ASM "ld      d,(ix+3)"
+    ASM "add     hl,de"
     ASM "ld      de,(rt_data_ptr)"
     ASM "ld      a,(de)   ; width in bytes"
     ASM "ld      b,a"

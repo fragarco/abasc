@@ -2420,14 +2420,13 @@ SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 
-' Draws a sprite of W bytes x H lines at position X,Y
-' on the screen. Expects that the information for this sprite
-' has been added to the program via DATA, so that before calling
-' this routine, the sprite to be painted is chosen via a RESTORE.
-' The first two bytes of sprite information indicate its
-' size (W and H).
-SUB scrDrawSprite(x, y)
-SUB scrDrawSpriteXOR(x, y)
+' Draws a sprite of W bytes x H lines at position X (in bytes: 0-79),
+' Y (in lines: 199-0) on the screen. Expects that the information for
+' this sprite has been added to the program via DATA, so that before
+' calling this routine, the sprite to be painted is chosen via a RESTORE.
+' The first two bytes of sprite information indicate its size (W and H).
+SUB scrDrawSprite(xbyte, y)
+SUB scrDrawSpriteXOR(xbyte, y)
 
 FUNCTION scrPeekColor(x, y)
 
