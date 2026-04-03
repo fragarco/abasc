@@ -27,16 +27,15 @@ GOTO MAIN
 
 LABEL INITGAME
     FOR i=0 TO 5
-        enemy.x(i) = 10 + (i*30)
+        enemy.x(i) = 2 + (i*8)
         enemy.y(i) = 200
         enemy.active(i) = 1
     NEXT
-
     enemy.times = 0
-    enemy.movx  = 4
+    enemy.movx  = 1
     enemy.movy  = -2
 
-    hero.x = 140
+    hero.x = 35
 
     bullet.active = 0
     bullet.x = 0
@@ -46,17 +45,17 @@ LABEL INITGAME
 RETURN
 
 LABEL MOVHERO
-    IF INKEY(1) = 0 THEN hero.x = hero.x + 4
-    IF INKEY(8) = 0 THEN hero.x = hero.x - 4
+    IF INKEY(1) = 0 THEN hero.x = hero.x + 1
+    IF INKEY(8) = 0 THEN hero.x = hero.x - 1
     IF INKEY(47)= 0 AND bullet.active = 0 THEN
         bullet.active = 1
-        bullet.x = hero.x+ 14
+        bullet.x = hero.x + 2
         bullet.y = HEROY + 8
         bulletsfired = bulletsfired + 1
         GOSUB PLAYSHOOT
     END IF
     IF hero.x < 1  THEN hero.x = 1
-    IF hero.x > 288 THEN hero.x = 288
+    IF hero.x > 70 THEN hero.x = 70
 RETURN
 
 LABEL MOVENEMIES
@@ -70,8 +69,8 @@ LABEL MOVENEMIES
     enemy.times = enemy.times + 1
     IF enemy.y(0) < 100 THEN enemy.movy = 2
     IF enemy.y(0) > 196 THEN enemy.movy = -2
-    IF enemy.x(0) > 100 THEN enemy.movx = -4
-    IF enemy.x(0) < 10  THEN enemy.movx = 4
+    IF enemy.x(0) > 30  THEN enemy.movx = -1
+    IF enemy.x(0) < 1   THEN enemy.movx = 1
 RETURN
 
 LABEL MOVBULLET
@@ -86,11 +85,10 @@ RETURN
 
 LABEL CHECKCOLLISIONS
     ' Lets fine-tuning a little bit more the bounding box for the bullet
-    bx = bullet.x + 2
     IF bullet.active THEN
         FOR i=0 to 5
             IF enemy.active(i) THEN
-                IF scrCheckRectRect(bx, bullet.y, 2, 6, enemy.x(i), enemy.y(i), 32, 15) THEN
+                IF scrCheckRectRect(bullet.x, bullet.y, 1, 6, enemy.x(i), enemy.y(i), 8, 15) THEN
                     RESTORE CLRBULLET: call scrDrawSprite(bullet.x, bullet.y-2)
                     GOSUB PLAYEXPLOSION
                     bullet.active = 0
