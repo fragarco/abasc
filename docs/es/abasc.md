@@ -2382,7 +2382,7 @@ SUB scrSetClippingView(xbyte0, y0, xbyte1, y1)
 ' por las rutinas de dibujo de formas (0,0 .. 639,399) y las de dibujado de
 ' sprites (0,0 .. 79,199).
 FUNCTION scrByteToX(xbyte)
-FUNCTION scrXToByte(y)
+FUNCTION scrXToByte(x)
 FUNCTION scrLineToY(yline)
 FUNCTION scrYToLine(y)
 

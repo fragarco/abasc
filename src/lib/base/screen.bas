@@ -261,7 +261,7 @@ FUNCTION scrByteToX(xbyte) ASM
     ASM "ret"
 END FUNCTION
 
-FUNCTION scrXToByte(y) ASM
+FUNCTION scrXToByte(x) ASM
     ASM "ld      h,(ix+1)"
     ASM "ld      l,(ix+0)"
     ASM "sra     h"
