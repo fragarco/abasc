@@ -19,7 +19,10 @@ hero.y = 100
 call scrSetClippingView(15, 30, 65, 150)
 
 ' Dot drawing coordinates always go (bottom to top) 0-639 in X and 0-400 in Y
-call scrDrawBox(118, 60, 520, 304)
+' Conversion between dotted graphics coords and sprite coords is:
+' dot.y = sp.y * 2
+' dot.x = sp.x * 8
+call scrDrawBox(118, 58, 528, 302)
 
 LABEL MAIN
     IF INKEY(1) = 0 THEN hero.x = hero.x + 1

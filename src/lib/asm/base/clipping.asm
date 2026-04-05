@@ -1,8 +1,8 @@
 
 SCRVIEW_LEFT:   db  0 	 ; in screen bytes (0-79)
-SCRVIEW_TOP:    db  0 	 ; in screen lines (199-9)
+SCRVIEW_TOP:    db  0 	 ; in screen lines (0-199)
 SCRVIEW_RIGHT:  db  79   ; in screen bytes (0-79)
-SCRVIEW_BOTTOM: db  199  ; in screen lines (199-9)
+SCRVIEW_BOTTOM: db  199  ; in screen lines (0-199)
 
 ; SCRCROPSPRITE
 ; This routines tests the current position and size of one
@@ -18,6 +18,7 @@ SCRVIEW_BOTTOM: db  199  ; in screen lines (199-9)
 ;   Carry flag set if the sprite is not visible.
 ;   Modifies  AF, HL, DE
 scrCropSprite:
+__cropsp_offtop:
 	ld      a,c
 	ld      (__spclipped_h+1),a		; SPCLP.H = SP.H
    	ld      a,(ix+0)				; DE = SP.Y
@@ -75,7 +76,8 @@ __cropsp_offbottom:
    	add     hl,de					; restore OFF.BOTTOM
 	ld      a,(__spclipped_h+1)
 	sub     l
-	ld      (__spclipped_h+1),a		; SPCLP.H = SPCLP.H - OFF.BOTTOM
+	inc     a
+	ld      (__spclipped_h+1),a		; SPCLP.H = (SPCLP.H - OFF.BOTTOM) + 1
 
 __cropsp_offleft:
 	ld      l,(ix+2)				; HL = SP.X
@@ -121,6 +123,7 @@ __cropsp_right:
    	ex      de,hl
 	ld      h,a
    	ld      a,(SCRVIEW_RIGHT)
+	inc     a						; next byte to the current seen one
 	ld      l,a
    	sbc     hl,de					; OFF.RIGHT = VP.RIGHT - (SP.X + SP.W)
    	ret     nc
