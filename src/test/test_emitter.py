@@ -99,6 +99,9 @@ class TestEmitter(unittest.TestCase):
     def test_record(self):
         self._compare_bins("record.bas", "record.bin")
 
+    def test_spclipping(self):
+        self._compare_bins("spclip.bas", "spclip.bin")
+
     def test_sprites(self):
         self._compare_bins("sprites.bas", "sprites.bin")
 
