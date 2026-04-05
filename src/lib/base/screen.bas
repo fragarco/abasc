@@ -195,6 +195,33 @@ SUB scrDrawSpriteXOR(xbyte, y) ASM
     ASM "ret"
 END SUB
 
+SUB scrSetClippingView(xbyte0, y0, xbyte1, y1) ASM
+    ASM "ld      a,(ix+0)"
+    ASM "ld      (SCRVIEW_BOTTOM),a"
+    ASM "ld      a,(ix+2)"
+    ASM "ld      (SCRVIEW_RIGHT),a"
+    ASM "ld      a,(ix+4)"
+    ASM "ld      (SCRVIEW_TOP),a"
+    ASM "ld      a,(ix+6)"
+    ASM "ld      (SCRVIEW_LEFT),a"
+    ASM "ret"
+    ASM "read 'asm/base/clipping.asm'"
+END SUB
+
+SUB scrDrawSpriteClipped(xbyte, y) ASM
+    ASM "xor     a"
+    ASM "ld      (__spclipped_func),a    ; NOP operation"
+    ASM "jp      scrDrawClippedSprite"
+    ASM "read 'asm/base/clipping.asm'"
+END SUB
+
+SUB scrDrawSpriteClippedXOR(xbyte, y) ASM
+    ASM "ld      a,&AE"
+    ASM "ld      (__spclipped_func),a    ; XOR (HL) operation"
+    ASM "jp      scrDrawClippedSprite"
+    ASM "read 'asm/base/clipping.asm'"
+END SUB
+
 FUNCTION scrPeekColor(x, y) ASM
     ASM "ld      l,(ix+0)"
     ASM "ld      h,(ix+1)"
