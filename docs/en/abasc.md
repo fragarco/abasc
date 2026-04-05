@@ -2442,6 +2442,13 @@ SUB scrDrawSpriteClipped(xbyte, y)
 SUB scrDrawSpriteClippedXOR(xbyte, y)
 SUB scrSetClippingView(xbyte0, y0, xbyte1, y1)
 
+' The following functions perform the transformation between
+' dotted graphics coordinates (0,0 .. 639,399) to sprites
+' coordinates (0,0 .. 79,199)
+FUNCTION scrByteToX(xbyte)
+FUNCTION scrXToByte(y)
+FUNCTION scrLineToY(yline)
+FUNCTION scrYToLine(y)
 
 ' Routines that use the firmware to provide support for a
 ' double buffer. The second video buffer uses memory starting

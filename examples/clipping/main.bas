@@ -22,6 +22,8 @@ call scrSetClippingView(15, 30, 65, 150)
 ' Conversion between dotted graphics coords and sprite coords is:
 ' dot.y = sp.y * 2
 ' dot.x = sp.x * 8
+' scrXtoByte, scrByteToX, scrYToLine, scrLineToY functions can be used to perform the
+' calculations
 call scrDrawBox(118, 58, 528, 302)
 
 LABEL MAIN

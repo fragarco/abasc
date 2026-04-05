@@ -233,6 +233,46 @@ FUNCTION scrPeekColor(x, y) ASM
     ASM "ret"
 END FUNCTION
 
+FUNCTION scrLineToY(yline) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "sla     l"
+    ASM "ld      h,(ix+1)"
+    ASM "rl      h"
+    ASM "ret"
+END FUNCTION
+
+FUNCTION scrYToLine(y) ASM
+    ASM "ld      h,(ix+1)"
+    ASM "sra     h"
+    ASM "ld      l,(ix+0)"
+    ASM "rr      l"
+    ASM "ret"
+END FUNCTION
+
+FUNCTION scrByteToX(xbyte) ASM
+    ASM "ld      l,(ix+0)"
+    ASM "ld      h,(ix+1)"
+    ASM "sla     l"
+    ASM "rl      h"
+    ASM "sla     l"
+    ASM "rl      h"
+    ASM "sla     l"
+    ASM "rl      h"
+    ASM "ret"
+END FUNCTION
+
+FUNCTION scrXToByte(y) ASM
+    ASM "ld      h,(ix+1)"
+    ASM "ld      l,(ix+0)"
+    ASM "sra     h"
+    ASM "rr      l"
+    ASM "sra     h"
+    ASM "rr      l"
+    ASM "sra     h"
+    ASM "rr      l"
+    ASM "ret"
+END FUNCTION
+
 SUB scrInitDoubleBuffer ASM
     ASM "ld      a,&40"
     ASM "call    &BC08    ; SCR_SET_BASE"
