@@ -264,7 +264,7 @@ Este manual no trata de ser una guía exhaustiva de programación en BASIC. Como
 * BASIC 2 PLUS Language Reference (Locomotive Software ltd.)
 * Using Locomotive BASIC 2 on the Amstrad 1512 (Robert Ransom)
 
-Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sobre programación en ensablador para el procesador Z80, se recomiendan los siguientes libros de consulta:
+Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sobre programación en ensamblador para el procesador Z80, se recomiendan los siguientes libros de consulta:
 
 * CPC464/664/6128 FIRMWARE, ROM rutines and explanations (B. Godden, P. Overell, D. Radisic) 
 * The Amstrad CPC Firnware Guide (Bob Taylor)
@@ -530,7 +530,7 @@ Podrá acceder a ellos mediante el siguiente esquema:
 | param2    | IX+2, IX+3            |
 | param3    | IX+0, IX+1            |
 
-Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensablador y que el compilador no necesita gestionar la memoria temporal (montículo).
+Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensamblador y que el compilador no necesita gestionar la memoria temporal (montículo).
 
 ``` basic
 SUB cpcSetColor(i,c) ASM
@@ -553,7 +553,7 @@ CALL cpcSetColor(0,&14)
 Mediante `ASM` es posible importar a nuestro proyecto otros ficheros con código en ensamblador o ficheros binarios:
 
 ```basic
-ASM "read 'mylib.asm'    ; codigo ensablador adicional"
+ASM "read 'mylib.asm'    ; codigo ensamblador adicional"
 ASM "incbin 'assets.bin' ; contenido binario"
 ```
 
@@ -570,7 +570,7 @@ FOR i = 0 TO 4
 NEXT
 ```
 
-`ABASC` extiende el uso del símbolo `@` permitiendo que se use para acceder a la dirección asociada a una etiqueta definida con `LABEL`, así como obtener la dirección de memoria desde la que se leerán los valores en la siguiente llamada a `READ`. Es, incluso, posible obtener la dirección a una etiqueta definida desde código en ensamblador. Estas opciones pueden ser muy interesantes cuando se trabaja con ficheros importados que contienen código en ensablamdor o datos en binario.
+`ABASC` extiende el uso del símbolo `@` permitiendo que se use para acceder a la dirección asociada a una etiqueta definida con `LABEL`, así como obtener la dirección de memoria desde la que se leerán los valores en la siguiente llamada a `READ`. Es posible, incluso, obtener la dirección a una etiqueta definida desde código en ensamblador. Estas opciones pueden ser muy interesantes cuando se trabaja con ficheros importados que contienen código en ensamblador o datos en binario.
 
 ```basic
 LABEL MAIN
@@ -1154,9 +1154,7 @@ Función. Según el valor de `x` permite obtener varios valores relacionados con
 
 ### `FUNCTION nombre(parametros) [ASM]`
 
-Comando. Introducido con la versión 2 plus de Locomotive BASIC, este comando permite declarar funciones de forma parecida a `DEF FN` pero cuyo cuerpo se extienda por más de una línea.
-
-Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno. Las funciones pueden llamarse directamente como parte de una expresion. 
+Comando. Introducido con la versión 2 plus de Locomotive BASIC, este comando permite declarar funciones de forma parecida a `DEF FN`, pero cuyo cuerpo se extienda por más de una línea. Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno. Las funciones pueden llamarse directamente como parte de una expresion. 
 
 ```basic
 function pow2(x)
@@ -1166,9 +1164,7 @@ end function
 result = pow2(2)
 ```
 
-La cláusula `ASM`en la declaración de la función permite indicar que todo el cuerpo de la función será código en ensablador (a través del comando ASM), tal y como se explica en la sección `Uso de código ensamblador` del capítulo `Peculiaridades del compilador`.
-
-Se recomienda al programador leer la sección `Procedimientos y Funciones` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
+ Si se utiliza la cláusula `ASM` al final de la declaración de la función, ABASC entiende que el cuerpo va a ser código en ensablador y que no va a necesitar utilizar el montículo de memoria temporal, por ello, evita guardar y restar su estado en cada llamada. Se recomienda al programador leer la sección `Procedimientos y Funciones` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
 
 ### `GOSUB etiqueta`
 
@@ -1949,7 +1945,7 @@ PRINT STRING$(40,250)
 
 ### `SUB [(parámetros)] [ASM]`
 
-Comando. Proveniente de Locomotive BASIC 2 Plus, `SUB` permite declarar procedimientos con parámetros. Debe utilizarse `CALL` para llamar a un procedimiento declarado con `SUB`. El procedimiento debe declararse antes de que aparezca en el código una llamada al mismo. Si se utiliza la cláusula `ASM`, ABASC entiende que el cuerpo del procedimiento va a ser mayoritariamente código en ensablador que no va a usar el mecanismo de memoria temporal, por lo que no se encarga de apilarlo y restaruralo después de cada llamada.
+Comando. Proveniente de Locomotive BASIC 2 Plus, `SUB` permite declarar procedimientos con parámetros. Debe utilizarse `CALL` para llamar a un procedimiento declarado con `SUB`. El procedimiento debe declararse antes de que aparezca en el código una llamada al mismo. Si se utiliza la cláusula `ASM`, ABASC entiende que el cuerpo del procedimiento va a ser código en ensablador y que no va a necesitar emplear el montículo de memoria temporal, por ello, evita guardar y restar su estado en cada llamada.
 
 Se recomienda al programador leer las secciones `Procedimientos y Funciones` y `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad.
 
@@ -2349,28 +2345,38 @@ SUB memSet(dest, size, bytevalue)
 ' Equivalente a llamar a la rutina del firmware SCR INITIALISE
 SUB scrInitialize
 
-' Rutinas que devuelven posiciones de la memoria de video
+' Rutinas que devuelven posiciones de la memoria de video. La x
+' es dependiente del modo de video: 0-159 (mode 0), 0-319 (mode 1)
+' 0-639 (mode 2)
 FUNCTION scrDotPos(x, y)
 FUNCTION scrNextByte(vmem)
 FUNCTION scrPrevByte(vmem)
 FUNCTION scrNextLine(vmem)
 FUNCTION scrPrevLine(vmem)
 
-' Rutinas de dibujo de formas
+' Rutinas de dibujo de formas. Las coordenadas son independientes del
+' modo de pantalla: 0-639 (en X), 0-399 (en Y, de abajo a arriba)
 SUB scrFillBox(x1, y1, x2, y2, npen)
 SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 
+' Permite obtener el color de un pixel en pantalla. Las coordenadas son
+' independientes del modo de pantalla: 0-639 (en X), 0-399 (en Y, de abajo a arriba)
+FUNCTION scrPeekColor(x, y)
+
 ' Dibuja un sprite de W bytes x H lines en la posición X (en bytes: 0-79),
-' Y (en lineas: 199-0) de la pantalla. Espera que la información de dicho
-' sprite se añada al programa mediante DATA, de forma que antes de llamar
+' Y (en lineas de abajo a arriba: 0-199) de la pantalla. Espera que la información
+' de dicho sprite se añada al programa mediante DATA, de forma que antes de llamar
 ' a esta rutina se elija el sprite a pintar mediante un RESTORE.
-' Los dos primeros bytes de información del sprite indican su tamaño (W y H).
+' Los dos primeros bytes de información del sprite indican su tamaño (W y H). Hay
+' que recordar que el procesador Z80 es little endian, por lo que los bytes aparecen
+' como "cambiados de orden" en la sentencia DATA: DATA &HHWW
 SUB scrDrawSprite(xbyte, y)
 SUB scrDRawSpriteXOR(xbyte, y)
-
-FUNCTION scrPeekColor(x, y)
+SUB scrDrawSpriteClipped(xbyte, y)
+SUB scrDrawSpriteClippedXOR(xbyte, y)
+SUB scrSetClippingView(xbyte0, y0, xbyte1, y1)
 
 ' Rutinas que utilizan el firmware para proporcionar soporte para un
 ' doble buffer. El segundo buffer de vídeo utiliza la memoria desde

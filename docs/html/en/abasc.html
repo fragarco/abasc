@@ -1773,20 +1773,23 @@ command declares a function similar to <code>DEF FN</code> but with a
 multi-line body.</p>
 <p>Functions declared with <code>FUNCTION</code> must include at least
 one assignment to the function’s own name, which will act as the return
-value. Functions can be called directly as part of an expression.</p>
+value. Functions can be called directly as part of an expression.
+Therefore they must not be called using the <code>CALL</code>
+command.</p>
 <pre class="basic"><code>FUNCTION pow2(x)
     pow2 = x * x
 END FUNCTION
 
 result = pow2(2)</code></pre>
-<p>The optional <code>ASM</code> clause indicates that the function body
-will consist entirely of assembly code (using the <code>ASM</code>
-command), as described in the section <strong>Using Assembly
-Code</strong> under <strong>Peculiarities of the Compiler</strong>.</p>
-<p>Programmers are advised to read the <strong>Functions and
-Procedures</strong> section for more information about parameter
-handling and the lack of recursion support, as discussed in the
-<strong>Peculiarities of the Compiler</strong> chapter.</p>
+<p>The optional <code>ASM</code> clause indicates that function’s body
+will consist entirely of assembly code that does <strong>not</strong>
+rely on the temporary-memory mechanism, which allows the compiler to
+perform some optimizations.</p>
+<p>Programmers are advised to read <strong>Functions and
+Procedures</strong> and <strong>Using Assembly Code</strong> sections in
+the <strong>Peculiarities of the Compiler</strong> chapter to obtain
+more information about using assembly code, parameter handling and the
+lack of recursion support.</p>
 <h3 id="gosub-label"><code>GOSUB label</code></h3>
 <p><strong>Command</strong>. Jumps to a label, which can be defined
 either as a line number or as a literal declared with
@@ -2670,13 +2673,15 @@ Plus</strong>, <code>SUB</code> defines procedures with parameters. You
 must use <code>CALL</code> to invoke a procedure declared with
 <code>SUB</code>. Procedures must be declared <strong>before</strong>
 any call to them appears in the code.</p>
-<p>If the <code>ASM</code> clause is specified, ABASC assumes that the
-body of the procedure will consist mostly of assembly code that does
-<strong>not</strong> rely on the temporary-memory mechanism.</p>
-<p>Programmers are encouraged to read the sections <strong>Functions and
-Procedures</strong> and <strong>Using Assembly Code</strong> in the
-chapter <strong>“Compiler Peculiarities”</strong> for details on
-parameter handling and recursion support.</p>
+<p>The optional <code>ASM</code> clause indicates that procedure’s body
+will consist entirely of assembly code that does <strong>not</strong>
+rely on the temporary-memory mechanism, which allows the compiler to
+perform some optimizations.</p>
+<p>Programmers are advised to read <strong>Functions and
+Procedures</strong> and <strong>Using Assembly Code</strong> sections in
+the <strong>Peculiarities of the Compiler</strong> chapter to obtain
+more information about using assembly code, parameter handling and the
+lack of recursion support.</p>
 <pre class="basic"><code>SUB myUSING(n,long)
     &#39; Prints number N using a fixed LONG width,
     &#39; padding the left side with zeroes.
@@ -3111,19 +3116,29 @@ byte1(int16) FUNCTION byteSet0(int16, b) FUNCTION byteSet1(int16, b)</p>
 </ul>
 <p>’ Equivalent to calling the firmware routine SCR INITIALIZE SUB
 scrInitialize</p>
-<p>’ Routines that return video memory positions FUNCTION scrDotPos(x,
-y) FUNCTION scrNextByte(vmem) FUNCTION scrPrevByte(vmem) FUNCTION
-scrNextLine(vmem) FUNCTION scrPrevLine(vmem)</p>
-<p>’ Drawing routines for shapes SUB scrFillBox(x1, y1, x2, y2, npen)
-SUB scrDrawBox(x1, y1, x2, y2) SUB scrDrawTriangle(x1, y1, x2, y2, x3,
-y3) SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)</p>
-<p>’ Draws a sprite of W bytes x H lines at position X,Y ’ on the
-screen. Expects that the information for this sprite ’ has been added to
-the program via DATA, so that before calling ’ this routine, the sprite
-to be painted is chosen via a RESTORE. ’ The first two bytes of sprite
-information indicate its ’ size (W and H). SUB scrDrawSprite(x, y) SUB
-scrDrawSpriteXOR(x, y)</p>
-<p>FUNCTION scrPeekColor(x, y)</p>
+<p>’ Routines that return video memory positions. X range ’ depends on
+the screen video mode: 0-159 (mode 0), ’ 0-319 (mode 1) or 0-639 (mode
+2) FUNCTION scrDotPos(x, y) FUNCTION scrNextByte(vmem) FUNCTION
+scrPrevByte(vmem) FUNCTION scrNextLine(vmem) FUNCTION
+scrPrevLine(vmem)</p>
+<p>’ Drawing routines for shapes. X and Y ranges are ’ independent from
+the screen video mode: 0-639 in X, ’ 0-399 in Y (from screen bottom to
+top) SUB scrFillBox(x1, y1, x2, y2, npen) SUB scrDrawBox(x1, y1, x2, y2)
+SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3) SUB scrDrawPolygon(x1, y1,
+x2, y2, x3, y3, x4, y4)</p>
+<p>’ Returns the pixel color value. X and Y ranges are ’ independent
+from the screen video mode: 0-639 in X, ’ 0-399 in Y (from screen bottom
+to top) FUNCTION scrPeekColor(x, y)</p>
+<p>’ This collection of routines draw a sprite of W bytes x H lines at ’
+position X in bytes (0-79), Y in lines (199-0). They expect that ’ the
+information for each sprite is added to the program via DATA, ’ so that
+before calling the draw routine, the sprite is chosen via ’ a RESTORE
+call. ’ The first two bytes of sprite information indicate its size (W
+and H). ’ As the Z80 processor is little endian, it means that the
+values appear ’ to be “inverted” in the DATA statement: DATA &amp;HHWW
+SUB scrDrawSprite(xbyte, y) SUB scrDrawSpriteXOR(xbyte, y) SUB
+scrDrawSpriteClipped(xbyte, y) SUB scrDrawSpriteClippedXOR(xbyte, y) SUB
+scrSetClippingView(xbyte0, y0, xbyte1, y1)</p>
 <p>’ Routines that use the firmware to provide support for a ’ double
 buffer. The second video buffer uses memory starting ’ at position
 0x4000. Programs that use these routines must ’ be compiled with the

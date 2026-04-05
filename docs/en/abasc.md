@@ -1164,7 +1164,7 @@ PRINT TIME - T!
 
 **Command**. Introduced in Locomotive BASIC 2 Plus, this command declares a function similar to `DEF FN` but with a multi-line body.
 
-Functions declared with `FUNCTION` must include at least one assignment to the function’s own name, which will act as the return value. Functions can be called directly as part of an expression.
+Functions declared with `FUNCTION` must include at least one assignment to the function’s own name, which will act as the return value. Functions can be called directly as part of an expression. Therefore they must not be called using the `CALL` command.
 
 ```basic
 FUNCTION pow2(x)
@@ -1174,9 +1174,9 @@ END FUNCTION
 result = pow2(2)
 ```
 
-The optional `ASM` clause indicates that the function body will consist entirely of assembly code (using the `ASM` command), as described in the section **Using Assembly Code** under **Peculiarities of the Compiler**.
+The optional `ASM` clause indicates that function's body will consist entirely of assembly code that does **not** rely on the temporary-memory mechanism, which allows the compiler to perform some optimizations.
 
-Programmers are advised to read the **Functions and Procedures** section for more information about parameter handling and the lack of recursion support, as discussed in the **Peculiarities of the Compiler** chapter.
+Programmers are advised to read **Functions and Procedures** and **Using Assembly Code** sections in the **Peculiarities of the Compiler** chapter to obtain more information about using assembly code, parameter handling and the lack of recursion support.
 
 ### `GOSUB label`
 
@@ -1981,12 +1981,11 @@ PRINT STRING$(40,250)
 
 ### `SUB [(parameters)] [ASM]`
 
-**Command.** Imported from **Locomotive BASIC 2 Plus**, `SUB` defines procedures with parameters.
-You must use `CALL` to invoke a procedure declared with `SUB`. Procedures must be declared **before** any call to them appears in the code.
+**Command.** Imported from **Locomotive BASIC 2 Plus**, `SUB` defines procedures with parameters. You must use `CALL` to invoke a procedure declared with `SUB`. Procedures must be declared **before** any call to them appears in the code.
 
-If the `ASM` clause is specified, ABASC assumes that the body of the procedure will consist mostly of assembly code that does **not** rely on the temporary-memory mechanism.
+The optional `ASM` clause indicates that procedure's body will consist entirely of assembly code that does **not** rely on the temporary-memory mechanism, which allows the compiler to perform some optimizations.
 
-Programmers are encouraged to read the sections **Functions and Procedures** and **Using Assembly Code** in the chapter **“Compiler Peculiarities”** for details on parameter handling and recursion support.
+Programmers are advised to read **Functions and Procedures** and **Using Assembly Code** sections in the **Peculiarities of the Compiler** chapter to obtain more information about using assembly code, parameter handling and the lack of recursion support.
 
 ```basic
 SUB myUSING(n,long)
@@ -2407,28 +2406,42 @@ SUB memSet(dest, size, bytevalue)
 ' Equivalent to calling the firmware routine SCR INITIALIZE
 SUB scrInitialize
 
-' Routines that return video memory positions
+' Routines that return video memory positions. X range
+' depends on the screen video mode: 0-159 (mode 0), 
+' 0-319 (mode 1) or 0-639 (mode 2)
 FUNCTION scrDotPos(x, y)
 FUNCTION scrNextByte(vmem)
 FUNCTION scrPrevByte(vmem)
 FUNCTION scrNextLine(vmem)
 FUNCTION scrPrevLine(vmem)
 
-' Drawing routines for shapes
+' Drawing routines for shapes. X and Y ranges are
+' independent from the screen video mode: 0-639 in X,
+' 0-399 in Y (from screen bottom to top)
 SUB scrFillBox(x1, y1, x2, y2, npen)
 SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
 
-' Draws a sprite of W bytes x H lines at position X (in bytes: 0-79),
-' Y (in lines: 199-0) on the screen. Expects that the information for
-' this sprite has been added to the program via DATA, so that before
-' calling this routine, the sprite to be painted is chosen via a RESTORE.
+' Returns the pixel color value. X and Y ranges are
+' independent from the screen video mode: 0-639 in X,
+' 0-399 in Y (from screen bottom to top)
+FUNCTION scrPeekColor(x, y)
+
+' This collection of routines draw a sprite of W bytes x H lines at
+' position X in bytes (0-79), Y in lines (199-0). They expect that
+' the information for each sprite is added to the program via DATA,
+' so that before calling the draw routine, the sprite is chosen via
+' a RESTORE call.
 ' The first two bytes of sprite information indicate its size (W and H).
+' As the Z80 processor is little endian, it means that the values appear
+' to be "inverted" in the DATA statement: DATA &HHWW
 SUB scrDrawSprite(xbyte, y)
 SUB scrDrawSpriteXOR(xbyte, y)
+SUB scrDrawSpriteClipped(xbyte, y)
+SUB scrDrawSpriteClippedXOR(xbyte, y)
+SUB scrSetClippingView(xbyte0, y0, xbyte1, y1)
 
-FUNCTION scrPeekColor(x, y)
 
 ' Routines that use the firmware to provide support for a
 ' double buffer. The second video buffer uses memory starting

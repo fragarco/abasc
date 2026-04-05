@@ -626,7 +626,7 @@ and C. Lawson)</li>
 <li>Using Locomotive BASIC 2 on the Amstrad 1512 (Robert Ransom)</li>
 </ul>
 <p>Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y
-CPC6128, o sobre programación en ensablador para el procesador Z80, se
+CPC6128, o sobre programación en ensamblador para el procesador Z80, se
 recomiendan los siguientes libros de consulta:</p>
 <ul>
 <li>CPC464/664/6128 FIRMWARE, ROM rutines and explanations (B. Godden,
@@ -1017,7 +1017,7 @@ de 2 bytes):</p>
 </table>
 <p>Por último, es posible añadir la cláusula <code>ASM</code> a la
 declaración de una función o subrutina, indicando que todo el código va
-a ser ensablador y que el compilador no necesita gestionar la memoria
+a ser ensamblador y que el compilador no necesita gestionar la memoria
 temporal (montículo).</p>
 <pre class="basic"><code>SUB cpcSetColor(i,c) ASM
     &#39; Equivalent to the BASIC call INK
@@ -1036,7 +1036,7 @@ END SUB
 CALL cpcSetColor(0,&amp;14)</code></pre>
 <p>Mediante <code>ASM</code> es posible importar a nuestro proyecto
 otros ficheros con código en ensamblador o ficheros binarios:</p>
-<pre class="basic"><code>ASM &quot;read &#39;mylib.asm&#39;    ; codigo ensablador adicional&quot;
+<pre class="basic"><code>ASM &quot;read &#39;mylib.asm&#39;    ; codigo ensamblador adicional&quot;
 ASM &quot;incbin &#39;assets.bin&#39; ; contenido binario&quot;</code></pre>
 <h2 id="punteros">Punteros</h2>
 <p>Locomotive BASIC emplea el símbolo <code>@</code> para acceder a la
@@ -1053,10 +1053,10 @@ NEXT</code></pre>
 permitiendo que se use para acceder a la dirección asociada a una
 etiqueta definida con <code>LABEL</code>, así como obtener la dirección
 de memoria desde la que se leerán los valores en la siguiente llamada a
-<code>READ</code>. Es, incluso, posible obtener la dirección a una
+<code>READ</code>. Es posible, incluso, obtener la dirección a una
 etiqueta definida desde código en ensamblador. Estas opciones pueden ser
 muy interesantes cuando se trabaja con ficheros importados que contienen
-código en ensablamdor o datos en binario.</p>
+código en ensamblador o datos en binario.</p>
 <pre class="basic"><code>LABEL MAIN
     CLS
 
@@ -1800,10 +1800,9 @@ Devuelve la memoria temporal disponible en ese instante. | |
 id="function-nombreparametros-asm"><code>FUNCTION nombre(parametros) [ASM]</code></h3>
 <p>Comando. Introducido con la versión 2 plus de Locomotive BASIC, este
 comando permite declarar funciones de forma parecida a
-<code>DEF FN</code> pero cuyo cuerpo se extienda por más de una
-línea.</p>
-<p>Las rutinas declaradas con <code>FUNCTION</code> deben incluir al
-menos una instrucción de asignación al propio nombre de la función, que
+<code>DEF FN</code>, pero cuyo cuerpo se extienda por más de una línea.
+Las rutinas declaradas con <code>FUNCTION</code> deben incluir al menos
+una instrucción de asignación al propio nombre de la función, que
 actuará como valor de retorno. Las funciones pueden llamarse
 directamente como parte de una expresion.</p>
 <pre class="basic"><code>function pow2(x)
@@ -1811,12 +1810,11 @@ directamente como parte de una expresion.</p>
 end function
 
 result = pow2(2)</code></pre>
-<p>La cláusula <code>ASM</code>en la declaración de la función permite
-indicar que todo el cuerpo de la función será código en ensablador (a
-través del comando ASM), tal y como se explica en la sección
-<code>Uso de código ensamblador</code> del capítulo
-<code>Peculiaridades del compilador</code>.</p>
-<p>Se recomienda al programador leer la sección
+<p>Si se utiliza la cláusula <code>ASM</code> al final de la declaración
+de la función, ABASC entiende que el cuerpo va a ser código en
+ensablador y que no va a necesitar utilizar el montículo de memoria
+temporal, por ello, evita guardar y restar su estado en cada llamada. Se
+recomienda al programador leer la sección
 <code>Procedimientos y Funciones</code> para obtener más información
 sobre el tratamiento de los parámetros o el soporte a la recursividad en
 el capítulo <code>Peculiaridades del compilador</code>.</p>
@@ -2680,9 +2678,9 @@ permite declarar procedimientos con parámetros. Debe utilizarse
 <code>SUB</code>. El procedimiento debe declararse antes de que aparezca
 en el código una llamada al mismo. Si se utiliza la cláusula
 <code>ASM</code>, ABASC entiende que el cuerpo del procedimiento va a
-ser mayoritariamente código en ensablador que no va a usar el mecanismo
-de memoria temporal, por lo que no se encarga de apilarlo y restaruralo
-después de cada llamada.</p>
+ser código en ensablador y que no va a necesitar emplear el montículo de
+memoria temporal, por ello, evita guardar y restar su estado en cada
+llamada.</p>
 <p>Se recomienda al programador leer las secciones
 <code>Procedimientos y Funciones</code> y
 <code>Uso de código ensamblador</code> del capítulo
@@ -3123,19 +3121,30 @@ bytePosSetX(bytepos, x) FUNCTION bytePosSetY(intvalue, y)</p>
 </ul>
 <p>’ Equivalente a llamar a la rutina del firmware SCR INITIALISE SUB
 scrInitialize</p>
-<p>’ Rutinas que devuelven posiciones de la memoria de video FUNCTION
-scrDotPos(x, y) FUNCTION scrNextByte(vmem) FUNCTION scrPrevByte(vmem)
-FUNCTION scrNextLine(vmem) FUNCTION scrPrevLine(vmem)</p>
-<p>’ Rutinas de dibujo de formas SUB scrFillBox(x1, y1, x2, y2, npen)
-SUB scrDrawBox(x1, y1, x2, y2) SUB scrDrawTriangle(x1, y1, x2, y2, x3,
-y3) SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)</p>
-<p>’ Dibuja un sprite de W bytes x H lines en la posición X,Y ’ de la
-pantalla. Espera que la información de dicho sprite ’ se añada al
-programa mediante DATA, de forma que antes de llamar ’ a esta rutina se
-elija el sprite a pintar mediante un RESTORE. ’ Los dos primeros bytes
-de información del sprite indican su ’ tamaño (W y H). SUB
-scrDrawSprite(x, y) SUB scrDRawSpriteXOR(x, y)</p>
-<p>FUNCTION scrPeekColor(x, y)</p>
+<p>’ Rutinas que devuelven posiciones de la memoria de video. La x ’ es
+dependiente del modo de video: 0-159 (mode 0), 0-319 (mode 1) ’ 0-639
+(mode 2) FUNCTION scrDotPos(x, y) FUNCTION scrNextByte(vmem) FUNCTION
+scrPrevByte(vmem) FUNCTION scrNextLine(vmem) FUNCTION
+scrPrevLine(vmem)</p>
+<p>’ Rutinas de dibujo de formas. Las coordenadas son independientes del
+’ modo de pantalla: 0-639 (en X), 0-399 (en Y, de abajo a arriba) SUB
+scrFillBox(x1, y1, x2, y2, npen) SUB scrDrawBox(x1, y1, x2, y2) SUB
+scrDrawTriangle(x1, y1, x2, y2, x3, y3) SUB scrDrawPolygon(x1, y1, x2,
+y2, x3, y3, x4, y4)</p>
+<p>’ Permite obtener el color de un pixel en pantalla. Las coordenadas
+son ’ independientes del modo de pantalla: 0-639 (en X), 0-399 (en Y, de
+abajo a arriba) FUNCTION scrPeekColor(x, y)</p>
+<p>’ Dibuja un sprite de W bytes x H lines en la posición X (en bytes:
+0-79), ’ Y (en lineas de abajo a arriba: 0-199) de la pantalla. Espera
+que la información ’ de dicho sprite se añada al programa mediante DATA,
+de forma que antes de llamar ’ a esta rutina se elija el sprite a pintar
+mediante un RESTORE. ’ Los dos primeros bytes de información del sprite
+indican su tamaño (W y H). Hay ’ que recordar que el procesador Z80 es
+little endian, por lo que los bytes aparecen ’ como “cambiados de orden”
+en la sentencia DATA: DATA &amp;HHWW SUB scrDrawSprite(xbyte, y) SUB
+scrDRawSpriteXOR(xbyte, y) SUB scrDrawSpriteClipped(xbyte, y) SUB
+scrDrawSpriteClippedXOR(xbyte, y) SUB scrSetClippingView(xbyte0, y0,
+xbyte1, y1)</p>
 <p>’ Rutinas que utilizan el firmware para proporcionar soporte para un
 ’ doble buffer. El segundo buffer de vídeo utiliza la memoria desde ’ la
 posición 0x4000. Los programas que usen estas rutinas deben ’ compilarse
