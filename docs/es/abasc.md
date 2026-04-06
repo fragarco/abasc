@@ -3163,7 +3163,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.5
-  - Arragla algunos pequeños fallos tipográficos en la documentación.
+  - Arregla algunos pequeños fallos tipográficos en la documentación.
   - Añade nuevas rutinas en BASE para permitir dibujar sprites con clipping:
       - scrDrawSpriteClipped(xbyte, y)
       - scrDrawSpriteClippedXOR(xbyte, y)
