@@ -3225,6 +3225,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+* Version 1.0.6
+  -
+
 * Version 1.0.5
   - Fixes some minor typos and errors in the documentation.
   - Adds new routines to BASE library to handle sprite clipping.
