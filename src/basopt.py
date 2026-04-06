@@ -180,6 +180,14 @@ class BasOptimizer:
                 return nnode
         return node
 
+    def _op_arrayitem(self, node: AST.ArrayItem) -> AST.Statement:
+        """ 
+        ArrayItems as part of expressions. Check if index is a constant.
+        """
+        for i in range(0, len(node.args)):
+            node.args[i] = self._op_statement(node.args[i])
+        return node
+
     def _op_assignment(self, node: AST.Assignment) -> AST.Statement:
         node.source = self._op_statement(node.source)
         if isinstance(node.target, AST.Variable):
@@ -272,6 +280,8 @@ class BasOptimizer:
             stmt = self._op_binaryop(stmt)
         elif isinstance(stmt, AST.Variable):
             stmt = self._op_variable(stmt)
+        elif isinstance(stmt, AST.ArrayItem):
+            stmt = self._op_arrayitem(stmt)
         return stmt
       
     def optimize_ast(self, program: AST.Program, syms: SYM.SymTable) -> tuple[AST.Program, SYM.SymTable]:

@@ -3226,7 +3226,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.6
-  -
+  - Fixes a bug using const values as index to access array items.
 
 * Version 1.0.5
   - Fixes some minor typos and errors in the documentation.
