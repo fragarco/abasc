@@ -3163,7 +3163,16 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.5
-  -
+  - Arragla algunos pequeños fallos tipográficos en la documentación.
+  - Añade nuevas rutinas en BASE para permitir dibujar sprites con clipping:
+      - scrDrawSpriteClipped(xbyte, y)
+      - scrDrawSpriteClippedXOR(xbyte, y)
+      - scrSetClippingView(xbyte0, y0, xbyte1, y1)
+      - scrByteToX(xbyte)
+      - scrXToByte(y)
+      - scrLineToY(yline)
+      - scrYToLine(y)
+  - Añade un nuevo ejemplo `clipping` para mostrar el uso de las nuevas funciones.
 
 * Versión 1.0.4
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.

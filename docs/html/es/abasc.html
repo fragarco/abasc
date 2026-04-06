@@ -3877,7 +3877,24 @@ describe a continuación.</p>
 <hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li><h2 id="versión-1.0.5">Versión 1.0.5</h2></li>
+<li>Versión 1.0.5
+<ul>
+<li>Arragla algunos pequeños fallos tipográficos en la
+documentación.</li>
+<li>Añade nuevas rutinas en BASE para permitir dibujar sprites con
+clipping:
+<ul>
+<li>scrDrawSpriteClipped(xbyte, y)</li>
+<li>scrDrawSpriteClippedXOR(xbyte, y)</li>
+<li>scrSetClippingView(xbyte0, y0, xbyte1, y1)</li>
+<li>scrByteToX(xbyte)</li>
+<li>scrXToByte(y)</li>
+<li>scrLineToY(yline)</li>
+<li>scrYToLine(y)</li>
+</ul></li>
+<li>Añade un nuevo ejemplo <code>clipping</code> para mostrar el uso de
+las nuevas funciones.</li>
+</ul></li>
 <li>Versión 1.0.4
 <ul>
 <li>Incluye un nuevo flag <code>--start</code> que permite establecer la

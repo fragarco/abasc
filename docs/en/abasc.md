@@ -3226,7 +3226,16 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.5
-  -
+  - Fixes some minor typos and errors in the documentation.
+  - Adds new routines to BASE library to handle sprite clipping.
+      - scrDrawSpriteClipped(xbyte, y) 
+      - scrDrawSpriteClippedXOR(xbyte, y)
+      - scrSetClippingView(xbyte0, y0, xbyte1, y1)
+      - scrByteToX(xbyte)
+      - scrXToByte(y)
+      - scrLineToY(yline)
+      - scrYToLine(y)
+  - Adds a new example `clipping` to demostrate the use of the new routines.
 
 * Version 1.0.4
   - Adds the flag `--start` which allows users to specify the starting address for the program area.

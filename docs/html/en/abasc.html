@@ -3870,7 +3870,22 @@ version 2 and version 2 plus.</p>
 <hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
-<li><h2 id="version-1.0.5">Version 1.0.5</h2></li>
+<li>Version 1.0.5
+<ul>
+<li>Fixes some minor typos and errors in the documentation.</li>
+<li>Adds new routines to BASE library to handle sprite clipping.
+<ul>
+<li>scrDrawSpriteClipped(xbyte, y)</li>
+<li>scrDrawSpriteClippedXOR(xbyte, y)</li>
+<li>scrSetClippingView(xbyte0, y0, xbyte1, y1)</li>
+<li>scrByteToX(xbyte)</li>
+<li>scrXToByte(y)</li>
+<li>scrLineToY(yline)</li>
+<li>scrYToLine(y)</li>
+</ul></li>
+<li>Adds a new example <code>clipping</code> to demostrate the use of
+the new routines.</li>
+</ul></li>
 <li>Version 1.0.4
 <ul>
 <li>Adds the flag <code>--start</code> which allows users to specify the
