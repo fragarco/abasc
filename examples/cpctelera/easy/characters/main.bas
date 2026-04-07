@@ -102,7 +102,7 @@ END SUB
 LABEL MAIN
     ' Disable firmware to prevent it from restoring our video memory changes 
     ' ... and interfering with drawChar functions
-    call cpctRemoveInterruptHandler()
+    call cpctDisableFirmware()
     ' Loop forever showing characters on different modes and colours
     '
     WHILE 1

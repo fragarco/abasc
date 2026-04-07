@@ -74,7 +74,7 @@ label MAIN
 
    ' Initialize CPC Mode and Colours
    palette = @label(palettefw)
-   call cpctRemoveInterruptHandler()      ' Disable firmware to prevent it from interfering
+   call cpctDisableFirmware()      ' Disable firmware to prevent it from interfering
    call cpctfw2hw       (palette, 16)     ' Convert Firmware colours to Hardware colours 
    call cpctSetPalette  (palette, 16)     ' Set up palette using hardware colours
    call cpctSetBorder   (HWC.BRIGHTWHITE) ' Set up the border to the background colour (white)

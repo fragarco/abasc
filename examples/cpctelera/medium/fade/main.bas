@@ -33,7 +33,7 @@ label MAIN
   img.spr(2) = @LABEL("G_No13"): img.x(2) = 22: img.y(2) = 60: img.w(2) = 36: img.h(2) = 80
 
   ' Initialize the CPC
-  call cpctRemoveInterruptHandler() ' Disable firmware to prevent it from interfering
+  call cpctDisableFirmware() ' Disable firmware to prevent it from interfering
   call cpctSetVideoMode(0)          ' Set video mode 0 (160x200, 16 colours)
   call setBlackPalette(0, 16)       ' Set all 17 colours (16 palette + border) to Black
   call initPalette()

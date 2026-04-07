@@ -79,7 +79,7 @@ TILEMAP.VMEM = cpctGetScreenPtr(CPCT.VMEMSTART, VIEWPORT.X, VIEWPORT.Y)
 sub initialize(bcolor)
    ' Firmware must be disabled to be able to change video mode,
    ' setting palette colours and border
-   call cpctRemoveInterruptHandler()            ' Disable firmware 
+   call cpctDisableFirmware()            ' Disable firmware 
    call cpctSetVideoMode(0)                     ' Set Video Mode 0 (160x200, 16 colours)
    call cpctSetPalette(@LABEL(TILEMAP.PAL), 16) ' Set palette colours
    call cpctSetBorder(bcolor)                   ' Set border colour

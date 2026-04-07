@@ -133,7 +133,7 @@ end sub
 ' draws the background
 '
 sub initialization 
-   call cpctRemoveInterruptHandler()     ' Disable firmware to prevent it from interfering
+   call cpctDisableFirmware()     ' Disable firmware to prevent it from interfering
    call cpctfw2hw(@LABEL("palette"), 16) ' Convert firmware colours to hardware colours 
    call cpctSetPalette(@LABEL("palette"), 16)  ' Set palette using hardware colour values
    call cpctSetBorder(peek(@LABEL("palette"))) ' Set border colour same as background (0)

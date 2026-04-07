@@ -27,7 +27,7 @@ asm "palette: db &14, &15, &13, &16, &0E"
 '
 label MAIN
    ' Initializing the CPC
-   call cpctRemoveInterruptHandler() ' Disable firmware (as we are going to use mode and colours)
+   call cpctDisableFirmware() ' Disable firmware (as we are going to use mode and colours)
    call cpctSetVideoMode(0)          ' Set video mode 0 (16&200, 16 colours)
    call cpctSetPalette(@LABEL("palette"), 5) ' Set first 5 colours from our palette (we aren't going to use more)
    

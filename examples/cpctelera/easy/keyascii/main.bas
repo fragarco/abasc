@@ -21,7 +21,7 @@ chain merge "cpctelera/cpctelera.bas"
 ' Set up the Amstrad
 '
 
-call cpctRemoveInterruptHandler()' Disable firmware to prevent it from interfering with setPalette and setVideoMode
+call cpctDisableFirmware()' Disable firmware to prevent it from interfering with setPalette and setVideoMode
 call cpctSetVideoMode(0)         ' Set video mode 0 (160x200, 16 colours)
 call cpctSetDrawCharM0(3, 0)     ' Set PEN 3, PAPER 0 for Characters to be drawn using cpct_drawCharM0
 

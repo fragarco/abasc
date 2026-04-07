@@ -25,7 +25,7 @@ chain merge "cpctelera/cpctelera.bas"
 sub initialization
    shared HWC.BLACK, CPCT.VMEMSTART
    ' Disable the firmware to prevent it from resetting the colour of the border
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
    ' Set Border colour to black
    call cpctSetBorder(HWC.BLACK)
    ' Draw a stripes pattern at the screen

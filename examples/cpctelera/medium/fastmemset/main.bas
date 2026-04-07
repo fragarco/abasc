@@ -79,7 +79,7 @@ label MAIN
 
    ' Disable firmware to prevent it from interfering with setVideoMode
    ' Then set videomode to 0
-   call cpctRemoveInterruptHandler() 
+   call cpctDisableFirmware() 
    call cpctSetVideoMode(0)
 
    ' Infinite screen clearing loop

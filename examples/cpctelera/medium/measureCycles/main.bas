@@ -34,7 +34,7 @@ label MAIN
 
    ' First, disable firmware to prevent it from intercepting our palette and video mode settings (and,
    ' at the same time, winning some speed not having to process firmware code at every interrupt)
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
    ' Set palette and Screen Border (transform firmware to hardware colours and then set them)
    paladdr = @LABEL("sp_palette")
    call cpctfw2hw(paladdr, 4)

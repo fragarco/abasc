@@ -48,7 +48,7 @@ label MAIN
 
    ' First, disable firmware to prevent it from restoring video modes and 
    ' interfering with drawString functions
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
 
    ' Loop forever showing characters on different modes and colours
    '

@@ -30,7 +30,7 @@
 '
 CHAIN MERGE "cpctelera/cpctelera.bas"
 
-call cpctRemoveInterruptHandler()
+call cpctDisableFirmware()
 call cpctClearScreen(&00)
 
 ' Lets draw some boxes

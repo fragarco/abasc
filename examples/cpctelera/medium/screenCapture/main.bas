@@ -46,7 +46,7 @@ const BUILDING3.H =  80
 ' 
 sub Initialization
    shared CPCT.VMEMSTART, HWC.BLACK, VMEM.SIZE
-   call cpctRemoveInterruptHandler()            ' Disable firmware to take full control of the CPC
+   call cpctDisableFirmware()            ' Disable firmware to take full control of the CPC
    call cpctSetVideoMode(0)                     ' Set mode 0
    call cpctSetPalette(@LABEL("g_palette"), 16) ' Set the palette
    call cpctSetBorder(HWC.BLACK)                ' Set the border color with Hardware color

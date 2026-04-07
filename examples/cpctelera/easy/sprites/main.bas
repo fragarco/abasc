@@ -79,7 +79,7 @@ label MAIN
     WAITLOOPS = 1000
     
     ' Disable firmware to prevent it from interfering with setVideoMode
-    call cpctRemoveInterruptHandler()
+    call cpctDisableFirmware()
 
     ' Convert palettes from firmware colour values to 
     ' hardware colours (which are used by cpct_setPalette)

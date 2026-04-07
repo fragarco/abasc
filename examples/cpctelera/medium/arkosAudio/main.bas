@@ -72,7 +72,7 @@ label MAIN
    songaddr  = @LABEL("molusk_song_address")
 
    ' Initialize CPC
-   call cpctRemoveInterruptHandler() ' Disable firmware to prevent interaction
+   call cpctDisableFirmware() ' Disable firmware to prevent interaction
    call cpctSetVideoMode(2)          ' Set Mode 2 (64&200, 2 colours)
    call cpctSetDrawCharM2(1, 0)      ' Set Initial colours for drawCharM2 (Foreground/Background)
 

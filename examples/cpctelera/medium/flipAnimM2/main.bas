@@ -53,7 +53,7 @@ sub initialize
    shared CPCT.VMEMSTART, HWC.BLACK, HWC.WHITE
    shared BANNER.W, BANNER.H
    ' Disable firmware to prevent it from interfering with setPalette and setVideoMode
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
 
    ' Set up the hardware palette using hardware colour values
    call cpctSetBorder(HWC.BLACK)

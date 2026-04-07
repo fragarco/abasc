@@ -60,7 +60,7 @@ label MAIN
 
   ' Disable firmware to prevent it from restoring video mode or
   ' interfering with our drawChar functions
-  call cpctRemoveInterruptHandler()
+  call cpctDisableFirmware()
 
   ' Set mode 2 for visual clarity on arrays printed
   call cpctSetVideoMode(2)

@@ -224,7 +224,7 @@ sub application
    call showMessages()
 
    ' Initialize the application
-   call cpctRemoveInterruptHandler() ' Firmware must be disabled for this application to work
+   call cpctDisableFirmware() ' Firmware must be disabled for this application to work
    call cpctSetBorder(0)             '    Set the border colour gray and.. 
    call cpctSetPALColour(0, &14)     ' ...background black
 

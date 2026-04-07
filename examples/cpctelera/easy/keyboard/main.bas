@@ -46,7 +46,7 @@ LABEL MAIN
    ' Set up the screen
    '
    ' Disable firmware to prevent it from interfering with setPalette and setVideoMode
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
 
    ' Set the colour palette
    call cpctSetPalette(SPPAL, 4) ' Set up the hardware palette using hardware colours

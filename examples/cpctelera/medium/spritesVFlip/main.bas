@@ -111,7 +111,7 @@ end sub
 '
 sub initialize
    shared HWC.BLACK
-   call cpctRemoveInterruptHandler()             ' Disable firmware to prevent it from restoring mode and palette
+   call cpctDisableFirmware()             ' Disable firmware to prevent it from restoring mode and palette
    call cpctSetVideoMode(0)                      ' Set video mode to 0 (16&200, 16 colours)
    call cpctSetPalette(@LABEL("g_palette"), 16)  ' Set the palette using hardware values generated at rocket.h
    call cpctSetBorder(HWC.BLACK)                 ' Set border colour to Black 

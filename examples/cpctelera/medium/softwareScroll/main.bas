@@ -156,7 +156,7 @@ end sub
 sub initialize
    shared HWC.BLUE, BUILDING.W
    shared VIEWPORT.W, VIEWPORT.H
-   call cpctRemoveInterruptHandler()            ' We use own mode and colours, firmware must be disabled
+   call cpctDisableFirmware()            ' We use own mode and colours, firmware must be disabled
    call cpctSetVideoMode(0)                     ' Set video mode 0 (16&200 pixels, 2&25 characters, 16 colours)
    call cpctSetPalette(@LABEL("g_palette"), 16) ' Set our own colours defined en g_palette (automatically generated in maps/tileset.c)
    call cpctSetBorder(HWC.BLUE)                 ' Set border same as background colour: BLUE

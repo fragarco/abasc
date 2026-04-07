@@ -70,7 +70,7 @@ const WAITPAINTED = 19999
 
 label MAIN
    ' Initialization
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
    call cpctSetVideoMode(0)
 
    ' Main loop: filling the screen using the 4 different basic 

@@ -117,7 +117,7 @@ end sub
 sub initialize 
    shared HWC.BLACK
    ' Disable firmware to prevent it from interfering
-   call cpctRemoveInterruptHandler()
+   call cpctDisableFirmware()
    
    ' 1. Set the palette colours using hardware colour values
    ' 2. Set border colour to black
