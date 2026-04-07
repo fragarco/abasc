@@ -1,9 +1,9 @@
 ' MODULE CPCTELERA/FIRMWARE
 
-FUNCTION cpctDisableFirmware ASM
+SUB cpctDisableFirmware ASM
     ASM "jp      cpct_removeInterruptHandler ; returns in HL current callback address"
     ASM "read 'asm/cpctelera/firmware/cpct_removeInterruptHandler.asm'"
-END FUNCTION
+END SUB
 
 SUB cpctDisableLowerROM ASM
     ASM "jp      cpct_disableLowerROM"

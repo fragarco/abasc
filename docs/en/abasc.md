@@ -3228,6 +3228,7 @@ SUB         rsSetMode(nmode)
 * Version 1.0.6
   - Fixes a bug using const values as index to access array items.
   - Improves the parsing of DEFINT, DEFREAL and DEFSTR commands.
+  - Fixes a bug with CALL and the use of expressions as addresses.
 
 * Version 1.0.5
   - Fixes some minor typos and errors in the documentation.

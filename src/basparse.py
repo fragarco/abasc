@@ -294,8 +294,12 @@ class LocBasParser:
         <asm_call> ::= <str_expression>[,<expression>*)]
         """
         self._advance()
-        if self._current_is(TokenType.IDENT):
-            return self._parse_user_fun()
+        if self._current_is(TokenType.IDENT) and self._next_is(TokenType.LPAREN):
+            # Let's check if we are calling a procedure declared with SUB
+            fname = "SUB" + self._current().lexeme
+            entry = self.symtable.find(ident=fname, stype=SymType.Procedure, context="")
+            if entry is not None:
+                return self._parse_user_fun()
         tk = self._current()
         dir = self._parse_expression()
         if dir.etype not in (AST.ExpType.Integer, AST.ExpType.String):
