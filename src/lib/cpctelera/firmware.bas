@@ -25,7 +25,9 @@ SUB cpctEnableUpperROM ASM
     ASM "read 'asm/cpctelera/firmware/cpct_enableDisableROMs.asm'"
 END SUB
 
-SUB cpctReenableFirmware ASM
+SUB cpctReenableFirmware(cbaddress) ASM
+    ASM "ld      l,(ix+0)   ; address to the routine (callback) that will be called."
+    ASM "ld      h,(ix+1)   ; usually the value returned by cpctRemoveInterruptHandler"
     ASM "jp      cpct_reenableFirmware"
     ASM "read 'asm/cpctelera/firmware/cpct_reenableFirmware.asm'"
 END SUB
