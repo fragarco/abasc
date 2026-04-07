@@ -3164,6 +3164,8 @@ SUB         rsSetMode(nmode)
 
 * Versión 1.0.6
   - Arragla un bug al usar una constante como indice al acceder a elementos de un array.
+  - Mejora el soporte para los comandos DEFINT, DEFREAL y DEFSTR
+      - Abasc ignora esos comandos, pero no debe dar errores de compilación.
 
 * Versión 1.0.5
   - Arregla algunos pequeños fallos tipográficos en la documentación.

@@ -914,7 +914,15 @@ class CPCEmitter:
         dataline = "db "
         for a in node.args:
             if isinstance(a, AST.String):
-                dataline = dataline + f'{len(a.value)},"{a.value}",'
+                # We have to code the strings here in the same way that we do with
+                # string constants
+                svalue = ""
+                for c in a.value:
+                    svalue = svalue + f'&{ord(c):02X},'
+                if svalue == "":
+                    dataline = dataline + "0,"
+                else:      
+                    dataline = dataline + f'{len(a.value)},{svalue[:-1]},'
             elif isinstance(a, AST.Integer):
                 dataline = dataline + f'{a.value % 256},{a.value // 256},'
             elif isinstance(a, AST.Real):

@@ -549,8 +549,8 @@ class LocBasParser:
             self._advance()
             return AST.String(value=tok.lexeme.strip('"'))
         else:
-            name = self._advance().text
-            return AST.String(value=name)
+            text = self._advance().text
+            return AST.String(value=text)
 
     @astnode
     def _parse_DECSS(self) -> AST.Function:
@@ -710,6 +710,9 @@ class LocBasParser:
         """ <DEFINT> ::= DEFINT <str_range> """
         self._advance()
         args = [self._parse_range()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_range())
         return AST.Command(name="DEFINT", args=args)
 
     @astnode
@@ -717,6 +720,9 @@ class LocBasParser:
         """ <DEFREAL> ::= DEFREAL <str_range> """
         self._advance()
         args = [self._parse_range()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_range())
         return AST.Command(name="DEFREAL", args=args)
 
     @astnode
@@ -724,6 +730,9 @@ class LocBasParser:
         """ <DEFSTR> ::= DEFSTR <str_range> """
         self._advance()
         args = [self._parse_range()]
+        while self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_range())
         return AST.Command(name="DEFSTR", args=args)
 
     @astnode
