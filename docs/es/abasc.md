@@ -3162,6 +3162,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+* Versión 1.0.7
+  -
+
 * Versión 1.0.6
   - Arragla un bug al usar una constante como indice al acceder a elementos de un array.
   - Mejora el soporte para los comandos DEFINT, DEFREAL y DEFSTR
