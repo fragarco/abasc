@@ -200,6 +200,8 @@ class BasOptimizer:
                     nnode.line = node.line
                     nnode.col = node.col
                     return nnode
+        elif isinstance(node.target, AST.ArrayItem):
+            node.target = self._op_arrayitem(node.target)
         return node
 
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
