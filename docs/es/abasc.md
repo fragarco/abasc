@@ -3163,10 +3163,10 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.7
-  -
+  - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
 
 * Versión 1.0.6
-  - Arragla un bug al usar una constante como indice al acceder a elementos de un array.
+  - Arregla un bug al usar una constante como indice al acceder a elementos de un array.
   - Mejora el soporte para los comandos DEFINT, DEFREAL y DEFSTR
       - Abasc ignora esos comandos, pero no debe dar errores de compilación.
   - Arregla un problema al usar expresiones como direcciones con CALL.

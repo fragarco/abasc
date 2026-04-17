@@ -72,7 +72,9 @@ __cropsp_offbottom:
    	ld      d,a
    	ld      e,c						; DE = SP.H
    	sbc     hl,de					; OFF.BOTTOM = OFF.BOTTOM - SP.H
-   	jr      nc,__cropsp_allcrop     ; OFF.BOTTOM >= 0?
+  	jr      c,__cropsp_drawbottom   ; Si OFF.BOTTOM < SP.H (carry), aún hay líneas visibles
+   	jr      nz,__cropsp_allcrop     ; Si OFF.BOTTOM > SP.H (sin carry y no 0), está 100% fuera
+	__cropsp_drawbottom:
    	add     hl,de					; restore OFF.BOTTOM
 	ld      a,(__spclipped_h+1)
 	sub     l
@@ -198,17 +200,23 @@ __draw_clipsp_line:
 	__spclipped_leftoff:
 	ld      de,0		;  self-modifying code: OFF.LEFT
 	add     iy,de
+	
+	push    iy
+	pop     de
 	__spclipped_w:
 	ld      b,0			;  self-modifying code: SPCLP.W
 	push    hl
 __draw_clipsp_ldir:
-	ld      a,(iy)
+	ld      a,(de)
 	__spclipped_func:
 	xor		(hl)		; self-modifying code: NOP or XOR
 	ld      (hl),a
 	inc     hl
-	inc     iy
+	inc     de
 	djnz    __draw_clipsp_ldir
+	
+	push    de
+	pop     iy
 	__spclipped_rightoff:
 	ld      de,0		; OFF.RIGHT  
 	add     iy,de

@@ -3226,7 +3226,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.7
-  - 
+  - Fixes bottom clipping in scrDrawSpriteClipped routine.
   
 * Version 1.0.6
   - Fixes a bug using const values as index to access array items.
