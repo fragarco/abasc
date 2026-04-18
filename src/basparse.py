@@ -2802,7 +2802,7 @@ class LocBasParser:
         while self._current_is(TokenType.OP, "XOR"):
             op = self._advance()
             tk = self._current()
-            right = self._parse_logic_and()
+            right = self._parse_logic_or()
             # AND, OR and XOR produce integer results, they round real numbers before
             # performing the operation
             left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
@@ -2900,16 +2900,32 @@ class LocBasParser:
 
     @astnode
     def _parse_factor(self) -> AST.Statement:
-        r""" <factor> ::= <unary> [( * | / | \ ) <unary>] """
-        left = self._parse_unary()
+        r""" <factor> ::= <pow> [( * | / | \ ) <pow>] """
+        left = self._parse_pow()
         while self._current_in((TokenType.OP,), ('*', '/', '\\')):
             op = self._advance()
             tk = self._current()
-            right = self._parse_unary()
+            right = self._parse_pow()
             if op.lexeme == '\\':
                 dtype = AST.ExpType.Integer
             else:
                 dtype = AST.exptype_derive(left, right)
+            left, right = self._cast_numtypes(left, right, dtype, tk)
+            left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+            left.set_origin(op.line, op.col)
+        return left
+
+    @astnode
+    def _parse_pow(self) -> AST.Statement:
+        """ <pow> ::= <unary> ^ <unary> | <unary> """
+        left = self._parse_unary()
+        if self._current_is(TokenType.OP, lexeme='^'):
+            # As per Locomotive BASIC documentation, the pow operation
+            # is always Real
+            op = self._advance()
+            tk = self._current()
+            right = self._parse_unary()
+            dtype = AST.ExpType.Real
             left, right = self._cast_numtypes(left, right, dtype, tk)
             left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
             left.set_origin(op.line, op.col)

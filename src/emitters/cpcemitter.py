@@ -4409,6 +4409,9 @@ class CPCEmitter:
         elif op == '/':
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_DIV}", info="MATH_REAL_DIV")
             self._emit_code("call    rt_math_call")
+        elif op == '^':
+            self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_POWER}", info="MATH_REAL_POWER")
+            self._emit_code("call    rt_math_call")
         else:
             self._raise_error(2, node, f'unknown "{op}" REAL op')
         self._moveflo_heap(node)
