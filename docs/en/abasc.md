@@ -3227,7 +3227,8 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.
-  
+  - Fixes the MOD operator precedence order which must be higher than addition and substraction.
+
 * Version 1.0.6
   - Fixes a bug using const values as index to access array items.
   - Improves the parsing of DEFINT, DEFREAL and DEFSTR commands.

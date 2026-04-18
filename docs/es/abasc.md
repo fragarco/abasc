@@ -3164,6 +3164,7 @@ SUB         rsSetMode(nmode)
 
 * Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
+  - Corrige el orden de precedencia del operador MOD con respecto a la suma y la resta.
 
 * Versión 1.0.6
   - Arregla un bug al usar una constante como indice al acceder a elementos de un array.
