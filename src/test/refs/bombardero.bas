@@ -59,7 +59,7 @@
 570 LOCATE x-1,y:PRINT CHR$(32)+CHR$(32)+CHR$(32)+CHR$(253)+CHR$(8)+CHR$(238)+CHR$(8);
 580 FOR t=1 TO 10:SOUND 7,4000,5,15,0,0,5:PEN t:PRINT CHR$(253)+CHR$(8)+CHR$(238)+CHR$(8)+CHR$(32)+CHR$(8);:FOR tm=0 TO 50:NEXT:NEXT:PEN 2
 590 CLS:LOCATE 1,5:PRINT"Ha conseguido";puntos;"puntos."
-600 IF puntos>maxi THEN maxi=puntos:LOCATE 1,8:PRINT"BATIO EL RECORD!!";
+600 IF puntos>maxi THEN maxi=puntos:LOCATE 1,8:PRINT"HA BATIDO EL RECORD!!";
 610 puntos=0:LOCATE 1,12:PRINT"Pulse V para volver a empezar";
 620 a$=INKEY$:IF a$="v" OR a$="V" GOTO 630 ELSE GOTO 620
 630 PEN 1:MODE 1:x=2:y=2:a=2:b=2:GOTO 90
