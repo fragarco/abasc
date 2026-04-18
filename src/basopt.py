@@ -58,6 +58,12 @@ class BasOptimizer:
             nnode.line = node.args[0].line
             nnode.col = node.args[0].col
             return nnode
+        elif isinstance(node.args[0], AST.Integer):
+            self.modified = True
+            nnode = AST.Integer(value=node.args[0].value)
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
             # Lets use the interger version of TIME
             self.modified = True
@@ -66,14 +72,20 @@ class BasOptimizer:
         return node
 
     def _op_CREAL(self, node: AST.Function) -> AST.Statement:
-        if isinstance(node.args[0], AST.Real):
+        if isinstance(node.args[0], AST.Integer):
             self.modified = True
             nnode = AST.Real(value=float(node.args[0].value))
             nnode.line = node.args[0].line
             nnode.col = node.args[0].col
             return nnode
+        elif isinstance(node.args[0], AST.Real):
+            self.modified = True
+            nnode = AST.Real(value=node.args[0].value)
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         return node
-    
+
     def _op_CONST(self, node: AST.Command) -> AST.Statement:
         if not isinstance(node.args[1], AST.Integer):
             node.args[1] = self._op_statement(node.args[1])
@@ -111,6 +123,12 @@ class BasOptimizer:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
             nnode = AST.Integer(value=int(node.args[0].value))
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
+        elif isinstance(node.args[0], AST.Integer):
+            self.modified = True
+            nnode = AST.Integer(value=node.args[0].value)
             nnode.line = node.args[0].line
             nnode.col = node.args[0].col
             return nnode
@@ -153,6 +171,12 @@ class BasOptimizer:
                 nnode.line = node.args[0].line
                 nnode.col = node.args[0].col
                 return nnode
+        elif isinstance(node.args[0], AST.Integer):
+            self.modified = True
+            nnode = AST.Integer(value=node.args[0].value)
+            nnode.line = node.args[0].line
+            nnode.col = node.args[0].col
+            return nnode
         return node
 
     def _op_RECORD(self, node:AST.Command) -> AST.Statement:
@@ -207,9 +231,9 @@ class BasOptimizer:
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
-            # We replace AND and OR by its bitwise Python operators
+            # We replace MOD, POW, INT DIV, AND and OR by their Python operators
             command = f'''{repr(node.left.value)}'''   # type: ignore [attr-defined]
-            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "//")
+            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "//").replace("^", "**")
             command += f'''{repr(node.right.value)}''' # type: ignore [attr-defined]
             try:
                 result = eval(command)                 
