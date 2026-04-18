@@ -2842,12 +2842,12 @@ class LocBasParser:
 
     @astnode
     def _parse_comparison(self) -> AST.Statement:
-        """ <comparison> ::= <mod> [(= | < | > | <= | =< | >= | => | <>) <mod>] """
-        left = self._parse_mod()
+        """ <comparison> ::= <term> [(= | < | > | <= | =< | >= | => | <>) <term>] """
+        left = self._parse_term()
         while self._current_is(TokenType.COMP):
             op = self._advance()
             self._current()
-            right = self._parse_mod()
+            right = self._parse_term()
             dtype = AST.exptype_derive(left, right)
             if not AST.exptype_isvalid(dtype):
                 self._raise_error(13, op)
@@ -2864,27 +2864,13 @@ class LocBasParser:
         return left
 
     @astnode
-    def _parse_mod(self) -> AST.Statement:
-        """ <MOD> ::= <term> [MOD <term>] """
-        left = self._parse_term()
-        while self._current_is(TokenType.OP, "MOD"):
-            op = self._advance()
-            tk = self._current()
-            right = self._parse_term()
-            # MOD always produces an integer result and needs integer operators
-            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
-            left = AST.BinaryOp(op="MOD", left=left, right=right, etype=AST.ExpType.Integer)
-            left.set_origin(op.line, op.col)
-        return left
-
-    @astnode
     def _parse_term(self) -> AST.Statement:
-        """ <term> ::= <factor> [( + | - ) <factor>] """
-        left = self._parse_factor()
+        """ <term> ::= <mod> [( + | - ) <mod>] """
+        left = self._parse_mod()
         while self._current_in((TokenType.OP,),  ('+', '-')):
             op = self._advance()
             tk = self._current()
-            right = self._parse_factor()
+            right = self._parse_mod()
             dtype = AST.exptype_derive(left, right)
             if not AST.exptype_isvalid(dtype):
                 self._raise_error(13, op)
@@ -2895,6 +2881,20 @@ class LocBasParser:
             else:
                 left, right = self._cast_numtypes(left, right, dtype, tk)
             left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
+            left.set_origin(op.line, op.col)
+        return left
+
+    @astnode
+    def _parse_mod(self) -> AST.Statement:
+        """ <MOD> ::= <factor> [MOD <factor>] """
+        left = self._parse_factor()
+        while self._current_is(TokenType.OP, "MOD"):
+            op = self._advance()
+            tk = self._current()
+            right = self._parse_factor()
+            # MOD always produces an integer result and needs integer operators
+            left, right = self._cast_numtypes(left, right, AST.ExpType.Integer, tk)
+            left = AST.BinaryOp(op="MOD", left=left, right=right, etype=AST.ExpType.Integer)
             left.set_origin(op.line, op.col)
         return left
 
