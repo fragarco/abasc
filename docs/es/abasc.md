@@ -3162,6 +3162,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+* Versión 1.0.8
+  -
+
 * Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
   - Corrige el orden de precedencia del operador MOD con respecto a la suma y la resta.

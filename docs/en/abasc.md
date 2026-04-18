@@ -3225,6 +3225,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+* Version 1.0.8
+  -
+
 * Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.
   - Fixes the MOD operator precedence order which must be higher than addition and substraction.
