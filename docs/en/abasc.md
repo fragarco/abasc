@@ -414,6 +414,12 @@ Furthermore, a string array immediately allocates memory for **all its elements*
 DIM A$(5) FIXED 10   ' Total memory = 11 bytes × 5 elements
 ```
 
+The usual symbols in array declaration and array item accesses are parentheses, although square brackets can also be used.
+
+```basic
+DIM A$[5] FIXED 10   ' Total memory = 11 bytes × 5 elements
+```
+
 ### RECORD Structures
 
 ABASC supports organizing data into more complex structures known as **records** as it was introduced by Locomotive BASIC version 2 Plus. Internally, a record is simply a structured way of subdividing and labeling the memory reserved by a string. To use records, their layout must first be defined using the `RECORD` statement:
@@ -933,10 +939,10 @@ DELETE &C000-&FFFF
 
 **Command**. Declares an array and reserves memory for it. The data type is indicated using a suffix on the array name (`%`, `!`, `$`). If no suffix is specified, the array stores integers. For string arrays, you can reduce the maximum memory allocated for each element using the `FIXED` clause after the index list.
 
-Indices start at 0 and go up to the number specified in the declaration.
+Indices start at 0 and go up to the number specified in the declaration. The usual symbols in array declaration and array item accesses are parentheses, although square brackets can also be used.
 
 ```basic
-DIM name$(3) FIXED 8
+DIM name$(3) FIXED 8  ' an equivalent declaration would be DIM name$[3] FIXED 8
 
 name$(0) = "Juan"
 name$(1) = "Daniel"
@@ -944,7 +950,7 @@ name$(2) = "Pepe"
 name$(3) = "Roberto"
 
 FOR I=0 TO 3
-    PRINT name$(I)
+    PRINT name$(I)  ' an equivalent form would be PRINT name$[I]
 NEXT
 ```
 
@@ -3227,6 +3233,7 @@ SUB         rsSetMode(nmode)
 
 * Version 1.0.8
   - Blocks sound command if the channel queue is full.
+  - Adds support for brackets in array declarations and array item accesses.
 
 * Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.

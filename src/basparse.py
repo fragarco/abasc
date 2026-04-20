@@ -624,7 +624,7 @@ class LocBasParser:
         paramsym: SymType
         if self._match(TokenType.LPAREN):
             if self._next_is(TokenType.LBRACK):
-                param = self._parse_array_declaration(start = TokenType.LBRACK, end = TokenType.RBRACK)
+                param = self._parse_array_declaration(onlybracket = True)
                 paramtype = param.etype
                 paramname = param.name
                 paramsym = SymType.ArrayParam
@@ -649,7 +649,7 @@ class LocBasParser:
             while self._current_is(TokenType.COMMA):
                 self._advance()
                 if self._next_is(TokenType.LBRACK):
-                    param = self._parse_array_declaration(start = TokenType.LBRACK, end = TokenType.RBRACK)
+                    param = self._parse_array_declaration(onlybracket = True)
                     paramtype = param.etype
                     paramname = param.name
                     paramsym = SymType.ArrayParam
@@ -768,11 +768,11 @@ class LocBasParser:
         """ <DIM> ::= DIM <array_declaration>[,<array_declaration>]*"""
         # El numero dado como "size" es el maximo indice que se puede
         # usar, de esta forma es valido 10 DIM I(0): I(0) = 5
-        tk = self._advance()      
-        args: list[AST.Statement] = [self._parse_array_declaration()]
+        tk = self._advance()
+        args: list[AST.Statement] = [self._parse_array_declaration(onlybracket = False)]
         while self._current_is(TokenType.COMMA):
             self._advance()
-            var = self._parse_array_declaration()
+            var = self._parse_array_declaration(onlybracket = False)
             args.append(var)
         for var in args:
             info = SymEntry(
@@ -801,15 +801,20 @@ class LocBasParser:
         self._raise_error(2, tk, "constant or literal integer was expected")
 
     @astnode
-    def _parse_array_declaration(self, start = TokenType.LPAREN, end = TokenType.RPAREN) -> AST.Array:
+    def _parse_array_declaration(self, onlybracket = False) -> AST.Array:
         """ <array_declaration> ::= IDENT([INT[,INT]]) """
         var = self._expect(TokenType.IDENT).lexeme
         vartype = AST.exptype_fromname(var)
         datasz = AST.exptype_memsize(vartype)
         sizes = [10]
         sizesexp: list[AST.Statement] = []
-        self._expect(start)
-        if not self._current_is(TokenType.RPAREN):
+        if self._current_is(TokenType.LBRACK):
+            self._advance()
+            endsym = TokenType.RBRACK
+        elif not onlybracket:
+            self._expect(TokenType.LPAREN)
+            endsym = TokenType.RPAREN
+        if not self._current_is(endsym):
             # We set the current elements to BASIC default 10 and leave
             # the optimizer and emitter to deal with real dimensions so expressions
             # can get the oportunity to be reduced to literal integers.
@@ -818,7 +823,7 @@ class LocBasParser:
                 self._advance()
                 sizesexp.append(self._parse_int_expression(allowcast=False))
                 sizes.append(10)
-        self._expect(end)
+        self._expect(endsym)
         fixedexp: Optional[AST.Statement] = None
         if vartype == AST.ExpType.String and self._current_is(TokenType.KEYWORD, lexeme="FIXED"):
             self._advance()
@@ -3030,7 +3035,8 @@ class LocBasParser:
         # emiter will do
         tkvar = self._expect(TokenType.IDENT)
         etype = AST.exptype_fromname(tkvar.lexeme)
-        if self._current_is(TokenType.LPAREN):
+        if self._current_is(TokenType.LPAREN) or self._current_is(TokenType.LBRACK):
+            opensym = self._current()
             # Array item
             self._advance()
             tk = self._current()
@@ -3043,7 +3049,8 @@ class LocBasParser:
                 indexes.append(self._parse_expression())
                 if not AST.exptype_isint(indexes[-1].etype):
                     self._raise_error(13, tk)
-            self._expect(TokenType.RPAREN)
+            if opensym.type == TokenType.LPAREN: self._expect(TokenType.RPAREN)
+            if opensym.type == TokenType.LBRACK: self._expect(TokenType.RBRACK)
             varname = tkvar.lexeme
             vartype = etype
             tk = self._current()

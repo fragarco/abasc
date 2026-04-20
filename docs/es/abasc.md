@@ -409,12 +409,18 @@ Es importante destacar que, al no existir comprobaciones en tiempo de ejecución
 
 ### Arrays
 
-En Locomotive BASIC, un array que no ha sido declarado previamente con `DIM` se considera que tiene 10 elementos por defecto. ABASC es más estricto: la compilación fallará si el código intenta operar con arrays que no hayan sido declarados explicitamente mediante `DIM`.
+En el Locomotive BASIC interpretado, un array que no ha sido declarado previamente con `DIM` se considera que tiene 10 elementos por defecto. ABASC es más estricto: la compilación fallará si el código intenta operar con arrays que no hayan sido declarados explicitamente mediante `DIM`.
 
 Además, un array de cadenas reservará inmediatamente la memoria necesaria para todos sus elementos. Por defecto, cada cadena ocupa 255 bytes (1 para la longitud y 254 para el contenido), lo que puede consumir rápidamente la memoria disponible. Por ello, igual que con las cadenas individuales, es posible utilizar la cláusula `FIXED`:
 
 ```basic
 DIM A$(5) FIXED 10   ' El espacio total será de 11 bytes × 5 elementos
+```
+
+Los símbolos habituales para indicar el inicio y final de los indices son los paréntesis, aunque también se pueden utilizar los corchetes:
+
+```basic
+DIM A$[5] FIXED 10   ' El espacio total será de 11 bytes × 5 elementos
 ```
 
 ### Estructuras con RECORD
@@ -933,10 +939,10 @@ Comando. Desactiva el mecanismo de interrupciones. Con las interrupciones desact
 
 Comando. Permite declarar y reservar la memoria a utilizar por un array (vector). El tipo de dato debe indicarse como sufijo al nombre del array (`%`, `!`, `$`). Si no se indica ningún sufijo, los datos serán enteros. En el caso de un array de cadenas de texto, es posible reducir el tamaño máximo reservado para cada cadena usando la cláusula `FIXED` después de la lista de indices.
 
-Los indices van desde 0 hasta el número indicado en la declaración.
+Los indices van desde 0 hasta el número indicado en la declaración. Se puden utilizar tanto paréntesis como corchetes a la hora e indicar índices.
 
 ```
-DIM nom$(3) FIXED 8
+DIM nom$(3) FIXED 8  ' dim nom$[3] fixed 8 también sería válido
 
 nom$(0) = "Juan"
 nom$(1) = "Daniel"
@@ -944,7 +950,7 @@ nom$(2) = "Pepe"
 nom$(3) = "Roberto"
 
 FOR I=0 TO 3
-    PRINT nom$(I)
+    PRINT nom$(I)   ' como alternativa: print nom$[I]
 NEXT
 ```
 
@@ -3164,6 +3170,7 @@ SUB         rsSetMode(nmode)
 
 * Versión 1.0.8
   - Bloquea el comando SOUND si la cola del canal está llena.
+  - Añade soporte para corchetes en las declaraciones y accesos a elementos de un array.
 
 * Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
