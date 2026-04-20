@@ -3163,7 +3163,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 * Versión 1.0.8
-  -
+  - Bloquea el comando SOUND si la cola del canal está llena.
 
 * Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.

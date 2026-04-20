@@ -3226,7 +3226,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 * Version 1.0.8
-  -
+  - Blocks sound command if the channel queue is full.
 
 * Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.
