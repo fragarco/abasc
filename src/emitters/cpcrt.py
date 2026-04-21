@@ -2961,7 +2961,7 @@ f"""
 ;   AF, BC, DE, IX and HL are modified.
 rt_sound:
     ld      hl,rt_sound_buf
-    call    {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
+    jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
     ret     c
     jr      rt_sound  ; repeat the call if the queue is full
 """
