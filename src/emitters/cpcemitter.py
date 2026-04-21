@@ -2336,7 +2336,7 @@ class CPCEmitter:
         MID$ specifies part of a string (a sub-string) which can be used either as
         the destination of an assignment (MID$ as a command) or as an argument in
         a string expression (MID$ as a Function). The first <integer expression>
-        specifies the position of the first character of the sub-string.
+        specifies the position of the first character of the sub-string (starts at 1).
         The second <integer expression> specifies the length of the sub-string
         to be returned. If omitted, this extends to the end of the original string. 
         """
@@ -2344,12 +2344,15 @@ class CPCEmitter:
         self._emit_import("rt_substr")
         self._emit_code("; MID$(<string>, <integer expression> [, <integer expression>]))")
         self._emit_expression(node.args[1])
-        self._emit_code("push    hl")
         if len(node.args) == 3:
+            self._emit_code("push    hl")
             self._emit_expression(node.args[2])
             self._emit_code("pop     bc")
             self._emit_code("ld      b,l")
             self._emit_code("push    bc")
+        else:
+            self._emit_code("ld       h,255")
+            self._emit_code("push     hl")
         self._emit_expression(node.args[0])
         self._reserve_heapmem_de(255, node)
         self._emit_code("pop     bc")
@@ -4197,7 +4200,6 @@ class CPCEmitter:
         node.args   : list of index expressions
         var.indexes : list of dimension lengths
         """
-        self._emit_import("rt_mul16_A")
         varname = node.name
         record = ""
         vartype = AST.exptype_fromname(varname)
@@ -4215,6 +4217,8 @@ class CPCEmitter:
         ndims = len(dims)
         if len(node.args) != ndims:
             self._raise_error(2, node, info="bad subscript count")
+        if ndims > 1:
+            self._emit_import("rt_mul16")
         # lets calculte the linear offset: x + y*szx + z*szx*szy ...
         self._emit_expression(node.args[0])
         dim_size = 1
@@ -4222,8 +4226,8 @@ class CPCEmitter:
             self._emit_code("push    hl", info=f"save partial offset (dim {i-1})")
             dim_size = dim_size * (dims[i-1] + 1) # adding 1 because array sizes are inclusive 0..N  
             self._emit_expression(node.args[i])
-            self._emit_code(f"ld      a,{dim_size}", info=f"dimension {i-1} linear size") 
-            self._emit_code("call    rt_mul16_A")
+            self._emit_code(f"ld      de,{dim_size}", info=f"dimension {i-1} linear size") 
+            self._emit_code("call    rt_mul16")
             self._emit_code("pop     de")
             self._emit_code("add     hl,de", info="add next index")
         # address_offset = linear_offset * size_of(data)
