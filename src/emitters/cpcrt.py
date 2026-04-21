@@ -1366,29 +1366,27 @@ __findstr_match:
     "rt_substr": ([],"",
 """
 ; RT_SUBSTR
-; Returns part of a string (a substring) of the string pointed by HL
-; and places them in the string pointed by DE. The starting position to
-; copy is in C and B has the number of characters to copy (0 to copy
-; to the end).
+; Slices a part of a string (a substring) of the string pointed by HL
+; and copies it in the string pointed by DE. The starting position to
+; copy is in C (starting in 1) and B has the number of characters to copy.
 ; Inputs:
 ;     HL address to the source string
-;     DE address to the destintion string
+;     DE address to the destination string
 ;      C starting position in source string
 ;      B number of characters to copy, 0 copies to the end
 ; Outputs:
 ;     HL  points to the destination string
 ;     HL, BC, DE and AF are modified
 rt_substr:
-    ld      a,b
-    or      a
-    jr      nz,$+3
-    ld      b,(hl)  ; by default all chars from start to the end
+    xor     a
+    or      b       ; check number of characters is not 0
+    jr      z,__substr_empty
     ld      a,(hl)  ; main string len
+    sub     c       ; check starting char is in range
+    jr      c,__substr_empty 
     ex      de,hl
     ld      (hl),0
-    sub     c
-    ret     c
-    inc     a
+    inc     a       ; source string remaining chars
     cp      b
     jr      nc,$+3
     ld      b,a
@@ -1404,6 +1402,11 @@ rt_substr:
     ldir
     pop     hl
     ret
+__substr_empty:
+    xor     a
+    ld      (de),a  ; init DE length to 0
+    ex      de,hl
+    ret
 """
 ),
     "rt_strleft": ([],"", 
@@ -1414,15 +1417,18 @@ rt_substr:
 ; characters to copy are in C
 ; Inputs:
 ;     HL address to the source string
-;     DE address to the destintion string
+;     DE address to the destination string
 ;      C number of characters to copy
 ; Outputs:
 ;     HL  points to the destination string
 ;     HL, BC, DE and AF are modified
 rt_strleft:
+    xor     a
+    cp      c       ; check number of characters is not 0
+    jr      z,__strleft_empty
     ld      a,(hl)  ; main string len
     cp      c       ; more chars than the len of source string
-    ret     c
+    ret     c       ; return all the string
     push    de
     ld      (de),a  ; destination length
     inc     hl
@@ -1430,6 +1436,10 @@ rt_strleft:
     ld      b,0
     ldir
     pop     hl
+    ret
+__strleft_empty:
+    ld      (de),a  ; init DE length to 0
+    ex      de,hl
     ret
 """
 ),
@@ -1441,12 +1451,15 @@ rt_strleft:
 ; characters to copy are in C
 ; Inputs:
 ;     HL address to the source string
-;     DE address to the destintion string
+;     DE address to the destination string
 ;      C number of characters to copy
 ; Outputs:
 ;     HL  points to the destination string
 ;     HL, BC, DE and AF are modified
 rt_strright:
+    xor     a
+    cp      c       ; check number of characters is not 0
+    jr      z,__strright_empty
     ld      a,(hl)  ; main string len
     sub     c       ; more chars than the len of source string
     ret     c
@@ -1461,6 +1474,10 @@ rt_strright:
     djnz    $-1
     ldir
     pop     hl
+    ret
+__strright_empty:
+    ld      (de),a  ; init DE length to 0
+    ex      de,hl
     ret
 """
 ),
@@ -1477,6 +1494,9 @@ rt_strright:
 ;     HL points to string
 ;     AF, HL, DE and B are modified
 rt_strfill:
+    xor     a
+    cp      c       ; check number of characters is not 0
+    jr      z,__strfill_empty
     ld      a,l
     ld      b,a
     ld      (de),a
@@ -1486,6 +1506,10 @@ rt_strfill:
     ld      (de),a
     djnz    $-2
     pop     hl
+    ret
+__strfill_empty:
+    ld      (de),a  ; init DE length to 0
+    ex      de,hl
     ret
 """
 ),
