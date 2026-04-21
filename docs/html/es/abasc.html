@@ -241,6 +241,8 @@
 <p><strong>Un compilador cruzado de BASIC para los Amstrad
 CPC</strong></p>
 <ul>
+<li><a href="#abasc-manual-del-usuario">ABASC: MANUAL DEL
+USUARIO</a></li>
 <li><a href="#introducción">Introducción</a>
 <ul>
 <li><a href="#influencias">Influencias</a></li>
@@ -849,11 +851,11 @@ en tiempo de ejecución —como sí ocurre en un intérprete—, nada impide
 que el programador intente almacenar más carácteres de los permitidos en
 <code>A$</code>, lo que provocará comportamientos impredecibles.</p>
 <h3 id="arrays">Arrays</h3>
-<p>En Locomotive BASIC, un array que no ha sido declarado previamente
-con <code>DIM</code> se considera que tiene 10 elementos por defecto.
-ABASC es más estricto: la compilación fallará si el código intenta
-operar con arrays que no hayan sido declarados explicitamente mediante
-<code>DIM</code>.</p>
+<p>En el Locomotive BASIC interpretado, un array que no ha sido
+declarado previamente con <code>DIM</code> se considera que tiene 10
+elementos por defecto. ABASC es más estricto: la compilación fallará si
+el código intenta operar con arrays que no hayan sido declarados
+explicitamente mediante <code>DIM</code>.</p>
 <p>Además, un array de cadenas reservará inmediatamente la memoria
 necesaria para todos sus elementos. Por defecto, cada cadena ocupa 255
 bytes (1 para la longitud y 254 para el contenido), lo que puede
@@ -861,6 +863,9 @@ consumir rápidamente la memoria disponible. Por ello, igual que con las
 cadenas individuales, es posible utilizar la cláusula
 <code>FIXED</code>:</p>
 <pre class="basic"><code>DIM A$(5) FIXED 10   &#39; El espacio total será de 11 bytes × 5 elementos</code></pre>
+<p>Los símbolos habituales para indicar el inicio y final de los indices
+son los paréntesis, aunque también se pueden utilizar los corchetes:</p>
+<pre class="basic"><code>DIM A$[5] FIXED 10   &#39; El espacio total será de 11 bytes × 5 elementos</code></pre>
 <h3 id="estructuras-con-record">Estructuras con RECORD</h3>
 <p>ABASC incluye soporte para la organización de variables en
 estructuras más complejas denominadas <strong>REGISTROS</strong>.
@@ -1079,8 +1084,8 @@ ASM &quot;asm_label:&quot;</code></pre>
 siguiente:</p>
 <table>
 <colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
+<col style="width: 3%" />
+<col style="width: 96%" />
 </colgroup>
 <thead>
 <tr>
@@ -1129,8 +1134,8 @@ gestión de memoria: <code>HIMEM</code>, <code>MEMORY</code>,
 significado varía ligeramente debido al modelo compilado:</p>
 <table>
 <colgroup>
-<col style="width: 55%" />
-<col style="width: 44%" />
+<col style="width: 9%" />
+<col style="width: 90%" />
 </colgroup>
 <thead>
 <tr>
@@ -1248,8 +1253,8 @@ de este manual.</p>
 <p>Carácteres especiales:</p>
 <table>
 <colgroup>
-<col style="width: 58%" />
-<col style="width: 41%" />
+<col style="width: 8%" />
+<col style="width: 91%" />
 </colgroup>
 <thead>
 <tr>
@@ -1558,9 +1563,10 @@ ningún sufijo, los datos serán enteros. En el caso de un array de
 cadenas de texto, es posible reducir el tamaño máximo reservado para
 cada cadena usando la cláusula <code>FIXED</code> después de la lista de
 indices.</p>
-<p>Los indices van desde 0 hasta el número indicado en la
-declaración.</p>
-<pre><code>DIM nom$(3) FIXED 8
+<p>Los indices van desde 0 hasta el número indicado en la declaración.
+Se puden utilizar tanto paréntesis como corchetes a la hora e indicar
+índices.</p>
+<pre><code>DIM nom$(3) FIXED 8  &#39; dim nom$[3] fixed 8 también sería válido
 
 nom$(0) = &quot;Juan&quot;
 nom$(1) = &quot;Daniel&quot;
@@ -1568,7 +1574,7 @@ nom$(2) = &quot;Pepe&quot;
 nom$(3) = &quot;Roberto&quot;
 
 FOR I=0 TO 3
-    PRINT nom$(I)
+    PRINT nom$(I)   &#39; como alternativa: print nom$[I]
 NEXT</code></pre>
 <h3 id="draw-xyimodo"><code>DRAW x,y[,i[,modo]]</code></h3>
 <p>Comando. Dibuja una línea desde la posición actual del cursor hasta
@@ -1643,11 +1649,17 @@ carácter, pero utiliza el número de parámetros para saber si nos
 encontramos en el primer caso o en el segundo. En caso de duda,
 procederá siempre considerando que estamos usando el primer caso, donde
 cada envolvente se especifica usando tres valores.</p>
-<p>Sección tipo 1: * Parámetro 1: número de escalores, de 0 a 239. *
-Parámetro 2: tamaño de cada escalón, de -128 a +127. * Parámetro 3:
-pausa</p>
-<p>Sección tipo 2: * Parámetro 1: periodo del tono (entero de 16 bits).
-* Parámetro 2: pausa</p>
+<p>Sección tipo 1:</p>
+<ul>
+<li>Parámetro 1: número de escalores, de 0 a 239.</li>
+<li>Parámetro 2: tamaño de cada escalón, de -128 a +127.</li>
+<li>Parámetro 3: pausa</li>
+</ul>
+<p>Sección tipo 2:</p>
+<ul>
+<li>Parámetro 1: periodo del tono (entero de 16 bits).</li>
+<li>Parámetro 2: pausa</li>
+</ul>
 <h3
 id="env-número-de-envolvente-secciones"><code>ENV número de envolvente, secciones</code></h3>
 <p>Comando. Define la variación en volumen de un sonido. Locomotive
@@ -1660,12 +1672,18 @@ parámetros para saber si nos encontramos en el primer caso o en el
 segundo. En caso de duda, procederá siempre considerando que estamos
 usando el primer caso, donde cada envolvente se especifica usando tres
 valores.</p>
-<p>Sección tipo 1: * Parámetro 1: número de escalores, de 0 a 127. *
-Parámetro 2: tamaño de cada escalón, de -128 a +127. * Parámetro 3:
-pausa, rango de 0 a 255.</p>
-<p>Sección tipo 2: * Parámetro 1: ID de envolvente según el hardware de
-sonido. * Parámetro 2: periodo de la envolvente. Valor que se manda a
-los registros.</p>
+<p>Sección tipo 1:</p>
+<ul>
+<li>Parámetro 1: número de escalores, de 0 a 127.</li>
+<li>Parámetro 2: tamaño de cada escalón, de -128 a +127.</li>
+<li>Parámetro 3: pausa, rango de 0 a 255.</li>
+</ul>
+<p>Sección tipo 2:</p>
+<ul>
+<li>Parámetro 1: ID de envolvente según el hardware de sonido.</li>
+<li>Parámetro 2: periodo de la envolvente. Valor que se manda a los
+registros.</li>
+</ul>
 <pre class="basic"><code>ENV 1,=9,2000
 ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
 ENV 3,=9,9000</code></pre>
@@ -2278,8 +2296,12 @@ id="on-sq-canal-gosub-etiqueta"><code>ON SQ (canal) GOSUB etiqueta</code></h3>
 <p>Comando. Registra el salto a una etiqueta como una interrupción que
 debe ejecutarse cuando hay un “slot” libre en la cola de sonido indicada
 por <code>canal</code>. El valor de <code>canal</code> debe ser un valor
-de entre los de la siguiente lista: * 1 = canal A * 2 = canal B * 4 =
-canal C</p>
+de entre los de la siguiente lista:</p>
+<ul>
+<li>1 = canal A</li>
+<li>2 = canal B</li>
+<li>4 = canal C</li>
+</ul>
 <pre class="basic"><code>ON SQ(2) GOSUB INSERTAenB</code></pre>
 <h3 id="openin-fichero"><code>OPENIN fichero</code></h3>
 <p>Comando. Abre el fichero indicado por <code>fichero</code> para
@@ -2299,10 +2321,10 @@ además, establecer las dimensiones de la ventana para gráficos, si se
 proporcionan las coordenadas opcionales <code>izq</code>,
 <code>der</code>, <code>arr</code> y <code>abajo</code>. Una llamada a
 <code>MODE</code> restablece las dimensiones.</p>
-<pre class="basic"><code>CLS:BORDER 13 
+<pre class="basic"><code>CLS:BORDER 13
 LABEL BUCLE
-    ORIGIN 0,0,50,590,350,50  
-    DRAW 540,350 
+    ORIGIN 0,0,50,590,350,50
+    DRAW 540,350
 GOTO BUCLE</code></pre>
 <h3 id="out-puerton"><code>OUT puerto,n</code></h3>
 <p>Comando. Envía el valor <code>n</code> al puerto hardware indicado
@@ -2488,13 +2510,13 @@ identificador declarado con <code>LABEL</code>. Si no se especifica
 ninguna <code>etiqueta</code> el comando establece el primer dato
 declarado con <code>DATA</code> encontrado en el programa.</p>
 <pre class="basic"><code>LABEL BUCLE
-FOR N=1 TO 5 
-    READ A$ 
-    PRINT A$;&quot; &quot;; 
-    DATA datos,&quot;a leer&quot;,una,&quot;y otra&quot;,vez   
-NEXT 
-PRINT 
-RESTORE 
+FOR N=1 TO 5
+    READ A$
+    PRINT A$;&quot; &quot;;
+    DATA datos,&quot;a leer&quot;,una,&quot;y otra&quot;,vez
+NEXT
+PRINT
+RESTORE
 GOTO BUCLE</code></pre>
 <h3 id="resume"><code>RESUME</code></h3>
 <p>Comando. Restaura la ejecución de un programa detenido tras un evento
@@ -2547,8 +2569,8 @@ referencia, los tipos permitidos por la instrucción en BASIC son:</p>
 <p>El resto de parámetros opcionales son:</p>
 <table>
 <colgroup>
-<col style="width: 44%" />
-<col style="width: 56%" />
+<col style="width: 11%" />
+<col style="width: 88%" />
 </colgroup>
 <thead>
 <tr>
@@ -3081,13 +3103,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb117"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb118"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb118"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb119"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -3268,93 +3290,93 @@ SUB         cpctSetInterruptHandler(cbaddress)</code></pre>
 <ul>
 <li><code>cpctelera/keyboard</code></li>
 </ul>
-<pre><code>CONST KEY.UP           
-CONST KEY.RIGHT        
-CONST KEY.DOWN         
-CONST KEY.F9           
-CONST KEY.F6           
-CONST KEY.F3           
-CONST KEY.ENTER        
-CONST KEY.FDOT         
-CONST KEY.LEFT         
-CONST KEY.COPY         
-CONST KEY.F7           
-CONST KEY.F8           
-CONST KEY.F5           
-CONST KEY.F1           
-CONST KEY.F2           
-CONST KEY.F0           
-CONST KEY.CLR          
-CONST KEY.OPENBRACKET  
-CONST KEY.RETURN       
-CONST KEY.CLOSEBRACKET 
-CONST KEY.F4           
-CONST KEY.SHIFT        
-CONST KEY.BACKSLASH    
-CONST KEY.CONTROL      
-CONST KEY.CARET        
-CONST KEY.HYPHEN       
-CONST KEY.AT           
-CONST KEY.P            
-CONST KEY.SEMICOLON    
-CONST KEY.COLON        
-CONST KEY.SLASH        
-CONST KEY.DOT          
-CONST KEY.0            
-CONST KEY.9            
-CONST KEY.O            
-CONST KEY.I            
-CONST KEY.L            
-CONST KEY.K            
-CONST KEY.M            
-CONST KEY.COMMA        
-CONST KEY.8            
-CONST KEY.7            
-CONST KEY.U            
-CONST KEY.Y            
-CONST KEY.H            
-CONST KEY.J            
-CONST KEY.N            
-CONST KEY.SPACE        
-CONST KEY.6            
-CONST JOY1.UP          
-CONST KEY.5            
-CONST JOY1.DOWN        
-CONST KEY.R            
-CONST JOY1.LEFT        
-CONST KEY.T            
-CONST JOY1.RIGHT       
-CONST KEY.G            
-CONST JOY1.FIRE1       
-CONST KEY.F            
-CONST JOY1.FIRE2       
-CONST KEY.B            
-CONST JOY1.FIRE3       
-CONST KEY.V            
-CONST KEY.4            
-CONST KEY.3            
-CONST KEY.E            
-CONST KEY.W            
-CONST KEY.S            
-CONST KEY.D            
-CONST KEY.C            
-CONST KEY.X            
-CONST KEY.1            
-CONST KEY.2            
-CONST KEY.ESC          
-CONST KEY.Q            
-CONST KEY.TAB          
-CONST KEY.A            
-CONST KEY.CAPSLOCK     
-CONST KEY.Z            
-CONST JOY0.UP          
-CONST JOY0.DOWN        
-CONST JOY0.LEFT        
-CONST JOY0.RIGHT       
-CONST JOY0.FIRE1       
-CONST JOY0.FIRE2       
-CONST JOY0.FIRE3       
-CONST KEY.DEL          
+<pre><code>CONST KEY.UP
+CONST KEY.RIGHT
+CONST KEY.DOWN
+CONST KEY.F9
+CONST KEY.F6
+CONST KEY.F3
+CONST KEY.ENTER
+CONST KEY.FDOT
+CONST KEY.LEFT
+CONST KEY.COPY
+CONST KEY.F7
+CONST KEY.F8
+CONST KEY.F5
+CONST KEY.F1
+CONST KEY.F2
+CONST KEY.F0
+CONST KEY.CLR
+CONST KEY.OPENBRACKET
+CONST KEY.RETURN
+CONST KEY.CLOSEBRACKET
+CONST KEY.F4
+CONST KEY.SHIFT
+CONST KEY.BACKSLASH
+CONST KEY.CONTROL
+CONST KEY.CARET
+CONST KEY.HYPHEN
+CONST KEY.AT
+CONST KEY.P
+CONST KEY.SEMICOLON
+CONST KEY.COLON
+CONST KEY.SLASH
+CONST KEY.DOT
+CONST KEY.0
+CONST KEY.9
+CONST KEY.O
+CONST KEY.I
+CONST KEY.L
+CONST KEY.K
+CONST KEY.M
+CONST KEY.COMMA
+CONST KEY.8
+CONST KEY.7
+CONST KEY.U
+CONST KEY.Y
+CONST KEY.H
+CONST KEY.J
+CONST KEY.N
+CONST KEY.SPACE
+CONST KEY.6
+CONST JOY1.UP
+CONST KEY.5
+CONST JOY1.DOWN
+CONST KEY.R
+CONST JOY1.LEFT
+CONST KEY.T
+CONST JOY1.RIGHT
+CONST KEY.G
+CONST JOY1.FIRE1
+CONST KEY.F
+CONST JOY1.FIRE2
+CONST KEY.B
+CONST JOY1.FIRE3
+CONST KEY.V
+CONST KEY.4
+CONST KEY.3
+CONST KEY.E
+CONST KEY.W
+CONST KEY.S
+CONST KEY.D
+CONST KEY.C
+CONST KEY.X
+CONST KEY.1
+CONST KEY.2
+CONST KEY.ESC
+CONST KEY.Q
+CONST KEY.TAB
+CONST KEY.A
+CONST KEY.CAPSLOCK
+CONST KEY.Z
+CONST JOY0.UP
+CONST JOY0.DOWN
+CONST JOY0.LEFT
+CONST JOY0.RIGHT
+CONST JOY0.FIRE1
+CONST JOY0.FIRE2
+CONST JOY0.FIRE3
+CONST KEY.DEL
 
 FUNCTION    cpctGetKeypressedAsASCII
 FUNCTION    cpctIsAnyKeyPressed
@@ -3406,7 +3428,7 @@ FUNCTION    cpctRand</code></pre>
 </ul>
 <pre><code>const CPCTBLEND.XOR
 const CPCTBLEND.AND
-const CPCTBLEND.OR 
+const CPCTBLEND.OR
 const CPCTBLEND.ADD
 const CPCTBLEND.ADC
 const CPCTBLEND.SBC
@@ -3488,61 +3510,61 @@ SUB         cpctSetDrawCharM2(fg, bg)</code></pre>
 <pre><code>CONST CPCT.VMEMSTART
 CONST CPCT.VMEMSIZE
 
-CONST FWC.BLACK         
-CONST FWC.BLUE          
-CONST FWC.BRIGHTBLUE    
-CONST FWC.RED           
-CONST FWC.MAGENTA       
-CONST FWC.MAUVE         
-CONST FWC.BRIGHTRED     
-CONST FWC.PURPLE        
-CONST FWC.BRIGHTMAGENTA 
-CONST FWC.GREEN         
-CONST FWC.CYAN          
-CONST FWC.SKYBLUE       
-CONST FWC.YELLOW        
-CONST FWC.WHITE         
-CONST FWC.PASTELBLUE    
-CONST FWC.ORANGE        
-CONST FWC.PINK          
-CONST FWC.PASTERMAGENTA 
-CONST FWC.BRIGHTGREEN   
-CONST FWC.SEAGREEN      
-CONST FWC.BRIGHTCYAN    
-CONST FWC.LIME          
-CONST FWC.PASTELGREEN   
-CONST FWC.PASTELCYAN    
-CONST FWC.BRIGHTYELLOW  
-CONST FWC.PASTELYELLOW  
-CONST FWC.BRIGHTWHITE   
+CONST FWC.BLACK
+CONST FWC.BLUE
+CONST FWC.BRIGHTBLUE
+CONST FWC.RED
+CONST FWC.MAGENTA
+CONST FWC.MAUVE
+CONST FWC.BRIGHTRED
+CONST FWC.PURPLE
+CONST FWC.BRIGHTMAGENTA
+CONST FWC.GREEN
+CONST FWC.CYAN
+CONST FWC.SKYBLUE
+CONST FWC.YELLOW
+CONST FWC.WHITE
+CONST FWC.PASTELBLUE
+CONST FWC.ORANGE
+CONST FWC.PINK
+CONST FWC.PASTERMAGENTA
+CONST FWC.BRIGHTGREEN
+CONST FWC.SEAGREEN
+CONST FWC.BRIGHTCYAN
+CONST FWC.LIME
+CONST FWC.PASTELGREEN
+CONST FWC.PASTELCYAN
+CONST FWC.BRIGHTYELLOW
+CONST FWC.PASTELYELLOW
+CONST FWC.BRIGHTWHITE
 
-CONST HWC.BLACK        
-CONST HWC.BLUE         
-CONST HWC.BRIGHTBLUE   
-CONST HWC.RED          
-CONST HWC.MAGENTA      
-CONST HWC.MAUVE        
-CONST HWC.BRIGHTRED    
-CONST HWC.PURPLE       
+CONST HWC.BLACK
+CONST HWC.BLUE
+CONST HWC.BRIGHTBLUE
+CONST HWC.RED
+CONST HWC.MAGENTA
+CONST HWC.MAUVE
+CONST HWC.BRIGHTRED
+CONST HWC.PURPLE
 CONST HWC.BRIGHTMAGENTA
-CONST HWC.GREEN        
-CONST HWC.CYAN         
-CONST HWC.SKYBLUE      
-CONST HWC.YELLOW       
-CONST HWC.WHITE        
-CONST HWC.PASTELBLUE   
-CONST HWC.ORANGE       
-CONST HWC.PINK         
+CONST HWC.GREEN
+CONST HWC.CYAN
+CONST HWC.SKYBLUE
+CONST HWC.YELLOW
+CONST HWC.WHITE
+CONST HWC.PASTELBLUE
+CONST HWC.ORANGE
+CONST HWC.PINK
 CONST HWC.PASTERMAGENTA
-CONST HWC.BRIGHTGREEN  
-CONST HWC.SEAGREEN     
-CONST HWC.BRIGHTCYAN   
-CONST HWC.LIME         
-CONST HWC.PASTELGREEN  
-CONST HWC.PASTELCYAN   
-CONST HWC.BRIGHTYELLOW 
-CONST HWC.PASTELYELLOW 
-CONST HWC.BRIGHTWHITE  
+CONST HWC.BRIGHTGREEN
+CONST HWC.SEAGREEN
+CONST HWC.BRIGHTCYAN
+CONST HWC.LIME
+CONST HWC.PASTELGREEN
+CONST HWC.PASTELCYAN
+CONST HWC.BRIGHTYELLOW
+CONST HWC.PASTELYELLOW
+CONST HWC.BRIGHTWHITE
 
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
@@ -3593,105 +3615,105 @@ SUB rsEnableFirmware</code></pre>
 <ul>
 <li><code>cpcrslib/keyboard</code></li>
 </ul>
-<pre><code>const RSKEY.EMPTY   
-const RSKEY.FDOT    
-const RSKEY.FENTER  
-const RSKEY.F3      
-const RSKEY.F6      
-const RSKEY.F9      
-const RSKEY.DOWN    
-const RSKEY.RIGHT   
-const RSKEY.UP      
-const RSKEY.F0      
-const RSKEY.F2      
-const RSKEY.F1      
-const RSKEY.F5      
-const RSKEY.F8      
-const RSKEY.F7      
-const RSKEY.COPY    
-const RSKEY.LEFT    
-const RSKEY.CTRL    
-const RSKEY.BSLASH  
-const RSKEY.SHIFT   
-const RSKEY.F4      
-const RSKEY.RSQUARE 
-const RSKEY.RETURN  
-const RSKEY.LSQUARE 
-const RSKEY.CLR     
-const RSKEY.DOT     
-const RSKEY.FSLASH  
-const RSKEY.COLON   
-const RSKEY.SCOLON  
-const RSKEY.P       
-const RSKEY.AT      
-const RSKEY.MINUS   
-const RSKEY.EXP     
-const RSKEY.COMMA   
-const RSKEY.M       
-const RSKEY.K       
-const RSKEY.L       
-const RSKEY.I       
-const RSKEY.O       
-const RSKEY.9       
-const RSKEY.0       
-const RSKEY.SPACE   
-const RSKEY.N       
-const RSKEY.J       
-const RSKEY.H       
-const RSKEY.Y       
-const RSKEY.U       
-const RSKEY.7       
-const RSKEY.8       
-const RSKEY.V       
-const RSKEY.B       
-const RSKEY.F       
-const RSKEY.G       
-const RSKEY.T       
-const RSKEY.R       
-const RSKEY.5       
-const RSKEY.6       
-const RSKEY.J2FIRE3 
-const RSKEY.J2FIRE2 
-const RSKEY.J2FIRE1 
-const RSKEY.J2RIGHT 
-const RSKEY.J2LEFT  
-const RSKEY.J2DOWN  
-const RSKEY.J2UP    
-const RSKEY.X       
-const RSKEY.C       
-const RSKEY.D       
-const RSKEY.S       
-const RSKEY.W       
-const RSKEY.E       
-const RSKEY.3       
-const RSKEY.4       
-const RSKEY.Z       
-const RSKEY.CAPS    
-const RSKEY.A       
-const RSKEY.TAB     
-const RSKEY.Q       
-const RSKEY.ESC     
-const RSKEY.2       
-const RSKEY.1       
-const RSKEY.DEL     
-const RSKEY.J1FIRE3 
-const RSKEY.J1FIRE2 
-const RSKEY.J1FIRE1 
-const RSKEY.J1RIGHT 
-const RSKEY.J1LEFT  
-const RSKEY.J1DOWN  
-const RSKEY.J1UP    
+<pre><code>const RSKEY.EMPTY
+const RSKEY.FDOT
+const RSKEY.FENTER
+const RSKEY.F3
+const RSKEY.F6
+const RSKEY.F9
+const RSKEY.DOWN
+const RSKEY.RIGHT
+const RSKEY.UP
+const RSKEY.F0
+const RSKEY.F2
+const RSKEY.F1
+const RSKEY.F5
+const RSKEY.F8
+const RSKEY.F7
+const RSKEY.COPY
+const RSKEY.LEFT
+const RSKEY.CTRL
+const RSKEY.BSLASH
+const RSKEY.SHIFT
+const RSKEY.F4
+const RSKEY.RSQUARE
+const RSKEY.RETURN
+const RSKEY.LSQUARE
+const RSKEY.CLR
+const RSKEY.DOT
+const RSKEY.FSLASH
+const RSKEY.COLON
+const RSKEY.SCOLON
+const RSKEY.P
+const RSKEY.AT
+const RSKEY.MINUS
+const RSKEY.EXP
+const RSKEY.COMMA
+const RSKEY.M
+const RSKEY.K
+const RSKEY.L
+const RSKEY.I
+const RSKEY.O
+const RSKEY.9
+const RSKEY.0
+const RSKEY.SPACE
+const RSKEY.N
+const RSKEY.J
+const RSKEY.H
+const RSKEY.Y
+const RSKEY.U
+const RSKEY.7
+const RSKEY.8
+const RSKEY.V
+const RSKEY.B
+const RSKEY.F
+const RSKEY.G
+const RSKEY.T
+const RSKEY.R
+const RSKEY.5
+const RSKEY.6
+const RSKEY.J2FIRE3
+const RSKEY.J2FIRE2
+const RSKEY.J2FIRE1
+const RSKEY.J2RIGHT
+const RSKEY.J2LEFT
+const RSKEY.J2DOWN
+const RSKEY.J2UP
+const RSKEY.X
+const RSKEY.C
+const RSKEY.D
+const RSKEY.S
+const RSKEY.W
+const RSKEY.E
+const RSKEY.3
+const RSKEY.4
+const RSKEY.Z
+const RSKEY.CAPS
+const RSKEY.A
+const RSKEY.TAB
+const RSKEY.Q
+const RSKEY.ESC
+const RSKEY.2
+const RSKEY.1
+const RSKEY.DEL
+const RSKEY.J1FIRE3
+const RSKEY.J1FIRE2
+const RSKEY.J1FIRE1
+const RSKEY.J1RIGHT
+const RSKEY.J1LEFT
+const RSKEY.J1DOWN
+const RSKEY.J1UP
 
-const RSKB.LINE1    
-const RSKB.LINE2    
-const RSKB.LINE3    
-const RSKB.LINE4    
-const RSKB.LINE5    
-const RSKB.LINE6    
-const RSKB.LINE7    
-const RSKB.LINE8    
-const RSKB.LINE9    
-const RSKB.LINE10   
+const RSKB.LINE1
+const RSKB.LINE2
+const RSKB.LINE3
+const RSKB.LINE4
+const RSKB.LINE5
+const RSKB.LINE6
+const RSKB.LINE7
+const RSKB.LINE8
+const RSKB.LINE9
+const RSKB.LINE10
 
 FUNCTION        rsAnyKeyPressed
 SUB             rsAssignKey(entry, keyid)
@@ -3747,29 +3769,29 @@ SUB         rsPrintGphStrXYM1(text$, x, y)
 SUB         rsPrintGphStrM1x2(text$, vmem)
 SUB         rsPrintGphStrXYM1x2(text$, x, y)
 
-const RSTXT0.PEN0  
-const RSTXT0.PEN1  
-const RSTXT0.PEN2  
-const RSTXT0.PEN3  
-const RSTXT0.PEN4  
-const RSTXT0.PEN5  
-const RSTXT0.PEN6  
-const RSTXT0.PEN7  
-const RSTXT0.PEN8  
-const RSTXT0.PEN9  
-const RSTXT0.PEN10 
-const RSTXT0.PEN11 
-const RSTXT0.PEN12 
-const RSTXT0.PEN13 
-const RSTXT0.PEN14 
-const RSTXT0.PEN15 
+const RSTXT0.PEN0
+const RSTXT0.PEN1
+const RSTXT0.PEN2
+const RSTXT0.PEN3
+const RSTXT0.PEN4
+const RSTXT0.PEN5
+const RSTXT0.PEN6
+const RSTXT0.PEN7
+const RSTXT0.PEN8
+const RSTXT0.PEN9
+const RSTXT0.PEN10
+const RSTXT0.PEN11
+const RSTXT0.PEN12
+const RSTXT0.PEN13
+const RSTXT0.PEN14
+const RSTXT0.PEN15
 
 SUB rsSetInkGphStrM0(indind, color)
 
-const RSTXT1.PEN0 
-const RSTXT1.PEN1 
-const RSTXT1.PEN2 
-const RSTXT1.PEN3 
+const RSTXT1.PEN0
+const RSTXT1.PEN1
+const RSTXT1.PEN2
+const RSTXT1.PEN3
 
 SUB rsSetInkGphStrM1(indind, color)</code></pre>
 <ul>
@@ -3796,61 +3818,61 @@ SUB         rsWaitVSync</code></pre>
 <ul>
 <li><code>cpcrslib/video</code></li>
 </ul>
-<pre><code>CONST RSFW.BLACK        
-CONST RSFW.BLUE         
-CONST RSFW.BRIGHTBLUE   
-CONST RSFW.RED          
-CONST RSFW.MAGENTA      
-CONST RSFW.MAUVE        
-CONST RSFW.BRIGHTRED    
-CONST RSFW.PURPLE       
+<pre><code>CONST RSFW.BLACK
+CONST RSFW.BLUE
+CONST RSFW.BRIGHTBLUE
+CONST RSFW.RED
+CONST RSFW.MAGENTA
+CONST RSFW.MAUVE
+CONST RSFW.BRIGHTRED
+CONST RSFW.PURPLE
 CONST RSFW.BRIGHTMAGENTA
-CONST RSFW.GREEN        
-CONST RSFW.CYAN         
-CONST RSFW.SKYBLUE      
-CONST RSFW.YELLOW       
-CONST RSFW.WHITE        
-CONST RSFW.PASTELBLUE   
-CONST RSFW.ORANGE       
-CONST RSFW.PINK         
+CONST RSFW.GREEN
+CONST RSFW.CYAN
+CONST RSFW.SKYBLUE
+CONST RSFW.YELLOW
+CONST RSFW.WHITE
+CONST RSFW.PASTELBLUE
+CONST RSFW.ORANGE
+CONST RSFW.PINK
 CONST RSFW.PASTERMAGENTA
-CONST RSFW.BRIGHTGREEN  
-CONST RSFW.SEAGREEN     
-CONST RSFW.BRIGHTCYAN   
-CONST RSFW.LIME         
-CONST RSFW.PASTELGREEN  
-CONST RSFW.PASTELCYAN   
-CONST RSFW.BRIGHTYELLOW 
-CONST RSFW.PASTELYELLOW 
-CONST RSFW.BRIGHTWHITE  
+CONST RSFW.BRIGHTGREEN
+CONST RSFW.SEAGREEN
+CONST RSFW.BRIGHTCYAN
+CONST RSFW.LIME
+CONST RSFW.PASTELGREEN
+CONST RSFW.PASTELCYAN
+CONST RSFW.BRIGHTYELLOW
+CONST RSFW.PASTELYELLOW
+CONST RSFW.BRIGHTWHITE
 
-CONST RSHW.BLACK        
-CONST RSHW.BLUE         
-CONST RSHW.BRIGHTBLUE   
-CONST RSHW.RED          
-CONST RSHW.MAGENTA      
-CONST RSHW.MAUVE        
-CONST RSHW.BRIGHTRED    
-CONST RSHW.PURPLE       
+CONST RSHW.BLACK
+CONST RSHW.BLUE
+CONST RSHW.BRIGHTBLUE
+CONST RSHW.RED
+CONST RSHW.MAGENTA
+CONST RSHW.MAUVE
+CONST RSHW.BRIGHTRED
+CONST RSHW.PURPLE
 CONST RSHW.BRIGHTMAGENTA
-CONST RSHW.GREEN        
-CONST RSHW.CYAN         
-CONST RSHW.SKYBLUE      
-CONST RSHW.YELLOW       
-CONST RSHW.WHITE        
-CONST RSHW.PASTELBLUE   
-CONST RSHW.ORANGE       
-CONST RSHW.PINK         
+CONST RSHW.GREEN
+CONST RSHW.CYAN
+CONST RSHW.SKYBLUE
+CONST RSHW.YELLOW
+CONST RSHW.WHITE
+CONST RSHW.PASTELBLUE
+CONST RSHW.ORANGE
+CONST RSHW.PINK
 CONST RSHW.PASTERMAGENTA
-CONST RSHW.BRIGHTGREEN  
-CONST RSHW.SEAGREEN     
-CONST RSHW.BRIGHTCYAN   
-CONST RSHW.LIME         
-CONST RSHW.PASTELGREEN  
-CONST RSHW.PASTELCYAN   
-CONST RSHW.BRIGHTYELLOW 
-CONST RSHW.PASTELYELLOW 
-CONST RSHW.BRIGHTWHITE   
+CONST RSHW.BRIGHTGREEN
+CONST RSHW.SEAGREEN
+CONST RSHW.BRIGHTCYAN
+CONST RSHW.LIME
+CONST RSHW.PASTELGREEN
+CONST RSHW.PASTELCYAN
+CONST RSHW.BRIGHTYELLOW
+CONST RSHW.PASTELYELLOW
+CONST RSHW.BRIGHTWHITE
 
 SUB         rsClrScr
 FUNCTION    rsGetScrAddress(x, y)
@@ -3880,6 +3902,12 @@ describe a continuación.</p>
 <li>Versión 1.0.8
 <ul>
 <li>Bloquea el comando SOUND si la cola del canal está llena.</li>
+<li>Arregla un problema al usar LEF<span
+class="math inline">, <em>R</em><em>I</em><em>G</em><em>H</em><em>T</em></span>
+y MID$ con 0 como número de caracteres a copiar.</li>
+<li>Arregla un problema con arrays de múltiples índices.</li>
+<li>Añade soporte para corchetes en las declaraciones y accesos a
+elementos de un array.</li>
 </ul></li>
 <li>Versión 1.0.7
 <ul>

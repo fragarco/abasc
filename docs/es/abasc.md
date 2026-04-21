@@ -1,8 +1,10 @@
 <!-- omit in toc -->
-ABASC: MANUAL DEL USUARIO
-==================
+
+# ABASC: MANUAL DEL USUARIO
+
 **Un compilador cruzado de BASIC para los Amstrad CPC**
 
+- [ABASC: MANUAL DEL USUARIO](#abasc-manual-del-usuario)
 - [Introducción](#introducción)
   - [Influencias](#influencias)
   - [Un recorrido por las distintas versiones de Locomotive BASIC](#un-recorrido-por-las-distintas-versiones-de-locomotive-basic)
@@ -12,11 +14,11 @@ ABASC: MANUAL DEL USUARIO
     - [Versión 2 Plus](#versión-2-plus)
 - [Referencias](#referencias)
 - [Sintaxis soportada por ABASC](#sintaxis-soportada-por-abasc)
-    - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
-    - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
+  - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
+  - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
 - [Herramientas adicionales](#herramientas-adicionales)
 - [Uso del compilador](#uso-del-compilador)
-    - [Opciones](#opciones)
+  - [Opciones](#opciones)
   - [Creación de un proyecto usando BASPRJ](#creación-de-un-proyecto-usando-basprj)
 - [Peculiaridades del compilador](#peculiaridades-del-compilador)
   - [Tipos y variables](#tipos-y-variables)
@@ -257,20 +259,20 @@ Aparecida en 1989, esta revisión añadía `FUNCTION`, `SUB`, sentencias `IF` de
 
 Este manual no trata de ser una guía exhaustiva de programación en BASIC. Como material de consulta sobre la programación en Locomotive BASIC es más recomendable consultar los siguientes textos:
 
-* Amstrad CPC464 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
-* Manual de Referencia BASIC para el Programador (Amsoft)
-* Amstrad CPC6128 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
-* BASIC 2 User Guide (Locomotive Software ltd.)
-* BASIC 2 PLUS Language Reference (Locomotive Software ltd.)
-* Using Locomotive BASIC 2 on the Amstrad 1512 (Robert Ransom)
+- Amstrad CPC464 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
+- Manual de Referencia BASIC para el Programador (Amsoft)
+- Amstrad CPC6128 - Manual del Usuario (I. Spital, R. Perry, W. Poel and C. Lawson)
+- BASIC 2 User Guide (Locomotive Software ltd.)
+- BASIC 2 PLUS Language Reference (Locomotive Software ltd.)
+- Using Locomotive BASIC 2 on the Amstrad 1512 (Robert Ransom)
 
 Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sobre programación en ensamblador para el procesador Z80, se recomiendan los siguientes libros de consulta:
 
-* CPC464/664/6128 FIRMWARE, ROM rutines and explanations (B. Godden, P. Overell, D. Radisic) 
-* The Amstrad CPC Firnware Guide (Bob Taylor)
-* Z80 Assembly Langauge Programming (Lance A. Leventhal)
-* Ready Made Machine Language Routines For the Amstrad CPC (Joe Pritchard)
-* Código máquina para principantes con Amstrad (Steve Kramer)
+- CPC464/664/6128 FIRMWARE, ROM rutines and explanations (B. Godden, P. Overell, D. Radisic)
+- The Amstrad CPC Firnware Guide (Bob Taylor)
+- Z80 Assembly Langauge Programming (Lance A. Leventhal)
+- Ready Made Machine Language Routines For the Amstrad CPC (Joe Pritchard)
+- Código máquina para principantes con Amstrad (Steve Kramer)
 
 ---
 
@@ -286,7 +288,7 @@ Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sob
 
 ### Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)
 
-``` basic
+```basic
 10 MODE 1
 20 BORDER 0
 30 PAPER 3
@@ -298,7 +300,7 @@ Para ampliar conocimientos sobre el Firmware del Amstrad CPC464 y CPC6128, o sob
 
 ### Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)
 
-``` basic
+```basic
 RECORD person; name$ FIXED 10, age, birth
 DIM records$(5) FIXED 14
 
@@ -323,13 +325,13 @@ DATA "Elvira", 20, 2005
 
 # Herramientas adicionales
 
-Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes. 
+Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes.
 
--   `abasm.py` --- ensamblador compatible con WinAPE y RVM. [manual](abasm.html)\
--   `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga. [manual](img.html)\
--   `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](dsk.html)\
--   `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](cdt.html)\
--   `basprj` --- crea una estructura básica de proyecto para comenzar a trabajar. [manual](basprj.html)
+- `abasm.py` --- ensamblador compatible con WinAPE y RVM. [manual](abasm.html)\
+- `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga. [manual](img.html)\
+- `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](dsk.html)\
+- `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](cdt.html)\
+- `basprj` --- crea una estructura básica de proyecto para comenzar a trabajar. [manual](basprj.html)
 
 ---
 
@@ -339,13 +341,13 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 
 ### Opciones
 
--   `--version` --- muestra la versión del compilador.
--   `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
--   `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
--   `--start <n>`--- dirección de inicio del programa (por defecto es 0x0040, ver sección sobre `Gestión de la memoria`).
--   `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
--   `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
--   `-o`, `--out` --- nombre de salida sin extensión.\
+- `--version` --- muestra la versión del compilador.
+- `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
+- `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
+- `--start <n>`--- dirección de inicio del programa (por defecto es 0x0040, ver sección sobre `Gestión de la memoria`).
+- `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
+- `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
+- `-o`, `--out` --- nombre de salida sin extensión.\
 
 ## Creación de un proyecto usando BASPRJ
 
@@ -378,14 +380,14 @@ ABASC utiliza un sistema de tipado algo más estricto que el proporcionado por e
 | ------ | ------------ | ----------------------------------------------------------------------------- |
 | Entero | % (opcional) | Valores enteros en el rango -32768...32767                                    |
 | Real   | !            | Números en coma flotante de 5 bytes (4 para la mantisa y 1 para el exponente) |
-| Texto  | $            | Cadenas de hasta 254 carácteres (ver siguiente sección)     
+| Texto  | $            | Cadenas de hasta 254 carácteres (ver siguiente sección)                       |
 
 ### Cadenas de texto
 
 En la implementación original de Locomotive BASIC para los Amstrad CPC, las cadenas utilizaban una estructura de **doble indirección**. Una variable de tipo texto ocupaba inicialmente 3 bytes:
 
-* byte 1: longitud
-* bytes 2 y 3: dirección al contenido de la cadena
+- byte 1: longitud
+- bytes 2 y 3: dirección al contenido de la cadena
 
 La longitud máxima era de 255 carácteres.
 
@@ -393,8 +395,8 @@ En ABASC, el contenido de la cadena se almacena directamente a continuación del
 
 La única excepción son las **llamadas RSX**, para las que ABASC conserva la estructura original de Locomotive BASIC con el fin de garantizar la compatibilidad. Por ello, una rutina RSX recibirá siempre las cadenas de texto en una estructura de 3 bytes:
 
-* 1 byte: longitud
-* 2 bytes: puntero al contenido
+- 1 byte: longitud
+- 2 bytes: puntero al contenido
 
 Además, es posible que el programador no desee reservar siempre los 254 bytes por defecto para una cadena, por lo que ABASC incorpora dos sentencias procedentes de Locomotive BASIC 2: **`FIXED`** y **`DECLARE`**.
 
@@ -449,10 +451,10 @@ A$.persona.edad = 20
 
 El programa anterior dejará el contenido de la memoria reservada por `A$`como sigue:
 
-| BYTE   |  Contenido      |  Valor     |
-|--------|-----------------|------------|
-| 0 - 10 | longitud y contenido de `nom$` | 4,J,u,a,n,0,0,0,0,0,0 |
-| 11 - 12 | valor de `edad` | 20        |
+| BYTE    | Contenido                      | Valor                 |
+| ------- | ------------------------------ | --------------------- |
+| 0 - 10  | longitud y contenido de `nom$` | 4,J,u,a,n,0,0,0,0,0,0 |
+| 11 - 12 | valor de `edad`                | 20                    |
 
 ## Procedimientos y Funciones
 
@@ -470,7 +472,7 @@ END FUNCTION
 
 Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno.
 
-Las funciones pueden llamarse directamente como parte de una expresion, mientras que las subrutinas deben llamarse con `CALL`, indicando el nombre del procedimiento y los parámetros entre paréntesis separados por comas. 
+Las funciones pueden llamarse directamente como parte de una expresion, mientras que las subrutinas deben llamarse con `CALL`, indicando el nombre del procedimiento y los parámetros entre paréntesis separados por comas.
 
 ```basic
 function pow2(x)
@@ -538,7 +540,7 @@ Podrá acceder a ellos mediante el siguiente esquema:
 
 Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensamblador y que el compilador no necesita gestionar la memoria temporal (montículo).
 
-``` basic
+```basic
 SUB cpcSetColor(i,c) ASM
     ' Equivalent to the BASIC call INK
     ' param 1: is the ink number (0-16) bening 16 the border ink.
@@ -602,25 +604,25 @@ ASM "asm_label:"
 
 El mapa de memoria de un programa compilado con ABASC es el siguiente:
 
-| Dirección         | Descripción                                                |
-| ----------------- | ---------------------------------------------------------- |
-| **0x0040**        | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo). Este valor se puede cambiar mediante el flag `--start`.|
-| **\_code\_**      | Comienzo del área para el código de la aplicación. Comienza justo después del código de initialización y del montículo. |
-| **\_runtime\_**   | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador. |
-| **\_data\_**      | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, ya que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). En cualquier caso, se puede configurar mediante el parámetros `--data`. Si el código que precede a esta área ocupa la dirección designada para los datos, el compilador moverá esta zona a la primera dirección de memoria posterior que esté disponible.|
-| **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa. |
+| Dirección           | Descripción                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0x0040**          | Comienzo del área para la inicialización de la aplicación y reserva de memoria temporal (montículo). Este valor se puede cambiar mediante el flag `--start`.                                                                                                                                                                                                                                                                                                                |
+| **\_code\_**        | Comienzo del área para el código de la aplicación. Comienza justo después del código de initialización y del montículo.                                                                                                                                                                                                                                                                                                                                                     |
+| **\_runtime\_**     | Etiqueta que marca el comienzo del área para rutinas de apoyo generadas por el compilador.                                                                                                                                                                                                                                                                                                                                                                                  |
+| **\_data\_**        | Etiqueta que marca el comienzo del espacio reservado para las variables. Su dirección más baja posible es 0x4000, ya que no puede compartir espacio con el area de direccionamiento del Firmware (0x0000-0x3FFF). En cualquier caso, se puede configurar mediante el parámetros `--data`. Si el código que precede a esta área ocupa la dirección designada para los datos, el compilador moverá esta zona a la primera dirección de memoria posterior que esté disponible. |
+| **\_program_end\_** | Etiqueta que marca la dirección donde finaliza la memoria consumida por el programa.                                                                                                                                                                                                                                                                                                                                                                                        |
 
 Locomotive BASIC incluye una serie de comandos relacionados con la gestión de memoria: `HIMEM`, `MEMORY`, `FRE` y `SYMBOL AFTER`.
 ABASC los soporta, pero su significado varía ligeramente debido al modelo compilado:
 
-| Comando          | Función ABASC  |
-| ---------------- | ------------- |
-| **HIMEM**        | Devuelve la dirección de memoria inmediatamente posterior al final del programa. |
-| **MEMORY**       | Establece la dirección de memoria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla. |
+| Comando          | Función ABASC                                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **HIMEM**        | Devuelve la dirección de memoria inmediatamente posterior al final del programa.                                                                                |
+| **MEMORY**       | Establece la dirección de memoria máxima a la que podrá llegar el binario generado. Si se supera, la compilación falla.                                         |
 | **SYMBOL AFTER** | ABASC reserva memoria para carácteres redefinibles (UDC) igual que Locomotive BASIC. Esta zona forma parte de **data**. Puede liberarse con `SYMBOL AFTER 256`. |
-| **FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
-| **FRE(1)**       | Devuelve la memoria temporal (montículo) disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
+| **FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`).                                             |
+| **FRE(1)**       | Devuelve la memoria temporal (montículo) disponible en ese instante.                                                                                            |
+| **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`.                                                                 |
 
 ABASC utiliza memoria temporal para almacenar valores intermedios durante la evaluación de expresiones (por ejemplo, concatenación de cadenas o cálculo de expresiones numéricas). Esta memoría se reserva en el montículo o "heap". Dicho montículo comienza en la zona baja de la memoría (al rededor de la dirección 0x0040) y su tamaño máximo se calcula durante la compilación. Después de cada sentencia, la memoria temporal se libera automáticamente. La única excepción ocurre durante una llamada a `FUNCTION` o `SUB`: la memoria temporal previa a la llamada se preserva para poder restaurar el contexto al regresar.
 
@@ -640,7 +642,7 @@ La instalación de ABASC contiene un directorio llamado `lib`. Cualquier fichero
 
 `CHAIN MERGE` tratará primero de resolver cualquier fichero a incluir contra el directorio local de nuestro código fuente. Si el fichero dado no es un fichero local a nuestro programa, buscará en el directorio `lib` de la instalación de ABASC al considerar que se trata de una "librería", un fichero .BAS reusable desde cualquier proyecto. Por ejemplo, podemos probar el fichero `base/memory.bas` que se distribuye con ABASC mediante este simple programa:
 
-``` basic
+```basic
 CHAIN MERGE "base/memory.bas"
 
 A$="Hola mundo"
@@ -663,15 +665,15 @@ A continuación se muestra una breve guía de la notiación y de los comandos y 
 
 Carácteres especiales:
 
-| carácter | Notas |
-|----------|-------|
-| & o &H   | prefijo para números en hexadecimal |
-| &X 	   | prefijo para números en binario |
-| : 	   | separador de sentencias en la misma línea |
-| # 	   | prefijo para denotar un canal de texto (0-9) |
-| "        | delimitador de cadenas de texto |
+| carácter | Notas                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------ |
+| & o &H   | prefijo para números en hexadecimal                                                        |
+| &X       | prefijo para números en binario                                                            |
+| :        | separador de sentencias en la misma línea                                                  |
+| #        | prefijo para denotar un canal de texto (0-9)                                               |
+| "        | delimitador de cadenas de texto                                                            |
 | @        | delante del nombre de una variable indica dirección de memoria apuntada por dicha variable |
-| \|       | delante de un identificador indica llamada a función RSX |
+| \|       | delante de un identificador indica llamada a función RSX                                   |
 
 ## Listado de comandos y funciones
 
@@ -685,7 +687,7 @@ Comando. Llama a una subrutina indicada tras un retardo. El "delay" se mide con 
 
 ABASC emplea las funciones del Firmware para la gestión de eventos asíncronos. Las rutinas del usuario son llamadas con la ROM baja activa y, por tanto, el código debería mantenerse breve y no hacer uso de los primeros 16K de memoria. Por ejemplo, las operaciones con números en coma flotante o las operaciones con textos tratarán de reservar memoria temporal en dicho rango y deberían evitarse. Las operaciones con enteros, en cambio, no deberían dar problemas. Este mecanismo también depende de que las interrupciones estén activas (ver `DI`y `EI`).
 
-``` basic
+```basic
 A = 0
 AFTER 50 GOSUB INCR  ' Llama a la rutina INCR después de 1 segundo
 A = 5
@@ -698,9 +700,9 @@ RETURN
 
 ### `ASC(string)`
 
-Función. Devuelve el valor ASCII del primer carácter de la cadena suministrada como parámetro. 
+Función. Devuelve el valor ASCII del primer carácter de la cadena suministrada como parámetro.
 
-``` basic
+```basic
 PRINT ASC("HOLA") ' imprime 72, el codigo ASCII para la letra H
 ```
 
@@ -708,7 +710,7 @@ PRINT ASC("HOLA") ' imprime 72, el codigo ASCII para la letra H
 
 Comando. Inserta el código contenido de la lista de cadenas de texto como código ensamblador. Cada cadena de la lista se inserta como una nueva línea.
 
-``` basic
+```basic
 ASM "ld  hl,_my_str", "ld  a,(hl)"
 ```
 
@@ -724,7 +726,7 @@ Comando. ABASC ignora este comando y emite un mensaje de alerta sobre su uso, ya
 
 Función. Devuelve el valor entero `number` como candea de texto con su representación binaria. Locomotive BASIC permite especificar el número exacto de digitos a utilizar en la representación binaria, pero **ABASC solo soporta los valores 8 o 16**.
 
-``` basic
+```basic
 PRINT BIN$(16,8)  ' imprimira la cadena de texto "00010000"
 ```
 
@@ -732,7 +734,7 @@ PRINT BIN$(16,8)  ' imprimira la cadena de texto "00010000"
 
 Comando. Permite espedificar el color del borde. Si se proporcionan dos valores, se produce un parpadeo cuyo tiempo controla el comando `SPEED INK`.
 
-``` basic
+```basic
 BORDER 0,1
 ```
 
@@ -740,7 +742,7 @@ BORDER 0,1
 
 Comando. Permite llamar a una rutina existente en memoria indicado su dirección, a una rutina declara con SUB o FUNCTION, o a una etiqueta declarada dentro de un bloque en ensamblador.
 
-``` basic
+```basic
 SUB nada
     print "solo imprimo nada"
 END SUB
@@ -754,7 +756,7 @@ ASM "bucle_eterno: jr bucle_eterno"
 
 ### `CAT`
 
-Comando. Muesta el contenido del dispositivo de almacenamiento actual. Es posible cambiar el dispositivo a través de llamadas a funciones RSX como `|TAPE`, `|DISC`, `|A` o `|B`. 
+Comando. Muesta el contenido del dispositivo de almacenamiento actual. Es posible cambiar el dispositivo a través de llamadas a funciones RSX como `|TAPE`, `|DISC`, `|A` o `|B`.
 
 ### `CHAIN`
 
@@ -766,7 +768,7 @@ Comando. ABASC reinterpreta este comando para permitir dividir nuestro código e
 
 Si `string` no es un fichero local al programa, buscará en el directorio `lib` de la instalación de ABASC al considerar que se trata de una "librería", un fichero .BAS reusable desde cualquier proyecto.
 
-``` basic
+```basic
 fichero OTRO.BAS
     MYVAR$ = "UNA CADENA MUY UTIL"
 
@@ -780,7 +782,7 @@ fichero MAIN.BAS
 
 Función. Devuelve una cadena de texto con el carácter equivalente indicado por `x` en el rango 0-255.
 
-``` basic
+```basic
 PRINT CHR$(250)
 ```
 
@@ -788,7 +790,7 @@ PRINT CHR$(250)
 
 Función. Devuelve un entero con la conversión redondeada del número real `x`. `x` debe estar dentro del rango -32768..32767 o el valor devuelto será erroneo.
 
-``` basic
+```basic
 PRINT CINT(PI)
 ```
 
@@ -820,7 +822,7 @@ Comando. Borra la pantalla usando el color de `PAPER` actual. Es posible indicar
 
 Comando. CONST define una constante numérica simple y le asigna un nombre como si fuera una variable más. A partir de ese momento, cuando el nombre de la constante aparezca como parte de una expresión, será sustituido directamente por el valor númerico, lo que puede habilitar ciertas optimizaciones del compilador. Además, si se intenta cambiar su valor inicial, la compilación fallará alertando al programador del error.
 
-``` basic
+```basic
 CONST VMEM = &C000
 
 FOR I=0 TO 16384
@@ -836,7 +838,7 @@ Comando. En el BASIC original permite continuar la ejecución de un programa det
 
 Función. Devuelve el carácter situado en la posición actual del cursor de texto para el `canal`indicado. Esta función apareció con la versión BASIC 1.1. ABASC proporciona una implementación que permite utilizar la función incluso en programas que se van a ejecutar en un Amstrad CPC 464.
 
-``` basic
+```basic
 MODE 1
 PRINT "HELLO WORLD"
 LOCATE 3,1
@@ -860,7 +862,7 @@ Comando. Incorporado en la versión 1.1 de BASIC. Permite fijar el valor encendi
 
 Comando. Permite añadir al programa una serie de valores (números enteros o carácteres) que después pueden leerse en orden mediante la instrucción `READ`.
 
-``` basic
+```basic
 CLS
 FOR I=0 TO 5
     READ nom$
@@ -878,7 +880,7 @@ Comando. Este comando apareció con la versión 2 de Locomotive BASIC. Permite "
 
 por ejemplo:
 
-``` basic
+```basic
 B$ = ""              ' B$ reserva espacio para 254 carácteres
 DECLARE A$ FIXED 15  ' A$ reserva espacio para 15 carácteres
 B = 0                ' B queda inicializada a 0 generando más código ensamblador
@@ -889,7 +891,7 @@ DECLARE A            ' que A.
 
 Función. Esta función apareció con la versión 1.1 de BASIC. Permite convertir `numero` en una cadena aplicando un patrón para indicar el número de espacios antes o después del punto decimal. ABASC no soporta todavía el uso de estos patrones, por lo que esta llamada se comporta, básicamente, igual que `STR$`.
 
-``` basic
+```basic
 PRINT DEC$(15.5, "###.##")
 ```
 
@@ -912,7 +914,7 @@ Comandos. Originalmente fijaban un rango de letras iniciales para indicar que un
 
 Comando. Establece que las funciones que trabajan con ángulos devuelvan sus resultados en grados en vez de radianes.
 
-``` basic
+```basic
 DEG
 PRINT SIN(90.0)
 RAD
@@ -923,7 +925,7 @@ PRINT SIN(90.0)
 
 Comando. En Locomotive BASIC este comando borraba un conjunto de líneas del programa en BASIC. En ABASC, este funcionamiento no tiene sentido, así que `DELETE` se ha modificado para permitir borrar (llenar con 0s) una región de la memoria. El rango debe proporcionarse como: dirección inicial - dirección final.
 
-``` basic
+```basic
 DELETE &C000-&FFFF
 ```
 
@@ -958,14 +960,14 @@ NEXT
 
 Comando. Dibuja una línea desde la posición actual del cursor hasta la posición `x` e `y`. Si se indica un tercer parámetro, este es el color a utilizar. Con la versión 1.1 de BASIC, se añadió un cuarto parámetro soportado por ABASC (incluso para programas que correrán en un Amstrad CPC 464). Este cuarto parámetro indica el modo o máscara a aplicar entre cada punto de la línea y el fondo, con los valores que se indican a continuación:
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+| Valor | Modo               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (OR eXclusivo) |
+| 2     | AND                |
+| 3     | OR                 |
 
-``` basic
+```basic
 MODE 1
 DRAW 100,100,1
 DRAW 0,100,2
@@ -987,7 +989,7 @@ Comando. Activa las interrupciones. Ver `DI`.
 
 ### `END`
 
-Comando. Termina la ejecución del programa. Mientras que en el interprete de BASIC esto significa devolver el control al usuario, ABASC salta a un bucle infinito. `STOP`, en cambio, fuerza un reincio de la máquina. 
+Comando. Termina la ejecución del programa. Mientras que en el interprete de BASIC esto significa devolver el control al usuario, ABASC salta a un bucle infinito. `STOP`, en cambio, fuerza un reincio de la máquina.
 
 ### `END FUNCTION`
 
@@ -1002,37 +1004,42 @@ Comando. Termina la declaración de un procedimiento. Ver `SUB`.
 Comando. Define la variación en tono de un sonido. Locomotive BASIC permite especificar dos tipos de envolventes de tono (secciones), una con tres parámetros y otra con dos. Aunque no está documentado, para diferenciarlas, es posible utilizar el símbolo `=` antes del primer número en el segundo caso. ABASC no falla si se encuentra dicho carácter, pero utiliza el número de parámetros para saber si nos encontramos en el primer caso o en el segundo. En caso de duda, procederá siempre considerando que estamos usando el primer caso, donde cada envolvente se especifica usando tres valores.
 
 Sección tipo 1:
-* Parámetro 1: número de escalores, de 0 a 239.
-* Parámetro 2: tamaño de cada escalón, de -128 a +127.
-* Parámetro 3: pausa
-        
+
+- Parámetro 1: número de escalores, de 0 a 239.
+- Parámetro 2: tamaño de cada escalón, de -128 a +127.
+- Parámetro 3: pausa
+
 Sección tipo 2:
-* Parámetro 1: periodo del tono (entero de 16 bits).
-* Parámetro 2: pausa
+
+- Parámetro 1: periodo del tono (entero de 16 bits).
+- Parámetro 2: pausa
 
 ### `ENV número de envolvente, secciones`
 
 Comando. Define la variación en volumen de un sonido. Locomotive BASIC permite especificar dos tipos de envolventes de volumen (secciones), una con tres parámetros y otra con dos. Aunque no está documentado, para diferenciarlas, es posible utilizar el símbolo `=` antes del primer número en el segundo caso. ABASC no falla si se encuentra dicho carácter, pero utiliza el número de parámetros para saber si nos encontramos en el primer caso o en el segundo. En caso de duda, procederá siempre considerando que estamos usando el primer caso, donde cada envolvente se especifica usando tres valores.
 
 Sección tipo 1:
-* Parámetro 1: número de escalores, de 0 a 127.
-* Parámetro 2: tamaño de cada escalón, de -128 a +127.
-* Parámetro 3: pausa, rango de 0 a 255.
-        
-Sección tipo 2:
-* Parámetro 1: ID de envolvente según el hardware de sonido.
-* Parámetro 2: periodo de la envolvente. Valor que se manda a los registros.
 
-``` basic
+- Parámetro 1: número de escalores, de 0 a 127.
+- Parámetro 2: tamaño de cada escalón, de -128 a +127.
+- Parámetro 3: pausa, rango de 0 a 255.
+
+Sección tipo 2:
+
+- Parámetro 1: ID de envolvente según el hardware de sonido.
+- Parámetro 2: periodo de la envolvente. Valor que se manda a los registros.
+
+```basic
 ENV 1,=9,2000
 ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
 ENV 3,=9,9000
 ```
+
 ### `EOF`
 
 Función. Permite saber si el fichero del que se está leyendo ha llegado al final. Devuelve -1 (true) si el final se ha alcanzado o 0 (false) en cualquier otro caso.
 
-``` basic
+```basic
 OPENIN "DATOS.TXT"
 WHILE NOT EOF
     LINE INPUT #9,C$
@@ -1053,7 +1060,7 @@ Comando. En Locomotive BASIC permite conocer la línea donde se ha producido el 
 
 Comando. Permite recuperar un código de error (entero) que se haya establecido antes llamando al comando `ERROR`. También puede almacenar el código de error `31` (File not open) si los comandos `OPENIN` u `OPENOUT` fallan.
 
-``` basic
+```basic
 ERROR 5
 PRINT ERR
 ```
@@ -1068,7 +1075,7 @@ Comando. Fija el `temporizador` indicado (0..3 - 0 por defecto) para saltar a `e
 
 ABASC emplea las funciones del Firmware para la gestión de eventos asíncronos. Las rutinas del usuario son llamadas con la ROM baja activa y, por tanto, el código debería mantenerse breve y no hacer uso de los primeros 16K de memoria. Por ejemplo, las operaciones con números en coma flotante o las operaciones con textos tratarán de reservar memoria temporal en dicho rango y deberían evitarse. Las operaciones con enteros, en cambio, no deberían dar problemas. Este mecanismo también depende de que las interrupciones estén activas (ver `DI` y `EI`).
 
-``` basic
+```basic
 A=0
 EVERY 300 GOSUB INCA ' imprime e incrementa A cada 6 segundos
 END
@@ -1083,7 +1090,7 @@ LABEL INCA
 
 Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un bucle FOR con una sentencia `GOTO` o `RETURN`, en versiones posteriores del lenguaje se introdujo este comando como una forma más adecuada de abandonar un bucle `FOR` antes de su terminación. La ejecución del comando `EXIT FOR` saltará a la siguiente instrucción tras el `NEXT`.
 
-``` basic
+```basic
 FOR I=0 TO 100
     IF I = 50 THEN EXIT FOR
 NEXT
@@ -1094,7 +1101,7 @@ PRINT I
 
 Comando. Aunque en Locomotive BASIC 1.0 y 1.1 es posible salir de un bucle WHILE con una sentencia `GOTO` o `RETURN`, el versiones posteriores del lenguaje se introdujo este comando como una forma más adecuada de abandnar un bucle `WHILE`. La ejecución de este comando saltará a la siguiente instrucción tras el `WEND` desde donde se continuará con la ejecución normal del programa.
 
-``` basic
+```basic
 I=0
 WHILE I < 101
     IF I=50 THEN EXIT WHILE
@@ -1111,7 +1118,7 @@ Función. Calcula E elevado a `x`, siendo E 2.7182818 aproximadamente, el númer
 
 Comando. Solo disponible para ordenadores Amstrad CPC 664, 6128 o superiores. Rellena un área de la pantalla a partir de la posición actual del cursor gráfico con la tinta activa. Permite rellenar figuras, y aunque ABASC ompile el programa adecuadamante, fallará si trata de ejecutarse en un Amstrad CPC 464.
 
-``` basic
+```basic
 MODE 0
 GRAPHICS PEN 15
 MOVE 200,0
@@ -1124,7 +1131,7 @@ FILL 15
 
 Función. Convierte a entero el número real `x` truncándolo. Para que el valor devuelto sea correcto, el número real debe estar en el rango -32768 to +32767.
 
-``` basic
+```basic
 PRINT FIX(PI+0.5), CINT(PI+0.5)
 ```
 
@@ -1132,7 +1139,7 @@ PRINT FIX(PI+0.5), CINT(PI+0.5)
 
 Comando. Permite especificar un bucle donde `variable` variará de valor desde `inicio` a `fin`. Si no se especifica una `variacion`, el incremento será de 1 en cada pasada del bucle.
 
-``` basic
+```basic
 CLS
 T! = TIME
 FOR i=1 to 10
@@ -1154,13 +1161,13 @@ Comando. Hace que el programa se detenga hasta la siguiente señal de sincronism
 Función. Según el valor de `x` permite obtener varios valores relacionados con la memoria:
 
 | Valor del parámetro | Valor devuelto |
-|**FRE(0)**       | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
-| **FRE(1)**       | Devuelve la memoria temporal disponible en ese instante. |
-| **FRE("")**      | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
+|**FRE(0)** | Devuelve la memoria disponible entre `_program_end_` y la zona del Firmware donde empiezan las variables (`&A6FC`). |
+| **FRE(1)** | Devuelve la memoria temporal disponible en ese instante. |
+| **FRE("")** | Fuerza la liberación de la memoria temporal (montículo) y devuelve el mismo valor que `FRE(0)`. |
 
 ### `FUNCTION nombre(parametros) [ASM]`
 
-Comando. Introducido con la versión 2 plus de Locomotive BASIC, este comando permite declarar funciones de forma parecida a `DEF FN`, pero cuyo cuerpo se extienda por más de una línea. Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno. Las funciones pueden llamarse directamente como parte de una expresion. 
+Comando. Introducido con la versión 2 plus de Locomotive BASIC, este comando permite declarar funciones de forma parecida a `DEF FN`, pero cuyo cuerpo se extienda por más de una línea. Las rutinas declaradas con `FUNCTION` deben incluir al menos una instrucción de asignación al propio nombre de la función, que actuará como valor de retorno. Las funciones pueden llamarse directamente como parte de una expresion.
 
 ```basic
 function pow2(x)
@@ -1170,13 +1177,13 @@ end function
 result = pow2(2)
 ```
 
- Si se utiliza la cláusula `ASM` al final de la declaración de la función, ABASC entiende que el cuerpo va a ser código en ensablador y que no va a necesitar utilizar el montículo de memoria temporal, por ello, evita guardar y restar su estado en cada llamada. Se recomienda al programador leer la sección `Procedimientos y Funciones` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
+Si se utiliza la cláusula `ASM` al final de la declaración de la función, ABASC entiende que el cuerpo va a ser código en ensablador y que no va a necesitar utilizar el montículo de memoria temporal, por ello, evita guardar y restar su estado en cada llamada. Se recomienda al programador leer la sección `Procedimientos y Funciones` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad en el capítulo `Peculiaridades del compilador`.
 
 ### `GOSUB etiqueta`
 
 Comando. Salta a una etiqueta definida como un número de línea o como un literal decalrado con `LABEL`. Vuelve a la linea posterior al `GOSUB` al encontrar la sentencia `RETURN`.
 
-``` basic
+```basic
 A=0
 GOSUB incrementar
 GOSUB incrementar
@@ -1196,7 +1203,7 @@ Comando. Salta a una etiqueta definida como un número de línea o como un liter
 
 Comando. Establece el valor de `tinta` (0..15) a utilizar como color de fondo para los carácteres escritos si se ha utilizado previamente la sentencia `TAG`. También como color al borrar la ventana mediante las llamadas a `CLG`.
 
-``` basic
+```basic
 MODE 0
 MASK 15
 GRAPHICS PAPER 3
@@ -1207,12 +1214,12 @@ DRAW 640,0
 
 Comando. Introducido en la versión 1.1 de BASIC. Establece el valor de `tinta` (un valor entre 0 y 15) como color para las instrucciones de dibujo de líneas y puntos. El `modo` se refiere a como debe combinarse el dibujo con el fondo.
 
-* 0: Fondo opaco.
-* 1: Fondo transparente.
+- 0: Fondo opaco.
+- 1: Fondo transparente.
 
 El valor de fondo solo puede utilizarse si el programa va a ejecutarse sobre máquinas CPC 664 o superiores, ya que en el Amstrad CPC 464 no está soportado y su uso acarreará efectos indefinidos.
 
-``` basic
+```basic
 MODE 0
 GRAPHICS PEN 15
 MOVE 200,0
@@ -1234,16 +1241,16 @@ PRINT HEX$(2048,4)
 
 Función. Devuelve la dirección de memoria inmediatamente posterior al final del programa compilado por ABASC. Puede ser muy útil con el comando `LOAD` para cargar otros binarios en una zona libre de la memoria.
 
-``` basic
+```basic
 PRINT "Limite de la memoria consumida", HIMEM
 PRINT "Memoria libre antes de las variables del Firmware", FRE(0)
-``` 
+```
 
 ### `IF expression THEN expression ELSE expression END IF`
 
 Comando. ABASC soporta la estructura tradicional de `IF .. THEN .. ELSE` en una línea de Locomotive BASIC 1.0 y 1.1. Además, añade soporte para la sintaxis introducida en Locomotive BASIC 2 Plus, que permite definir el cuerpo de las sentencias THEN y ELSE en varias líneas. No es posible combinar los dos variantes en una misma sentencia IF, si se usa la forma multilinea en el cuerpo del THEN, también debe hacerse así en el cuerpo del ELSE (si está presente) y terminar la sentencia con `END IF`.
 
-``` basic
+```basic
 PAS$="Por favor"
 LABEL PREGUNTA
     PRINT "DAME LA CONTRASEÑA:";
@@ -1261,13 +1268,13 @@ END
 
 Comando. Asigna `color1` a `tinta`. Si se da un segundo color, la tinta parpadeara entre `color1`y `color2`. En número de tintas disponibles varía con el modo de la pantalla:
 
-* Modo 2: 2 tintas  (0 y 1)
-* Modo 1: 4 tintas  (0..3)
-* Modo 0: 16 tintas (0..15)
+- Modo 2: 2 tintas (0 y 1)
+- Modo 1: 4 tintas (0..3)
+- Modo 0: 16 tintas (0..15)
 
 El rango de colores va de 0 (negro) al 26 (blanco brillante).
 
-``` basic
+```basic
 MODE 1
 BORDER 0
 INK 0,0: INK 1,26: INK 2,26,0
@@ -1279,15 +1286,15 @@ PEN 2: PRINT "_"
 
 Función. Esta función analiza el teclado para determinar qué teclas se están pulsando. El escaneo se realiza 50 veces por segundo. Las teclas [MAYÚS] y [CTRL] se identifican de la siguiente manera:
 
-| Valor devuelto | [MAYÚS] | [CTRL] |Tecla especificada |
-|----------------|---------|--------|-------------------|
-|      -1        |   N/A   |   N/A  |   Sin pulsar      |
-|       0        | Sin pulsar | Sin pulsar | Pulsada    |
-|      32        | Pulsada | Sin pulsar | Pulsada       |
-|     128        | Sin pulsar | Pulsada | Pulsada       |
-|     160        | Pulsada | Pulsada | Pulsada          |
+| Valor devuelto | [MAYÚS]    | [CTRL]     | Tecla especificada |
+| -------------- | ---------- | ---------- | ------------------ |
+| -1             | N/A        | N/A        | Sin pulsar         |
+| 0              | Sin pulsar | Sin pulsar | Pulsada            |
+| 32             | Pulsada    | Sin pulsar | Pulsada            |
+| 128            | Sin pulsar | Pulsada    | Pulsada            |
+| 160            | Pulsada    | Pulsada    | Pulsada            |
 
-``` basic
+```basic
 CLS
 LABEL BUCLE
     IF INKEY(55)=32 THEN PRINT "V + mayusculas": END
@@ -1298,7 +1305,7 @@ GOTO BUCLE
 
 Función. Devuelve una cadena de texto con la tecla pulsada. Si no hay ninguna tecla pulsada, devuelve la cadena vacía "".
 
-``` basic
+```basic
 MODE 1
 LABEL BUCLE
     k$ = INKEY$
@@ -1318,7 +1325,7 @@ Comando. INPUT es un comando muy versatil con muchas opciones. Por ello, queda f
 
 Función. Busca en `cadena1` la primera aparición `cadena2`. Si se indica el parámetro opcional `posición`, la búsqueda comenzará desde esa posición; de lo contrario, la búsqueda comienza desde el primer carácter. Las posiciones comienzan en 1 y no en 0.
 
-``` basic
+```basic
 POSA = INSTR(1,"AMSTRAD", "A")
 PRINT POSA
 POSA = INSTR(POSA+1, "AMSTRAD", "A")
@@ -1335,14 +1342,14 @@ Función. Con números positivos se comporta como `FIX`. Con números negativos 
 
 Función. Similar a `INKEY`, pero para joysticks. El valor `joystick` debe ser 0 o 1, pues los Amstrad CPC solo soportan dos joysticks simultáneos. Si no hay ninguna dirección o botón del joystick en uso, devuelve 0. En cualquier otro caso, develve un entero que codifica el estado como sigue:
 
-|Bit 	| Decimal 	| Función   |
-|-------|-----------|-----------|
-|0 	    |1 	        | Arriba    |
-|1 	    |2 	        | Abajo     |
-|2 	    |4 	        | Izquierda |
-|3 	    |8 	        | Derecha   |
-|4 	    |16         | Fuego 2   |
-|5 	    |32         | Fuego 1   |
+| Bit | Decimal | Función   |
+| --- | ------- | --------- |
+| 0   | 1       | Arriba    |
+| 1   | 2       | Abajo     |
+| 2   | 4       | Izquierda |
+| 3   | 8       | Derecha   |
+| 4   | 16      | Fuego 2   |
+| 5   | 32      | Fuego 1   |
 
 ### `KEY tecla,cadena`
 
@@ -1356,7 +1363,7 @@ Comando. Redefine que devuelve la pulsación de `tecla`. ABASC no soporta este c
 
 Comando. Define una etiqueta a la que se puede saltar con `GOTO` o `GOSUB`. `etiqueta` es un identificador y no una cadena de texto, por lo que no debe enmarcarse entre dobles comillas. Las etiquetas no tienen en cuenta la diferencia entre mayúsculas o minúsculas.
 
-``` basic
+```basic
 LABEL main
     PRINT "HOLA MUNDO"
 GOTO MAIN
@@ -1388,7 +1395,7 @@ ASM "asm_label:"
 
 Función. Devuelve los primeros `n` carácteres de la izquierda de `cadena`.
 
-``` basic
+```basic
 PRINT LEFT$("AMSTRAD", 3)
 ```
 
@@ -1396,7 +1403,7 @@ PRINT LEFT$("AMSTRAD", 3)
 
 Función. Devuelve la longitud en carácteres de `cadena`
 
-``` basic
+```basic
 PRINT LEN("AMSTRAD")
 ```
 
@@ -1408,7 +1415,7 @@ Comando. Un vestigio de las primeras especificaciones de BASIC. No es necesario 
 
 Comando. Acepta una línea de texto del canal indicado (#0 por defecto). El canal #9 se utiliza para leer del fichero de entrada abierto. Para el resto de canales #0-#8 se comporta, practicamente, como el comando `INPUT`.
 
-``` basic
+```basic
 OPENIN "DATOS.TXT"
 WHILE NOT EOF
     LINE INPUT #9,C$
@@ -1425,7 +1432,7 @@ Comando. ABASC ignora este comando y emite una advertencia si lo encuentra como 
 
 Comando. Carga un fichero de disco o cienta en memoria. ABASC solo soporta la carga de binarios. Si se proporciona el segundo parámetro, cargará el programa en la dirección indicada.
 
-``` basic
+```basic
 DIREC = HIMEM
 LOAD "SPRITES.BIN",DIREC
 ```
@@ -1434,7 +1441,7 @@ LOAD "SPRITES.BIN",DIREC
 
 Comando. Posiciona el cursor de texto en la posición `x` e `y`. Las posiciones empiezan en 1 y el tamaño en x depende del modo gráfico (0 = 20, 1 = 40, 2 = 80). Si se indica un `#canal` los límites dependerán de las dimensiones especificadas con `WINDOW`.
 
-``` basic
+```basic
 CLS
 LABEL MAIN
     FRAME
@@ -1457,7 +1464,7 @@ Función. Devuelve el logaritmo en base 10 de `x`. Implica el uso de números re
 
 Función. Devuelve `cadena`con todos sus carácteres pasados a minúsculas.
 
-``` basic
+```basic
 C$="AmsTRaD"
 PRINT LOWER$(C$)
 PRINT UPPER$(C$)
@@ -1467,7 +1474,7 @@ PRINT UPPER$(C$)
 
 Comando. Solo disponible a partir de BASIC 1.1. Cualquier programa compilado usando este comando solo funcionará en ordenadores Amstrad CPC664 y CPC6128. Establece la máscara o plantilla que se utilizará al dibujar líneas. El valor binario `mascara` debe estar en el rango de 0 a 255. Su significado es activar (1) o desactivar (0) los bits de cada grupo adyacente de 8 píxeles. `puntoinicial` determina si el primer punto de la línea se debe dibujar (1) o no (0).
 
-``` basic
+```basic
 MODE 0
 MASK 15   ' mascara = 00001111
 GRAPHICS PAPER 3
@@ -1482,7 +1489,7 @@ Función. Devuelve el máximo valor de entre los proporcionados como parámetros
 
 Comando. Establece `maxdir` como la dirección máxima en memoria que puede llegar a ocupar el binario generado por el porgrama compilado. Si se supera, la compilación falla.
 
-``` basic
+```basic
 MEMORY &A6FB  ' En &A6FC comienzan las variables del Firmware/AMSDOS
 ```
 
@@ -1494,7 +1501,7 @@ Comando. Lee `fichero` de disco o cinta y remplaza el programa en memoria. ABASC
 
 Functión y Comando. Como función en una expresión, devuelve el número de carácteres `n` desde la posición `inicio`. Como comando, puede utilizarse para remplazar una parte de la cadena. La escritura en memoria siempre es delicada y el programador debe tener cuidado de no sobrepasar los límites de almacenamiento de la cadena o el programa se comportará de manera inesperada.
 
-``` basic
+```basic
 C$="AMSTRAD"
 PRINT MID$(C$,3,3)
 MID$(C$,3,3) = "BBB"
@@ -1513,12 +1520,12 @@ Comando. Cambia el modo de pantalla a 0, 1 o 2.
 
 Comando. Mueve el cursor gráfico a la posición `x` e `y`. Si proporciona un tercer parámetro, este indica la `tinta`con el color a usar a partir de ese momento. El cuarto parámetro indica el modo o máscara a aplicar entre cada punto de las líneas y el fondo, con los valores que se indican a continuación:
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+| Valor | Modo               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (OR eXclusivo) |
+| 2     | AND                |
+| 3     | OR                 |
 
 ### `MOVER x,y[,tinta[,modo]]`
 
@@ -1570,11 +1577,12 @@ END
 ### `ON SQ (canal) GOSUB etiqueta`
 
 Comando. Registra el salto a una etiqueta como una interrupción que debe ejecutarse cuando hay un "slot" libre en la cola de sonido indicada por `canal`. El valor de `canal` debe ser un valor de entre los de la siguiente lista:
-* 1 = canal A
-* 2 = canal B
-* 4 = canal C
 
-``` basic
+- 1 = canal A
+- 2 = canal B
+- 4 = canal C
+
+```basic
 ON SQ(2) GOSUB INSERTAenB
 ```
 
@@ -1590,11 +1598,11 @@ Comando. Abre el fichero indicado por `fichero` para escritura. En caso de error
 
 Comando. Establece la posición actual del cursor gráfico. Es posible, además, establecer las dimensiones de la ventana para gráficos, si se proporcionan las coordenadas opcionales `izq`, `der`, `arr` y `abajo`. Una llamada a `MODE` restablece las dimensiones.
 
-``` basic
-CLS:BORDER 13 
+```basic
+CLS:BORDER 13
 LABEL BUCLE
-    ORIGIN 0,0,50,590,350,50  
-    DRAW 540,350 
+    ORIGIN 0,0,50,590,350,50
+    DRAW 540,350
 GOTO BUCLE
 ```
 
@@ -1606,7 +1614,7 @@ Comando. Envía el valor `n` al puerto hardware indicado por `puerto`.
 
 Comando. Fija la tinta a utilizar como color de fondo. Si no se indica un `canal` se aplica sobre el canal #0. **Ver nota en `PEN`.**
 
-``` basic
+```basic
 MODE 1
 INK 1,3  ' color rojo
 PAPER 1
@@ -1617,18 +1625,19 @@ CLS
 
 Función. Devuelve el contenido del byte de memoria en `dirección`.
 
-``` basic
+```basic
 ' Imprime los 5 bytes de un numero real
 N! = PI
 FOR I=0 TO 4
     PRINT HEX$(PEEK(@N!+I),2);" ";
 NEXT
 ```
+
 ### `PEN [#canal,]tinta`
 
 Comando. Fija `tinta` como el color de dibujo para el canal indicado (#0 por defecto).
 
-``` basic
+```basic
 MODE 1
 INK 2,3  ' color rojo
 PEN 2
@@ -1645,12 +1654,12 @@ Función. Devuelve el valor real 3.14159265
 
 Comando. Desplaza el cursor gráfico a la posición `x` e `y` y dibuja un punto. Si se indica una `tinta` queda establecida como el color activo. Moves graphics cursor and plots colour from current position. El cuarto parámetro indica el modo o máscara a aplicar entre cada punto de la línea y el fondo, con los valores que se indican a continuación:
 
-| Valor | Modo  |
-|-------|-------|
-|   0   | Fill (normal) |
-|   1   | XOR (OR eXclusivo) |
-|   2   | AND   |
-|   3   | OR    |
+| Valor | Modo               |
+| ----- | ------------------ |
+| 0     | Fill (normal)      |
+| 1     | XOR (OR eXclusivo) |
+| 2     | AND                |
+| 3     | OR                 |
 
 ### `PLOTR x,y[,tinta[,modo]]`
 
@@ -1660,7 +1669,7 @@ Comando. Su funcionamiento es igual a `PLOT`salvo porque `x` e `y` son posicione
 
 Comando. Escribe en la posición de memoria `dirección` el valor (byte) `n`. Si `n` es mayor que 255 el valor se trunca.
 
-``` basic
+```basic
 CLS
 SUB MEMCOPY(org, dest, n)
     FOR I=0 TO n
@@ -1679,7 +1688,7 @@ PRINT B$
 
 Función. Devuelve la posición actual en X del cursor de texto para el `canal` indicado (#0 por defecto).
 
-``` basic
+```basic
 MODE 1
 PRINT POS(#0), VPOS(#0)
 ```
@@ -1692,7 +1701,7 @@ Comando. `PRINT` es un comando muy versatil y con múltiples opciones. Por ello,
 
 Comando. Establece que las funciones que devuelven grados den los resultados en radianes. Es el comando contrapuesto a `DEG`.
 
-``` basic
+```basic
 DEG
 PRINT SIN(90.0)
 RAD
@@ -1703,7 +1712,7 @@ PRINT SIN(90.0)
 
 Comando. La implementación soportada por ABASC difiere un poco del comportamiento habitual de este comando en Locomotive BASIC. Si se usa `RANDOMIZE` sin parámetros, ABASC lo interpreta como si se hubiera usado `RANDOMIZE TIME`. El uso de `RANDOMIZE` y `RND` implica el uso de números reales.
 
-``` basic
+```basic
 RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
@@ -1714,7 +1723,7 @@ NEXT
 
 Comando. Lee el siguiente dato de los declarados con `DATA` y lo asigna a la variable correspondiente de su lista. El programador es el responsable de que el tipo de dato actual y el tipo de la variable coincidan.
 
-``` basic
+```basic
 CLS
 FOR I=0 TO 5
     READ nom$
@@ -1746,11 +1755,11 @@ A$.persona.edad = 20
 
 Comando. Los sonidos encolados en un determinado `canal`pueden contener un estado de `espera`. Este comando libera dichos sonidos. `canal` es un número entero que indica los canales afectados:
 
-* 1 = canal A
-* 2 = canal B
-* 4 = canal C
+- 1 = canal A
+- 2 = canal B
+- 4 = canal C
 
-``` basic
+```basic
 RELEASE 7 'libera los sonidos en los tres canales
 ```
 
@@ -1772,13 +1781,13 @@ Comando. Establece que el siguiente dato a leer con `READ` sea el primer valor d
 
 ```basic
 LABEL BUCLE
-FOR N=1 TO 5 
-    READ A$ 
-    PRINT A$;" "; 
-    DATA datos,"a leer",una,"y otra",vez   
-NEXT 
-PRINT 
-RESTORE 
+FOR N=1 TO 5
+    READ A$
+    PRINT A$;" ";
+    DATA datos,"a leer",una,"y otra",vez
+NEXT
+PRINT
+RESTORE
 GOTO BUCLE
 ```
 
@@ -1794,7 +1803,7 @@ Comando. Continua la ejecución del programa en la siguiente instrucción al úl
 
 Función. Devuelve los primeros `n` carácteres comenzando la cuenta por la derecha de `cadena`.
 
-``` basic
+```basic
 PRINT RIGHT$("AMSTRAD", 3)
 ```
 
@@ -1802,7 +1811,7 @@ PRINT RIGHT$("AMSTRAD", 3)
 
 Función. Devuelve un número pseudoaleatorio en el rango [0.0 - 1.0]. Si se llama con el parámetro 0 (`RND(0)`) devuelve, de nuevo, el último número que se generó. El uso de `RANDOMIZE` y `RND` implica el uso de números reales.
 
-``` basic
+```basic
 RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
@@ -1813,7 +1822,7 @@ NEXT
 
 Función. Redondea el número real `x` a la posición decimal indicada por `n` (0 por defecto).
 
-``` basic
+```basic
 FOR I=0 TO 4
     PRINT ROUND(PI, I)
 NEXT
@@ -1828,19 +1837,19 @@ Comando. En BASIC este comando permite ejecutar desde el principio el programa a
 
 Comando. En BASIC permite grabar un programa a disco o cassette. ABASC solo permite grabar una región de memoria como fichero binario. Por tanto, el `tipo` del fichero siempre se considera (y debe indicarse así si se van a utilizar el resto de parámetros) B. Como referencia, los tipos permitidos por la instrucción en BASIC son:
 
-* A - Texto (ASCII)
-* P - Fichero protegido
-* B - Binario
+- A - Texto (ASCII)
+- P - Fichero protegido
+- B - Binario
 
 El resto de parámetros opcionales son:
 
-| Parámetro | Función      |
-|-----------|--------------|
-|dirección  | Dirección de memoria desde donde comenzar el volcado. |
-| tamaño    | Total de bytes que se deben volcar al fichero. |
-| entrada   | Dirección donde empezar la ejecución del binario si se carga con `RUN`.|
+| Parámetro | Función                                                                 |
+| --------- | ----------------------------------------------------------------------- |
+| dirección | Dirección de memoria desde donde comenzar el volcado.                   |
+| tamaño    | Total de bytes que se deben volcar al fichero.                          |
+| entrada   | Dirección donde empezar la ejecución del binario si se carga con `RUN`. |
 
-``` basic
+```basic
 MODE 1
 PAPER 3
 CLS
@@ -1854,9 +1863,10 @@ LOAD "pantalla.bin"
 
 Función. Devuelve -1 si `x` es menor que 0, devuelve 0 si `x`es igual a 0 o devuelve 1 si `x` es mayor que cero.
 
-``` basic
+```basic
 PRINT SGN(PI)
 ```
+
 ### `SHARED variable | array [,variable | array]`
 
 Este comando proviene del Locomotive BASIC 2 Plus. Permite que desde una rutina (SUB o FUNCTION) se referencie y utilice una variable global del programa. Si el nombre de la variable termina en corchetes, se interpreta que la variable es un array declarado con `DIM`.
@@ -1882,7 +1892,7 @@ Función. Devuelve el seno de `x`. Implica el uso de números reales.
 
 Comando. `SOUND` es uno de los principales puntos fuertes de Locomotive BASIC comparado con el resto de las versiones BASIC de la época. Es un comando muy versátil que proporcina un acceso muy amplio al chip de audio de los Amstrad CPC. Por tanto, el lector hará bien en recurrir a los libros de la sección `Referencias` para aprender todos los entresijos de este comando.
 
-``` basic
+```basic
 ENV 2,127,0,0,127,0,0,127,0,0,127,0,0,127,0,0
 SOUND 1,1000,0,12,2
 SOUND 2,900,0,12,2
@@ -1896,7 +1906,7 @@ Función. Devuelve una cadena de texto con tantos espacios en blanco como los in
 
 Comando. `INK` y `BORDER` permiten especificar dos colores entre los que se alternará. `SPEED INK` permite especificar cuanto tiempo estará visible cada uno de los dos colores. Los tiempos `t1` y `t2` se indican en "frames" (50 por segundo).
 
-``` basic
+```basic
 SPEED INK 150,50 ' 3 segundos y 1 segundo
 BORDER 0,1
 ```
@@ -1913,12 +1923,12 @@ Comando. Cambia la velocidad (en baudios) a la que se escribe en cassette. `n`pu
 
 Función. Permite comprobar el número de entradas libres en la cola para el `canal` indicado (1,2 o 4). Determina si dicho canal está activo y, en caso contrario, por qué la entrada activa de la cola (si la hay) está en espera. El resultado es un entero que codifica la información como sigue:
 
-* Los bits 0, 1 y 2 indican el número de huecos libres en la cola.
-* Los bits 3, 4 y 5 indican el estado de socronización de la primera nota en la cola.
-* El bit 6 se activa si la primera nota está en espera.
-* El bit 7 se activa si el canal está activo ahora mismo.
+- Los bits 0, 1 y 2 indican el número de huecos libres en la cola.
+- Los bits 3, 4 y 5 indican el estado de socronización de la primera nota en la cola.
+- El bit 6 se activa si la primera nota está en espera.
+- El bit 7 se activa si el canal está activo ahora mismo.
 
-``` basic
+```basic
 SOUND 65,100,100
 PRINT BIN$(SQ(1),8) ' debe imprimir 01000011
 ```
@@ -1935,7 +1945,7 @@ Comando. En Locomotive BASIC detiene la ejecución del programa y devuelve el co
 
 Función. Devuelve una cadena con el número `x` convertido en texto.
 
-``` basic
+```basic
 PRINT "PI = " + STR$(PI)
 ```
 
@@ -1943,7 +1953,7 @@ PRINT "PI = " + STR$(PI)
 
 Función. Devuelve una cadena de texto con el carácter indicado repetido `n` veces.
 
-``` basic
+```basic
 MODE 1
 LOCATE 1,10
 PRINT STRING$(40,250)
@@ -1955,7 +1965,7 @@ Comando. Proveniente de Locomotive BASIC 2 Plus, `SUB` permite declarar procedim
 
 Se recomienda al programador leer las secciones `Procedimientos y Funciones` y `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros o el soporte a la recursividad.
 
-``` basic
+```basic
 SUB miUSING(n,long)
     ' Imprime el número N con una LONG fija, rellenando
     ' con 0 los espacios sobrantes a la izquerda.
@@ -1976,10 +1986,10 @@ CALL miUSING(num,8)
 Comando. Redefine el símbolo indicado por el número `carácter`. Dicho número debe estar disponible para redefinirse (ver `SYMBOL AFTER`). Cada caracter viene representado por una matriz de 8x8 píxeles. Los siguientes 8 valores definen cada fila del carácter. El valor es la suma de píxeles de esa línea que deben pintarse con el color de la tinta actual. Cada pixel de la línea tiene un valor númerico tal y como sigue:
 
 | pixel 1 | pixel 2 | pixel 3 | pixel 4 | pixel 5 | pixel 6 | pixel 7 | pixel 8 |
-|---------|---------|---------|---------|---------|---------|---------|---------|
-|  128    |    64   |   32    |    16   |    8    |    4    |    2    |    1    |
+| ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| 128     | 64      | 32      | 16      | 8       | 4       | 2       | 1       |
 
-``` basic
+```basic
 SYMBOL AFTER 240
 SYMBOL 240,&00,&00,&74,&7E,&6C,&70,&7C,&30
 SYMBOL 241,&7E,&FD,&80,&80,&80,&80,&40,&00
@@ -2015,7 +2025,7 @@ ABASC reserva 8 bytes por cada carácter que puede redefinirse. Si no se va a ut
 
 Comando. Redirige la salida de texto asociada a `canal` (#0 por defecto) para utilizar como el cursor gráfico en vez del cursor de texto. Esto permite mezclar texto con gráficos o desplazar el texto por píxeles en vez de por bloques de 8x8.
 
-``` basic
+```basic
 MODE 2
 BORDER 9
 INK 0,12: INK 1,0
@@ -2040,7 +2050,7 @@ Comando.Desactiva el uso del cursor gráfico para el canal de texto indicado (#0
 
 Función. Devuelve la tangente del ángulo `x`. Implica el uso de números reales.
 
-``` basic
+```basic
 PRINT TAN(45)
 ```
 
@@ -2048,7 +2058,7 @@ PRINT TAN(45)
 
 Función. Devuelve el valor de la tinta en la posición de pantalla `x` e `y`.
 
-``` basic
+```basic
 MODE 1
 PRINT TEST(320,200)
 PLOT 320,200,1
@@ -2077,13 +2087,14 @@ NEXT i
 PRINT " FIN!"
 PRINT "Tiempo="; (TIME-T!)/300.0; "s" ' Si se uso TIME(0) no hace falta restar
 ```
- Por último, si ABASC detecta que se está convirtiendo el valor devuelto por TIME a un entero, ejecuta una optimización en la llamada para evitar el uso de números reales. Sin embargo, el programador debería tener cuidado al usar TIME de este modo, ya que el valor da una vuelta entera cada 3 segundos debido a la menor precisión de los números enteros.
 
- ``` basic
- TIME(0)
+Por último, si ABASC detecta que se está convirtiendo el valor devuelto por TIME a un entero, ejecuta una optimización en la llamada para evitar el uso de números reales. Sin embargo, el programador debería tener cuidado al usar TIME de este modo, ya que el valor da una vuelta entera cada 3 segundos debido a la menor precisión de los números enteros.
+
+```basic
+TIME(0)
 FOR I=0 TO 20
-    FRAME
-    PRINT CINT(TIME)
+   FRAME
+   PRINT CINT(TIME)
 NEXT
 ```
 
@@ -2099,7 +2110,7 @@ Comando. En Locomotive BASIC permite emitir trazas según se interpreta un progr
 
 Comando. Convierte un valor sin signo (como una dirección de memoria) en el rango 0..65535 en un entero con signo en el rango -32768..+32767.
 
-``` basic
+```basic
 PRINT UNT(&FF66) ' debe imprimir el valor -154
 ```
 
@@ -2107,7 +2118,7 @@ PRINT UNT(&FF66) ' debe imprimir el valor -154
 
 Función. Devuelve `cadena`con todos sus carácteres pasados a mayúsculas.
 
-``` basic
+```basic
 C$="AmsTRaD"
 PRINT LOWER$(C$)
 PRINT UPPER$(C$)
@@ -2115,7 +2126,7 @@ PRINT UPPER$(C$)
 
 ### `VAL(cadena)`
 
-Función. Devuelve el primer **número entero** encontrado en `cadena`. Por tanto, y a diferencia del intérprete de BASIC en las máquinas Amstrad CPC, `VAL` no se puede usar para extraer un número real de una cadena de texto. 
+Función. Devuelve el primer **número entero** encontrado en `cadena`. Por tanto, y a diferencia del intérprete de BASIC en las máquinas Amstrad CPC, `VAL` no se puede usar para extraer un número real de una cadena de texto.
 
 ```basic
 PRINT VAL("15") + 15
@@ -2125,7 +2136,7 @@ PRINT VAL("15") + 15
 
 Función. Devuelve la posición actual en Y del cursor de texto para el `canal` indicado (#0 por defecto).
 
-``` basic
+```basic
 MODE 1
 PRINT POS(#0), VPOS(#0)
 ```
@@ -2146,7 +2157,7 @@ Comando. Marca el final de un buclo `WHILE`.
 
 Comando. Marca el inicio de un bucle del que solo se sale cuando `condición` es cierta.
 
-``` basic
+```basic
 CLS
 PRINT "Espera de 10 segundos": T! = TIME + 3000
 WHILE TIME<T!
@@ -2163,7 +2174,7 @@ Comando. Especifica el ancho en caracteres máximo a soportar por la impresora. 
 
 Comando. Define una nueva ventana de texto asociada a `canal` que debe estar en el rango #0..#7 (#0 por defecto).
 
-``` basic
+```basic
 MODE 1
 WINDOW #1,1,40,20,25
 WINDOW #2,2,39,21,24
@@ -2179,7 +2190,7 @@ CLS#2
 
 Comando. Intercambia las características de las ventanas de texto indicadas por `canal1` y `canal2`.
 
-``` basic
+```basic
 MODE 1
 WINDOW #1,1,40,20,25
 PAPER 0
@@ -2189,11 +2200,12 @@ CLS#1
 WINDOW SWAP 0,1
 PRINT "VENTANA 0"
 ```
+
 ### `WRITE [#canal],dato1,dato2,...`
 
 Comando. En Locomotive BASIC escribe los valores proporcionados en el canal indicado (#0 por defecto). ABASC ignora el valor del canal y siempre lo considera #9, el canal para operaciones con ficheros. Por tanto, `WRITE` se puede utilizar para escribir en un fichero mientras que `READIN` serviría para leer los datos de vuelta. Los números reales no están soportados, solo se pueden escribir datos enteros o cadenas de texto.
 
-``` basic
+```basic
 A=15
 NOM$="Juan"
 OPENOUT "DATOS.TXT"
@@ -2205,7 +2217,7 @@ CLOSEOUT
 
 Función. Devuelve la posición en X del cursor gráfico.
 
-``` basic
+```basic
 MODE 1
 PRINT XPOS;YPOS
 MOVE 320,200
@@ -2220,7 +2232,7 @@ Función. Devuelve la posición en Y del cursor gráfico. Ver `XPOS`.
 
 Comando. Cambia la anchura (13 por defecto) de la zona de escritura utilizada por `PRINT` cuando se separan elementos con comas.
 
-``` basic
+```basic
 CLS
 PRINT "A","B"
 ZONE 4
@@ -2237,8 +2249,8 @@ Depurar programas generados por un compilador cruzado puede ser una tarea comple
 
 **WinApe** ofrece una forma conveniente de "pegar" código BASIC y ejecutarlo. Esto nos permite comparar los resultados entre el intérprete de BASIC y nuestro código compilado. Naturalmente, para que nuestro código funcione, no podremos utilizar las opciones provenientes del Locomotive BASIC 2 (como `FUNCTION`, `SUB`, `IF` multilinea, etc.). Sin embargo, sí podremos usar las siguientes características:
 
-* Código sin números de línea
-* Código dividido en varios archivos
+- Código sin números de línea
+- Código dividido en varios archivos
 
 Al compilar con ABASC, el primer paso lo realiza el preprocesador. Con la opción `--verbose` activada, genera un archivo intermedio con la extensión `.BPP`, en el que se añaden números de línea y se añade el código proveniente de los archivos adicionales referenciados mediante `CHAIN MERGE`.
 
@@ -2260,9 +2272,9 @@ En **Retro Virtual Machine**, podemos activar las herramientas de depuración si
 
 Aparecerá en la barra superior de iconos un botón con el símbolo de un martillo. Al hacer clic sobre él, se desplegará un submenú con varias herramientas; seleccionaremos la última, la consola de **Retro Virtual Machine**. Desde esta consola, podremos navegar por los directorios de nuestra máquina y cargar nuestro código de la siguiente manera:
 
-* `ls` — Lista el contenido del directorio actual.
-* `cd` — Cambia de directorio.
-* `asm` — Ensambla el archivo `.ASM` especificado.
+- `ls` — Lista el contenido del directorio actual.
+- `cd` — Cambia de directorio.
+- `asm` — Ensambla el archivo `.ASM` especificado.
 
 Este método permite cargar nuestro programa en un entorno de prueba mucho más rápido que usando archivos `.DSK` y el soporte de disco. Una vez que el programa está en memoria, se puede ejecutar mediante el comando:
 
@@ -2290,22 +2302,22 @@ Finalmente, se recomienda al lector consultar la documentación oficial de **Win
 
 Una de las grandes ventajas de ABASC es que, al estar escrito en Python, resulta sencillo **ampliar y modificar sus funciones**. El código fuente se organiza en los siguientes archivos principales:
 
-* **abasc.py – Fichero principal:** Gestiona las distintas opciones del compilador y ejecuta la compilación paso a paso.
-* **baspp.py – Preprocesador:** Añade números de línea e inserta cualquier fichero de código adicional referenciado mediante `CHAIN MERGE`. Si se activa la opción `--verbose`, genera un fichero intermedio con extensión `.BPP`.
-* **baslex.py – Analizador léxico:** Recorre el código fuente y genera la lista de tokens correspondiente. Con `--verbose`, produce un fichero intermedio con extensión `.LEX`.
-* **basparse.py – Analizador sintáctico:** Procesa la lista de tokens, verifica la sintaxis del programa y genera una representación intermedia del código en forma de Árbol de Sintaxis Abstracta (AST). Con `--verbose`, se genera un fichero intermedio `.AST`.
-* **emitters/cpcemitter.py – Generador de código ensamblador:** Toma el AST generado por el analizador sintáctico y produce el código ensamblador equivalente. El resultado se guarda en un fichero `.ASM`, que luego será ensamblado por **ABASM** para producir el binario final.
-* **emitters/cpcrt.py – Runtime del compilador:** Contiene rutinas en ensamblador llamadas por el código generado por `cpcemitter.py`.
+- **abasc.py – Fichero principal:** Gestiona las distintas opciones del compilador y ejecuta la compilación paso a paso.
+- **baspp.py – Preprocesador:** Añade números de línea e inserta cualquier fichero de código adicional referenciado mediante `CHAIN MERGE`. Si se activa la opción `--verbose`, genera un fichero intermedio con extensión `.BPP`.
+- **baslex.py – Analizador léxico:** Recorre el código fuente y genera la lista de tokens correspondiente. Con `--verbose`, produce un fichero intermedio con extensión `.LEX`.
+- **basparse.py – Analizador sintáctico:** Procesa la lista de tokens, verifica la sintaxis del programa y genera una representación intermedia del código en forma de Árbol de Sintaxis Abstracta (AST). Con `--verbose`, se genera un fichero intermedio `.AST`.
+- **emitters/cpcemitter.py – Generador de código ensamblador:** Toma el AST generado por el analizador sintáctico y produce el código ensamblador equivalente. El resultado se guarda en un fichero `.ASM`, que luego será ensamblado por **ABASM** para producir el binario final.
+- **emitters/cpcrt.py – Runtime del compilador:** Contiene rutinas en ensamblador llamadas por el código generado por `cpcemitter.py`.
 
 Siempre que se realicen cambios en cualquiera de estos archivos, es recomendable comprobar que no se han introducido errores evidentes. Esto se puede hacer ejecutando los siguientes comandos desde el directorio donde se encuentra `abasc.py`:
 
-* **Comprobación de tipos:**
+- **Comprobación de tipos:**
 
 ```bash
 mypy . --explicit-package-bases
 ```
 
-* **Pruebas unitarias:**
+- **Pruebas unitarias:**
 
 ```bash
 python3 -m unittest -b
@@ -2315,7 +2327,7 @@ Finalmente, el directorio `examples` incluye varios programas de ejemplo que pue
 
 ---
 
-# Apéndice III: LA LIBRERÍA BASE 
+# Apéndice III: LA LIBRERÍA BASE
 
 BASE es una librería que expone algunas rutinas útiles publicadas en su día en libros como "Ready made machine language routines for the Amstrad" o que están disponibles como llamadas al Firmware.
 
@@ -2327,7 +2339,7 @@ chain merge "base/base.bas"
 
 ## Constantes y funciones de Base:
 
-* `base/bytepos.bas`
+- `base/bytepos.bas`
 
 ' En `ABASC` no hay soporte para datos de tipo byte. Todos los enteros son
 ' de 16 bits. Estas rutinas permiten codificar en un entero una posición
@@ -2341,12 +2353,12 @@ FUNCTION bytePosGetY(intvalue)
 FUNCTION bytePosSetX(bytepos, x)
 FUNCTION bytePosSetY(intvalue, y)
 
-* `base/memory.bas`
+- `base/memory.bas`
 
 SUB memCopy(dest, src, nbytes)
 SUB memSet(dest, size, bytevalue)
 
-* `base/screen.bas`
+- `base/screen.bas`
 
 ' Equivalente a llamar a la rutina del firmware SCR INITIALISE
 SUB scrInitialize
@@ -2400,12 +2412,12 @@ SUB scrInitDoubleBuffer()
 SUB scrSwapDoubleBuffer()
 
 ' Rutinas que usan el firmware para establecer la dirección de inicio
-' de la memoria de video o su offset. 
-SUB      scrSetLocation(memaddr)
+' de la memoria de video o su offset.
+SUB scrSetLocation(memaddr)
 FUNCTION scrGetLocation()
-SUB      scrSetOffset(offset)
+SUB scrSetOffset(offset)
 FUNCTION scrGetOffset()
-SUB      scrSetVideoLocation(base, offset)
+SUB scrSetVideoLocation(base, offset)
 
 ' Rutinas que hacen scroll de la pantalla
 SUB scrScrollUp()
@@ -2416,7 +2428,7 @@ SUB scrScrollDown()
 FUNCTION scrCheckPointRect(pointx, pointy, recx, recy, recwidth, recheight)
 FUNCTION scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2, rech2)
 
-* `base/string.bas`
+- `base/string.bas`
 
 ' A s$ se le añaden totaln caracteres por la izquierda. El caracter añadido
 ' se indica en padchar
@@ -2426,7 +2438,7 @@ FUNCTION strLPad$(s$, totaln, padchar)
 ' se indica en padchar
 FUNCTION strRPad$(s$, totaln, padchar)
 
-' Equivalente ta dest$ = dest$  + src$ pero consume menos memoria
+' Equivalente ta dest$ = dest$ + src$ pero consume menos memoria
 SUB strAppend(dest$, src$)
 
 ' Equivalente a dest$ = src$
@@ -2435,10 +2447,10 @@ SUB strCopy(dest$, src$)
 ' Equivalente a src$ = ""
 SUB strClear(src$)
 
-* `base/text.bas`
+- `base/text.bas`
 
 ' Devuelve el código ASCII del caracter de la pantalla en la posición x,y
-FUNCTION txtReadAsc(x, y) 
+FUNCTION txtReadAsc(x, y)
 
 ' Imprime la cadena text$ rotada hacía la izquierda 90º. Sobreescribe el
 ' primer UDG disponible, por lo que no puede usarse cono SYMBOL AFTER 256
@@ -2456,9 +2468,9 @@ SUB txtPrintBig(text$, x, y, pen1, pen2)
 
 # Apéndice IV: CPCTELERA
 
-CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El *Framework* original, incluyendo un gran número de herramientas adicionles, se pude consultar aquí:
+CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El _Framework_ original, incluyendo un gran número de herramientas adicionles, se pude consultar aquí:
 
-* [Página de CPCTelera en Github](https://github.com/lronaldo/cpctelera)
+- [Página de CPCTelera en Github](https://github.com/lronaldo/cpctelera)
 
 Entre el contenido, se puede acceder a una documentación muy completa. Además, `ABASC` incluye muchos de los ejemplos originales adaptados y listos para su consulta en el directorio `examples/cpctelera`.
 
@@ -2470,7 +2482,7 @@ chain merge "cpctelera/cpctelera.bas"
 
 ## Constantes y funciones de CPCTelera:
 
-* `cpctelera/audio.bas`:
+- `cpctelera/audio.bas`:
 
 ```
 CONST AY.CHANNELA
@@ -2491,7 +2503,7 @@ FUNCTION    cpctakpSongLoopTimes
 SUB         cpctakpStop
 ```
 
-* `cpctelera/bitarray.bas`
+- `cpctelera/bitarray.bas`
 
 ```
 FUNCTION    cpctGetBit(array$, index)
@@ -2504,7 +2516,7 @@ SUB         cpctSet4Bits(array$, value, index)
 SUB         cpctSet6Bits(array$, value, index)
 ```
 
-* `cpctelera/easytilemaps`
+- `cpctelera/easytilemaps`
 
 ```
 SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap)
@@ -2517,7 +2529,7 @@ SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles)
 SUB cpctetmSetDrawTilemap4x8agf(vieww, viewh, tilemapw, tiles)
 ```
 
-* `cpctelera/firmware`
+- `cpctelera/firmware`
 
 ```
 FUNCTION    cpctDisableFirmware
@@ -2530,96 +2542,96 @@ FUNCTION    cpctRemoveInterruptHandler
 SUB         cpctSetInterruptHandler(cbaddress)
 ```
 
-* `cpctelera/keyboard`
+- `cpctelera/keyboard`
 
 ```
-CONST KEY.UP           
-CONST KEY.RIGHT        
-CONST KEY.DOWN         
-CONST KEY.F9           
-CONST KEY.F6           
-CONST KEY.F3           
-CONST KEY.ENTER        
-CONST KEY.FDOT         
-CONST KEY.LEFT         
-CONST KEY.COPY         
-CONST KEY.F7           
-CONST KEY.F8           
-CONST KEY.F5           
-CONST KEY.F1           
-CONST KEY.F2           
-CONST KEY.F0           
-CONST KEY.CLR          
-CONST KEY.OPENBRACKET  
-CONST KEY.RETURN       
-CONST KEY.CLOSEBRACKET 
-CONST KEY.F4           
-CONST KEY.SHIFT        
-CONST KEY.BACKSLASH    
-CONST KEY.CONTROL      
-CONST KEY.CARET        
-CONST KEY.HYPHEN       
-CONST KEY.AT           
-CONST KEY.P            
-CONST KEY.SEMICOLON    
-CONST KEY.COLON        
-CONST KEY.SLASH        
-CONST KEY.DOT          
-CONST KEY.0            
-CONST KEY.9            
-CONST KEY.O            
-CONST KEY.I            
-CONST KEY.L            
-CONST KEY.K            
-CONST KEY.M            
-CONST KEY.COMMA        
-CONST KEY.8            
-CONST KEY.7            
-CONST KEY.U            
-CONST KEY.Y            
-CONST KEY.H            
-CONST KEY.J            
-CONST KEY.N            
-CONST KEY.SPACE        
-CONST KEY.6            
-CONST JOY1.UP          
-CONST KEY.5            
-CONST JOY1.DOWN        
-CONST KEY.R            
-CONST JOY1.LEFT        
-CONST KEY.T            
-CONST JOY1.RIGHT       
-CONST KEY.G            
-CONST JOY1.FIRE1       
-CONST KEY.F            
-CONST JOY1.FIRE2       
-CONST KEY.B            
-CONST JOY1.FIRE3       
-CONST KEY.V            
-CONST KEY.4            
-CONST KEY.3            
-CONST KEY.E            
-CONST KEY.W            
-CONST KEY.S            
-CONST KEY.D            
-CONST KEY.C            
-CONST KEY.X            
-CONST KEY.1            
-CONST KEY.2            
-CONST KEY.ESC          
-CONST KEY.Q            
-CONST KEY.TAB          
-CONST KEY.A            
-CONST KEY.CAPSLOCK     
-CONST KEY.Z            
-CONST JOY0.UP          
-CONST JOY0.DOWN        
-CONST JOY0.LEFT        
-CONST JOY0.RIGHT       
-CONST JOY0.FIRE1       
-CONST JOY0.FIRE2       
-CONST JOY0.FIRE3       
-CONST KEY.DEL          
+CONST KEY.UP
+CONST KEY.RIGHT
+CONST KEY.DOWN
+CONST KEY.F9
+CONST KEY.F6
+CONST KEY.F3
+CONST KEY.ENTER
+CONST KEY.FDOT
+CONST KEY.LEFT
+CONST KEY.COPY
+CONST KEY.F7
+CONST KEY.F8
+CONST KEY.F5
+CONST KEY.F1
+CONST KEY.F2
+CONST KEY.F0
+CONST KEY.CLR
+CONST KEY.OPENBRACKET
+CONST KEY.RETURN
+CONST KEY.CLOSEBRACKET
+CONST KEY.F4
+CONST KEY.SHIFT
+CONST KEY.BACKSLASH
+CONST KEY.CONTROL
+CONST KEY.CARET
+CONST KEY.HYPHEN
+CONST KEY.AT
+CONST KEY.P
+CONST KEY.SEMICOLON
+CONST KEY.COLON
+CONST KEY.SLASH
+CONST KEY.DOT
+CONST KEY.0
+CONST KEY.9
+CONST KEY.O
+CONST KEY.I
+CONST KEY.L
+CONST KEY.K
+CONST KEY.M
+CONST KEY.COMMA
+CONST KEY.8
+CONST KEY.7
+CONST KEY.U
+CONST KEY.Y
+CONST KEY.H
+CONST KEY.J
+CONST KEY.N
+CONST KEY.SPACE
+CONST KEY.6
+CONST JOY1.UP
+CONST KEY.5
+CONST JOY1.DOWN
+CONST KEY.R
+CONST JOY1.LEFT
+CONST KEY.T
+CONST JOY1.RIGHT
+CONST KEY.G
+CONST JOY1.FIRE1
+CONST KEY.F
+CONST JOY1.FIRE2
+CONST KEY.B
+CONST JOY1.FIRE3
+CONST KEY.V
+CONST KEY.4
+CONST KEY.3
+CONST KEY.E
+CONST KEY.W
+CONST KEY.S
+CONST KEY.D
+CONST KEY.C
+CONST KEY.X
+CONST KEY.1
+CONST KEY.2
+CONST KEY.ESC
+CONST KEY.Q
+CONST KEY.TAB
+CONST KEY.A
+CONST KEY.CAPSLOCK
+CONST KEY.Z
+CONST JOY0.UP
+CONST JOY0.DOWN
+CONST JOY0.LEFT
+CONST JOY0.RIGHT
+CONST JOY0.FIRE1
+CONST JOY0.FIRE2
+CONST JOY0.FIRE3
+CONST KEY.DEL
 
 FUNCTION    cpctGetKeypressedAsASCII
 FUNCTION    cpctIsAnyKeyPressed
@@ -2631,7 +2643,7 @@ SUB         cpctScanKeyboardi
 SUB         cpctScanKeyboardif
 ```
 
-* `cpctelera/memutils`
+- `cpctelera/memutils`
 
 ```
 SUB         cpctMemcpy(toptr, fromptr, bytes)
@@ -2665,19 +2677,19 @@ SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)
 ```
 
-* `cpctelera/random`
+- `cpctelera/random`
 
 ```
 SUB         cpctSRand(seed)
 FUNCTION    cpctRand
 ```
 
-* `cpctelera/sprites`
+- `cpctelera/sprites`
 
 ```
 const CPCTBLEND.XOR
 const CPCTBLEND.AND
-const CPCTBLEND.OR 
+const CPCTBLEND.OR
 const CPCTBLEND.ADD
 const CPCTBLEND.ADC
 const CPCTBLEND.SBC
@@ -2743,7 +2755,7 @@ FUNCTION    cpctpx2byteM0(px0, px1)
 FUNCTION    cpctpx2byteM1(px0, px1, px2, px3)
 ```
 
-* `cpctelera/strings`
+- `cpctelera/strings`
 
 ```
 SUB         cpctDrawCharM0(vmem, chnum)
@@ -2757,67 +2769,67 @@ SUB         cpctSetDrawCharM1(fg, bg)
 SUB         cpctSetDrawCharM2(fg, bg)
 ```
 
-* `cpctelera/video`
+- `cpctelera/video`
 
 ```
 CONST CPCT.VMEMSTART
 CONST CPCT.VMEMSIZE
 
-CONST FWC.BLACK         
-CONST FWC.BLUE          
-CONST FWC.BRIGHTBLUE    
-CONST FWC.RED           
-CONST FWC.MAGENTA       
-CONST FWC.MAUVE         
-CONST FWC.BRIGHTRED     
-CONST FWC.PURPLE        
-CONST FWC.BRIGHTMAGENTA 
-CONST FWC.GREEN         
-CONST FWC.CYAN          
-CONST FWC.SKYBLUE       
-CONST FWC.YELLOW        
-CONST FWC.WHITE         
-CONST FWC.PASTELBLUE    
-CONST FWC.ORANGE        
-CONST FWC.PINK          
-CONST FWC.PASTERMAGENTA 
-CONST FWC.BRIGHTGREEN   
-CONST FWC.SEAGREEN      
-CONST FWC.BRIGHTCYAN    
-CONST FWC.LIME          
-CONST FWC.PASTELGREEN   
-CONST FWC.PASTELCYAN    
-CONST FWC.BRIGHTYELLOW  
-CONST FWC.PASTELYELLOW  
-CONST FWC.BRIGHTWHITE   
+CONST FWC.BLACK
+CONST FWC.BLUE
+CONST FWC.BRIGHTBLUE
+CONST FWC.RED
+CONST FWC.MAGENTA
+CONST FWC.MAUVE
+CONST FWC.BRIGHTRED
+CONST FWC.PURPLE
+CONST FWC.BRIGHTMAGENTA
+CONST FWC.GREEN
+CONST FWC.CYAN
+CONST FWC.SKYBLUE
+CONST FWC.YELLOW
+CONST FWC.WHITE
+CONST FWC.PASTELBLUE
+CONST FWC.ORANGE
+CONST FWC.PINK
+CONST FWC.PASTERMAGENTA
+CONST FWC.BRIGHTGREEN
+CONST FWC.SEAGREEN
+CONST FWC.BRIGHTCYAN
+CONST FWC.LIME
+CONST FWC.PASTELGREEN
+CONST FWC.PASTELCYAN
+CONST FWC.BRIGHTYELLOW
+CONST FWC.PASTELYELLOW
+CONST FWC.BRIGHTWHITE
 
-CONST HWC.BLACK        
-CONST HWC.BLUE         
-CONST HWC.BRIGHTBLUE   
-CONST HWC.RED          
-CONST HWC.MAGENTA      
-CONST HWC.MAUVE        
-CONST HWC.BRIGHTRED    
-CONST HWC.PURPLE       
+CONST HWC.BLACK
+CONST HWC.BLUE
+CONST HWC.BRIGHTBLUE
+CONST HWC.RED
+CONST HWC.MAGENTA
+CONST HWC.MAUVE
+CONST HWC.BRIGHTRED
+CONST HWC.PURPLE
 CONST HWC.BRIGHTMAGENTA
-CONST HWC.GREEN        
-CONST HWC.CYAN         
-CONST HWC.SKYBLUE      
-CONST HWC.YELLOW       
-CONST HWC.WHITE        
-CONST HWC.PASTELBLUE   
-CONST HWC.ORANGE       
-CONST HWC.PINK         
+CONST HWC.GREEN
+CONST HWC.CYAN
+CONST HWC.SKYBLUE
+CONST HWC.YELLOW
+CONST HWC.WHITE
+CONST HWC.PASTELBLUE
+CONST HWC.ORANGE
+CONST HWC.PINK
 CONST HWC.PASTERMAGENTA
-CONST HWC.BRIGHTGREEN  
-CONST HWC.SEAGREEN     
-CONST HWC.BRIGHTCYAN   
-CONST HWC.LIME         
-CONST HWC.PASTELGREEN  
-CONST HWC.PASTELCYAN   
-CONST HWC.BRIGHTYELLOW 
-CONST HWC.PASTELYELLOW 
-CONST HWC.BRIGHTWHITE  
+CONST HWC.BRIGHTGREEN
+CONST HWC.SEAGREEN
+CONST HWC.BRIGHTCYAN
+CONST HWC.LIME
+CONST HWC.PASTELGREEN
+CONST HWC.PASTELCYAN
+CONST HWC.BRIGHTYELLOW
+CONST HWC.PASTELYELLOW
+CONST HWC.BRIGHTWHITE
 
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
@@ -2847,11 +2859,11 @@ SUB         cpctWaitVSYNCStart
 
 # Apéndice V: CPCRSLIB
 
-`CPCRSlib` es una librería de C que contiene rutinas y funciones que permiten la gestión de sprites y el uso de *tilemaps* en Amstrad CPC. Está diseñada para usarse con los compiladores z88dk y SDCC.
+`CPCRSlib` es una librería de C que contiene rutinas y funciones que permiten la gestión de sprites y el uso de _tilemaps_ en Amstrad CPC. Está diseñada para usarse con los compiladores z88dk y SDCC.
 
 La librería original puede descargarse desde:
 
-* [Página de CPCRSlib en Sourceforge](https://sourceforge.net/p/cpcrslib/wiki/Home/)
+- [Página de CPCRSlib en Sourceforge](https://sourceforge.net/p/cpcrslib/wiki/Home/)
 
 `ABASC` incluye varios de los ejemplos originales adaptados y listos para su consulta en el directorio `examples/cpcrslib`.
 
@@ -2863,115 +2875,115 @@ chain merge "cpcrslib/cpcrslib.bas"
 
 ## Constantes y funciones de CPCRSlib:
 
-* `cpcrslib/firmware`
+- `cpcrslib/firmware`
 
 ```
 SUB rsDisableFirmware
 SUB rsEnableFirmware
 ```
 
-* `cpcrslib/keyboard`
+- `cpcrslib/keyboard`
 
 ```
-const RSKEY.EMPTY   
-const RSKEY.FDOT    
-const RSKEY.FENTER  
-const RSKEY.F3      
-const RSKEY.F6      
-const RSKEY.F9      
-const RSKEY.DOWN    
-const RSKEY.RIGHT   
-const RSKEY.UP      
-const RSKEY.F0      
-const RSKEY.F2      
-const RSKEY.F1      
-const RSKEY.F5      
-const RSKEY.F8      
-const RSKEY.F7      
-const RSKEY.COPY    
-const RSKEY.LEFT    
-const RSKEY.CTRL    
-const RSKEY.BSLASH  
-const RSKEY.SHIFT   
-const RSKEY.F4      
-const RSKEY.RSQUARE 
-const RSKEY.RETURN  
-const RSKEY.LSQUARE 
-const RSKEY.CLR     
-const RSKEY.DOT     
-const RSKEY.FSLASH  
-const RSKEY.COLON   
-const RSKEY.SCOLON  
-const RSKEY.P       
-const RSKEY.AT      
-const RSKEY.MINUS   
-const RSKEY.EXP     
-const RSKEY.COMMA   
-const RSKEY.M       
-const RSKEY.K       
-const RSKEY.L       
-const RSKEY.I       
-const RSKEY.O       
-const RSKEY.9       
-const RSKEY.0       
-const RSKEY.SPACE   
-const RSKEY.N       
-const RSKEY.J       
-const RSKEY.H       
-const RSKEY.Y       
-const RSKEY.U       
-const RSKEY.7       
-const RSKEY.8       
-const RSKEY.V       
-const RSKEY.B       
-const RSKEY.F       
-const RSKEY.G       
-const RSKEY.T       
-const RSKEY.R       
-const RSKEY.5       
-const RSKEY.6       
-const RSKEY.J2FIRE3 
-const RSKEY.J2FIRE2 
-const RSKEY.J2FIRE1 
-const RSKEY.J2RIGHT 
-const RSKEY.J2LEFT  
-const RSKEY.J2DOWN  
-const RSKEY.J2UP    
-const RSKEY.X       
-const RSKEY.C       
-const RSKEY.D       
-const RSKEY.S       
-const RSKEY.W       
-const RSKEY.E       
-const RSKEY.3       
-const RSKEY.4       
-const RSKEY.Z       
-const RSKEY.CAPS    
-const RSKEY.A       
-const RSKEY.TAB     
-const RSKEY.Q       
-const RSKEY.ESC     
-const RSKEY.2       
-const RSKEY.1       
-const RSKEY.DEL     
-const RSKEY.J1FIRE3 
-const RSKEY.J1FIRE2 
-const RSKEY.J1FIRE1 
-const RSKEY.J1RIGHT 
-const RSKEY.J1LEFT  
-const RSKEY.J1DOWN  
-const RSKEY.J1UP    
+const RSKEY.EMPTY
+const RSKEY.FDOT
+const RSKEY.FENTER
+const RSKEY.F3
+const RSKEY.F6
+const RSKEY.F9
+const RSKEY.DOWN
+const RSKEY.RIGHT
+const RSKEY.UP
+const RSKEY.F0
+const RSKEY.F2
+const RSKEY.F1
+const RSKEY.F5
+const RSKEY.F8
+const RSKEY.F7
+const RSKEY.COPY
+const RSKEY.LEFT
+const RSKEY.CTRL
+const RSKEY.BSLASH
+const RSKEY.SHIFT
+const RSKEY.F4
+const RSKEY.RSQUARE
+const RSKEY.RETURN
+const RSKEY.LSQUARE
+const RSKEY.CLR
+const RSKEY.DOT
+const RSKEY.FSLASH
+const RSKEY.COLON
+const RSKEY.SCOLON
+const RSKEY.P
+const RSKEY.AT
+const RSKEY.MINUS
+const RSKEY.EXP
+const RSKEY.COMMA
+const RSKEY.M
+const RSKEY.K
+const RSKEY.L
+const RSKEY.I
+const RSKEY.O
+const RSKEY.9
+const RSKEY.0
+const RSKEY.SPACE
+const RSKEY.N
+const RSKEY.J
+const RSKEY.H
+const RSKEY.Y
+const RSKEY.U
+const RSKEY.7
+const RSKEY.8
+const RSKEY.V
+const RSKEY.B
+const RSKEY.F
+const RSKEY.G
+const RSKEY.T
+const RSKEY.R
+const RSKEY.5
+const RSKEY.6
+const RSKEY.J2FIRE3
+const RSKEY.J2FIRE2
+const RSKEY.J2FIRE1
+const RSKEY.J2RIGHT
+const RSKEY.J2LEFT
+const RSKEY.J2DOWN
+const RSKEY.J2UP
+const RSKEY.X
+const RSKEY.C
+const RSKEY.D
+const RSKEY.S
+const RSKEY.W
+const RSKEY.E
+const RSKEY.3
+const RSKEY.4
+const RSKEY.Z
+const RSKEY.CAPS
+const RSKEY.A
+const RSKEY.TAB
+const RSKEY.Q
+const RSKEY.ESC
+const RSKEY.2
+const RSKEY.1
+const RSKEY.DEL
+const RSKEY.J1FIRE3
+const RSKEY.J1FIRE2
+const RSKEY.J1FIRE1
+const RSKEY.J1RIGHT
+const RSKEY.J1LEFT
+const RSKEY.J1DOWN
+const RSKEY.J1UP
 
-const RSKB.LINE1    
-const RSKB.LINE2    
-const RSKB.LINE3    
-const RSKB.LINE4    
-const RSKB.LINE5    
-const RSKB.LINE6    
-const RSKB.LINE7    
-const RSKB.LINE8    
-const RSKB.LINE9    
-const RSKB.LINE10   
+const RSKB.LINE1
+const RSKB.LINE2
+const RSKB.LINE3
+const RSKB.LINE4
+const RSKB.LINE5
+const RSKB.LINE6
+const RSKB.LINE7
+const RSKB.LINE8
+const RSKB.LINE9
+const RSKB.LINE10
 
 FUNCTION        rsAnyKeyPressed
 SUB             rsAssignKey(entry, keyid)
@@ -2983,7 +2995,7 @@ FUNCTION        rsTestKeyF(entry)
 FUNCTION        rsTestKeyboard(kbline)
 ```
 
-* `cpcrslib/player`
+- `cpcrslib/player`
 
 ```
 const RSCH.A
@@ -3000,7 +3012,7 @@ SUB         rsWyzSetPlayerOn
 SUB         rsWyzSetPlayerOff
 ```
 
-* `cpcrslib/sprite`
+- `cpcrslib/sprite`
 
 ```
 const RSPRITE.SIZE = 14
@@ -3017,7 +3029,7 @@ SUB         rsPutSpXOR(sprite, w, h, vmem)
 SUB         rsPutSpXORXY(sprite, w, h, x, y)
 ```
 
-* `cpcrslib/text`
+- `cpcrslib/text`
 
 ```
 SUB         rsPrintGphStrStd(npen, text$, vmem)
@@ -3033,34 +3045,34 @@ SUB         rsPrintGphStrXYM1(text$, x, y)
 SUB         rsPrintGphStrM1x2(text$, vmem)
 SUB         rsPrintGphStrXYM1x2(text$, x, y)
 
-const RSTXT0.PEN0  
-const RSTXT0.PEN1  
-const RSTXT0.PEN2  
-const RSTXT0.PEN3  
-const RSTXT0.PEN4  
-const RSTXT0.PEN5  
-const RSTXT0.PEN6  
-const RSTXT0.PEN7  
-const RSTXT0.PEN8  
-const RSTXT0.PEN9  
-const RSTXT0.PEN10 
-const RSTXT0.PEN11 
-const RSTXT0.PEN12 
-const RSTXT0.PEN13 
-const RSTXT0.PEN14 
-const RSTXT0.PEN15 
+const RSTXT0.PEN0
+const RSTXT0.PEN1
+const RSTXT0.PEN2
+const RSTXT0.PEN3
+const RSTXT0.PEN4
+const RSTXT0.PEN5
+const RSTXT0.PEN6
+const RSTXT0.PEN7
+const RSTXT0.PEN8
+const RSTXT0.PEN9
+const RSTXT0.PEN10
+const RSTXT0.PEN11
+const RSTXT0.PEN12
+const RSTXT0.PEN13
+const RSTXT0.PEN14
+const RSTXT0.PEN15
 
 SUB rsSetInkGphStrM0(indind, color)
 
-const RSTXT1.PEN0 
-const RSTXT1.PEN1 
-const RSTXT1.PEN2 
-const RSTXT1.PEN3 
+const RSTXT1.PEN0
+const RSTXT1.PEN1
+const RSTXT1.PEN2
+const RSTXT1.PEN3
 
 SUB rsSetInkGphStrM1(indind, color)
 ```
 
-* `cpcrslib/tilemap`
+- `cpcrslib/tilemap`
 
 ```
 SUB         rsInitTileMap
@@ -3077,7 +3089,7 @@ SUB         rsTouchTileXY(x, y)
 FUNCTION    rsGetDoubleBufferAddress(x, y)
 ```
 
-* `cpcrslib/utils`
+- `cpcrslib/utils`
 
 ```
 SUB         rsPause(halts)
@@ -3085,64 +3097,64 @@ FUNCTION    rsRandom
 SUB         rsWaitVSync
 ```
 
-* `cpcrslib/video`
+- `cpcrslib/video`
 
 ```
-CONST RSFW.BLACK        
-CONST RSFW.BLUE         
-CONST RSFW.BRIGHTBLUE   
-CONST RSFW.RED          
-CONST RSFW.MAGENTA      
-CONST RSFW.MAUVE        
-CONST RSFW.BRIGHTRED    
-CONST RSFW.PURPLE       
+CONST RSFW.BLACK
+CONST RSFW.BLUE
+CONST RSFW.BRIGHTBLUE
+CONST RSFW.RED
+CONST RSFW.MAGENTA
+CONST RSFW.MAUVE
+CONST RSFW.BRIGHTRED
+CONST RSFW.PURPLE
 CONST RSFW.BRIGHTMAGENTA
-CONST RSFW.GREEN        
-CONST RSFW.CYAN         
-CONST RSFW.SKYBLUE      
-CONST RSFW.YELLOW       
-CONST RSFW.WHITE        
-CONST RSFW.PASTELBLUE   
-CONST RSFW.ORANGE       
-CONST RSFW.PINK         
+CONST RSFW.GREEN
+CONST RSFW.CYAN
+CONST RSFW.SKYBLUE
+CONST RSFW.YELLOW
+CONST RSFW.WHITE
+CONST RSFW.PASTELBLUE
+CONST RSFW.ORANGE
+CONST RSFW.PINK
 CONST RSFW.PASTERMAGENTA
-CONST RSFW.BRIGHTGREEN  
-CONST RSFW.SEAGREEN     
-CONST RSFW.BRIGHTCYAN   
-CONST RSFW.LIME         
-CONST RSFW.PASTELGREEN  
-CONST RSFW.PASTELCYAN   
-CONST RSFW.BRIGHTYELLOW 
-CONST RSFW.PASTELYELLOW 
-CONST RSFW.BRIGHTWHITE  
+CONST RSFW.BRIGHTGREEN
+CONST RSFW.SEAGREEN
+CONST RSFW.BRIGHTCYAN
+CONST RSFW.LIME
+CONST RSFW.PASTELGREEN
+CONST RSFW.PASTELCYAN
+CONST RSFW.BRIGHTYELLOW
+CONST RSFW.PASTELYELLOW
+CONST RSFW.BRIGHTWHITE
 
-CONST RSHW.BLACK        
-CONST RSHW.BLUE         
-CONST RSHW.BRIGHTBLUE   
-CONST RSHW.RED          
-CONST RSHW.MAGENTA      
-CONST RSHW.MAUVE        
-CONST RSHW.BRIGHTRED    
-CONST RSHW.PURPLE       
+CONST RSHW.BLACK
+CONST RSHW.BLUE
+CONST RSHW.BRIGHTBLUE
+CONST RSHW.RED
+CONST RSHW.MAGENTA
+CONST RSHW.MAUVE
+CONST RSHW.BRIGHTRED
+CONST RSHW.PURPLE
 CONST RSHW.BRIGHTMAGENTA
-CONST RSHW.GREEN        
-CONST RSHW.CYAN         
-CONST RSHW.SKYBLUE      
-CONST RSHW.YELLOW       
-CONST RSHW.WHITE        
-CONST RSHW.PASTELBLUE   
-CONST RSHW.ORANGE       
-CONST RSHW.PINK         
+CONST RSHW.GREEN
+CONST RSHW.CYAN
+CONST RSHW.SKYBLUE
+CONST RSHW.YELLOW
+CONST RSHW.WHITE
+CONST RSHW.PASTELBLUE
+CONST RSHW.ORANGE
+CONST RSHW.PINK
 CONST RSHW.PASTERMAGENTA
-CONST RSHW.BRIGHTGREEN  
-CONST RSHW.SEAGREEN     
-CONST RSHW.BRIGHTCYAN   
-CONST RSHW.LIME         
-CONST RSHW.PASTELGREEN  
-CONST RSHW.PASTELCYAN   
-CONST RSHW.BRIGHTYELLOW 
-CONST RSHW.PASTELYELLOW 
-CONST RSHW.BRIGHTWHITE   
+CONST RSHW.BRIGHTGREEN
+CONST RSHW.SEAGREEN
+CONST RSHW.BRIGHTCYAN
+CONST RSHW.LIME
+CONST RSHW.PASTELGREEN
+CONST RSHW.PASTELCYAN
+CONST RSHW.BRIGHTYELLOW
+CONST RSHW.PASTELYELLOW
+CONST RSHW.BRIGHTWHITE
 
 SUB         rsClrScr
 FUNCTION    rsGetScrAddress(x, y)
@@ -3168,34 +3180,36 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
-* Versión 1.0.8
+- Versión 1.0.8
   - Bloquea el comando SOUND si la cola del canal está llena.
+  - Arregla un problema al usar LEF$, RIGHT$ y MID$ con 0 como número de caracteres a copiar.
+  - Arregla un problema con arrays de múltiples índices.
   - Añade soporte para corchetes en las declaraciones y accesos a elementos de un array.
 
-* Versión 1.0.7
+- Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
   - Corrige el orden de precedencia del operador MOD con respecto a la suma y la resta.
   - Añade soporte para el operador exponente (^).
 
-* Versión 1.0.6
+- Versión 1.0.6
   - Arregla un bug al usar una constante como indice al acceder a elementos de un array.
   - Mejora el soporte para los comandos DEFINT, DEFREAL y DEFSTR
-      - Abasc ignora esos comandos, pero no debe dar errores de compilación.
+    - Abasc ignora esos comandos, pero no debe dar errores de compilación.
   - Arregla un problema al usar expresiones como direcciones con CALL.
 
-* Versión 1.0.5
+- Versión 1.0.5
   - Arregla algunos pequeños fallos tipográficos en la documentación.
   - Añade nuevas rutinas en BASE para permitir dibujar sprites con clipping:
-      - scrDrawSpriteClipped(xbyte, y)
-      - scrDrawSpriteClippedXOR(xbyte, y)
-      - scrSetClippingView(xbyte0, y0, xbyte1, y1)
-      - scrByteToX(xbyte)
-      - scrXToByte(y)
-      - scrLineToY(yline)
-      - scrYToLine(y)
+    - scrDrawSpriteClipped(xbyte, y)
+    - scrDrawSpriteClippedXOR(xbyte, y)
+    - scrSetClippingView(xbyte0, y0, xbyte1, y1)
+    - scrByteToX(xbyte)
+    - scrXToByte(y)
+    - scrLineToY(yline)
+    - scrYToLine(y)
   - Añade un nuevo ejemplo `clipping` para mostrar el uso de las nuevas funciones.
 
-* Versión 1.0.4
+- Versión 1.0.4
   - Incluye un nuevo flag `--start` que permite establecer la dirección de inicio del programa.
   - Optimiza los bucles FOR.
   - Permite usar expressiones de resultado constante en la declaración de arrays.
@@ -3204,34 +3218,31 @@ SUB         rsSetMode(nmode)
   - Incluye el clásico programa Amthello en la sección de ejemplos.
   - Incluye nuevos ejemplos de uso de CPCTELERA en el directorio `examples/cpctelera/advanced`.
   - Añade nuevas rutinas a la librería BASE.
-  
-* Versión 1.0.3
+- Versión 1.0.3
   - Genera los ficheros intermedios junto al destino en vez de junto al fichero fuente.
   - Arregla un error si la ruta del fichero contenía la subcadena 'BAS'.
   - Arregla un error optimizando variables índice de los bucles FOR.
   - Incluye un nuevo ejemplo: examples/cpctelera/games/runner
   - Añade tests automáticos para cubrir la parte de emisión de código.
 
-* Versión 1.0.2
+- Versión 1.0.2
   - Arregla un problema con las variables CONST en sentencias DIM o FIXED
   - Arregla un error tipográfico en cpctelera/sprites.bas
 
-* Versión 1.0.1
+- Versión 1.0.1
   - Mejoras en el manejo de variables CONST
   - Revisión de los ejemplos en MacOS
-  
-* Versión 1.0.0
+- Versión 1.0.0
   - Soporta la sintaxis de Locomotive BASIC 1.0 y 1.1
   - Soporta números reales
   - Soporta la sintaxis de Locomotive BASIC 2 y BASIC 2 plus
-    * LABEL, SUB, FUNCTION, SELECT CASE, etc.
+    - LABEL, SUB, FUNCTION, SELECT CASE, etc.
   - Permite incrustar código en ensamblador mediante el comando ASM
   - Incluye versiones adaptadas de las librerías CPCTELERA y CPCRSLIB
   - Incluye múltiples ejemplos para probar el compilador
   - Incluye varias herramientas adicionales para crear ficheros DSK, CDT o convertir imágenes.
   - Incluye un plug-in para Visual Code (abasc-vscode.vsix)
   - Limitaciones:
-    * Los arrays siempre empizan en 0
-    * Solo se pueden usar números enteros como índices en la declaración de un array.
-    * No se soportan los patrones del comando USING
-  
+    - Los arrays siempre empizan en 0
+    - Solo se pueden usar números enteros como índices en la declaración de un array.
+    - No se soportan los patrones del comando USING

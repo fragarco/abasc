@@ -1,8 +1,10 @@
 <!-- omit in toc -->
-ABASC: USER MANUAL
-==================
+
+# ABASC: USER MANUAL
+
 **A BASIC cross compiler for the Amstrad CPC machines**
 
+- [ABASC: USER MANUAL](#abasc-user-manual)
 - [Introduction](#introduction)
   - [Influences](#influences)
   - [A Brief Overview of the Locomotive BASIC Versions](#a-brief-overview-of-the-locomotive-basic-versions)
@@ -12,11 +14,11 @@ ABASC: USER MANUAL
     - [Version 2 Plus](#version-2-plus)
 - [References](#references)
 - [Syntax Supported by ABASC](#syntax-supported-by-abasc)
-    - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
-    - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
+  - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
+  - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
 - [Additional Tools](#additional-tools)
 - [Using the Compiler](#using-the-compiler)
-    - [Options](#options)
+  - [Options](#options)
   - [Creating a Project Using BASPRJ](#creating-a-project-using-basprj)
 - [Peculiarities of the Compiler](#peculiarities-of-the-compiler)
   - [Types and Variables](#types-and-variables)
@@ -257,19 +259,19 @@ Introduced in 1989, this revision added `FUNCTION`, `SUB`, multi-line `IF` state
 
 This manual is **not** intended to be a comprehensive guide to programming in BASIC. For in-depth information on Locomotive BASIC programming, the following texts are recommended:
 
-* *Amstrad CPC464 – User Manual* (I. Spital, R. Perry, W. Poel, C. Lawson)
-* *BASIC Programmer’s Reference Manual* (Amsoft)
-* *Amstrad CPC6128 – User Manual* (I. Spital, R. Perry, W. Poel, C. Lawson)
-* *BASIC 2 User Guide* (Locomotive Software Ltd.)
-* *BASIC 2 PLUS Language Reference* (Locomotive Software Ltd.)
-* *Using Locomotive BASIC 2 on the Amstrad 1512* (Robert Ransom)
+- _Amstrad CPC464 – User Manual_ (I. Spital, R. Perry, W. Poel, C. Lawson)
+- _BASIC Programmer’s Reference Manual_ (Amsoft)
+- _Amstrad CPC6128 – User Manual_ (I. Spital, R. Perry, W. Poel, C. Lawson)
+- _BASIC 2 User Guide_ (Locomotive Software Ltd.)
+- _BASIC 2 PLUS Language Reference_ (Locomotive Software Ltd.)
+- _Using Locomotive BASIC 2 on the Amstrad 1512_ (Robert Ransom)
 
 To deepen your knowledge of the Amstrad CPC464/CPC6128 firmware, or of Z80 assembly programming, the following reference books are recommended:
 
-* *CPC464/664/6128 FIRMWARE, ROM Routines and Explanations* (B. Godden, P. Overell, D. Radisic)
-* *The Amstrad CPC Firmware Guide* (Bob Taylor)
-* *Z80 Assembly Language Programming* (Lance A. Leventhal)
-* *Ready-Made Machine Language Routines for the Amstrad CPC* (Joe Pritchard)
+- _CPC464/664/6128 FIRMWARE, ROM Routines and Explanations_ (B. Godden, P. Overell, D. Radisic)
+- _The Amstrad CPC Firmware Guide_ (Bob Taylor)
+- _Z80 Assembly Language Programming_ (Lance A. Leventhal)
+- _Ready-Made Machine Language Routines for the Amstrad CPC_ (Joe Pritchard)
 
 ---
 
@@ -324,12 +326,11 @@ DATA "Elvira", 20, 2005
 
 In addition to the compiler, the development package includes several extra tools that cover the entire workflow from generating the binary to package it for distribution. Each tool has its own manual distributed alongside the compiler documentation. All utilities are fully independent and can be used on their own.
 
-* `abasm.py` — Assembler compatible with WinAPE and RVM syntax. [manual](abasm.html)
-* `basprj.py` — Creates a basic project structure to use with `ABASC`. [manual](basprj.html)
-* `img.py` — Converts images to CPC format and can generate loading screens. [manual](img.html)
-* `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files. [manual](dsk.html)
-* `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files. [manual](cdt.html)
-
+- `abasm.py` — Assembler compatible with WinAPE and RVM syntax. [manual](abasm.html)
+- `basprj.py` — Creates a basic project structure to use with `ABASC`. [manual](basprj.html)
+- `img.py` — Converts images to CPC format and can generate loading screens. [manual](img.html)
+- `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files. [manual](dsk.html)
+- `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files. [manual](cdt.html)
 
 # Using the Compiler
 
@@ -339,13 +340,13 @@ python abasc.py [options] file.bas [-o output]
 
 ### Options
 
-* `--version` — Displays the compiler version.
-* `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
-* `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
-* `--start <n>` — Program area starting address (0x0040 by default)
-* `--data <n>` — Data area starting address (0x4000 by default)
-* `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
-* `-o`, `--out` — Output file name (without extension).
+- `--version` — Displays the compiler version.
+- `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
+- `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
+- `--start <n>` — Program area starting address (0x0040 by default)
+- `--data <n>` — Data area starting address (0x4000 by default)
+- `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
+- `-o`, `--out` — Output file name (without extension).
 
 ## Creating a Project Using BASPRJ
 
@@ -384,8 +385,8 @@ ABASC uses a somewhat stricter type system than the original Locomotive BASIC in
 
 In the original Locomotive BASIC, strings used a **double-indirection** structure. A string variable occupied 3 bytes:
 
-* Byte 1: length
-* Bytes 2–3: pointer to the string data
+- Byte 1: length
+- Bytes 2–3: pointer to the string data
 
 The maximum length was 255 characters.
 
@@ -393,8 +394,8 @@ In ABASC, string data is stored **directly after the length byte**, reserving **
 
 The only exception is **RSX calls**, for which ABASC preserves the original Locomotive BASIC string structure to ensure compatibility. Thus, RSX routines will always receive strings in the 3-byte indirection format:
 
-* 1 byte: length
-* 2 bytes: pointer to content
+- 1 byte: length
+- 2 bytes: pointer to content
 
 In addition, programmers may not always want to reserve the full 254 bytes for every string. ABASC therefore includes two statements from Locomotive BASIC 2: **`FIXED`** and **`DECLARE`**, which allow specifying the exact buffer size:
 
@@ -600,25 +601,25 @@ ASM "asm_label:"
 
 The memory map for a program compiled with ABASC is structured as follows:
 
-| Address             | Description                                                                |
-| ------------------- | -------------------------------------------------------------------------- |
-| **0x0040**          | Start of the application-initialization area and temporary memory space (heap). This address can be changed (if neccesary) using the flag `--start`.|
-| **\_code\_**        | Program main source code. Starts just after the heap and the startup code.       |
-| **\_runtime\_**     | Label marking the beginning of compiler-generated support routines.         |
+| Address             | Description                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **0x0040**          | Start of the application-initialization area and temporary memory space (heap). This address can be changed (if neccesary) using the flag `--start`.                                                                                                                                                                                                                                             |
+| **\_code\_**        | Program main source code. Starts just after the heap and the startup code.                                                                                                                                                                                                                                                                                                                       |
+| **\_runtime\_**     | Label marking the beginning of compiler-generated support routines.                                                                                                                                                                                                                                                                                                                              |
 | **\_data\_**        | Label marking the beginning of the static variable-allocation area. The lowest address for this area is 0x4000 as it can not share the address space used by the Firmware. The initial address, however, can be set using the parameter `--data`. if the preceding code overpasses the configured starting address for the data area, it will be allocated to start from the first free address. |
-| **\_program_end\_** | Label marking the address where the program’s memory usage ends.            |
+| **\_program_end\_** | Label marking the address where the program’s memory usage ends.                                                                                                                                                                                                                                                                                                                                 |
 
 Locomotive BASIC provides several commands for memory management: `HIMEM`, `MEMORY`, `FRE`, and `SYMBOL AFTER`.
 ABASC supports them as well, but their semantics differ slightly due to the compiled-code model:
 
-| Command          | Meaning in ABASC                              |
-| ---------------- | -------------------------------------------- |
-| **HIMEM**        | Returns the memory address immediately above the end of the compiled program (_program_end_ address). |
-| **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.|
+| Command          | Meaning in ABASC                                                                                                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **HIMEM**        | Returns the memory address immediately above the end of the compiled program (_program_end_ address).                                                                            |
+| **MEMORY**       | Sets the maximum memory address the compiled binary may reach. If exceeded, compilation fails.                                                                                   |
 | **SYMBOL AFTER** | ABASC reserves memory for redefinable characters (UDCs), just as Locomotive BASIC does. This region is part of the `_data_` segment. It can be released with `SYMBOL AFTER 256`. |
-| **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`). |
-| **FRE(1)**       | Returns the currently available temporary memory (heap). |
-| **FRE("")**      | Forces a cleanup of temporary memory (heap) and returns the same value as `FRE(0)`. |
+| **FRE(0)**       | Returns the free memory between `_program_end_` and the Firmware’s variable-storage area (`&A6FC`).                                                                              |
+| **FRE(1)**       | Returns the currently available temporary memory (heap).                                                                                                                         |
+| **FRE("")**      | Forces a cleanup of temporary memory (heap) and returns the same value as `FRE(0)`.                                                                                              |
 
 ABASC uses temporary memory to store intermediate results during the evaluation of expressions (such as string concatenation or numeric computations). This memory is allocated in a block called the "heap". The heap starts around the memory address 0x040 and its total maximum size is calculated at compiling time. After each statement, this temporary memory is automatically released. The only exception occurs during a `FUNCTION` or `SUB` call: the temporary memory allocated before the call is preserved so it can be restored when execution returns to the caller.
 
@@ -654,21 +655,21 @@ PRINT B$
 # Commands and Language Syntax
 
 The following section provides a concise overview of the notation, commands, and functions supported by the compiler. It is **not** intended to be an exhaustive guide to Locomotive BASIC, but rather to highlight the elements that are specific to the compiler.
-For a more comprehensive understanding of the language, refer to the works listed in the *References* section at the beginning of this manual.
+For a more comprehensive understanding of the language, refer to the works listed in the _References_ section at the beginning of this manual.
 
 ## Notation
 
 Special characters:
 
-| Character   | Notes          |
-| ----------- | -------------- |
-| `&` or `&H` | Prefix for hexadecimal numbers        |
-| `&X`        | Prefix for binary numbers             |
-| `:`         | Separates multiple statements on the same line |
-| `#`         | Prefix used to indicate a text channel (0–9)   |
-| `"`         | String delimiter                               |
+| Character   | Notes                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| `&` or `&H` | Prefix for hexadecimal numbers                                                           |
+| `&X`        | Prefix for binary numbers                                                                |
+| `:`         | Separates multiple statements on the same line                                           |
+| `#`         | Prefix used to indicate a text channel (0–9)                                             |
+| `"`         | String delimiter                                                                         |
 | `@`         | Placed before a variable name to indicate the memory address referenced by that variable |
-| `\|`        | Placed before an identifier to indicate an RSX function call |
+| `\|`        | Placed before an identifier to indicate an RSX function call                             |
 
 ## List of Commands and Functions
 
@@ -744,7 +745,7 @@ END SUB
 
 CALL &BC14         ' Firmware routine to clear the screen
 CALL nothing()     ' Call a BASIC subroutine
-CALL "infinite_loop" 
+CALL "infinite_loop"
 PRINT "We will never reach here"
 ASM "infinite_loop: jr infinite_loop"
 ```
@@ -817,7 +818,7 @@ PRINT CINT(PI)
 
 **Command**. CONST declares and defines named constants, assigning them a fixed integer value. When the constant name is used in an expression, its value is substituted directly, which may enable compiler optimizations. Any attempt to change the value of a constant will cause the compilation to fail with an error, alerting the programmer to the invalid operation.
 
-``` basic
+```basic
 CONST VMEM = &C000
 
 FOR I=0 TO 16384
@@ -833,7 +834,7 @@ NEXT
 
 **Function**. Returns the character at the current text cursor position for the given `channel`. Introduced in BASIC 1.1, ABASC provides support even on programs running on an Amstrad CPC 464.
 
-``` basic
+```basic
 MODE 1
 PRINT "HELLO WORLD"
 LOCATE 3,1
@@ -873,8 +874,8 @@ DATA "Anabel","Rachel","Elvira"
 
 **Command**. Introduced in Locomotive BASIC 2, `DECLARE` allows you to "predefine" a variable that will be used later. Typically, only arrays need explicit declaration with `DIM` since scalar variables are automatically declared when assigned. However, `DECLARE` can be used to:
 
-* Create string variables with a maximum length smaller than the default 254 bytes.
-* Declare integer variables initialized to 0 without generating extra assignment instructions.
+- Create string variables with a maximum length smaller than the default 254 bytes.
+- Declare integer variables initialized to 0 without generating extra assignment instructions.
 
 Example:
 
@@ -1003,14 +1004,14 @@ DRAW 0,0,2
 
 **Type 1 Section:**
 
-* Parameter 1: number of steps, from 0 to 239.
-* Parameter 2: step size, from -128 to +127.
-* Parameter 3: pause
+- Parameter 1: number of steps, from 0 to 239.
+- Parameter 2: step size, from -128 to +127.
+- Parameter 3: pause
 
 **Type 2 Section:**
 
-* Parameter 1: pitch period (16-bit integer).
-* Parameter 2: pause
+- Parameter 1: pitch period (16-bit integer).
+- Parameter 2: pause
 
 ### `ENV envelope_number, sections`
 
@@ -1018,14 +1019,14 @@ DRAW 0,0,2
 
 **Type 1 Section:**
 
-* Parameter 1: number of steps, from 0 to 127.
-* Parameter 2: step size, from -128 to +127.
-* Parameter 3: pause, range 0–255
+- Parameter 1: number of steps, from 0 to 127.
+- Parameter 2: step size, from -128 to +127.
+- Parameter 3: pause, range 0–255
 
 **Type 2 Section:**
 
-* Parameter 1: envelope ID according to the sound hardware.
-* Parameter 2: envelope period, the value sent directly to the hardware registers.
+- Parameter 1: envelope ID according to the sound hardware.
+- Parameter 2: envelope period, the value sent directly to the hardware registers.
 
 ```basic
 ENV 1,=9,2000
@@ -1160,11 +1161,11 @@ PRINT TIME - T!
 
 **Function**. Returns values related to memory depending on the parameter `x`:
 
-| Parameter   | Return Value |
-| ----------- | ------------ |
+| Parameter   | Return Value                                                                                                |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
 | **FRE(0)**  | Returns the available memory between `_program_end_` and the Firmware area where variables start (`&A6FC`). |
-| **FRE(1)**  | Returns the currently available temporary memory (heap).|
-| **FRE("")** | Forces the release of temporary memory (heap) and returns the same value as `FRE(0)`.|
+| **FRE(1)**  | Returns the currently available temporary memory (heap).                                                    |
+| **FRE("")** | Forces the release of temporary memory (heap) and returns the same value as `FRE(0)`.                       |
 
 ### `FUNCTION name(parameters) [ASM]`
 
@@ -1219,8 +1220,8 @@ DRAW 640,0
 
 **Command**. Introduced in BASIC 1.1. Sets the `ink` value (0–15) to be used for line and point drawing commands. The `mode` parameter determines how the drawing is combined with the background:
 
-* 0: Opaque background.
-* 1: Transparent background.
+- 0: Opaque background.
+- 1: Transparent background.
 
 The background color can only be used on CPC 664 or higher models. On an Amstrad CPC 464, this feature is unsupported and may produce undefined behavior.
 
@@ -1275,9 +1276,9 @@ END
 
 **Command**. Assigns `color1` to the specified `ink`. If a second color is provided, the ink will alternate (blink) between `color1` and `color2`. The number of available inks depends on the screen mode:
 
-* Mode 2: 2 inks (0 and 1)
-* Mode 1: 4 inks (0–3)
-* Mode 0: 16 inks (0–15)
+- Mode 2: 2 inks (0 and 1)
+- Mode 1: 4 inks (0–3)
+- Mode 0: 16 inks (0–15)
 
 The color range is from 0 (black) to 26 (bright white).
 
@@ -1448,9 +1449,9 @@ LOAD "SPRITES.BIN", ENDDIR
 
 **Command**. Moves the text cursor to the position `x`, `y`. Coordinates start at 1. The maximum `x` value depends on the current graphics mode:
 
-* Mode 0 → 20 columns
-* Mode 1 → 40 columns
-* Mode 2 → 80 columns
+- Mode 0 → 20 columns
+- Mode 1 → 40 columns
+- Mode 2 → 80 columns
 
 If a `#channel` is specified, the limits depend on the dimensions defined with `WINDOW`.
 
@@ -1535,8 +1536,8 @@ PRINT C$                   ' Output: "AMBBBAD"
 
 **Command**. Moves the graphics cursor to the absolute position `(x, y)`.
 
-* Optional parameter `ink` sets the drawing color from that point onward.
-* Optional parameter `mode` defines how each point of the line is combined with the background, with the following values:
+- Optional parameter `ink` sets the drawing color from that point onward.
+- Optional parameter `mode` defines how each point of the line is combined with the background, with the following values:
 
 | Value | Mode               |
 | ----- | ------------------ |
@@ -1596,9 +1597,9 @@ END
 
 **Command**. Registers a jump to a label as an interrupt to be executed when there is a free "slot" in the sound queue of the specified `channel`. The `channel` value must be one of the following:
 
-* 1 = channel A
-* 2 = channel B
-* 4 = channel C
+- 1 = channel A
+- 2 = channel B
+- 4 = channel C
 
 ```basic
 ON SQ(2) GOSUB InsertInB
@@ -1759,7 +1760,7 @@ DATA "Anabel","Rachel","Elvira"
 
 ### `RECORD name;variable-list`
 
-**Command.** Declares a record structure that can be applied to string (`$`) variables in order to create data structures. See the section *Record Structures with `RECORD`* in the chapter *Compiler Specifics* for more details.
+**Command.** Declares a record structure that can be applied to string (`$`) variables in order to create data structures. See the section _Record Structures with `RECORD`_ in the chapter _Compiler Specifics_ for more details.
 
 ```basic
 DECLARE A$ FIXED 13   ' Optional, but reduces memory usage
@@ -1771,11 +1772,11 @@ A$.person.age = 20
 
 ### `RELEASE channel`
 
-**Command.** Sounds queued on a given `channel` may enter a *hold* state. This command releases those sounds. `channel` is an integer that specifies the affected channels:
+**Command.** Sounds queued on a given `channel` may enter a _hold_ state. This command releases those sounds. `channel` is an integer that specifies the affected channels:
 
-* 1 = channel A
-* 2 = channel B
-* 4 = channel C
+- 1 = channel A
+- 2 = channel B
+- 4 = channel C
 
 ```basic
 RELEASE 7   ' releases sounds on all three channels
@@ -1799,13 +1800,13 @@ RELEASE 7   ' releases sounds on all three channels
 
 ```basic
 LABEL LOOP
-FOR N=1 TO 5 
-    READ A$ 
-    PRINT A$;" "; 
-    DATA data,"to read",again,and,again   
-NEXT 
-PRINT 
-RESTORE 
+FOR N=1 TO 5
+    READ A$
+    PRINT A$;" ";
+    DATA data,"to read",again,and,again
+NEXT
+PRINT
+RESTORE
 GOTO LOOP
 ```
 
@@ -1855,9 +1856,9 @@ PRINT ROUND(PI, -3)
 
 **Command.** In Locomotive BASIC, this instruction saves a program to disk or tape. ABASC, however, only allows saving a memory region as a binary file. Therefore, the file `type` must be always **B** (Binary), and must be specified as such if any of the following parameters are used. For reference, the file types supported in Locomotive BASIC are:
 
-* **A** – ASCII text
-* **P** – Protected file
-* **B** – Binary
+- **A** – ASCII text
+- **P** – Protected file
+- **B** – Binary
 
 The additional optional parameters are:
 
@@ -1876,6 +1877,7 @@ PAPER 0
 CLS
 LOAD "pantalla.bin"
 ```
+
 ### `SGN(x)`
 
 **Function.** Returns **–1** if `x` is less than 0, **0** if `x` is exactly 0, and **1** if `x` is greater than 0.
@@ -1938,8 +1940,8 @@ BORDER 0,1
 
 **Command.** Changes the tape output speed (in baud). `n` can be:
 
-* **1** → 2000 baud
-* **0** → 1000 baud
+- **1** → 2000 baud
+- **0** → 1000 baud
 
 ### `SQ channel`
 
@@ -1948,10 +1950,10 @@ It also determines whether that channel is currently active and, if not, why the
 
 The result is an integer whose bits encode the information as follows:
 
-* **Bits 0, 1, 2** – Number of free slots in the queue.
-* **Bits 3, 4, 5** – Synchronization status of the first note in the queue.
-* **Bit 6** – Set if the first note is waiting.
-* **Bit 7** – Set if the channel is currently active.
+- **Bits 0, 1, 2** – Number of free slots in the queue.
+- **Bits 3, 4, 5** – Synchronization status of the first note in the queue.
+- **Bit 6** – Set if the first note is waiting.
+- **Bit 7** – Set if the channel is currently active.
 
 ```basic
 SOUND 65,100,100
@@ -2289,8 +2291,8 @@ Debugging programs generated by a cross-compiler can be a challenging task, as t
 
 **WinApe** provides a convenient way to "paste" BASIC code and run it. This allows us to compare results between the BASIC interpreter and our compiled code. Naturally, to make a fair comparison, we cannot use features introduced in Locomotive BASIC 2.0 (such as `FUNCTION`, `SUB`, multiline `IF`, etc.). However, we **can** use the following options:
 
-* Code without line numbers
-* Code split across multiple files
+- Code without line numbers
+- Code split across multiple files
 
 When compiling with ABASC, the first step is handled by the preprocessor. With the `--verbose` option enabled, it generates an intermediate file with the `.BPP` extension, where line numbers are added and any additional files referenced with `CHAIN MERGE` are included.
 
@@ -2312,9 +2314,9 @@ In **Retro Virtual Machine**, we can enable debugging tools by following these s
 
 An icon with a hammer will appear in the top toolbar. Clicking on it will display a submenu with various tools; we select the last one, the **Retro Virtual Machine** console. From this console, we can navigate through the machine’s directories and load our code as follows:
 
-* `ls` — Lists the contents of the current directory.
-* `cd` — Changes the current directory.
-* `asm` — Assembles the specified `.ASM` file.
+- `ls` — Lists the contents of the current directory.
+- `cd` — Changes the current directory.
+- `asm` — Assembles the specified `.ASM` file.
 
 This method allows us to load our program into a test environment much faster than using `.DSK` files and disk support. Once the program is in memory, it can be executed with the command:
 
@@ -2350,22 +2352,22 @@ Finally, readers are encouraged to consult the official documentation for **WinA
 
 One of the major advantages of ABASC is that, being written in Python, it is easy to **extend and modify its functionality**. The source code is organized across the following main files:
 
-* **abasc.py – Main file:** Handles the compiler options and executes the compilation process step by step.
-* **baspp.py – Preprocessor:** Adds line numbers and inserts any additional code files referenced via `CHAIN MERGE`. If the `--verbose` option is enabled, it generates an intermediate file with the `.BPP` extension.
-* **baslex.py – Lexical Analyzer:** Scans the source code and generates the corresponding list of tokens. With `--verbose`, it produces an intermediate `.LEX` file.
-* **basparse.py – Syntax Analyzer:** Processes the token list, checks the program’s syntax, and generates an intermediate representation of the code in the form of an Abstract Syntax Tree (AST). With `--verbose`, an intermediate `.AST` file is generated.
-* **emitters/cpcemitter.py – Assembler Code Generator:** Takes the AST produced by the syntax analyzer and outputs the equivalent assembly code. The result is saved as a `.ASM` file, which is then assembled by **ABASM** to produce the final binary.
-* **emitters/cpcrt.py – Compiler Runtime:** Contains assembly routines called by the code generated by `cpcemitter.py`.
+- **abasc.py – Main file:** Handles the compiler options and executes the compilation process step by step.
+- **baspp.py – Preprocessor:** Adds line numbers and inserts any additional code files referenced via `CHAIN MERGE`. If the `--verbose` option is enabled, it generates an intermediate file with the `.BPP` extension.
+- **baslex.py – Lexical Analyzer:** Scans the source code and generates the corresponding list of tokens. With `--verbose`, it produces an intermediate `.LEX` file.
+- **basparse.py – Syntax Analyzer:** Processes the token list, checks the program’s syntax, and generates an intermediate representation of the code in the form of an Abstract Syntax Tree (AST). With `--verbose`, an intermediate `.AST` file is generated.
+- **emitters/cpcemitter.py – Assembler Code Generator:** Takes the AST produced by the syntax analyzer and outputs the equivalent assembly code. The result is saved as a `.ASM` file, which is then assembled by **ABASM** to produce the final binary.
+- **emitters/cpcrt.py – Compiler Runtime:** Contains assembly routines called by the code generated by `cpcemitter.py`.
 
 Whenever changes are made to any of these files, it is recommended to check for obvious errors. This can be done by running the following commands from the directory containing `abasc.py`:
 
-* **Type checking:**
+- **Type checking:**
 
 ```bash
 mypy . --explicit-package-bases
 ```
 
-* **Unit testing:**
+- **Unit testing:**
 
 ```bash
 python3 -m unittest -b
@@ -2387,10 +2389,10 @@ chain merge "base/base.bas"
 
 ## BASE Constants and routines
 
-* `base/byte.bas`
+- `base/byte.bas`
 
 ' In `ABASC` there is no support for byte-type data. All integers are
-' 16 bits. These routines allow you to encode a retrieve bytes as 
+' 16 bits. These routines allow you to encode a retrieve bytes as
 ' separate data from a regular integer. For example:
 ' DIM positions(1)
 ' positions(0) = byteCompose(5,5)
@@ -2402,18 +2404,18 @@ FUNCTION byte1(int16)
 FUNCTION byteSet0(int16, b)
 FUNCTION byteSet1(int16, b)
 
-* `base/memory.bas`
+- `base/memory.bas`
 
 SUB memCopy(dest, src, nbytes)
 SUB memSet(dest, size, bytevalue)
 
-* `base/screen.bas`
+- `base/screen.bas`
 
 ' Equivalent to calling the firmware routine SCR INITIALIZE
 SUB scrInitialize
 
 ' Routines that return video memory positions. X range
-' depends on the screen video mode: 0-159 (mode 0), 
+' depends on the screen video mode: 0-159 (mode 0),
 ' 0-319 (mode 1) or 0-639 (mode 2)
 FUNCTION scrDotPos(x, y)
 FUNCTION scrNextByte(vmem)
@@ -2480,7 +2482,7 @@ SUB scrScrollDown()
 FUNCTION scrCheckPointRect(pointx, pointy, recx, recy, recwidth, recheight)
 FUNCTION scrCheckRectRect(recx1, recy1, recw1, rech1, recx2, recy2, recw2, rech2)
 
-* `base/string.bas`
+- `base/string.bas`
 
 ' s$ is left-padded with padchar character totaln times
 FUNCTION strLPad$(s$, totaln, padchar)
@@ -2488,7 +2490,7 @@ FUNCTION strLPad$(s$, totaln, padchar)
 ' s$ is right-padded with padchar character totaln times
 FUNCTION strRPad$(s$, totaln, padchar)
 
-' Equal to dest$ = dest$  + src$ but more memory optimized
+' Equal to dest$ = dest$ + src$ but more memory optimized
 SUB strAppend(dest$, src$)
 
 ' Equal to dest$ = src$
@@ -2497,7 +2499,7 @@ SUB strCopy(dest$, src$)
 ' Equal to src$ = ""
 SUB strClear(src$)
 
-* `base/text.bas`
+- `base/text.bas`
 
 ' Returns the ASCII code of the screen character at position x,y
 FUNCTION txtReadAsc(x, y)
@@ -2518,7 +2520,7 @@ SUB txtPrintBig(text$, x, y, pen1, pen2)
 
 CPCtelera is an integrated development framework for creating Amstrad CPC games and content. The original distribution, including several additional tools, can be downloaded from:
 
-* [CPCTelera Github page](https://github.com/lronaldo/cpctelera)
+- [CPCTelera Github page](https://github.com/lronaldo/cpctelera)
 
 The package includes a very complehensive documentation. Additionally, `ABASC` offers several of the original examples already translated to `ABASC` syntax in the directory `examples/cpctelera`.
 
@@ -2530,7 +2532,7 @@ chain merge "cpctelera/cpctelera.bas"
 
 ## CPCTelera Constants and routines
 
-* `cpctelera/audio.bas`:
+- `cpctelera/audio.bas`:
 
 ```basic
 CONST AY.CHANNELA
@@ -2551,7 +2553,7 @@ FUNCTION    cpctakpSongLoopTimes
 SUB         cpctakpStop
 ```
 
-* `cpctelera/bitarray.bas`
+- `cpctelera/bitarray.bas`
 
 ```basic
 FUNCTION    cpctGetBit(array$, index)
@@ -2564,7 +2566,7 @@ SUB         cpctSet4Bits(array$, value, index)
 SUB         cpctSet6Bits(array$, value, index)
 ```
 
-* `cpctelera/easytilemaps`
+- `cpctelera/easytilemaps`
 
 ```basic
 SUB cpctetmDrawTileBox2x4(x, y, w, h, mapw, videomem, timemap)
@@ -2577,7 +2579,7 @@ SUB cpctetmSetDrawTilemap4x8ag(vieww, viewh, tilemapw, tiles)
 SUB cpctetmSetDrawTilemap4x8agf(vieww, viewh, tilemapw, tiles)
 ```
 
-* `cpctelera/firmware`
+- `cpctelera/firmware`
 
 ```basic
 FUNCTION    cpctDisableFirmware
@@ -2590,96 +2592,96 @@ FUNCTION    cpctRemoveInterruptHandler
 SUB         cpctSetInterruptHandler(cbaddress)
 ```
 
-* `cpctelera/keyboard`
+- `cpctelera/keyboard`
 
 ```basic
-CONST KEY.UP           
-CONST KEY.RIGHT        
-CONST KEY.DOWN         
-CONST KEY.F9           
-CONST KEY.F6           
-CONST KEY.F3           
-CONST KEY.ENTER        
-CONST KEY.FDOT         
-CONST KEY.LEFT         
-CONST KEY.COPY         
-CONST KEY.F7           
-CONST KEY.F8           
-CONST KEY.F5           
-CONST KEY.F1           
-CONST KEY.F2           
-CONST KEY.F0           
-CONST KEY.CLR          
-CONST KEY.OPENBRACKET  
-CONST KEY.RETURN       
-CONST KEY.CLOSEBRACKET 
-CONST KEY.F4           
-CONST KEY.SHIFT        
-CONST KEY.BACKSLASH    
-CONST KEY.CONTROL      
-CONST KEY.CARET        
-CONST KEY.HYPHEN       
-CONST KEY.AT           
-CONST KEY.P            
-CONST KEY.SEMICOLON    
-CONST KEY.COLON        
-CONST KEY.SLASH        
-CONST KEY.DOT          
-CONST KEY.0            
-CONST KEY.9            
-CONST KEY.O            
-CONST KEY.I            
-CONST KEY.L            
-CONST KEY.K            
-CONST KEY.M            
-CONST KEY.COMMA        
-CONST KEY.8            
-CONST KEY.7            
-CONST KEY.U            
-CONST KEY.Y            
-CONST KEY.H            
-CONST KEY.J            
-CONST KEY.N            
-CONST KEY.SPACE        
-CONST KEY.6            
-CONST JOY1.UP          
-CONST KEY.5            
-CONST JOY1.DOWN        
-CONST KEY.R            
-CONST JOY1.LEFT        
-CONST KEY.T            
-CONST JOY1.RIGHT       
-CONST KEY.G            
-CONST JOY1.FIRE1       
-CONST KEY.F            
-CONST JOY1.FIRE2       
-CONST KEY.B            
-CONST JOY1.FIRE3       
-CONST KEY.V            
-CONST KEY.4            
-CONST KEY.3            
-CONST KEY.E            
-CONST KEY.W            
-CONST KEY.S            
-CONST KEY.D            
-CONST KEY.C            
-CONST KEY.X            
-CONST KEY.1            
-CONST KEY.2            
-CONST KEY.ESC          
-CONST KEY.Q            
-CONST KEY.TAB          
-CONST KEY.A            
-CONST KEY.CAPSLOCK     
-CONST KEY.Z            
-CONST JOY0.UP          
-CONST JOY0.DOWN        
-CONST JOY0.LEFT        
-CONST JOY0.RIGHT       
-CONST JOY0.FIRE1       
-CONST JOY0.FIRE2       
-CONST JOY0.FIRE3       
-CONST KEY.DEL          
+CONST KEY.UP
+CONST KEY.RIGHT
+CONST KEY.DOWN
+CONST KEY.F9
+CONST KEY.F6
+CONST KEY.F3
+CONST KEY.ENTER
+CONST KEY.FDOT
+CONST KEY.LEFT
+CONST KEY.COPY
+CONST KEY.F7
+CONST KEY.F8
+CONST KEY.F5
+CONST KEY.F1
+CONST KEY.F2
+CONST KEY.F0
+CONST KEY.CLR
+CONST KEY.OPENBRACKET
+CONST KEY.RETURN
+CONST KEY.CLOSEBRACKET
+CONST KEY.F4
+CONST KEY.SHIFT
+CONST KEY.BACKSLASH
+CONST KEY.CONTROL
+CONST KEY.CARET
+CONST KEY.HYPHEN
+CONST KEY.AT
+CONST KEY.P
+CONST KEY.SEMICOLON
+CONST KEY.COLON
+CONST KEY.SLASH
+CONST KEY.DOT
+CONST KEY.0
+CONST KEY.9
+CONST KEY.O
+CONST KEY.I
+CONST KEY.L
+CONST KEY.K
+CONST KEY.M
+CONST KEY.COMMA
+CONST KEY.8
+CONST KEY.7
+CONST KEY.U
+CONST KEY.Y
+CONST KEY.H
+CONST KEY.J
+CONST KEY.N
+CONST KEY.SPACE
+CONST KEY.6
+CONST JOY1.UP
+CONST KEY.5
+CONST JOY1.DOWN
+CONST KEY.R
+CONST JOY1.LEFT
+CONST KEY.T
+CONST JOY1.RIGHT
+CONST KEY.G
+CONST JOY1.FIRE1
+CONST KEY.F
+CONST JOY1.FIRE2
+CONST KEY.B
+CONST JOY1.FIRE3
+CONST KEY.V
+CONST KEY.4
+CONST KEY.3
+CONST KEY.E
+CONST KEY.W
+CONST KEY.S
+CONST KEY.D
+CONST KEY.C
+CONST KEY.X
+CONST KEY.1
+CONST KEY.2
+CONST KEY.ESC
+CONST KEY.Q
+CONST KEY.TAB
+CONST KEY.A
+CONST KEY.CAPSLOCK
+CONST KEY.Z
+CONST JOY0.UP
+CONST JOY0.DOWN
+CONST JOY0.LEFT
+CONST JOY0.RIGHT
+CONST JOY0.FIRE1
+CONST JOY0.FIRE2
+CONST JOY0.FIRE3
+CONST KEY.DEL
 
 FUNCTION    cpctGetKeypressedAsASCII
 FUNCTION    cpctIsAnyKeyPressed
@@ -2691,7 +2693,7 @@ SUB         cpctScanKeyboardi
 SUB         cpctScanKeyboardif
 ```
 
-* `cpctelera/memutils`
+- `cpctelera/memutils`
 
 ```basic
 SUB         cpctMemcpy(toptr, fromptr, bytes)
@@ -2725,19 +2727,19 @@ SUB         cpctSetStackLocation(addr)
 SUB         cpctWaitHalts(halts)
 ```
 
-* `cpctelera/random`
+- `cpctelera/random`
 
 ```basic
 SUB         cpctSRand(seed)
 FUNCTION    cpctRand
 ```
 
-* `cpctelera/sprites`
+- `cpctelera/sprites`
 
 ```basic
 const CPCTBLEND.XOR
 const CPCTBLEND.AND
-const CPCTBLEND.OR 
+const CPCTBLEND.OR
 const CPCTBLEND.ADD
 const CPCTBLEND.ADC
 const CPCTBLEND.SBC
@@ -2804,7 +2806,7 @@ FUNCTION    cpctpx2byteM0(px0, px1)
 FUNCTION    cpctpx2byteM1(px0, px1, px2, px3)
 ```
 
-* `cpctelera/strings`
+- `cpctelera/strings`
 
 ```basic
 SUB         cpctDrawCharM0(vmem, chnum)
@@ -2818,67 +2820,67 @@ SUB         cpctSetDrawCharM1(fg, bg)
 SUB         cpctSetDrawCharM2(fg, bg)
 ```
 
-* `cpctelera/video`
+- `cpctelera/video`
 
 ```basic
 CONST CPCT.VMEMSTART
 CONST CPCT.VMEMSIZE
 
-CONST FWC.BLACK         
-CONST FWC.BLUE          
-CONST FWC.BRIGHTBLUE    
-CONST FWC.RED           
-CONST FWC.MAGENTA       
-CONST FWC.MAUVE         
-CONST FWC.BRIGHTRED     
-CONST FWC.PURPLE        
-CONST FWC.BRIGHTMAGENTA 
-CONST FWC.GREEN         
-CONST FWC.CYAN          
-CONST FWC.SKYBLUE       
-CONST FWC.YELLOW        
-CONST FWC.WHITE         
-CONST FWC.PASTELBLUE    
-CONST FWC.ORANGE        
-CONST FWC.PINK          
-CONST FWC.PASTERMAGENTA 
-CONST FWC.BRIGHTGREEN   
-CONST FWC.SEAGREEN      
-CONST FWC.BRIGHTCYAN    
-CONST FWC.LIME          
-CONST FWC.PASTELGREEN   
-CONST FWC.PASTELCYAN    
-CONST FWC.BRIGHTYELLOW  
-CONST FWC.PASTELYELLOW  
-CONST FWC.BRIGHTWHITE   
+CONST FWC.BLACK
+CONST FWC.BLUE
+CONST FWC.BRIGHTBLUE
+CONST FWC.RED
+CONST FWC.MAGENTA
+CONST FWC.MAUVE
+CONST FWC.BRIGHTRED
+CONST FWC.PURPLE
+CONST FWC.BRIGHTMAGENTA
+CONST FWC.GREEN
+CONST FWC.CYAN
+CONST FWC.SKYBLUE
+CONST FWC.YELLOW
+CONST FWC.WHITE
+CONST FWC.PASTELBLUE
+CONST FWC.ORANGE
+CONST FWC.PINK
+CONST FWC.PASTERMAGENTA
+CONST FWC.BRIGHTGREEN
+CONST FWC.SEAGREEN
+CONST FWC.BRIGHTCYAN
+CONST FWC.LIME
+CONST FWC.PASTELGREEN
+CONST FWC.PASTELCYAN
+CONST FWC.BRIGHTYELLOW
+CONST FWC.PASTELYELLOW
+CONST FWC.BRIGHTWHITE
 
-CONST HWC.BLACK        
-CONST HWC.BLUE         
-CONST HWC.BRIGHTBLUE   
-CONST HWC.RED          
-CONST HWC.MAGENTA      
-CONST HWC.MAUVE        
-CONST HWC.BRIGHTRED    
-CONST HWC.PURPLE       
+CONST HWC.BLACK
+CONST HWC.BLUE
+CONST HWC.BRIGHTBLUE
+CONST HWC.RED
+CONST HWC.MAGENTA
+CONST HWC.MAUVE
+CONST HWC.BRIGHTRED
+CONST HWC.PURPLE
 CONST HWC.BRIGHTMAGENTA
-CONST HWC.GREEN        
-CONST HWC.CYAN         
-CONST HWC.SKYBLUE      
-CONST HWC.YELLOW       
-CONST HWC.WHITE        
-CONST HWC.PASTELBLUE   
-CONST HWC.ORANGE       
-CONST HWC.PINK         
+CONST HWC.GREEN
+CONST HWC.CYAN
+CONST HWC.SKYBLUE
+CONST HWC.YELLOW
+CONST HWC.WHITE
+CONST HWC.PASTELBLUE
+CONST HWC.ORANGE
+CONST HWC.PINK
 CONST HWC.PASTERMAGENTA
-CONST HWC.BRIGHTGREEN  
-CONST HWC.SEAGREEN     
-CONST HWC.BRIGHTCYAN   
-CONST HWC.LIME         
-CONST HWC.PASTELGREEN  
-CONST HWC.PASTELCYAN   
-CONST HWC.BRIGHTYELLOW 
-CONST HWC.PASTELYELLOW 
-CONST HWC.BRIGHTWHITE  
+CONST HWC.BRIGHTGREEN
+CONST HWC.SEAGREEN
+CONST HWC.BRIGHTCYAN
+CONST HWC.LIME
+CONST HWC.PASTELGREEN
+CONST HWC.PASTELCYAN
+CONST HWC.BRIGHTYELLOW
+CONST HWC.PASTELYELLOW
+CONST HWC.BRIGHTWHITE
 
 SUB         cpctClearScreen(color)
 SUB         cpctClearScreenf64(color)
@@ -2906,14 +2908,13 @@ SUB         cpctWaitVSYNCStart
 
 ---
 
-
 # Appendix V: CPCRSLIB
 
 `CPCRSlib` is a C library containing routines and functions that allow to the handling of sprites and tile-mapping in Amstrad CPC. The library is written to be used with Z88DK compiler or with SDCC complier.
 
 Last release of the library can be downloaded at:
 
-* [CPCRSlib Sourceforge page](https://sourceforge.net/p/cpcrslib/wiki/Home/)
+- [CPCRSlib Sourceforge page](https://sourceforge.net/p/cpcrslib/wiki/Home/)
 
 `ABASC` includes several adapted examples from the original `CPCRSlib` distribution. They can be found in the directory `examples/cpcrslib`.
 
@@ -2925,116 +2926,115 @@ chain merge "cpcrslib/cpcrslib.bas"
 
 ## CPCRSlib Constants and routines
 
-
-* `cpcrslib/firmware`
+- `cpcrslib/firmware`
 
 ```basic
 SUB rsDisableFirmware
 SUB rsEnableFirmware
 ```
 
-* `cpcrslib/keyboard`
+- `cpcrslib/keyboard`
 
 ```basic
-const RSKEY.EMPTY   
-const RSKEY.FDOT    
-const RSKEY.FENTER  
-const RSKEY.F3      
-const RSKEY.F6      
-const RSKEY.F9      
-const RSKEY.DOWN    
-const RSKEY.RIGHT   
-const RSKEY.UP      
-const RSKEY.F0      
-const RSKEY.F2      
-const RSKEY.F1      
-const RSKEY.F5      
-const RSKEY.F8      
-const RSKEY.F7      
-const RSKEY.COPY    
-const RSKEY.LEFT    
-const RSKEY.CTRL    
-const RSKEY.BSLASH  
-const RSKEY.SHIFT   
-const RSKEY.F4      
-const RSKEY.RSQUARE 
-const RSKEY.RETURN  
-const RSKEY.LSQUARE 
-const RSKEY.CLR     
-const RSKEY.DOT     
-const RSKEY.FSLASH  
-const RSKEY.COLON   
-const RSKEY.SCOLON  
-const RSKEY.P       
-const RSKEY.AT      
-const RSKEY.MINUS   
-const RSKEY.EXP     
-const RSKEY.COMMA   
-const RSKEY.M       
-const RSKEY.K       
-const RSKEY.L       
-const RSKEY.I       
-const RSKEY.O       
-const RSKEY.9       
-const RSKEY.0       
-const RSKEY.SPACE   
-const RSKEY.N       
-const RSKEY.J       
-const RSKEY.H       
-const RSKEY.Y       
-const RSKEY.U       
-const RSKEY.7       
-const RSKEY.8       
-const RSKEY.V       
-const RSKEY.B       
-const RSKEY.F       
-const RSKEY.G       
-const RSKEY.T       
-const RSKEY.R       
-const RSKEY.5       
-const RSKEY.6       
-const RSKEY.J2FIRE3 
-const RSKEY.J2FIRE2 
-const RSKEY.J2FIRE1 
-const RSKEY.J2RIGHT 
-const RSKEY.J2LEFT  
-const RSKEY.J2DOWN  
-const RSKEY.J2UP    
-const RSKEY.X       
-const RSKEY.C       
-const RSKEY.D       
-const RSKEY.S       
-const RSKEY.W       
-const RSKEY.E       
-const RSKEY.3       
-const RSKEY.4       
-const RSKEY.Z       
-const RSKEY.CAPS    
-const RSKEY.A       
-const RSKEY.TAB     
-const RSKEY.Q       
-const RSKEY.ESC     
-const RSKEY.2       
-const RSKEY.1       
-const RSKEY.DEL     
-const RSKEY.J1FIRE3 
-const RSKEY.J1FIRE2 
-const RSKEY.J1FIRE1 
-const RSKEY.J1RIGHT 
-const RSKEY.J1LEFT  
-const RSKEY.J1DOWN  
-const RSKEY.J1UP    
+const RSKEY.EMPTY
+const RSKEY.FDOT
+const RSKEY.FENTER
+const RSKEY.F3
+const RSKEY.F6
+const RSKEY.F9
+const RSKEY.DOWN
+const RSKEY.RIGHT
+const RSKEY.UP
+const RSKEY.F0
+const RSKEY.F2
+const RSKEY.F1
+const RSKEY.F5
+const RSKEY.F8
+const RSKEY.F7
+const RSKEY.COPY
+const RSKEY.LEFT
+const RSKEY.CTRL
+const RSKEY.BSLASH
+const RSKEY.SHIFT
+const RSKEY.F4
+const RSKEY.RSQUARE
+const RSKEY.RETURN
+const RSKEY.LSQUARE
+const RSKEY.CLR
+const RSKEY.DOT
+const RSKEY.FSLASH
+const RSKEY.COLON
+const RSKEY.SCOLON
+const RSKEY.P
+const RSKEY.AT
+const RSKEY.MINUS
+const RSKEY.EXP
+const RSKEY.COMMA
+const RSKEY.M
+const RSKEY.K
+const RSKEY.L
+const RSKEY.I
+const RSKEY.O
+const RSKEY.9
+const RSKEY.0
+const RSKEY.SPACE
+const RSKEY.N
+const RSKEY.J
+const RSKEY.H
+const RSKEY.Y
+const RSKEY.U
+const RSKEY.7
+const RSKEY.8
+const RSKEY.V
+const RSKEY.B
+const RSKEY.F
+const RSKEY.G
+const RSKEY.T
+const RSKEY.R
+const RSKEY.5
+const RSKEY.6
+const RSKEY.J2FIRE3
+const RSKEY.J2FIRE2
+const RSKEY.J2FIRE1
+const RSKEY.J2RIGHT
+const RSKEY.J2LEFT
+const RSKEY.J2DOWN
+const RSKEY.J2UP
+const RSKEY.X
+const RSKEY.C
+const RSKEY.D
+const RSKEY.S
+const RSKEY.W
+const RSKEY.E
+const RSKEY.3
+const RSKEY.4
+const RSKEY.Z
+const RSKEY.CAPS
+const RSKEY.A
+const RSKEY.TAB
+const RSKEY.Q
+const RSKEY.ESC
+const RSKEY.2
+const RSKEY.1
+const RSKEY.DEL
+const RSKEY.J1FIRE3
+const RSKEY.J1FIRE2
+const RSKEY.J1FIRE1
+const RSKEY.J1RIGHT
+const RSKEY.J1LEFT
+const RSKEY.J1DOWN
+const RSKEY.J1UP
 
-const RSKB.LINE1    
-const RSKB.LINE2    
-const RSKB.LINE3    
-const RSKB.LINE4    
-const RSKB.LINE5    
-const RSKB.LINE6    
-const RSKB.LINE7    
-const RSKB.LINE8    
-const RSKB.LINE9    
-const RSKB.LINE10   
+const RSKB.LINE1
+const RSKB.LINE2
+const RSKB.LINE3
+const RSKB.LINE4
+const RSKB.LINE5
+const RSKB.LINE6
+const RSKB.LINE7
+const RSKB.LINE8
+const RSKB.LINE9
+const RSKB.LINE10
 
 FUNCTION        rsAnyKeyPressed
 SUB             rsAssignKey(entry, keyid)
@@ -3046,7 +3046,7 @@ FUNCTION        rsTestKeyF(entry)
 FUNCTION        rsTestKeyboard(kbline)
 ```
 
-* `cpcrslib/player`
+- `cpcrslib/player`
 
 ```basic
 const RSCH.A
@@ -3063,7 +3063,7 @@ SUB         rsWyzSetPlayerOn
 SUB         rsWyzSetPlayerOff
 ```
 
-* `cpcrslib/sprite`
+- `cpcrslib/sprite`
 
 ```basic
 const RSPRITE.SIZE = 14
@@ -3080,7 +3080,7 @@ SUB         rsPutSpXOR(sprite, w, h, vmem)
 SUB         rsPutSpXORXY(sprite, w, h, x, y)
 ```
 
-* `cpcrslib/text`
+- `cpcrslib/text`
 
 ```basic
 SUB         rsPrintGphStrStd(npen, text$, vmem)
@@ -3096,34 +3096,34 @@ SUB         rsPrintGphStrXYM1(text$, x, y)
 SUB         rsPrintGphStrM1x2(text$, vmem)
 SUB         rsPrintGphStrXYM1x2(text$, x, y)
 
-const RSTXT0.PEN0  
-const RSTXT0.PEN1  
-const RSTXT0.PEN2  
-const RSTXT0.PEN3  
-const RSTXT0.PEN4  
-const RSTXT0.PEN5  
-const RSTXT0.PEN6  
-const RSTXT0.PEN7  
-const RSTXT0.PEN8  
-const RSTXT0.PEN9  
-const RSTXT0.PEN10 
-const RSTXT0.PEN11 
-const RSTXT0.PEN12 
-const RSTXT0.PEN13 
-const RSTXT0.PEN14 
-const RSTXT0.PEN15 
+const RSTXT0.PEN0
+const RSTXT0.PEN1
+const RSTXT0.PEN2
+const RSTXT0.PEN3
+const RSTXT0.PEN4
+const RSTXT0.PEN5
+const RSTXT0.PEN6
+const RSTXT0.PEN7
+const RSTXT0.PEN8
+const RSTXT0.PEN9
+const RSTXT0.PEN10
+const RSTXT0.PEN11
+const RSTXT0.PEN12
+const RSTXT0.PEN13
+const RSTXT0.PEN14
+const RSTXT0.PEN15
 
 SUB rsSetInkGphStrM0(indind, color)
 
-const RSTXT1.PEN0 
-const RSTXT1.PEN1 
-const RSTXT1.PEN2 
-const RSTXT1.PEN3 
+const RSTXT1.PEN0
+const RSTXT1.PEN1
+const RSTXT1.PEN2
+const RSTXT1.PEN3
 
 SUB rsSetInkGphStrM1(indind, color)
 ```
 
-* `cpcrslib/tilemap`
+- `cpcrslib/tilemap`
 
 ```basic
 SUB         rsInitTileMap
@@ -3140,7 +3140,7 @@ SUB         rsTouchTileXY(x, y)
 FUNCTION    rsGetDoubleBufferAddress(x, y)
 ```
 
-* `cpcrslib/utils`
+- `cpcrslib/utils`
 
 ```basic
 SUB         rsPause(halts)
@@ -3148,64 +3148,64 @@ FUNCTION    rsRandom
 SUB         rsWaitVSync
 ```
 
-* `cpcrslib/video`
+- `cpcrslib/video`
 
 ```basic
-CONST RSFW.BLACK        
-CONST RSFW.BLUE         
-CONST RSFW.BRIGHTBLUE   
-CONST RSFW.RED          
-CONST RSFW.MAGENTA      
-CONST RSFW.MAUVE        
-CONST RSFW.BRIGHTRED    
-CONST RSFW.PURPLE       
+CONST RSFW.BLACK
+CONST RSFW.BLUE
+CONST RSFW.BRIGHTBLUE
+CONST RSFW.RED
+CONST RSFW.MAGENTA
+CONST RSFW.MAUVE
+CONST RSFW.BRIGHTRED
+CONST RSFW.PURPLE
 CONST RSFW.BRIGHTMAGENTA
-CONST RSFW.GREEN        
-CONST RSFW.CYAN         
-CONST RSFW.SKYBLUE      
-CONST RSFW.YELLOW       
-CONST RSFW.WHITE        
-CONST RSFW.PASTELBLUE   
-CONST RSFW.ORANGE       
-CONST RSFW.PINK         
+CONST RSFW.GREEN
+CONST RSFW.CYAN
+CONST RSFW.SKYBLUE
+CONST RSFW.YELLOW
+CONST RSFW.WHITE
+CONST RSFW.PASTELBLUE
+CONST RSFW.ORANGE
+CONST RSFW.PINK
 CONST RSFW.PASTERMAGENTA
-CONST RSFW.BRIGHTGREEN  
-CONST RSFW.SEAGREEN     
-CONST RSFW.BRIGHTCYAN   
-CONST RSFW.LIME         
-CONST RSFW.PASTELGREEN  
-CONST RSFW.PASTELCYAN   
-CONST RSFW.BRIGHTYELLOW 
-CONST RSFW.PASTELYELLOW 
-CONST RSFW.BRIGHTWHITE  
+CONST RSFW.BRIGHTGREEN
+CONST RSFW.SEAGREEN
+CONST RSFW.BRIGHTCYAN
+CONST RSFW.LIME
+CONST RSFW.PASTELGREEN
+CONST RSFW.PASTELCYAN
+CONST RSFW.BRIGHTYELLOW
+CONST RSFW.PASTELYELLOW
+CONST RSFW.BRIGHTWHITE
 
-CONST RSHW.BLACK        
-CONST RSHW.BLUE         
-CONST RSHW.BRIGHTBLUE   
-CONST RSHW.RED          
-CONST RSHW.MAGENTA      
-CONST RSHW.MAUVE        
-CONST RSHW.BRIGHTRED    
-CONST RSHW.PURPLE       
+CONST RSHW.BLACK
+CONST RSHW.BLUE
+CONST RSHW.BRIGHTBLUE
+CONST RSHW.RED
+CONST RSHW.MAGENTA
+CONST RSHW.MAUVE
+CONST RSHW.BRIGHTRED
+CONST RSHW.PURPLE
 CONST RSHW.BRIGHTMAGENTA
-CONST RSHW.GREEN        
-CONST RSHW.CYAN         
-CONST RSHW.SKYBLUE      
-CONST RSHW.YELLOW       
-CONST RSHW.WHITE        
-CONST RSHW.PASTELBLUE   
-CONST RSHW.ORANGE       
-CONST RSHW.PINK         
+CONST RSHW.GREEN
+CONST RSHW.CYAN
+CONST RSHW.SKYBLUE
+CONST RSHW.YELLOW
+CONST RSHW.WHITE
+CONST RSHW.PASTELBLUE
+CONST RSHW.ORANGE
+CONST RSHW.PINK
 CONST RSHW.PASTERMAGENTA
-CONST RSHW.BRIGHTGREEN  
-CONST RSHW.SEAGREEN     
-CONST RSHW.BRIGHTCYAN   
-CONST RSHW.LIME         
-CONST RSHW.PASTELGREEN  
-CONST RSHW.PASTELCYAN   
-CONST RSHW.BRIGHTYELLOW 
-CONST RSHW.PASTELYELLOW 
-CONST RSHW.BRIGHTWHITE   
+CONST RSHW.BRIGHTGREEN
+CONST RSHW.SEAGREEN
+CONST RSHW.BRIGHTCYAN
+CONST RSHW.LIME
+CONST RSHW.PASTELGREEN
+CONST RSHW.PASTELCYAN
+CONST RSHW.BRIGHTYELLOW
+CONST RSHW.PASTELYELLOW
+CONST RSHW.BRIGHTWHITE
 
 SUB         rsClrScr
 FUNCTION    rsGetScrAddress(x, y)
@@ -3231,33 +3231,35 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
-* Version 1.0.8
+- Version 1.0.8
   - Blocks sound command if the channel queue is full.
+  - Fixes a crash in LEFT$, RIGHT$ and MID$ if number of chars to copy was 0.
+  - Fixes a limitation using arrays of multiple indexes.
   - Adds support for brackets in array declarations and array item accesses.
 
-* Version 1.0.7
+- Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.
   - Fixes the MOD operator precedence order which must be higher than addition and substraction.
   - Adds support for the real pow operator (^).
 
-* Version 1.0.6
+- Version 1.0.6
   - Fixes a bug using const values as index to access array items.
   - Improves the parsing of DEFINT, DEFREAL and DEFSTR commands.
   - Fixes a bug with CALL and the use of expressions as addresses.
 
-* Version 1.0.5
+- Version 1.0.5
   - Fixes some minor typos and errors in the documentation.
   - Adds new routines to BASE library to handle sprite clipping.
-      - scrDrawSpriteClipped(xbyte, y) 
-      - scrDrawSpriteClippedXOR(xbyte, y)
-      - scrSetClippingView(xbyte0, y0, xbyte1, y1)
-      - scrByteToX(xbyte)
-      - scrXToByte(y)
-      - scrLineToY(yline)
-      - scrYToLine(y)
+    - scrDrawSpriteClipped(xbyte, y)
+    - scrDrawSpriteClippedXOR(xbyte, y)
+    - scrSetClippingView(xbyte0, y0, xbyte1, y1)
+    - scrByteToX(xbyte)
+    - scrXToByte(y)
+    - scrLineToY(yline)
+    - scrYToLine(y)
   - Adds a new example `clipping` to demostrate the use of the new routines.
 
-* Version 1.0.4
+- Version 1.0.4
   - Adds the flag `--start` which allows users to specify the starting address for the program area.
   - Optimizes FOR loops.
   - Eneables the use of constant expressions in array declarations.
@@ -3267,32 +3269,32 @@ SUB         rsSetMode(nmode)
   - Adds new CPCTELERA examples under `examples/cpctelera/advanced` directory.
   - Adds new routines in BASE library.
 
-* Version 1.0.3
+- Version 1.0.3
   - Generates intermediate files along the destination file instead of the source file.
   - Fixes a problem with paths containing the substring 'BAS'.
   - FOR index variables could be optimized as const by mistake.
   - Includes a new example: examples/cpctelera/games/runner
   - New automated tests to check the code emitter.
 
-* Version 1.0.2
+- Version 1.0.2
   - CONST variables were not working properly in DIM and FIXED statements.
   - Fixes a typo in cpctelera/sprites.bas
 
-* Version 1.0.1
+- Version 1.0.1
   - Improvements in the handling of CONST variables
   - Doublecheck of all examples on MacOS
 
-* Version 1.0.0
+- Version 1.0.0
   - Supports Locomotive BASIC 1.0 and 1.1 syntax
   - Supports real numbers
   - Supports Locomotive BASIC 2 and BASIC 2 plus syntax
-    * LABEL, SUB, FUNCTION, SELECT CASE, etc.
+    - LABEL, SUB, FUNCTION, SELECT CASE, etc.
   - Allows embedding assembly code using the ASM command
   - Includes adapted versions of the CPCTELERA and CPCRSLIB libraries
   - Includes multiple examples to test the compiler
   - Includes several additional tools to create DSK, CDT files, or convert images
   - Includes a syntax highlighting plug-in for Visual Code (abasc-vscode.vsix)
   - Limitations:
-    * Arrays always start at 0
-    * Only integer numbers can be used as indices in array declarations
-    * USING command patterns are not supported
+    - Arrays always start at 0
+    - Only integer numbers can be used as indices in array declarations
+    - USING command patterns are not supported
