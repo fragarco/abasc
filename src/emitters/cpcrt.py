@@ -1424,13 +1424,14 @@ __substr_empty:
 ;     HL, BC, DE and AF are modified
 rt_strleft:
     xor     a
-    cp      c       ; check number of characters is not 0
+    or      c       ; check number of characters is not 0
     jr      z,__strleft_empty
     ld      a,(hl)  ; main string len
     cp      c       ; more chars than the len of source string
     ret     c       ; return all the string
     push    de
-    ld      (de),a  ; destination length
+    ld      a,c     ; destination length
+    ld      (de),a
     inc     hl
     inc     de
     ld      b,0
