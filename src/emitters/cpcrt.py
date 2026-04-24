@@ -825,7 +825,7 @@ __r2str_calculate_digits_next:
     pop     de
     ld      hl,rt_real2strz_buf  ; address of our text buffer
     ld      a,d    ; A is now the sign: 01 for + and FF for -
-    or      a
+    inc     a
     ld      a,32
     jr      nz,$+4
     ld      a,"-"
