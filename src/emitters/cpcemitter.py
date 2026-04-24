@@ -3355,23 +3355,23 @@ class CPCEmitter:
         self._emit_code("; SOUND <channel status>, <tone period>[,<duration>[,<volume>[,<volume envelope>[,<tone envelope>[,<noise period>]]]]")
         self._emit_expression(node.args[0]) 
         self._emit_code("ld      a,l")
-        self._emit_code("ld      (rt_sound_buf),a")    # channel
+        self._emit_code("ld      (rt_sound_buf),a", info="channel")
         self._emit_expression(node.args[4])
         self._emit_code("ld      a,l")
-        self._emit_code("ld      (rt_sound_buf+1),a")  # ENV
+        self._emit_code("ld      (rt_sound_buf+1),a", info="ENV")
         self._emit_expression(node.args[5])
         self._emit_code("ld      a,l")
-        self._emit_code("ld      (rt_sound_buf+2),a")  # ENT
+        self._emit_code("ld      (rt_sound_buf+2),a", info="ENT")
         self._emit_expression(node.args[1])
-        self._emit_code("ld      (rt_sound_buf+3),hl") # tone
+        self._emit_code("ld      (rt_sound_buf+3),hl", info="tone")
         self._emit_expression(node.args[6])
         self._emit_code("ld      a,l")
-        self._emit_code("ld      (rt_sound_buf+5),a")  # noise
+        self._emit_code("ld      (rt_sound_buf+5),a", info="noise")
         self._emit_expression(node.args[3])
         self._emit_code("ld      a,l")
-        self._emit_code("ld      (rt_sound_buf+6),a")  # volume
+        self._emit_code("ld      (rt_sound_buf+6),a", info="volume")
         self._emit_expression(node.args[2])
-        self._emit_code("ld      (rt_sound_buf+7),hl") # duration
+        self._emit_code("ld      (rt_sound_buf+7),hl", info="duration")
         self._emit_code("call    rt_sound")
         self._emit_code(";")
 

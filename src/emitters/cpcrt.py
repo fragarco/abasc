@@ -2949,7 +2949,8 @@ rt_fileoutbuf: defs 2048
 ),
     "rt_sound": (["rt_error"],
 """
-rt_sound_buf: defs 9
+rt_sound_buf:  defs 9
+rt_sound_busy: db   0
 """,
 f"""
 ; Adds a new sound to one of the available Amstrad CPC
@@ -2961,11 +2962,16 @@ f"""
 ;   CF if sound was added to the queue.
 ;   AF, BC, DE, IX and HL are modified.
 rt_sound:
-    di
+    ld      a,(rt_sound_busy)   ; avoid events to play sounds while
+    or      a                   ; another sound is waiting for a queue
+    ret     nz                  ; slot
+    inc     a
+    ld      (rt_sound_busy),a
     ld      hl,rt_sound_buf
     call    {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
-    jr      nc,rt_sound  ; repeat the call if the queue is full
-    ei
+    jr      nc,$-3
+    xor     a
+    ld      (rt_sound_busy),a
     ret
 """
 ),
