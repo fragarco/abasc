@@ -681,20 +681,17 @@ rt_int2str_buf: defs 8
 ;     HL number to convert to string
 ; Outputs:
 ;     HL points to the temporal address in memory with the string
-;      C indicates if the number is negative (C=1) or positive (C=0)
-;     HL, BC, DE, AF are modified
+;     HL, DE, AF and B are modified
 rt_int2str:
-    ld      de,rt_int2str_buf
-    inc     de     ; first byte stores string length
-    ld      bc,0   ; B will count total numbers and C indicates negative
-    ; Detect sign of HL
+    ld      de,rt_int2str_buf+1 ; first byte stores string length
+    ld      a,32   ; empty space for positive numbers
     bit     7,h
-    jr      z,__int2str_loop1
-    ; HL is negative so add '-' to string and negate HL
-    ld      a,"-"
+    jr      z,$+4  ; positive?
+    ld      a,"-"  ; HL is negative so add '-' to string and negate HL
     ld      (de),a
-    inc     de
-    inc     c
+    ld      e,0    ; number of characters
+    cp      32
+    jr      z,__int2str_loop1
     ; Negate HL 
     xor     a
     sub     l
@@ -703,25 +700,24 @@ rt_int2str:
     sbc     a,h
     ld      h,a
 __int2str_loop1:
-    push    bc
     call    rt_div16_by10 ; HL = HL / 10, A = remainder
-    pop     bc
-    push    af     ; Store digit in stack in reversed order
-    inc     b
+    push    af     ; Store digit in the stack in reversed order
+    inc     e
     ld      a,h
     or      l      ; Stop if quotent is 0
     jr      nz, __int2str_loop1
     ; Store string length
     ld      hl,rt_int2str_buf
-    ld      a,b
-    add     c
-    ld      (hl),a
+    ld      b,e    ; number of digits
+    inc     e      ; adding sign character
+    ld      (hl),e
+    ld      de,rt_int2str_buf+1
 __int2str_loop2:
     ; Retrieve digits from stack
+    inc     de
     pop     af
     or      &30    ; '0' + A
-    ld      (de), a
-    inc     de
+    ld      (de),a
     djnz    __int2str_loop2
     ret
 """
@@ -828,10 +824,12 @@ __r2str_calculate_digits_next:
     res     7,c    ; leave in C just the number of significant digits
     pop     de
     ld      hl,rt_real2strz_buf  ; address of our text buffer
-    ld      a,d      ; A is now the sign: 01 for + and FF for -
-    sub     1        ; A = 0 if possitive
-    jr      z,__float_check_exp
-    ld      (hl),"-" ; Lets write the negative sign
+    ld      a,d    ; A is now the sign: 01 for + and FF for -
+    or      a
+    ld      a,32
+    jr      nz,$+4
+    ld      a,"-"
+    ld      (hl),a ; Lets write the sign: ' ' or '-'
     inc     hl
 __float_check_exp:
     ld      b,0      ; total number of written digits
@@ -1790,11 +1788,6 @@ f"""
 ;     HL, BC, DE and AF are modified
 rt_print_int:
     call    rt_int2str
-    xor     a     ; leave the '-' space in positive numbers
-    or      c
-    jr      nz,$+7
-    ld      a,32
-    call    {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
     call    rt_print_str
     ld      a,32   ; trailing space
     jp      {FWCALL.TXT_OUTPUT}  ; TXT_OUTPUT
