@@ -3236,6 +3236,7 @@ SUB         rsSetMode(nmode)
   - Fixes a crash in LEFT$, RIGHT$ and MID$ if number of chars to copy was 0.
   - Fixes a limitation using arrays of multiple indexes.
   - Adds support for brackets in array declarations and array item accesses.
+  - Adds support for NEXT with a list of variables.
 
 - Version 1.0.7
   - Fixes bottom clipping in scrDrawSpriteClipped routine.
@@ -3296,5 +3297,5 @@ SUB         rsSetMode(nmode)
   - Includes a syntax highlighting plug-in for Visual Code (abasc-vscode.vsix)
   - Limitations:
     - Arrays always start at 0
-    - Only integer numbers can be used as indices in array declarations
+    - Only integer numbers can be used as indexes in array declarations
     - USING command patterns are not supported

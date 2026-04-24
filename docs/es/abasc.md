@@ -3185,6 +3185,7 @@ SUB         rsSetMode(nmode)
   - Arregla un problema al usar LEF$, RIGHT$ y MID$ con 0 como número de caracteres a copiar.
   - Arregla un problema con arrays de múltiples índices.
   - Añade soporte para corchetes en las declaraciones y accesos a elementos de un array.
+  - Añade soporte para el uso de NEXT con una secuencia de variables.
 
 - Versión 1.0.7
   - Arregla un problema en el clipping de la parte baja de los sprites al usar scrDrawSpriteClipped.
