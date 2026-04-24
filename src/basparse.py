@@ -1754,17 +1754,18 @@ class LocBasParser:
 
     @astnode
     def _parse_NEXT(self) -> AST.BlockEnd:
-        """ <NEXT> ::= NEXT [<ident>]"""
+        """ <NEXT> ::= NEXT [<ident>[,<ident>]*]"""
         tk = self._advance()
+        next_vars: list[str] = []
         if len(self.codeblocks) == 0 or "NEXT" not in self.codeblocks[-1].until_keywords:
             self._raise_error(1, tk)
-        next_var = ""
-        if self._current_is(TokenType.IDENT):
+        codeblock = self.codeblocks.pop()
+        while self._current_is(TokenType.IDENT):
             tk = self._current()
             var: AST.Variable | AST.ArrayItem = self._parse_ident()
             if not isinstance(var, AST.Variable) or not AST.exptype_isint(var.etype):
                 self._raise_error(13, tk)
-            node = self.codeblocks[-1].start_node
+            node = codeblock.start_node
             next_var = var.name.upper()
             if isinstance(node, AST.ForLoop):
                 orgvar = node.var.name.upper()
@@ -1772,8 +1773,15 @@ class LocBasParser:
                     self._raise_error(1, tk)
             else:
                 self._raise_error(2, tk)
-        self.codeblocks.pop()
-        return AST.BlockEnd(name="NEXT", var=next_var)
+            next_vars.append(next_var)
+            if self._current_is(TokenType.COMMA):
+                tk = self._advance()
+                if not self._current_is(TokenType.IDENT):
+                    self._raise_error(2, tk)
+                if len(self.codeblocks) == 0 or "NEXT" not in self.codeblocks[-1].until_keywords:
+                    self._raise_error(1, tk)
+                codeblock = self.codeblocks.pop()
+        return AST.BlockEnd(name="NEXT", vars=next_vars)
 
     @astnode
     def _parse_ON(self) -> AST.Command:

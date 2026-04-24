@@ -465,17 +465,17 @@ class SelectCase(Statement):
 
 class BlockEnd(Statement):
     name: str
-    var: str
+    vars: list[str]
 
-    def __init__(self, name: str, var: str = "") -> None:
+    def __init__(self, name: str, vars: list[str] = []) -> None:
         super().__init__(etype=ExpType.Void, id="BlockEnd")
         self.name = name
-        self.var = var 
+        self.vars = vars 
 
     def to_json(self) -> dict:
         d = super().to_json()
         d["name"] = self.name
-        d["var"] = self.var
+        d["vars"] = self.vars
         return d
 
 class Comment(Statement):

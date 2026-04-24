@@ -2469,18 +2469,20 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_NEXT(self, node:AST.BlockEnd) -> None:
-        fornode = self.forloops.pop()
         self._emit_code("; NEXT [<variable>]")
-        self._emit_code(f"ld      hl,({fornode.var_label})")
-        if fornode.step is not None:
-            self._emit_code(f"{fornode.step_label}B:")
-            self._emit_code("ld      bc,&BAAD", info="STEP value (self-modified code)")           
-            self._emit_code("add     hl,bc")
-        else:
-            self._emit_code("inc     hl")
-        self._emit_code(f"ld      ({fornode.var_label}),hl")
-        self._emit_code(f"jp      {fornode.start_label}")
-        self._emit_code(f"{fornode.end_label}:", 0)
+        loops = 1 if len(node.vars) == 0 else len(node.vars)
+        for _ in range(0,loops):
+            fornode = self.forloops.pop()
+            self._emit_code(f"ld      hl,({fornode.var_label})")
+            if fornode.step is not None:
+                self._emit_code(f"{fornode.step_label}B:")
+                self._emit_code("ld      bc,&BAAD", info="STEP value (self-modified code)")           
+                self._emit_code("add     hl,bc")
+            else:
+                self._emit_code("inc     hl")
+            self._emit_code(f"ld      ({fornode.var_label}),hl")
+            self._emit_code(f"jp      {fornode.start_label}")
+            self._emit_code(f"{fornode.end_label}:", 0)
         self._emit_code(";")
 
     def _emit_ON_GOSUB(self, node:AST.Command) -> None:
