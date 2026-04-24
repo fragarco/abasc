@@ -2961,11 +2961,12 @@ f"""
 ;   CF if sound was added to the queue.
 ;   AF, BC, DE, IX and HL are modified.
 rt_sound:
+    di
     ld      hl,rt_sound_buf
     call    {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
-    ret     c
-    halt
-    jr      rt_sound  ; repeat the call if the queue is full
+    jr      nc,rt_sound  ; repeat the call if the queue is full
+    ei
+    ret
 """
 ),
     "rt_load": (["rt_restoreroms"],"",
