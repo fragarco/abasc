@@ -1627,7 +1627,7 @@ rt_read_int:
 ; Outputs:
 ;     HL address to the real number
 ;     HL, BC and DE are modified
-rt_read_int:
+rt_read_real:
     push    hl
     ld      de,(rt_data_ptr)
     ld      bc,5
@@ -2949,7 +2949,7 @@ f"""
 ; sound queues. The data must be kept in a buffer placed
 ; somewhere in the 32k central memory area.
 ; Inputs:
-;   HL address to the sound buffer with the data.
+;   None the routine uses the information stored in rt_sound_buf
 ; Outputs:
 ;   CF if sound was added to the queue.
 ;   AF, BC, DE, IX and HL are modified.

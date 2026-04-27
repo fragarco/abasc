@@ -14,11 +14,11 @@
     - [Versión 2 Plus](#versión-2-plus)
 - [Referencias](#referencias)
 - [Sintaxis soportada por ABASC](#sintaxis-soportada-por-abasc)
-  - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
-  - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
+    - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
+    - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
 - [Herramientas adicionales](#herramientas-adicionales)
 - [Uso del compilador](#uso-del-compilador)
-  - [Opciones](#opciones)
+    - [Opciones](#opciones)
   - [Creación de un proyecto usando BASPRJ](#creación-de-un-proyecto-usando-basprj)
 - [Peculiaridades del compilador](#peculiaridades-del-compilador)
   - [Tipos y variables](#tipos-y-variables)
@@ -3181,7 +3181,6 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.0.8
-  - Bloquea el comando SOUND si la cola del canal está llena.
   - Arregla un problema al usar LEF$, RIGHT$ y MID$ con 0 como número de caracteres a copiar.
   - Arregla un problema con arrays de múltiples índices.
   - Añade soporte para corchetes en las declaraciones y accesos a elementos de un array.

@@ -14,11 +14,11 @@
     - [Version 2 Plus](#version-2-plus)
 - [References](#references)
 - [Syntax Supported by ABASC](#syntax-supported-by-abasc)
-  - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
-  - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
+    - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
+    - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
 - [Additional Tools](#additional-tools)
 - [Using the Compiler](#using-the-compiler)
-  - [Options](#options)
+    - [Options](#options)
   - [Creating a Project Using BASPRJ](#creating-a-project-using-basprj)
 - [Peculiarities of the Compiler](#peculiarities-of-the-compiler)
   - [Types and Variables](#types-and-variables)
@@ -3232,7 +3232,6 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.0.8
-  - Blocks sound command if the channel queue is full.
   - Fixes a crash in LEFT$, RIGHT$ and MID$ if number of chars to copy was 0.
   - Fixes a limitation using arrays of multiple indexes.
   - Adds support for brackets in array declarations and array item accesses.

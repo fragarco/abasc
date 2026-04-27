@@ -3356,6 +3356,7 @@ class CPCEmitter:
         self._emit_import("rt_sound")
         self._emit_code("; SOUND <channel status>, <tone period>[,<duration>[,<volume>[,<volume envelope>[,<tone envelope>[,<noise period>]]]]")
         self._emit_expression(node.args[0]) 
+        self._emit_code("di", info="We don't want EVERY or AFTER to mess with the sound buffer")
         self._emit_code("ld      a,l")
         self._emit_code("ld      (rt_sound_buf),a", info="channel")
         self._emit_expression(node.args[4])
@@ -3375,6 +3376,7 @@ class CPCEmitter:
         self._emit_expression(node.args[2])
         self._emit_code("ld      (rt_sound_buf+7),hl", info="duration")
         self._emit_code("call    rt_sound")
+        self._emit_code("ei")
         self._emit_code(";")
 
     def _emit_SPACESS(self, node:AST.Function) -> None:
@@ -4340,7 +4342,7 @@ class CPCEmitter:
         elif op == '*':
             self._emit_import("rt_mul16")
             self._emit_code("call    rt_mul16", info="HL = HL * DE")
-        elif op == '\\':
+        elif op == '\\' or op == '/':
             self._emit_import("rt_div16")
             self._emit_code("call    rt_div16", info="HL = HL \\ DE ")
         elif op == 'MOD':
