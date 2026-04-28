@@ -77,6 +77,7 @@ class CPCEmitter:
         self.wloops: list[AST.WhileLoop] = []
         self.ifblocks: list[AST.If] = []
         self.selectblocks: list[AST.SelectCase] = []
+        self.requiredlabels: list[tuple[str,AST.ASTNode]] = []
 
     def cfgset_wlevel(self, wlevel: WL) -> None:
         self.warning_level = wlevel
@@ -191,6 +192,12 @@ class CPCEmitter:
     def _check_heapmem(self) -> None:
         if self.reserved_heap_memory > self.max_heap_memory:
             self.max_heap_memory = self.reserved_heap_memory
+
+    def _check_requiredlabels(self) -> None:
+        for l in self.requiredlabels:
+            entry = self.symtable.find(ident = l[0], stype = SymType.Label, context="")
+            if entry is None:
+                self._raise_error(5, l[1], "the target label/line doesn't contain a DATA statement")
 
     def _emit_pushcontext(self) -> None:
         if self.context != "":
@@ -3137,7 +3144,9 @@ class CPCEmitter:
             if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
                 sym = self.symtable.find(str(label.value), SymType.Label, "")
                 if sym is not None:
-                    self._emit_code(f"ld      hl,_data_{str(label.value)}_label")
+                    targetlabel = f"_data_{str(label.value)}_label"
+                    self._emit_code(f"ld      hl,{targetlabel}")
+                    self.requiredlabels.append((targetlabel, node))
                 else:
                     self._raise_error(38, label)
             else:
@@ -4912,4 +4921,5 @@ class CPCEmitter:
         self._emit_amsdos_support()
         self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
+        self._check_requiredlabels()
         return self._compose_program(), self.max_heap_memory
