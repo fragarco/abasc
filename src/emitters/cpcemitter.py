@@ -197,6 +197,10 @@ class CPCEmitter:
         for l in self.requiredlabels:
             entry = self.symtable.find(ident = l[0], stype = SymType.Label, context="")
             if entry is None:
+                # label defined using LABEL command
+                datalabel = f"_data_{l[0]}_label"
+                entry = self.symtable.find(ident = datalabel, stype = SymType.Label, context="")
+            if entry is None:
                 self._raise_error(5, l[1], "the target label/line doesn't contain a DATA statement")
 
     def _emit_pushcontext(self) -> None:
@@ -941,6 +945,8 @@ class CPCEmitter:
         # emit the labels that RESTORE can use
         if node.userlabel != "":
             self._emit_data(f"{node.userlabel}:", section=DataSec.DATA)
+            # we add the label in its data form to check at the end that all RESTORE calls are correct
+            self.symtable.add(node.userlabel, SymEntry(SymType.Label, AST.ExpType.Void, SymTable()))
         inserted = self.symtable.add(ident = node.linelabel,
                                      info = SymEntry(SymType.Label, AST.ExpType.Void, SymTable()),
                                      context=""
