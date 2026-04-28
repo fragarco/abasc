@@ -477,9 +477,80 @@ rt_scratch_pad:  defs  255
 """,
 ""
 ),
+    "rt_using": (["rt_scratch_pad", "rt_int2str", "rt_strcopy"],
+"""
+; Scan position for PRINT USING substitution
+__subst_pos: defs 1
+""",
+"""
+; RT_USING
+; Replace the first run of '#' wildcards in rt_scratch_pad with the
+; decimal digits from rt_int2str_buf. Right-justified within the field.
+; Positive numbers produced by rt_int2str have a leading space (" NNN")
+; which is treated as a non-significant placeholder and omitted.
+; Negative numbers ("-NNN") include the sign as significant.
+;
+; Inputs:
+;     rt_int2str_buf already populated by a prior call to rt_int2str
+;     rt_scratch_pad with the string template
+; Outputs:
+;     HL  points to rt_scratch_pad with the resulting string
+;     AF, BC, DE and HL are modified
+rt_using:
+    ld      hl,rt_scratch_pad
+    xor     a
+    ld      b,(hl)              ; pattern string length
+    cp      b
+    jr      z,__using_done
+    ld      a,&23               ; character #
+    ld      c,0                 ; # sequence length
+__using_scan:
+    inc     hl
+    cp      (hl)
+    jr      z,__using_findend   ; let's find where ends this # sequence
+    dec     b
+    ret     z
+    jr      __using_scan
+__using_findend:
+    inc     c
+    inc     hl
+    dec     b
+    jr      z,__using_replace
+    cp      (hl)
+    jr      z,__using_findend
+__using_replace:
+    push    hl
+    ld      hl,rt_int2str_buf  ; number
+    ld      d,0
+    ld      e,(hl)
+    add     hl,de              ; point to last number
+    ld      b,e                ; num digits
+    pop     de
+__using_copyint:
+    dec     de
+    ld      a,(hl)
+    ld      (de),a
+    dec     hl
+    dec     b
+    jr      z,__using_copyspaces
+    dec     c
+    jr      nz,__using_copyint
+__using_done:
+    ld      hl,rt_scratch_pad
+    ret
+__using_copyspaces:
+    ld      a,&20             ; empty space
+__using_repeatchar:
+    dec     de
+    ld      (de),a
+    dec     c
+    jr      z,__using_done
+    jr      __using_repeatchar
+"""
+),
 #
 # STRINGS
-#      
+#
     "rt_stradd_len": ([],"",
 """
 ; RT_STRADD_LEN

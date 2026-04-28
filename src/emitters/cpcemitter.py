@@ -3823,18 +3823,34 @@ class CPCEmitter:
         returned by the PRINT command. This is achieved by specifying a
         <format template> to which the printed result must correspond.
         """
-        # TODO: apply format
         self._emit_code("; USING <format template>;<expression>[,<expression>]*")
-        self._raise_warning(WL.MEDIUM, "text patterns are not supported yet", node)
-        for a in node.args[1:]:
-            if a.etype == AST.ExpType.Integer:
-                self._print_int(a)
-            elif a.etype == AST.ExpType.Real:
-                self._print_real(a)
-            elif a.etype == AST.ExpType.String:
-                self._print_str(a)
+        self._emit_import("rt_int2str")
+        self._emit_import("rt_using")
+        self._emit_import("rt_print_str")
+
+        # Copy format template to rt_scratch_pad
+        self._emit_code("; Copy format template to USING buffer")
+        self._emit_expression(node.args[0])
+        self._emit_code("ex      de,hl")    
+        self._emit_code("ld      hl,rt_scratch_pad")
+        self._emit_code("call    rt_strcopy")
+
+        # Process each integer argument
+        for i, arg in enumerate(node.args[1:]):
+            if arg.etype == AST.ExpType.Integer:
+                self._emit_expression(arg)    # HL = integer value
+                self._emit_code("call    rt_int2str", info=f"Substitute integer argument {i+1}")
+                self._emit_code("call    rt_using")
+            elif arg.etype == AST.ExpType.Real:
+                self._raise_warning(WL.MEDIUM,
+                    "REAL arguments not supported in PRINT USING yet", arg)
+            elif arg.etype == AST.ExpType.String:
+                self._raise_warning(WL.MEDIUM,
+                    "STRING arguments not supported in PRINT USING yet", arg)
             else:
-                self._raise_error(2, a, "type not supported by USING")
+                self._raise_error(2, arg, "type not supported by USING")
+        self._emit_code("ld      hl,rt_scratch_pad")
+        self._emit_code("call    rt_print_str")
         self._emit_code(";")
 
     def _emit_VAL(self, node:AST.Function) -> None:
