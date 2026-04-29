@@ -477,48 +477,43 @@ rt_scratch_pad:  defs  255
 """,
 ""
 ),
-    "rt_using": (["rt_scratch_pad", "rt_int2str", "rt_strcopy"],
+    "rt_using_int": (["rt_scratch_pad"],"",
 """
-; Scan position for PRINT USING substitution
-__subst_pos: defs 1
-""",
-"""
-; RT_USING
+; RT_USING_INT
 ; Replace the first run of '#' wildcards in rt_scratch_pad with the
 ; decimal digits from rt_int2str_buf. Right-justified within the field.
 ; Positive numbers produced by rt_int2str have a leading space (" NNN")
 ; which is treated as a non-significant placeholder and omitted.
 ; Negative numbers ("-NNN") include the sign as significant.
-;
 ; Inputs:
 ;     rt_int2str_buf already populated by a prior call to rt_int2str
 ;     rt_scratch_pad with the string template
 ; Outputs:
 ;     HL  points to rt_scratch_pad with the resulting string
 ;     AF, BC, DE and HL are modified
-rt_using:
+rt_using_int:
     ld      hl,rt_scratch_pad
     xor     a
-    ld      b,(hl)              ; pattern string length
+    ld      b,(hl)              ; format string length
     cp      b
-    jr      z,__using_done
+    jr      z,__usingint_done
     ld      a,&23               ; character #
     ld      c,0                 ; # sequence length
-__using_scan:
+__usingint_scan:
     inc     hl
     cp      (hl)
-    jr      z,__using_findend   ; let's find where ends this # sequence
+    jr      z,__usingint_findend   ; let's find where ends this # sequence
     dec     b
     ret     z
-    jr      __using_scan
-__using_findend:
+    jr      __usingint_scan
+__usingint_findend:
     inc     c
     inc     hl
     dec     b
-    jr      z,__using_replace
+    jr      z,__usingint_replace
     cp      (hl)
-    jr      z,__using_findend
-__using_replace:
+    jr      z,__usingint_findend
+__usingint_replace:
     push    hl
     ld      hl,rt_int2str_buf  ; number
     ld      d,0
@@ -526,26 +521,88 @@ __using_replace:
     add     hl,de              ; point to last number
     ld      b,e                ; num digits
     pop     de
-__using_copyint:
+__usingint_copyint:
     dec     de
     ld      a,(hl)
     ld      (de),a
     dec     hl
     dec     b
-    jr      z,__using_copyspaces
+    jr      z,__usingint_copyspaces
     dec     c
-    jr      nz,__using_copyint
-__using_done:
+    jr      nz,__usingint_copyint
+__usingint_done:
     ld      hl,rt_scratch_pad
     ret
-__using_copyspaces:
+__usingint_copyspaces:
     ld      a,&20             ; empty space
-__using_repeatchar:
+__usingint_repeatchar:
     dec     de
     ld      (de),a
     dec     c
-    jr      z,__using_done
-    jr      __using_repeatchar
+    jr      z,__usingint_done
+    jr      __usingint_repeatchar
+"""
+),
+    "rt_using_str": (["rt_scratch_pad"],"",
+"""
+; RT_USING_STR
+; Search for ! or / / and replaces that by the text in a source string.
+; Inputs:
+;     HL source string
+;     rt_scratch_pad with the format string
+; Outputs:
+;     HL  points to rt_scratch_pad with the resulting string
+;     AF, BC, DE and HL are modified
+rt_using_str:
+    xor     a
+    ld      c,(hl)      ; source string length
+    or      c
+    jr      z,__usingstr_done
+    ex      de,hl
+    ld      hl,rt_scratch_pad
+    xor     a
+    ld      b,(hl)      ; format string length
+    or      b
+    ret     z
+__usingstr_scan:
+    inc     hl
+    ld      a,(hl)
+    cp      "!"
+    jr      z,__usingstr_copychar
+    cp      "\\"
+    jr      z,__usingstr_copystr
+    djnz    __usingstr_scan
+__usingstr_done:
+    ld      hl,rt_scratch_pad
+    ret
+__usingstr_copychar:
+    inc     de
+    ld      a,(de)
+    ld      (hl),a
+    jr      __usingstr_done
+__usingstr_copystr:
+    inc     de
+    ld      a,(de)
+    ld      (hl),a
+    inc     hl
+    dec     c
+    jr      z,__usingstr_fillspaces
+    ld      a,(hl)
+    cp      "\\"
+    jr      z,__usingstr_copychar
+    djnz    __usingstr_copystr
+    jr      __usingstr_done
+__usingstr_fillspaces:
+    ld      (hl)," "
+    inc     hl
+    ld      a,(hl)
+    cp      "\\"
+    jr      z,__usingstr_last
+    djnz    __usingstr_fillspaces
+    jr      __usingstr_done
+__usingstr_last:
+    ld     (hl)," "
+    jr     __usingstr_done
 """
 ),
 #

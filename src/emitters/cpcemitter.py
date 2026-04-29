@@ -3824,32 +3824,29 @@ class CPCEmitter:
         <format template> to which the printed result must correspond.
         """
         self._emit_code("; USING <format template>;<expression>[,<expression>]*")
-        self._emit_import("rt_int2str")
-        self._emit_import("rt_using")
         self._emit_import("rt_print_str")
-
-        # Copy format template to rt_scratch_pad
-        self._emit_code("; Copy format template to USING buffer")
+        self._emit_import("rt_strcopy")
         self._emit_expression(node.args[0])
         self._emit_code("ex      de,hl")    
         self._emit_code("ld      hl,rt_scratch_pad")
-        self._emit_code("call    rt_strcopy")
+        self._emit_code("call    rt_strcopy", info="copy format template to scratch buffer")
 
-        # Process each integer argument
-        for i, arg in enumerate(node.args[1:]):
+        for arg in node.args[1:]:
             if arg.etype == AST.ExpType.Integer:
-                self._emit_expression(arg)    # HL = integer value
-                self._emit_code("call    rt_int2str", info=f"Substitute integer argument {i+1}")
-                self._emit_code("call    rt_using")
+                self._emit_import("rt_int2str")
+                self._emit_import("rt_using_int")
+                self._emit_expression(arg)
+                self._emit_code("call    rt_int2str")
+                self._emit_code("call    rt_using_int")
             elif arg.etype == AST.ExpType.Real:
                 self._raise_warning(WL.MEDIUM,
                     "REAL arguments not supported in PRINT USING yet", arg)
             elif arg.etype == AST.ExpType.String:
-                self._raise_warning(WL.MEDIUM,
-                    "STRING arguments not supported in PRINT USING yet", arg)
+                self._emit_import("rt_using_str")
+                self._emit_expression(arg)
+                self._emit_code("call    rt_using_str")
             else:
                 self._raise_error(2, arg, "type not supported by USING")
-        self._emit_code("ld      hl,rt_scratch_pad")
         self._emit_code("call    rt_print_str")
         self._emit_code(";")
 
