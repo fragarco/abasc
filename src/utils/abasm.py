@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.1'
+__version__='1.4.2'
 
 import sys, os
 import re
@@ -472,7 +472,8 @@ class AsmContext:
             fd = open(inputfile, 'rb')
             content = []
             for line in fd.readlines():
-                content.append(line.decode('utf-8', 'ignore'))
+                line = line.decode('utf-8', 'ignore').replace('\n','').replace('\r','')
+                content.append(line)
             content.insert(0, '') # prepend blank so line numbers are 1-based
             fd.close()
             return content
