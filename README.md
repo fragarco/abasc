@@ -28,6 +28,12 @@ Por último, además del compilador propiamente dicho, se incluyen otras utilida
 7. Entra dentro de la carpeta *test* y ejecuta `make dsk` (Windows) o `./make.sh dsk` (Linux/MacOS)
 8. `ABASC` compilará el programa de ejemplo `main.bas` y generará un fichero `dsk` listo para probar en emuladores.
 
+### Agradecimientos
+
+ABASC debe su existencia al compilador de BASIC escrito por Emilio Guerrero: [**CPCBasic**](https://cpcbasic.webcindario.com/CPCBasicSp.html). Probablemente, ABASC no existiría si el proyecto siguiese activo y sus fuentes fueran públicas y accesibles.
+
+A @ervin (del foro CPCWiki) y a @AdolFito (del grupo AMSTRAD POWER) por sus continuos ánimos y pruebas.
+
 ### Licencia 
 
 El conjunto de utilidades ABASC, ABASM, BASPRJ, IMG, DSK y CDT son software libre; puedes redistribuirlo y/o modificarlo bajo los términos de la General Public License de GNU en su versión 3, tal como fue publicada por la Free Software Foundation.
@@ -61,6 +67,12 @@ In addition to the compiler itself, the ABASC package includes several auxiliary
 6.  Run the command: `python ../../src/basprj.py -n test`
 7.  Go into the *test* folder and run `make dsk` (Windows) or `./make.sh dsk` (Linux/MacOS).
 8.  `ABASC` will compile the example program `main.bas` and generate a `dsk` file ready to be tested in emulators.
+
+### Acknowledgements
+
+ABASC owes its existence to the BASIC compiler written by Emilio Guerrero: [**CPCBasic**](https://cpcbasic.webcindario.com/CPCBasicEn.html). ABASC would probably not exist if the project were still active and its source code were public and accessible.
+
+Thanks to @ervin (from the CPCWiki forum) and @AdolFito (from the AMSTRAD POWER group) for their continuous support and testing.
 
 ### License
 
