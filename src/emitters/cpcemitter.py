@@ -4370,7 +4370,7 @@ class CPCEmitter:
         elif op == '*':
             self._emit_import("rt_mul16")
             self._emit_code("call    rt_mul16", info="HL = HL * DE")
-        elif op == '\\' or op == '/':
+        elif op == '\\':
             self._emit_import("rt_div16")
             self._emit_code("call    rt_div16", info="HL = HL \\ DE ")
         elif op == 'MOD':
@@ -4401,7 +4401,7 @@ class CPCEmitter:
         elif op in ('=', '<>', '<', '<=', '>', '>='):
             self._emit_comparation(node)
         else:
-            self._raise_error(2, node, f'unknown "{op}" INT op')
+            self._raise_error(2, node, f'"{op}" is not an INT op')
     
     def _emit_str_op(self, node: AST.BinaryOp) -> None:
         """ HL = left value, DE = right value """
