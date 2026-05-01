@@ -3231,6 +3231,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+- Version 1.0.9
+  -  
+
 - Version 1.0.8
   - Fixes a crash in LEFT$, RIGHT$ and MID$ if number of chars to copy was 0.
   - Fixes a limitation using arrays of multiple indexes.
