@@ -78,6 +78,7 @@ class CPCEmitter:
         self.ifblocks: list[AST.If] = []
         self.selectblocks: list[AST.SelectCase] = []
         self.requiredlabels: list[tuple[str,AST.ASTNode]] = []
+        self.eventlabels: dict[str,str] = {}
 
     def cfgset_wlevel(self, wlevel: WL) -> None:
         self.warning_level = wlevel
@@ -319,6 +320,20 @@ class CPCEmitter:
             self._emit_data(f"; {256-self.symbolafter} elements x 8 bytes", 0)
             self._emit_data(f"_symbols_table: defs {(256 - self.symbolafter)*8}", 0)
 
+    def _emit_events(self) -> None:
+        if len(self.eventlabels):
+            self._emit_data()
+            self._emit_data("; Entry points for events registered using AFTER/EVERY", 0)
+        for e in self.eventlabels:
+            self._emit_data(f"{e}:", 0)
+            self._emit_data("ld      a,1")
+            self._emit_data("ld      (rt_timer_running),a")
+            self._emit_data(f"call    {self.eventlabels[e]}")
+            self._emit_data("xor     a")
+            self._emit_data("ld      (rt_timer_running),a")
+            self._emit_data("ret")
+
+
 
     def _real(self, n: float) -> bytearray:
         """
@@ -499,7 +514,9 @@ class CPCEmitter:
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
-                self._emit_code(f"ld      de,{sym.label}")
+                eventlabel = f"{sym.label}_event"
+                self.eventlabels[eventlabel] = sym.label
+                self._emit_code(f"ld      de,{eventlabel}")
         self._emit_code("ld      bc,&80fd", info="async far call / ROM select")
         self._emit_code(f"call    {FWCALL.KL_INIT_EVENT}", info="KL_INIT_EVENT")
         self._emit_code("pop     hl", info="tick block address")
@@ -3371,7 +3388,6 @@ class CPCEmitter:
         self._emit_import("rt_sound")
         self._emit_code("; SOUND <channel status>, <tone period>[,<duration>[,<volume>[,<volume envelope>[,<tone envelope>[,<noise period>]]]]")
         self._emit_expression(node.args[0]) 
-        self._emit_code("di", info="We don't want EVERY or AFTER to mess with the sound buffer")
         self._emit_code("ld      a,l")
         self._emit_code("ld      (rt_sound_buf),a", info="channel")
         self._emit_expression(node.args[4])
@@ -3391,7 +3407,6 @@ class CPCEmitter:
         self._emit_expression(node.args[2])
         self._emit_code("ld      (rt_sound_buf+7),hl", info="duration")
         self._emit_code("call    rt_sound")
-        self._emit_code("ei")
         self._emit_code(";")
 
     def _emit_SPACESS(self, node:AST.Function) -> None:
@@ -4940,5 +4955,6 @@ class CPCEmitter:
         self._emit_amsdos_support()
         self._emit_symbols(self.symtable.syms)
         self._emit_symbol_table()
+        self._emit_events()
         self._check_requiredlabels()
         return self._compose_program(), self.max_heap_memory
