@@ -2840,14 +2840,9 @@ __real_round_toint:
     jp      rt_math_call
 """
 ),
-    "rt_timer_running": ([],
+    "rt_timer": ([],
 """
-rt_timer_running: db 0      ; Set to 1 if a timer event is currently running
-""",
-""),
-    "rt_timer": (["rt_timer_running"],
-"""
-rt_timer_blocks:  defs 13*4 ; 4 tick blocks (event timer structure is 13 bytes)
+rt_timer_blocks: defs 13*4 ; 4 tick blocks (event timer structure is 13 bytes)
 """,
 """
 ; RT_TIMER_GET
@@ -3073,12 +3068,11 @@ rt_fileoutbuf: defs 2048
 """,
 ""
 ),
-    "rt_sound": (["rt_error", "rt_timer_running"],
+    "rt_sound": (["rt_error"],
 """
 rt_sound_buf: defs 9
 """,
 f"""
-; RT_SOUND
 ; Adds a new sound to one of the available Amstrad CPC
 ; sound queues. The data must be kept in a buffer placed
 ; somewhere in the 32k central memory area.
@@ -3089,12 +3083,7 @@ f"""
 ;   AF, BC, DE, IX and HL are modified.
 rt_sound:
     ld      hl,rt_sound_buf
-    call    {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
-    ret     c
-    ld      a,(rt_timer_running)
-    or      a
-    jr      z,rt_sound
-    ret
+    jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
 """
 ),
     "rt_load": (["rt_restoreroms"],"",
