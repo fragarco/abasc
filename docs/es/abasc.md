@@ -3180,9 +3180,6 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
-- Versión 1.0.9
-  -  
-
 - Versión 1.0.8
   - Arregla un problema al usar LEF$, RIGHT$ y MID$ con 0 como número de caracteres a copiar.
   - Arregla un problema con arrays de múltiples índices.
