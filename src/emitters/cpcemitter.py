@@ -252,8 +252,15 @@ class CPCEmitter:
 
     def _emit_code_end(self) -> None:
         self._emit_code()
-        self._emit_code("_code_end_: jr _code_end_", info="infinite end loop", indent=0)
+        self._emit_code("_code_end_:", indent=0)
+        self._emit_run_events()
+        self._emit_code("jr      _code_end_", info="infinite end loop")
 
+    def _emit_run_events(self) -> None:
+        if self.program.hasevents:
+            self._emit_import("rt_timer_runsync")
+            self._emit_code("call    rt_timer_runsync", info="run any pending synchronous events")
+        
     def _emit_heap_def(self) -> None:
         self._emit_heap("; DYNAMIC MEMORY AREA (HEAP), USED BY MALLOC AND FREE", 0)
         self._emit_heap("rt_heapmem_next:  dw rt_heapmem", 0, info="pointer to free memory for dynamic allocation")
@@ -481,7 +488,7 @@ class CPCEmitter:
         self._emit_code(";")
 
     def _emit_event_init(self, node:AST.Command) -> None:
-        self._emit_import("rt_timer")
+        self._emit_import("rt_timer_get")
         args = node.args
         self._emit_expression(args[0])
         self._emit_code("push    hl", info="number of ticks to fire event")
@@ -490,17 +497,16 @@ class CPCEmitter:
             self._emit_code("ld      b,l")
         else:
             self._emit_code("ld      b,0", info="default timer ID is 0")
-        self._emit_code("call    rt_timer_get", info="HL address to event block")
+        self._emit_code("call    rt_timer_get", info="HL address to event block, BC event type")
         self._emit_code("push    hl", info="tick block address")
-        self._emit_code("ld      bc,6")
-        self._emit_code("add     hl,bc", info="HL = event block inside the tick")
+        self._emit_code("ld      de,6")
+        self._emit_code("add     hl,de", info="HL = event block inside the tick")
         # GOSUB address
         label = args[-1].args[0] # type: ignore [attr-defined]
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"ld      de,{sym.label}")
-        self._emit_code("ld      bc,&80fd", info="async far call / ROM select")
         self._emit_code(f"call    {FWCALL.KL_INIT_EVENT}", info="KL_INIT_EVENT")
         self._emit_code("pop     hl", info="tick block address")
         self._emit_code("pop     de", info="timer ticks needed to fire the event")
@@ -608,6 +614,7 @@ class CPCEmitter:
         order, ie. (IX+0) is the last parameter supplied.
         """
         self._emit_code("; CALL <address expression> ,[<list of: <parameter>]")
+        self._emit_run_events()
         params = node.args[1:]
         if len(params) > 0:
             self._emit_pushcontext()
@@ -1622,6 +1629,7 @@ class CPCEmitter:
         """
         label = node.args[0]
         self._emit_code("; GOSUB <line number> | <label> ")
+        self._emit_run_events()
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
@@ -1636,6 +1644,7 @@ class CPCEmitter:
         """
         label = node.args[0]
         self._emit_code("; GOTO <line number> | <label> ")
+        self._emit_run_events()
         if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
             sym = self.symtable.find(str(label.value), SymType.Label, "")
             if sym is not None:
@@ -1724,6 +1733,7 @@ class CPCEmitter:
         node.else_label = elselabel
         node.end_label = endlabel
         self._emit_code("; IF <logical expr> THEN <option part> [ELSE <option part>]")
+        self._emit_run_events()
         self._emit_expression(node.condition)
         # clear temporal memory if used by the condition expression before
         # jumping. Modifies DE
@@ -2483,6 +2493,7 @@ class CPCEmitter:
 
     def _emit_NEXT(self, node:AST.BlockEnd) -> None:
         self._emit_code("; NEXT [<variable>]")
+        self._emit_run_events()
         loops = 1 if len(node.vars) == 0 else len(node.vars)
         for _ in range(0,loops):
             fornode = self.forloops.pop()
@@ -3084,21 +3095,15 @@ class CPCEmitter:
         Returns the REMAINing count from the delay timer specified in <int expr>
         (in the range 0 to 3) and disable it. 
         """
-        self._emit_import("rt_timer")
+        self._emit_import("rt_timer_get")
         self._emit_code("; REMAIN(<integer expression>)")
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
         self._emit_code("call    rt_timer_get", info="HL address to event block")
-        self._emit_code("ld      bc,4")
-        self._emit_code("add     hl,bc", info="point to recharge value")
-        self._emit_code("ld      (hl),&0000", info="reset recharge value")
-        self._emit_code("dec     hl",   info="remaining ticks")
-        self._emit_code("ld      d,(hl)")
-        self._emit_code("dec     hl")
-        self._emit_code("ld      e,(hl)")
-        self._emit_code("ld      (hl),&0000", info="disable ticker")
+        self._emit_code(f"call    {FWCALL.KL_DEL_TICKER}", info="KL_DEL_TICKER")
+        self._emit_code("jr      c,$+5")
+        self._emit_code("ld      de,0")
         self._emit_code("ex      de,hl")
-        self._emit_code("inc     hl", info="user count starts in 1 but system in 0")
         self._emit_code(";") 
 
     def _emit_RENUM(self, node:AST.Statement) -> None:
@@ -3297,6 +3302,7 @@ class CPCEmitter:
         """
         """
         self._emit_code("; SELECT CASE <int_expression>")
+        self._emit_run_events()
         self._set_select_case_labels(node)
         node.currentopt = 0
         self._emit_expression(node.condition)
@@ -3922,6 +3928,7 @@ class CPCEmitter:
     def _emit_WEND(self, node:AST.Statement) -> None:
         wnode = self.wloops.pop()
         self._emit_code("; WEND")
+        self._emit_run_events()
         self._emit_code(f"jp      {wnode.start_label}")
         self._emit_code(f"{wnode.end_label}:", 0)
         self._emit_code(";")

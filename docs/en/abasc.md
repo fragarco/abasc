@@ -3231,6 +3231,10 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+- Version 1.1.0
+  - Improved support for EVERY, AFTER y REMAIN commands (check the section about EVENTS in this manual)
+  - Basic support for PRINT USING
+
 - Version 1.0.8
   - Fixes a crash in LEFT$, RIGHT$ and MID$ if number of chars to copy was 0.
   - Fixes a limitation using arrays of multiple indexes.

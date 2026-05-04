@@ -82,6 +82,7 @@ class LocBasParser:
         self.current_usrlabel = ""
         self.current_linelabel = ""
         self.unsignedmode = False
+        self.hasevents = False
 
     @staticmethod
     def astnode(func: Callable[[LocBasParser], AST.ASTNode]):
@@ -217,6 +218,7 @@ class LocBasParser:
             timer = self._parse_int_expression()
             args.append(timer)
         args.append(self._parse_GOSUB())
+        self.hasevents = True
         return AST.Command(name="AFTER", args=args)
     
     @astnode
@@ -989,6 +991,7 @@ class LocBasParser:
         if not self._current_is(TokenType.KEYWORD, lexeme="GOSUB"):
             self._raise_error(2, tk)
         args.append(self._parse_GOSUB())
+        self.hasevents = True
         return AST.Command(name="EVERY", args=args)
 
     @astnode
@@ -3340,5 +3343,7 @@ class LocBasParser:
                 self._raise_error(45, info="EOF reached", tk=cblock.tk)
             else:
                 self._raise_error(24, self.tokens[-1])
-        return AST.Program(lines=lines), self.symtable
+        program = AST.Program(lines=lines)
+        program.hasevents = self.hasevents
+        return program, self.symtable
 

@@ -2840,7 +2840,7 @@ __real_round_toint:
     jp      rt_math_call
 """
 ),
-    "rt_timer": ([],
+    "rt_timer_get": ([],
 """
 rt_timer_blocks: defs 13*4 ; 4 tick blocks (event timer structure is 13 bytes)
 """,
@@ -2852,14 +2852,46 @@ rt_timer_blocks: defs 13*4 ; 4 tick blocks (event timer structure is 13 bytes)
 ; Inputs:
 ;     B  timer number (0-3)
 ; Outputs:
-;     HL address to the timer block
+;     HL address to the timer 
+;     BC value for a synchronous event attached to specified timer
 rt_timer_get:
     ld      hl,rt_timer_blocks
+    ld      a,b
+    or      a
+    ld      a,2         ; 0-3 -> bits 1..4
+    jr      z,__timerget_end
     ld      de,13       ; Block size
 __timerget_loop:
     add     hl,de
+    sla     a
     djnz    __timerget_loop
+__timerget_end:
+    ld      b,a
+    ld      c,&fd
     ret
+"""
+),
+    "rt_timer_runsync": ([],"",
+f"""
+; RT_TIMER_RUNSYNC
+; Checks if there are remaining synchronous events that must be
+; executed.
+; Inputs:
+;     B  timer number (0-3)
+; Outputs:
+;     HL address to the timer 
+;     BC value for a synchronous event attached to specified timer
+rt_timer_runsync:
+    call    {FWCALL.KL_POLL_SYNCHRONOUS} ; KL_POLL_SYNCHRONOUS
+    ret     nc
+    call    {FWCALL.KL_NEXT_SYNC} ; KL_NEXT_SYNC
+    ret     nc
+    push    af
+    push    hl
+    call    {FWCALL.KL_DO_SYNC} ; KL_DO_SYNC
+    pop     hl
+    pop     af
+    jp      {FWCALL.KL_DONE_SYNC} ; KL_DONE_SYNC
 """
 ),
     "rt_fill": ([],
@@ -3083,7 +3115,9 @@ f"""
 ;   AF, BC, DE, IX and HL are modified.
 rt_sound:
     ld      hl,rt_sound_buf
-    jp      {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
+    call    {FWCALL.SOUND_QUEUE} ; SOUND_QUEUE
+    ret     c
+    jr      rt_sound
 """
 ),
     "rt_load": (["rt_restoreroms"],"",
