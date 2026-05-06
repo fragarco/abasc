@@ -3836,7 +3836,6 @@ class CPCEmitter:
         self._emit_code("ex      de,hl")    
         self._emit_code("ld      hl,rt_scratch_pad")
         self._emit_code("call    rt_strcopy", info="copy format template to scratch buffer")
-
         for arg in node.args[1:]:
             if arg.etype == AST.ExpType.Integer:
                 self._emit_import("rt_int2str")
@@ -3845,8 +3844,15 @@ class CPCEmitter:
                 self._emit_code("call    rt_int2str")
                 self._emit_code("call    rt_using_int")
             elif arg.etype == AST.ExpType.Real:
-                self._raise_warning(WL.MEDIUM,
-                    "REAL arguments not supported in PRINT USING yet", arg)
+                self._emit_import("rt_math_call")
+                self._emit_import("rt_real2strz")
+                self._emit_import("rt_using_real")
+                self._emit_pushcontext()
+                self._emit_expression(arg)
+                self._moveflo_accum1()
+                self._emit_code("call    rt_real2strz")
+                self._emit_code("call    rt_using_real")
+                self._emit_popcontext()
             elif arg.etype == AST.ExpType.String:
                 self._emit_import("rt_using_str")
                 self._emit_expression(arg)

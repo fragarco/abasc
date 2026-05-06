@@ -491,7 +491,11 @@ rt_scratch_pad:  defs  255
 ; Outputs:
 ;     HL  points to rt_scratch_pad with the resulting string
 ;     AF, BC, DE and HL are modified
+rt_usingint_last: dw 0
 rt_using_int:
+    xor     a
+    ld      (rt_usingint_last),a
+    ld      (rt_usingint_last+1),a
     ld      hl,rt_scratch_pad
     xor     a
     ld      b,(hl)              ; format string length
@@ -513,6 +517,7 @@ __usingint_findend:
     jr      z,__usingint_replace
     cp      (hl)
     jr      z,__usingint_findend
+    ld      (rt_usingint_last),hl
 __usingint_replace:
     push    hl
     ld      hl,rt_int2str_buf  ; number
@@ -603,6 +608,75 @@ __usingstr_fillspaces:
 __usingstr_last:
     ld     (hl)," "
     jr     __usingstr_done
+"""
+),
+"rt_using_real": (["rt_scratch_pad", "rt_using_int", "rt_int2str"],"",
+"""
+; RT_USING_REAL
+; Replace the first run of '#' wildcards in rt_scratch_pad with the
+; real number stored in rt_real2strz_buf. Right-justified within the field.
+; Positive numbers produced by rt_real2strz have a leading space (" NNN.NN")
+; which is treated as a non-significant placeholder and omitted.
+; Negative numbers ("-NNN.NN") include the sign as significant.
+; Inputs:
+;     rt_real2strz_buf already populated by a prior call to rt_real2strz
+;     rt_scratch_pad with the string template
+; Outputs:
+;     HL  points to rt_scratch_pad with the resulting string
+;     AF, BC, DE and HL are modified
+rt_using_real:
+    ld      hl,rt_int2str_buf+1
+    ld      de,rt_real2strz_buf
+    ld      a,(de)
+    ld      b,0
+__usingreal_copyint:             ; let's convert the integer part
+    inc     de                   ; reusing rt_using_int
+    ld      (hl),a
+    inc     hl
+    inc     b
+    ld      a,(de)
+    cp      "."
+    jr      z,__usingreal_convint
+    or      a
+    jr      z,__usingreal_convint
+    jr      __usingreal_copyint
+__usingreal_convint:
+    push    af
+    push    de
+    ld      a,b
+    ld      (rt_int2str_buf),a
+    call    rt_using_int
+    pop     de
+    pop     af
+    or      a
+    jr      z,__usingreal_done
+    ld      b,a
+    xor     a
+    ld      hl,(rt_usingint_last)
+    add     h
+    or      l
+    jr      z,__usingreal_done
+    ld      a,b
+    cp      (hl)     ; is current template char a '.'?
+    jr      z,__usingreal_convdec
+__usingreal_done:
+    ld      hl,rt_scratch_pad
+    ret
+__usingreal_convdec:
+    inc     de
+    inc     hl
+    ld      a,"#"
+    cp      (hl)
+    jr      nz,__usingreal_done
+    ld      a,(de)
+    or      a
+    jr      z,__usingreal_fill0
+    ld      (hl),a
+    jr      __usingreal_convdec
+__usingreal_fill0:
+    ld      (hl),"0"
+    dec     de
+    jr      __usingreal_convdec
 """
 ),
 #
