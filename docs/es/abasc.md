@@ -153,6 +153,7 @@
     - [`POKE dirección,n`](#poke-direcciónn)
     - [`POS(#canal)`](#poscanal)
     - [`PRINT [#canal,][lista de elementos]`](#print-canallista-de-elementos)
+    - [`PRINT USING literal;[lista de variables]`](#print-using-literallista-de-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
     - [`READ lista-de-variables`](#read-lista-de-variables)
@@ -1707,7 +1708,18 @@ PRINT POS(#0), VPOS(#0)
 
 ### `PRINT [#canal,][lista de elementos]`
 
-Comando. `PRINT` es un comando muy versatil y con múltiples opciones. Por ello, queda fuera del alcance de este documento y se invita al lector a consultar las obras listadas en el capítulo sobre `Referencias`. En cualquier caso, ABASC **no soporta el uso de patrones de formato mediante USING**.
+Comando. `PRINT` es un comando muy versatil y con múltiples opciones. Por ello, queda fuera del alcance de este documento y se invita al lector a consultar las obras listadas en el capítulo sobre `Referencias`.
+
+### `PRINT USING literal;[lista de variables]`
+
+Comando. `ABASC` no soporta todas las opciones disponibles en el comando original. Puede utilizarse `PRINT USING` con variables enteras, cadenas de texto (*strings*) y números reales. En el caso de las cadenas de texto, se soporta el uso de `!` para insertar el primer carácter de la cadena, o `\   \` para indicar un número determinado de caracteres (como en el comando original). En el caso de los valores enteros y reales, solo se soporta el uso de `#` para indicar dígitos (igual que en el original).
+
+```basic
+10 A$ = "manzanas"
+20 V  = 5
+30 P! = 1.25
+40 PRINT USING "He comprado # \      \ a ##.### euros"; V,A$,P!
+```
 
 ### `RAD`
 

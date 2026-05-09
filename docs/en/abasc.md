@@ -153,6 +153,7 @@
     - [`POKE address,n`](#poke-addressn)
     - [`POS(#channel)`](#poschannel)
     - [`PRINT [#channel,][list of items]`](#print-channellist-of-items)
+    - [`PRINT USING literal;[list of variables]`](#print-using-literallist-of-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
     - [`READ variable-list`](#read-variable-list)
@@ -1726,6 +1727,17 @@ PRINT POS(#0), VPOS(#0)
 ### `PRINT [#channel,][list of items]`
 
 **Command.** `PRINT` is a highly versatile command with many options. Its full details are beyond the scope of this manual, so the reader is encouraged to consult the references listed in the `References` chapter. **Note:** ABASC does **not** support formatted output using `USING`.
+
+### `PRINT USING literal;[list of variables]`
+
+**Command**. `ABASC` does not support all the options available in the original command. `PRINT USING` can be used with integer variables, text strings, and real numbers. In the case of text strings, the use of `!` is supported to insert the first character of the string, or `\   \` to specify a fixed number of characters (as in the original command). In the case of integer and real values, only the use of `#` to indicate digits is supported (just like in the original command).
+
+```basic id="2s24at"
+10 A$ = "apples"
+20 V  = 5
+30 P! = 1.25
+40 PRINT USING "I bought # \      \ at ##.### euros"; V,A$,P!
+```
 
 ### `RAD`
 

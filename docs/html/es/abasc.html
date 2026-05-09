@@ -461,6 +461,8 @@ href="#plotr-xytintamodo"><code>PLOTR x,y[,tinta[,modo]]</code></a></li>
 <li><a href="#poscanal"><code>POS(#canal)</code></a></li>
 <li><a
 href="#print-canallista-de-elementos"><code>PRINT [#canal,][lista de elementos]</code></a></li>
+<li><a
+href="#print-using-literallista-de-variables"><code>PRINT USING literal;[lista de variables]</code></a></li>
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
 <li><a
@@ -2462,8 +2464,22 @@ id="print-canallista-de-elementos"><code>PRINT [#canal,][lista de elementos]</co
 <p>Comando. <code>PRINT</code> es un comando muy versatil y con
 múltiples opciones. Por ello, queda fuera del alcance de este documento
 y se invita al lector a consultar las obras listadas en el capítulo
-sobre <code>Referencias</code>. En cualquier caso, ABASC <strong>no
-soporta el uso de patrones de formato mediante USING</strong>.</p>
+sobre <code>Referencias</code>.</p>
+<h3
+id="print-using-literallista-de-variables"><code>PRINT USING literal;[lista de variables]</code></h3>
+<p>Comando. <code>ABASC</code> no soporta todas las opciones disponibles
+en el comando original. Puede utilizarse <code>PRINT USING</code> con
+variables enteras, cadenas de texto (<em>strings</em>) y números reales.
+En el caso de las cadenas de texto, se soporta el uso de <code>!</code>
+para insertar el primer carácter de la cadena, o <code>\   \</code> para
+indicar un número determinado de caracteres (como en el comando
+original). En el caso de los valores enteros y reales, solo se soporta
+el uso de <code>#</code> para indicar dígitos (igual que en el
+original).</p>
+<pre class="basic"><code>10 A$ = &quot;manzanas&quot;
+20 V  = 5
+30 P! = 1.25
+40 PRINT USING &quot;He comprado # \      \ a ##.### euros&quot;; V,A$,P!</code></pre>
 <h3 id="rad"><code>RAD</code></h3>
 <p>Comando. Establece que las funciones que devuelven grados den los
 resultados en radianes. Es el comando contrapuesto a
@@ -3144,13 +3160,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb118"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb119"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb119"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb120"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>

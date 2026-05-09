@@ -464,6 +464,8 @@ href="#plotr-xyinkmode"><code>PLOTR x,y[,ink[,mode]]</code></a></li>
 <li><a href="#poschannel"><code>POS(#channel)</code></a></li>
 <li><a
 href="#print-channellist-of-items"><code>PRINT [#channel,][list of items]</code></a></li>
+<li><a
+href="#print-using-literallist-of-variables"><code>PRINT USING literal;[list of variables]</code></a></li>
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
 <li><a
@@ -2441,6 +2443,17 @@ manual, so the reader is encouraged to consult the references listed in
 the <code>References</code> chapter. <strong>Note:</strong> ABASC does
 <strong>not</strong> support formatted output using
 <code>USING</code>.</p>
+<h3
+id="print-using-literallist-of-variables"><code>PRINT USING literal;[list of variables]</code></h3>
+<p><strong>Command</strong>. <code>ABASC</code> does not support all the
+options available in the original command. <code>PRINT USING</code> can
+be used with integer variables, text strings, and real numbers. In the
+case of text strings, the use of <code>!</code> is supported to insert
+the first character of the string, or <code>\   \</code> to specify a
+fixed number of characters (as in the original command). In the case of
+integer and real values, only the use of <code>#</code> to indicate
+digits is supported (just like in the original command).</p>
+<p><code>basic id="2s24at" 10 A$ = "apples" 20 V  = 5 30 P! = 1.25 40 PRINT USING "I bought # \      \ at ##.### euros"; V,A$,P!</code></p>
 <h3 id="rad"><code>RAD</code></h3>
 <p><strong>Command.</strong> Sets trigonometric functions to return
 results in radians. It is the counterpart to <code>DEG</code>.</p>
