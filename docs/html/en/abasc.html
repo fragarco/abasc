@@ -285,6 +285,7 @@ Procedures</a></li>
 <li><a href="#pointers">Pointers</a></li>
 <li><a href="#memory-management">Memory Management</a></li>
 <li><a href="#using-the-firmware">Using the Firmware</a></li>
+<li><a href="#events">Events</a></li>
 <li><a href="#libraries">Libraries</a></li>
 </ul></li>
 <li><a href="#commands-and-language-syntax">Commands and Language
@@ -1172,6 +1173,48 @@ the generated code and apply specific optimizations when needed, using
 <code>--verbose</code> option is enabled, the generated ASM file
 includes more detailed comments, making it easier to follow how each
 BASIC statement is translated into assembly code.</p>
+<h2 id="events">Events</h2>
+<p>One of the distinctive features of Locomotive BASIC is its support
+for events, which makes it possible to simulate a certain degree of
+multitasking. Event creation and management are handled through the
+<code>EVERY</code>, <code>AFTER</code>, <code>REMAIN</code>, and, to a
+lesser extent, <code>DI</code> and <code>EI</code> commands. In any
+case, the Locomotive BASIC interpreter relied on functions provided by
+the Amstrad CPC Firmware, just as <code>ABASC</code> does; therefore,
+this section includes useful information about that support.</p>
+<p>The Amstrad CPC Firmware allows the registration of events called
+<code>TICKERS</code>. Once per frame (50 times per second on a PAL
+system), the system checks, for each event, whether the assigned time
+has expired and whether the associated routine should be called. There
+are two types of events: synchronous and asynchronous. The former are
+handled by adding the event to be executed to a queue that will be
+processed by the main program whenever it deems appropriate. The latter
+are executed immediately after making a copy of the current execution
+context of the running program (mainly the register values).</p>
+<p>Locomotive BASIC implemented the <code>EVERY</code> and
+<code>AFTER</code> commands using synchronous events. Since it was an
+interpreted language, after executing each command it checked whether
+there were pending events and, if so, executed them. The <code>DI</code>
+command disabled notifications to the synchronous event queue, but it
+did not disable interrupts, since interrupts were also responsible for
+managing the <code>TIME</code> value and the sound queues.</p>
+<p><code>ABASC</code> 1.0.X implements <code>EVERY</code>,
+<code>AFTER</code>, and <code>REMAIN</code> using asynchronous messages,
+since it does not have the convenience of an interpreted language to
+check for pending events after each command. However, this
+implementation creates problems with sound queue management and produces
+results different from those obtained when running the same program on a
+real Amstrad CPC. Starting with version 1.1.0, <code>ABASC</code>
+switches to synchronous events. To achieve this, before executing any
+<code>GOTO</code> or <code>GOSUB</code> instruction, at the end of each
+iteration of a <code>NEXT</code> or <code>WEND</code> loop, or when
+resolving conditional statements with <code>IF</code>, it checks for
+pending synchronous events and executes them. This mechanism produces
+results much closer to the original behavior. The downside is that
+programs using <code>EVERY</code> or <code>AFTER</code> will consume
+more memory and incur some performance penalty, because additional calls
+to the pending-event checking routines must be inserted into the
+generated code.</p>
 <h2 id="libraries">Libraries</h2>
 <p>The ABASC installation includes a directory called <code>lib</code>.
 Any <code>.BAS</code> file can be placed there to be included in any of
@@ -1264,15 +1307,12 @@ delay. The <code>delay</code> is measured in 1/50 second increments. The
 optional second parameter specifies which of the four timers to use
 (0..3). If omitted, timer 0 is used by default. The <code>GOSUB</code>
 label can be either a line number (integer) or a literal defined with
-the <code>LABEL</code> statement.</p>
-<p>ABASC uses Firmware routines to handle asynchronous events. User
-routines are called with the lower ROM active, so code should remain
-short and <strong>avoid using the first 16K of memory</strong>.
-Operations with floating-point numbers or text may attempt to allocate
-temporary memory in this area (the heap) and should be avoided. Integer
-operations, on the other hand, are safe. This mechanism also requires
-that interrupts are enabled (see <code>DI</code> and
-<code>EI</code>).</p>
+the <code>LABEL</code> statement. Registered events can be cancelled
+through the use of <code>REMAIN</code> command, or can be temporally
+disabled with the command <code>DI</code>.</p>
+<p>ABASC uses Firmware routines to handle synchronous events, as it is
+explained in the section <code>Events</code> of the
+<code>Peculiarities of the Compiler</code> chapter.</p>
 <pre class="basic"><code>A = 0
 AFTER 50 GOSUB INCR  &#39; Calls the INCR routine after 1 second
 A = 5
@@ -1493,11 +1533,10 @@ address - ending address.</p>
 disk-related error. ABASC ignores any reference to this command and
 issues a warning if it appears in the code.</p>
 <h3 id="di"><code>DI</code></h3>
-<p><strong>Command</strong>. Disables the interrupt mechanism. With
-interrupts disabled, the <code>TIME</code> value stops updating, and
-events scheduled with <code>AFTER</code> or <code>EVERY</code> are not
-processed. Interrupts can be re-enabled using the <code>EI</code>
-command.</p>
+<p><strong>Command</strong>. Disables the events notification mechanism
+which means that events registered with <code>EVERY</code> or
+<code>AFTER</code> won’t be executed. The mechanism can be re-enabled
+using the <code>EI</code> command.</p>
 <h3
 id="dim-arrayindex1-index2-...-fixed-length"><code>DIM array(index1, index2, ...) [FIXED length]</code></h3>
 <p><strong>Command</strong>. Declares an array and reserves memory for
@@ -1568,7 +1607,8 @@ as in <code>DRAW</code>.</p>
 editing a specific line of code. In ABASC, it is ignored and has no
 effect during compilation.</p>
 <h3 id="ei"><code>EI</code></h3>
-<p><strong>Command</strong>. Enables interrupts. See also
+<p><strong>Command</strong>. Re-enables the execution of events
+registered by <code>AFTER</code> or <code>EVERY</code>commands. See also
 <code>DI</code>.</p>
 <h3 id="end"><code>END</code></h3>
 <p><strong>Command</strong>. Ends program execution. In the BASIC
@@ -1658,15 +1698,12 @@ id="every-timetimer-gosub-label"><code>EVERY time[,timer] GOSUB label</code></h2
 <p><strong>Command</strong>. Sets the specified <code>timer</code> (0–3,
 default 0) to call the subroutine at <code>label</code> every
 <code>time</code> ticks. Each tick represents 1/50 of a second, so a
-value of 50 corresponds to calling the label once per second.</p>
-<p>ABASC relies on the Amstrad CPC Firmware routines for handling
-asynchronous events. User routines are executed with the lower ROM
-active, so the code should be kept short and <strong>avoid using the
-first 16K of memory</strong>. Operations involving floating-point
-numbers or strings may attempt to allocate temporary memory within this
-range (the heap) and should be avoided, while integer operations are
-generally safe. This mechanism also requires that interrupts are enabled
-(see <code>DI</code> and <code>EI</code>).</p>
+value of 50 corresponds to calling the label once per second. Registered
+events can be cancelled through the use of <code>REMAIN</code> command,
+or can be temporally disabled with the command <code>DI</code>.</p>
+<p>ABASC uses Firmware routines to handle synchronous events, as it is
+explained in the section <code>Events</code> of the
+<code>Peculiarities of the Compiler</code> chapter.</p>
 <pre class="basic"><code>A = 0
 EVERY 300 GOSUB INCA  &#39; Prints and increments A every 6 seconds
 END
@@ -2467,10 +2504,13 @@ the affected channels:</p>
 <p><strong>Command.</strong> Inserts a comment in the program. The
 symbol <code>'</code> is an alias for this command.</p>
 <h3 id="remaintimer"><code>REMAIN(timer)</code></h3>
-<p><strong>Function.</strong> Disables the event associated with
+<p><strong>Function.</strong> Disables the events associated with
 <code>timer</code> (in the range 0–3) and returns the number of ticks
 remaining before it would have been triggered. Such events are
-registered using <code>AFTER</code> or <code>EVERY</code>.</p>
+registered using <code>AFTER</code> or <code>EVERY</code>. ABASC uses
+Firmware routines to handle synchronous events, as it is explained in
+the section <code>Events</code> of the
+<code>Peculiarities of the Compiler</code> chapter.</p>
 <h3
 id="renum-new-line-origin-line-step"><code>RENUM new-line, origin-line, step</code></h3>
 <p><strong>Command.</strong> In Locomotive BASIC, this command renumbers

@@ -30,6 +30,7 @@
   - [Pointers](#pointers)
   - [Memory Management](#memory-management)
   - [Using the Firmware](#using-the-firmware)
+  - [Events](#events)
   - [Libraries](#libraries)
 - [Commands and Language Syntax](#commands-and-language-syntax)
   - [Notation](#notation)
@@ -631,6 +632,16 @@ However, you can use the `ASM` statement to provide more efficient replacements 
 
 Another option is to modify the program’s assembly code directly. During compilation, ABASC generates an `.ASM` file containing the full assembly code. This allows the developer to adjust or extend the generated code and apply specific optimizations when needed, using **ABASM** to produce the final binary. When the `--verbose` option is enabled, the generated ASM file includes more detailed comments, making it easier to follow how each BASIC statement is translated into assembly code.
 
+## Events
+
+One of the distinctive features of Locomotive BASIC is its support for events, which makes it possible to simulate a certain degree of multitasking. Event creation and management are handled through the `EVERY`, `AFTER`, `REMAIN`, and, to a lesser extent, `DI` and `EI` commands. In any case, the Locomotive BASIC interpreter relied on functions provided by the Amstrad CPC Firmware, just as `ABASC` does; therefore, this section includes useful information about that support.
+
+The Amstrad CPC Firmware allows the registration of events called `TICKERS`. Once per frame (50 times per second on a PAL system), the system checks, for each event, whether the assigned time has expired and whether the associated routine should be called. There are two types of events: synchronous and asynchronous. The former are handled by adding the event to be executed to a queue that will be processed by the main program whenever it deems appropriate. The latter are executed immediately after making a copy of the current execution context of the running program (mainly the register values).
+
+Locomotive BASIC implemented the `EVERY` and `AFTER` commands using synchronous events. Since it was an interpreted language, after executing each command it checked whether there were pending events and, if so, executed them. The `DI` command disabled notifications to the synchronous event queue, but it did not disable interrupts, since interrupts were also responsible for managing the `TIME` value and the sound queues.
+
+`ABASC` 1.0.X implements `EVERY`, `AFTER`, and `REMAIN` using asynchronous messages, since it does not have the convenience of an interpreted language to check for pending events after each command. However, this implementation creates problems with sound queue management and produces results different from those obtained when running the same program on a real Amstrad CPC. Starting with version 1.1.0, `ABASC` switches to synchronous events. To achieve this, before executing any `GOTO` or `GOSUB` instruction, at the end of each iteration of a `NEXT` or `WEND` loop, or when resolving conditional statements with `IF`, it checks for pending synchronous events and executes them. This mechanism produces results much closer to the original behavior. The downside is that programs using `EVERY` or `AFTER` will consume more memory and incur some performance penalty, because additional calls to the pending-event checking routines must be inserted into the generated code.
+
 ## Libraries
 
 The ABASC installation includes a directory called `lib`. Any `.BAS` file can be placed there to be included in any of your programs using the `CHAIN MERGE` command.
@@ -679,9 +690,9 @@ Special characters:
 
 ### `AFTER delay[,timer] GOSUB label`
 
-**Command.** Calls the specified subroutine after a delay. The `delay` is measured in 1/50 second increments. The optional second parameter specifies which of the four timers to use (0..3). If omitted, timer 0 is used by default. The `GOSUB` label can be either a line number (integer) or a literal defined with the `LABEL` statement.
+**Command.** Calls the specified subroutine after a delay. The `delay` is measured in 1/50 second increments. The optional second parameter specifies which of the four timers to use (0..3). If omitted, timer 0 is used by default. The `GOSUB` label can be either a line number (integer) or a literal defined with the `LABEL` statement. Registered events can be cancelled through the use of `REMAIN` command, or can be temporally disabled with the command `DI`.
 
-ABASC uses Firmware routines to handle asynchronous events. User routines are called with the lower ROM active, so code should remain short and **avoid using the first 16K of memory**. Operations with floating-point numbers or text may attempt to allocate temporary memory in this area (the heap) and should be avoided. Integer operations, on the other hand, are safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC uses Firmware routines to handle synchronous events, as it is explained in the section `Events` of the `Peculiarities of the Compiler` chapter.
 
 ```basic
 A = 0
@@ -934,7 +945,7 @@ DELETE &C000-&FFFF
 
 ### `DI`
 
-**Command**. Disables the interrupt mechanism. With interrupts disabled, the `TIME` value stops updating, and events scheduled with `AFTER` or `EVERY` are not processed. Interrupts can be re-enabled using the `EI` command.
+**Command**. Disables the events notification mechanism which means that events registered with `EVERY` or `AFTER` won't be executed. The mechanism can be re-enabled using the `EI` command.
 
 ### `DIM array(index1, index2, ...) [FIXED length]`
 
@@ -984,7 +995,7 @@ DRAW 0,0,2
 
 ### `EI`
 
-**Command**. Enables interrupts. See also `DI`.
+**Command**. Re-enables the execution of events registered by `AFTER` or `EVERY`commands. See also `DI`.
 
 ### `END`
 
@@ -1070,9 +1081,9 @@ PRINT ERR
 
 ## `EVERY time[,timer] GOSUB label`
 
-**Command**. Sets the specified `timer` (0–3, default 0) to call the subroutine at `label` every `time` ticks. Each tick represents 1/50 of a second, so a value of 50 corresponds to calling the label once per second.
+**Command**. Sets the specified `timer` (0–3, default 0) to call the subroutine at `label` every `time` ticks. Each tick represents 1/50 of a second, so a value of 50 corresponds to calling the label once per second. Registered events can be cancelled through the use of `REMAIN` command, or can be temporally disabled with the command `DI`.
 
-ABASC relies on the Amstrad CPC Firmware routines for handling asynchronous events. User routines are executed with the lower ROM active, so the code should be kept short and **avoid using the first 16K of memory**. Operations involving floating-point numbers or strings may attempt to allocate temporary memory within this range (the heap) and should be avoided, while integer operations are generally safe. This mechanism also requires that interrupts are enabled (see `DI` and `EI`).
+ABASC uses Firmware routines to handle synchronous events, as it is explained in the section `Events` of the `Peculiarities of the Compiler` chapter.
 
 ```basic
 A = 0
@@ -1788,7 +1799,7 @@ RELEASE 7   ' releases sounds on all three channels
 
 ### `REMAIN(timer)`
 
-**Function.** Disables the event associated with `timer` (in the range 0–3) and returns the number of ticks remaining before it would have been triggered. Such events are registered using `AFTER` or `EVERY`.
+**Function.** Disables the events associated with `timer` (in the range 0–3) and returns the number of ticks remaining before it would have been triggered. Such events are registered using `AFTER` or `EVERY`. ABASC uses Firmware routines to handle synchronous events, as it is explained in the section `Events` of the `Peculiarities of the Compiler` chapter.
 
 ### `RENUM new-line, origin-line, step`
 
