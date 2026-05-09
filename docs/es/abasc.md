@@ -329,10 +329,10 @@ DATA "Elvira", 20, 2005
 
 Además del compilador, el paquete de desarrollo incluye algunas herramientas adicionales para cubrir todo el proceso de generar un binario y poder distribuirlo. Cada una de estas herramientas cuenta con su propio manual distribuido junto al del compilador. Todas estas herramientas pueden utilizarse por si mismas y son totalmente independientes.
 
-- `abasm.py` --- ensamblador compatible con WinAPE y RVM. [manual](abasm.html)\
-- `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga. [manual](img.html)\
-- `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](dsk.html)\
-- `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](cdt.html)\
+- `abasm.py` --- ensamblador compatible con WinAPE y RVM. [manual](abasm.html)
+- `img.py` --- conversión de imágenes a formato CPC. Puede generar pantallas de carga. [manual](img.html)
+- `dsk.py` --- creación de disquetes `.DSK`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](dsk.html)
+- `cdt.py` --- creación de cintas `.CDT`. Permite distribuir los binarios generados y otros ficheros adicionales. [manual](cdt.html)
 - `basprj` --- crea una estructura básica de proyecto para comenzar a trabajar. [manual](basprj.html)
 
 ---
@@ -2492,7 +2492,7 @@ SUB txtPrintBig(text$, x, y, pen1, pen2)
 
 # Apéndice IV: CPCTELERA
 
-CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El _Framework_ original, incluyendo un gran número de herramientas adicionles, se pude consultar aquí:
+CPCtelera es un marco de desarrollo integrado para crear juegos para los ordenadores Amstrad CPC. El _Framework_ original, incluyendo un gran número de herramientas adicionales, se pude consultar aquí:
 
 - [Página de CPCTelera en Github](https://github.com/lronaldo/cpctelera)
 
