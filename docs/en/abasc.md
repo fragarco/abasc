@@ -3255,7 +3255,8 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.1.1
-  - Fixes a problem reserving string memory when using DECLARE FIXED.
+  - Fixes a problem reserving string memory when using DECLARE FIXED
+  - FIxes a problem in SELECT CASE optimization
 
 - Version 1.1.0
   - Improved support for EVERY, AFTER y REMAIN commands (check the section about EVENTS in this manual)

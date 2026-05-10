@@ -185,6 +185,10 @@ class BasOptimizer:
                 arg.fixedexp = self._op_statement(arg.fixedexp)
         return node
 
+    def _op_SELECT_CASE(self, node:AST.SelectCase) -> AST.SelectCase:
+        node.condition = self._op_statement(node.condition)
+        return node
+    
     def _op_WHILE(self, node:AST.WhileLoop) -> AST.Statement:
         node.condition = self._op_statement(node.condition)
         return node
@@ -293,6 +297,8 @@ class BasOptimizer:
                 for i in range(0, len(stmt.args)):
                     stmt.args[i] = self._op_statement(stmt.args[i])
                 stmt = self._op_keyword(stmt)
+        elif isinstance(stmt, AST.SelectCase):
+            stmt = self._op_SELECT_CASE(stmt)
         elif isinstance(stmt, AST.DefSUB):
             self.context = stmt.name
         elif isinstance(stmt, AST.DefFUN):
