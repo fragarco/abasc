@@ -3205,6 +3205,9 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.1.0
+  - 
+  
+- Versión 1.1.0
   - Mejor soporte para EVERY, AFTER y REMAIN (ver sección sobre Eventos en el manual)
   - Soporte básico para PRINT USING
 
