@@ -3205,7 +3205,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.1.0
-  - 
+  - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto
   
 - Versión 1.1.0
   - Mejor soporte para EVERY, AFTER y REMAIN (ver sección sobre Eventos en el manual)

@@ -972,15 +972,16 @@ class CPCEmitter:
         lower than 254 (+1 for size) for strings.
         """
         self._emit_code("; DECLARE list of: <string ident> [FIXED INT] | <ident>")
-        # We don't really emit code here but let's check if we have string variables
-        # using the FIXED command, so we can raise an error if we don't have a
-        # constant value. Otherwise let's update the symbol.
+        # We don't really emit code here but if we have string variables
+        # using the FIXED command, we add the extra byte for the string size and
+        # raise an error if we don't have a constant value.
         for arg in node.args:
             if isinstance(arg, AST.Variable) and arg.fixedexp is not None:
                 if isinstance(arg.fixedexp, AST.Integer):
                     entry = self.symtable.find(arg.name, SymType.Variable, self.context)
                     if entry is not None:
-                        entry.datasz = arg.fixedexp.value
+                        # We must add now an extra byte to hold the string size
+                        entry.datasz = arg.fixedexp.value + 1
                     else:
                         self._raise_error(2, arg)
                 else:
