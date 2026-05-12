@@ -1750,9 +1750,7 @@ class LocBasParser:
     @astnode   
     def _parse_NEW(self) -> AST.Command:
         """ <NEW> ::= NEW """
-        # A direct command that is not allowed in compiled programs    
         tk = self._advance()
-        self._raise_error(21, tk)
         return AST.Command(name="NEW")
 
     @astnode
@@ -2000,7 +1998,7 @@ class LocBasParser:
         if self._current_is(TokenType.HASH):
             self._advance()
             stream = self._parse_int_expression()
-            self._expect(TokenType.COMMA)
+            self._match(TokenType.COMMA)
         while not self._end_of_statement():
             if self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 sym = self._advance()
