@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.1'
+__version__='1.4.2'
 
 import sys
 import os
@@ -512,12 +512,19 @@ class DirEntry:
         return content[32:]
 
     def dump(self):
-        print(self.entry, end = ': ')
+        print("%02d" % self.entry, end = ': ')
         if self.status == CPM_DELETED:
             print("DELETED/NOT USED")
         else:
+            ext = self.ext
+            flagro  = ext[0] & 0x80   # Read-only and System flags
+            flagsys = ext[1] & 0x80   # are codified in the extension
+            ext[0] = ext[0] & 0x7F    # most-significative bit for chars
+            ext[1] = ext[1] & 0x7F    # 0 and 1
+            flags = 100 if flagro else 0
+            if flagsys: flags += 10
             print(self.name.decode('utf-8') + '.' + self.ext.decode('utf-8'), end = '  [ ')
-            print("st:", self.status, "extend:", self.extend, "data pages:", self.pages, ']')
+            print(f"user: {self.status} extend: {self.extend} flags: {flags:03} pages: {self.pages:03}]")
 
 class DirTable:
     """
@@ -580,7 +587,7 @@ class DirTable:
                 sectors = sectors + self.to_file_sectors(ientry + 1)
         return sectors, totpages
 
-    def write_entries(self, ientry, filename, fbytes):
+    def write_entries(self, ientry, filename, fbytes, userid, flagro, flagsys):
         """
         Returns the list of (track, sector) consumed by the file.
         This assumes that ientry was obtained with a call to can_allocate and
@@ -591,13 +598,15 @@ class DirTable:
         filepages = math.ceil(fbytes/CPM_PAGE_BYTES)
         filecomp = os.path.basename(filename).split('.')
         fext = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
+        if flagro:  fext[0] |= 0x80
+        if flagsys: fext[1] |= 0x80
         fname = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
         fext.extend(0x20 for i in range(3 - len(fext)))
         fname.extend(0x20 for i in range(8 - len(fname)))
         extend = 0
         while filepages > 0:
             e = self.entries[ientry]
-            e.status = 0
+            e.status = userid
             e.name = fname
             e.ext = fext
             e.pages = min(128, filepages)
@@ -724,13 +733,14 @@ class AmsdosHead:
         checksum = self.calculate_checksum()
         return checksum == self.checksum
     
-    def build(self, file, filesz):
+    def build(self, user, file, filesz):
         filecomp = os.path.basename(file).split('.')
         fext = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
         fname = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
         self.__init__()
         fext.extend(0x20 for i in range(3 - len(fext)))
         fname.extend(0x20 for i in range(8 - len(fname)))
+        self.user = user
         self.file_name = fname
         self.file_ext = fext
         self.file_type = AMSDOS_BIN_TYPE if fext != b'BAS' else AMSDOS_BAS_TYPE
@@ -859,20 +869,20 @@ def run_get_start(startaddr, mapfile):
         print(f"[dsk] ERROR - invalid start address value: {startaddr}")
         sys.exit(1)
 
-def run_put_file(infile, dskfile, disk, content):
+def run_put_file(infile, dskfile, disk, content, userid, flagro, flagsys):
     dirtable = disk.get_dirtable()
     ientry = dirtable.can_allocate(len(content))
     if ientry == -1:
         print("[dsk] ERROR - not enough space")
         sys.exit(1)
-    sectors = dirtable.write_entries(ientry, infile, len(content))
+    sectors = dirtable.write_entries(ientry, infile, len(content), userid, flagro, flagsys)
     disk.set_dirtable(dirtable)
     disk.add_content(sectors, content)
     disk.write(dskfile)
 
 def run_put_asciifile(args, disk):
     content = run_read_input_file(args.put_ascii)
-    print("[dsk] adding ASCII file", args.put_ascii)
+    print(f"[dsk] adding ASCII file {args.put_ascii} to USER {args.user}")
     run_check(args, disk)
     # ASCII files always go without AMSDOS header. Additionaly, CPM 2.2 uses a 
     # special character to indicate end of file. Lets check if the file already
@@ -883,7 +893,7 @@ def run_put_asciifile(args, disk):
     # so let's check here and fix it if the input file only uses \n
     if b'\r\n' not in content:
         content = content.replace(b'\n', b'\r\n')
-    run_put_file(args.put_ascii, args.dskfile, disk, content)
+    run_put_file(args.put_ascii, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
 def run_put_binfile(args, disk, infile):
     content = run_read_input_file(infile)
@@ -894,21 +904,21 @@ def run_put_binfile(args, disk, infile):
         if header.is_valid_header():
             print('[dsk] removing current AMSDOS header for', infile)
             content = content[128:]
-    print("[dsk] adding BIN file", infile)
+    print(f"[dsk] adding BIN file {infile} to USER {args.user}")
     mapfile = {}
-    header.build(infile, len(content))
+    header.build(args.user, infile, len(content))
     if args.map_file != None: mapfile = run_read_mapfile(args.map_file)
     if args.load_addr != None: header.addr_load = args.load_addr
     if args.start_addr != None: header.addr_entry = run_get_start(args.start_addr, mapfile)
     header.update_checksum()
     content = bytearray(header.compose() + content)
-    run_put_file(infile, args.dskfile, disk, content)
+    run_put_file(infile, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
 def run_put_rawfile(args, disk, infile):
     content = run_read_input_file(infile)
     run_check(args, disk)
-    print("[dsk] adding RAW file", infile)
-    run_put_file(infile, args.dskfile, disk, content)
+    print(f"[dsk] adding RAW file {infile} to USER {args.user}")
+    run_put_file(infile, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
 def aux_int(param):
     """
@@ -940,6 +950,9 @@ def process_args():
                         default="0x4000",
                         help='Call address (by default 0x4000).' +
                              'the binary file must include an AMSDOS header. If a map file is imported a symbol name can be used')
+    parser.add_argument('--flag-ro', action='store_true', help='Used when adding files. It adds the READ-ONLY flag to the file.')
+    parser.add_argument('--flag-sys', action='store_true', help='Used when adding files. It adds the SYSTEM flag to the file.')
+    parser.add_argument('--user', type=int, default=0, help='Used when adding files. It sets the USER ID (0-15). By default is 0.')
     parser.add_argument('-v', '--version', action='version', version=f' DSK Tool Version {__version__}', help = "Shows program's version and exits")
 
     args = parser.parse_args()

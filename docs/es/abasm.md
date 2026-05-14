@@ -1276,7 +1276,8 @@ FD AE hh    	XOR   (IY+d)    5 Realiza una OR exclusiva entre el valor en (IY+d)
 
 - Versión 1.4.2 -
   * Eliminamos los finales de línea ya que pueden afectar a los mensajes de error.
- 
+  * La herramienta DSK permite indicar el usuario y añadir los flags read-only y system.
+
 - Versión 1.4.1 - 09/02/2026
   * Pequeños arreglos en la biblioteca CPCTELERA
   * Mejores mensajes de error en las herramientas CDT/DSK

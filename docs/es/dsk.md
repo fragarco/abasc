@@ -37,6 +37,9 @@ python dsk.py <dskfile> [opciones]
 - `--map-file <file>`: Importa un archivo generado por el ensamblador ABASM con un listado de símbolos y su dirección de memoria asociada.
 - `--load-addr <address>`: Dirección inicial para la carga del archivo (por defecto 0x4000), solo se usa en archivos binarios con encabezados AMSDOS generados.
 - `--start-addr <address|symbol>`: Dirección de llamada después de cargar el archivo (por defecto 0x4000). Si se importa un archivo MAP con símbolos se puede indicar uno de esos símbolos como punto de inicio. Solo tiene uso en archivos binarios con encabezados AMSDOS.
+- `--user <number 0..15>`: Se puede emplear al añadir ficheros, permite fijar el USER ID (0-15). Su valor es 0 por defecto.
+- `--flag-ro`: Se puede emplear al añadir ficheros, establece el flag READ-ONLY.
+- `--flag-sys`: SE puede emplear al añadir ficheros, establece el flag SYSTEM.
 - `--help`: Muestra la ayuda en la salida estándar.
 
 ## Ejemplos de uso

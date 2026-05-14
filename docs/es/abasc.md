@@ -3207,6 +3207,7 @@ SUB         rsSetMode(nmode)
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto
   - Arregla un error en la optimización del comando SELECT CASE
+  - DSK permite ahora fijar los flags read-only y system
   
 - Versión 1.1.0
   - Mejor soporte para EVERY, AFTER y REMAIN (ver sección sobre Eventos en el manual)

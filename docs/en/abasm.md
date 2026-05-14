@@ -1267,7 +1267,8 @@ FD AE hh    	XOR   (IY+d)    5 Exclusive OR value at location in IY+d and accumu
 
 - Version 1.4.2 -
   * Remove line endings from source code as it can affect error messages.
-  
+  * DSK tool can now set system and read-only flags.
+
 - Version 1.4.1 - 09/02/2026
   * Some fixes in cpctelera assembly code.
   * Better error messages in CDT/DSK tools.
