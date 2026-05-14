@@ -3204,6 +3204,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.1.2
+  - 
+
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto
   - Arregla un error en la optimización del comando SELECT CASE
