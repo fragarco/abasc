@@ -1495,6 +1495,24 @@ class LocBasParser:
         self.current_usrlabel = label.lexeme
         return AST.Label(value=label.lexeme)
 
+    @astnode
+    def _parse_LBOUND(self) -> AST.Function:
+        """ <LBOUND> ::= LBOUND(IDENT[,<int_expression>])"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        tk = self._expect(TokenType.IDENT)
+        entry = self.symtable.find(tk.lexeme, SymType.Array, context=self.context)
+        if entry is None:
+            self._raise_error(2, tk, "undefined array")
+        args: list[AST.Statement] = [AST.Variable(name=tk.lexeme, etype=entry.exptype)]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        else:
+            args.append(AST.Integer(value=1))
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LBOUND", etype=AST.ExpType.Integer, args=args)
+
     @astnode  
     def _parse_LEFTSS(self) -> AST.Function:
         """ <LEFTSS> ::== LEFT$(<st_expression>,<int_expression>) """
@@ -2038,6 +2056,24 @@ class LocBasParser:
         if not self._end_of_statement():
             args = [self._parse_real_expression()]
         return AST.Command(name="RANDOMIZE", args=args)
+
+    @astnode
+    def _parse_RBOUND(self) -> AST.Function:
+        """ <RBOUND> ::= RBOUND(IDENT[,<int_expression>])"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        tk = self._expect(TokenType.IDENT)
+        entry = self.symtable.find(tk.lexeme, SymType.Array, context=self.context)
+        if entry is None:
+            self._raise_error(2, tk, "undefined array")
+        args: list[AST.Statement] = [AST.Variable(name=tk.lexeme, etype=entry.exptype)]
+        if self._current_is(TokenType.COMMA):
+            self._advance()
+            args.append(self._parse_int_expression())
+        else:
+            args.append(AST.Integer(value=1))
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="RBOUND", etype=AST.ExpType.Integer, args=args)
 
     @astnode
     def _parse_READ(self) -> AST.Command:

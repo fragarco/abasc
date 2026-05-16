@@ -113,6 +113,7 @@
     - [`KEY key, string`](#key-key-string)
     - [`KEY DEF key, repeat[,<normal>[,<shift>[,<ctrl>]]]`](#key-def-key-repeatnormalshiftctrl)
     - [`LABEL label`](#label-label)
+    - [`LBOUND(array, dimension)`](#lboundarray-dimension)
     - [`LEFT$(string, n)`](#leftstring-n)
     - [`LEN(string)`](#lenstring)
     - [`LET variable = expression`](#let-variable--expression)
@@ -156,6 +157,7 @@
     - [`PRINT USING literal;[list of variables]`](#print-using-literallist-of-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
+    - [`RBOUND(array, dimension)`](#rboundarray-dimension)
     - [`READ variable-list`](#read-variable-list)
     - [`READIN variable-list`](#readin-variable-list)
     - [`RECORD name;variable-list`](#record-namevariable-list)
@@ -1411,6 +1413,17 @@ LABEL palette:
 ASM "asm_label:"
 ```
 
+### `LBOUND(array, dimension)`
+
+**Function**. This function may be used to determine the lower bound of one of the dimensions of an array. Currently, `Abasc` only supports arrays that start from 0.
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT LBOUND(myarray)     ' returns 0
+PRINT LBOUND(myarray, 1)  ' returns 0
+PRINT LBOUND(myarray, 2)  ' returns 0
+```
+
 ### `LEFT$(string, n)`
 
 **Function**. Returns the first `n` characters from the left of `string`.
@@ -1759,6 +1772,17 @@ RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
 NEXT
+```
+
+### `RBOUND(array, dimension)`
+
+**Function**. This function may be used to determine the upper bound of one of the dimensions of an array. 
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT RBOUND(myarray)     ' returns 10
+PRINT RBOUND(myarray, 1)  ' returns 10
+PRINT RBOUND(myarray, 2)  ' returns 20
 ```
 
 ### `READ variable-list`
@@ -3255,7 +3279,8 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.1.2
-  -
+  - Adds support for character "!" in LOAD command
+  - Adds Locomotive BASIC functions LBOUND and RBOUND
 
 - Version 1.1.1
   - Fixes a problem reserving string memory when using DECLARE FIXED

@@ -401,6 +401,8 @@ href="#instrstart_position-string1-string2"><code>INSTR([start_position,] string
 <li><a
 href="#key-def-key-repeatnormalshiftctrl"><code>KEY DEF key, repeat[,&lt;normal&gt;[,&lt;shift&gt;[,&lt;ctrl&gt;]]]</code></a></li>
 <li><a href="#label-label"><code>LABEL label</code></a></li>
+<li><a
+href="#lboundarray-dimension"><code>LBOUND(array, dimension)</code></a></li>
 <li><a href="#leftstring-n"><code>LEFT$(string, n)</code></a></li>
 <li><a href="#lenstring"><code>LEN(string)</code></a></li>
 <li><a
@@ -468,6 +470,8 @@ href="#print-channellist-of-items"><code>PRINT [#channel,][list of items]</code>
 href="#print-using-literallist-of-variables"><code>PRINT USING literal;[list of variables]</code></a></li>
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
+<li><a
+href="#rboundarray-dimension"><code>RBOUND(array, dimension)</code></a></li>
 <li><a
 href="#read-variable-list"><code>READ variable-list</code></a></li>
 <li><a
@@ -2105,6 +2109,15 @@ LABEL palette:
     DATA 1,2,3,4
 
 ASM &quot;asm_label:&quot;</code></pre>
+<h3
+id="lboundarray-dimension"><code>LBOUND(array, dimension)</code></h3>
+<p><strong>Function</strong>. This function may be used to determine the
+lower bound of one of the dimensions of an array. Currently,
+<code>Abasc</code> only supports arrays that start from 0.</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT LBOUND(myarray)     &#39; returns 0
+PRINT LBOUND(myarray, 1)  &#39; returns 0
+PRINT LBOUND(myarray, 2)  &#39; returns 0</code></pre>
 <h3 id="leftstring-n"><code>LEFT$(string, n)</code></h3>
 <p><strong>Function</strong>. Returns the first <code>n</code>
 characters from the left of <code>string</code>.</p>
@@ -2471,6 +2484,14 @@ and <code>RND</code> require the use of real numbers.</p>
 FOR I=1 TO 20
     PRINT RND
 NEXT</code></pre>
+<h3
+id="rboundarray-dimension"><code>RBOUND(array, dimension)</code></h3>
+<p><strong>Function</strong>. This function may be used to determine the
+upper bound of one of the dimensions of an array.</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT RBOUND(myarray)     &#39; returns 10
+PRINT RBOUND(myarray, 1)  &#39; returns 10
+PRINT RBOUND(myarray, 2)  &#39; returns 20</code></pre>
 <h3 id="read-variable-list"><code>READ variable-list</code></h3>
 <p><strong>Command.</strong> Reads the next datum from those declared
 using <code>DATA</code> and assigns it to the corresponding variable in
@@ -3136,13 +3157,13 @@ commands from the directory containing <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Type checking:</strong></li>
 </ul>
-<div class="sourceCode" id="cb120"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb122"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Unit testing:</strong></li>
 </ul>
-<div class="sourceCode" id="cb121"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb123"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finally, the <code>examples</code> directory contains several sample
 programs that can be compiled and also used for testing and
 experimenting with the compiler.</p>
@@ -3928,7 +3949,11 @@ version 2 and version 2 plus.</p>
 <hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
-<li><h2 id="version-1.1.2">Version 1.1.2</h2></li>
+<li>Version 1.1.2
+<ul>
+<li>Adds support for character “!” in LOAD command</li>
+<li>Adds Locomotive BASIC functions LBOUND and RBOUND</li>
+</ul></li>
 <li>Version 1.1.1
 <ul>
 <li>Fixes a problem reserving string memory when using DECLARE

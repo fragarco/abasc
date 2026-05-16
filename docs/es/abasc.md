@@ -114,6 +114,7 @@
     - [`KEY DEF tecla,repetir[,<normal>[,<mayus>[,<control>]]]`](#key-def-teclarepetirnormalmayuscontrol)
     - [`LABEL etiqueta`](#label-etiqueta)
     - [`LEFT$(cadena,n)`](#leftcadenan)
+    - [`LBOUND(array, dimension)`](#lboundarray-dimension)
     - [`LEN(cadena)`](#lencadena)
     - [`LET variable=expression`](#let-variableexpression)
     - [`LINE INPUT [#canal,][;][cadena;]<variable>`](#line-input-canalcadenavariable)
@@ -156,6 +157,7 @@
     - [`PRINT USING literal;[lista de variables]`](#print-using-literallista-de-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
+    - [`RBOUND(array, dimension)`](#rboundarray-dimension)
     - [`READ lista-de-variables`](#read-lista-de-variables)
     - [`READIN lista-de-variables`](#readin-lista-de-variables)
     - [`RECORD nombre;lista-de-variables`](#record-nombrelista-de-variables)
@@ -1412,6 +1414,17 @@ Función. Devuelve los primeros `n` carácteres de la izquierda de `cadena`.
 PRINT LEFT$("AMSTRAD", 3)
 ```
 
+### `LBOUND(array, dimension)`
+
+Función. Devuelve el límite por debajo para la dimesión indicada de un array (1 por defecto). `Abasc` solo soporta arrays que comienzan a contar los elementos en 0, por lo que esta función, actualmente, siempre devuelve 0.
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT LBOUND(myarray)     ' returns 0
+PRINT LBOUND(myarray, 1)  ' returns 0
+PRINT LBOUND(myarray, 2)  ' returns 0
+```
+
 ### `LEN(cadena)`
 
 Función. Devuelve la longitud en carácteres de `cadena`
@@ -1741,6 +1754,17 @@ RANDOMIZE
 FOR I=1 TO 20
     PRINT RND
 NEXT
+```
+
+### `RBOUND(array, dimension)`
+
+Función. Devuelve el límite superior para la dimesión indicada de un array (1 por defecto).
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT RBOUND(myarray)     ' returns 10
+PRINT RBOUND(myarray, 1)  ' returns 10
+PRINT RBOUND(myarray, 2)  ' returns 20
 ```
 
 ### `READ lista-de-variables`
@@ -3205,7 +3229,8 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.1.2
-  - 
+  - Añade soporte para el símbolo "!" en el comando LOAD
+  - Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND
 
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto

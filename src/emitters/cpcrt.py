@@ -2945,7 +2945,10 @@ __timerget_end:
     ret
 """
 ),
-    "rt_timer_runsync": ([],"",
+    "rt_timer_runsync": ([],
+"""
+rt_runningevent: db 0
+""",
 f"""
 ; RT_TIMER_RUNSYNC
 ; Checks if there are remaining synchronous events that must be
@@ -2956,13 +2959,21 @@ f"""
 ;     HL address to the timer 
 ;     BC value for a synchronous event attached to specified timer
 rt_timer_runsync:
+    ld      a,(rt_runningevent)
+    or      a
+    ret     nz
+    ld      (rt_runningevent),a
     call    {FWCALL.KL_POLL_SYNCHRONOUS} ; KL_POLL_SYNCHRONOUS
     ret     nc
     call    {FWCALL.KL_NEXT_SYNC} ; KL_NEXT_SYNC
     ret     nc
     push    af
     push    hl
+    ld      a,1
+    ld      (rt_runningevent),a
     call    {FWCALL.KL_DO_SYNC} ; KL_DO_SYNC
+    xor     a
+    ld      (rt_runningevent),a
     pop     hl
     pop     af
     jp      {FWCALL.KL_DONE_SYNC} ; KL_DONE_SYNC
@@ -3208,6 +3219,11 @@ rt_load:
     ld      de,0   ; 2K buffer not needed with disks
     ld      b,(hl) ; filename length
     inc     hl
+    ld      a,"!"  ; remove initial ! if present
+    cp      (hl)
+    jr      nz,$+4
+    dec     b
+    inc     hl
     call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
     ret     nc     ; Error
     ex      de,hl
@@ -3230,6 +3246,11 @@ rt_loadaddr:
     push    de
     ld      de,0   ; 2K buffer not needed with CAS_IN_DIRECT
     ld      b,(hl) ; filename length
+    inc     hl
+    ld      a,"!"  ; remove initial ! if present
+    cp      (hl)
+    jr      nz,$+4
+    dec     b
     inc     hl
     call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
     ret     nc     ; Error

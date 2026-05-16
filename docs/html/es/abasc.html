@@ -404,6 +404,8 @@ href="#instrposicióncadena1cadena2"><code>INSTR([posición,]cadena1,cadena2)</c
 href="#key-def-teclarepetirnormalmayuscontrol"><code>KEY DEF tecla,repetir[,&lt;normal&gt;[,&lt;mayus&gt;[,&lt;control&gt;]]]</code></a></li>
 <li><a href="#label-etiqueta"><code>LABEL etiqueta</code></a></li>
 <li><a href="#leftcadenan"><code>LEFT$(cadena,n)</code></a></li>
+<li><a
+href="#lboundarray-dimension"><code>LBOUND(array, dimension)</code></a></li>
 <li><a href="#lencadena"><code>LEN(cadena)</code></a></li>
 <li><a
 href="#let-variableexpression"><code>LET variable=expression</code></a></li>
@@ -465,6 +467,8 @@ href="#print-canallista-de-elementos"><code>PRINT [#canal,][lista de elementos]<
 href="#print-using-literallista-de-variables"><code>PRINT USING literal;[lista de variables]</code></a></li>
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
+<li><a
+href="#rboundarray-dimension"><code>RBOUND(array, dimension)</code></a></li>
 <li><a
 href="#read-lista-de-variables"><code>READ lista-de-variables</code></a></li>
 <li><a
@@ -2141,6 +2145,16 @@ ASM &quot;asm_label:&quot;</code></pre>
 <p>Función. Devuelve los primeros <code>n</code> carácteres de la
 izquierda de <code>cadena</code>.</p>
 <pre class="basic"><code>PRINT LEFT$(&quot;AMSTRAD&quot;, 3)</code></pre>
+<h3
+id="lboundarray-dimension"><code>LBOUND(array, dimension)</code></h3>
+<p>Función. Devuelve el límite por debajo para la dimesión indicada de
+un array (1 por defecto). <code>Abasc</code> solo soporta arrays que
+comienzan a contar los elementos en 0, por lo que esta función,
+actualmente, siempre devuelve 0.</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT LBOUND(myarray)     &#39; returns 0
+PRINT LBOUND(myarray, 1)  &#39; returns 0
+PRINT LBOUND(myarray, 2)  &#39; returns 0</code></pre>
 <h3 id="lencadena"><code>LEN(cadena)</code></h3>
 <p>Función. Devuelve la longitud en carácteres de
 <code>cadena</code></p>
@@ -2495,6 +2509,14 @@ reales.</p>
 FOR I=1 TO 20
     PRINT RND
 NEXT</code></pre>
+<h3
+id="rboundarray-dimension"><code>RBOUND(array, dimension)</code></h3>
+<p>Función. Devuelve el límite superior para la dimesión indicada de un
+array (1 por defecto).</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT RBOUND(myarray)     &#39; returns 10
+PRINT RBOUND(myarray, 1)  &#39; returns 10
+PRINT RBOUND(myarray, 2)  &#39; returns 20</code></pre>
 <h3
 id="read-lista-de-variables"><code>READ lista-de-variables</code></h3>
 <p>Comando. Lee el siguiente dato de los declarados con
@@ -3156,13 +3178,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb119"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb121"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb120"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb122"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -3952,7 +3974,11 @@ describe a continuación.</p>
 <hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li><h2 id="versión-1.1.2">Versión 1.1.2</h2></li>
+<li>Versión 1.1.2
+<ul>
+<li>Añade soporte para el símbolo “!” en el comando LOAD</li>
+<li>Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND</li>
+</ul></li>
 <li>Versión 1.1.1
 <ul>
 <li>Arregla un error al reservar espacio usando DECLARE y FIXED en
