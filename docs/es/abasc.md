@@ -124,6 +124,7 @@
     - [`LOG(x)`](#logx)
     - [`LOG10(x)`](#log10x)
     - [`LOWER$(cadena)`](#lowercadena)
+    - [`LTRIM$(string)`](#ltrimstring)
     - [`MASK mascara[,puntoinicial]`](#mask-mascarapuntoinicial)
     - [`MAX(a,b[,c,d,e...])`](#maxabcde)
     - [MEMORY maxdir](#memory-maxdir)
@@ -171,6 +172,7 @@
     - [`RIGHT$(cadena,n)`](#rightcadenan)
     - [`RND[(0)]`](#rnd0)
     - [`ROUND(x[,n])`](#roundxn)
+    - [`RTRIM$(string)`](#rtrimstring)
     - [`RUN [etiqueta | fichero]`](#run-etiqueta--fichero)
     - [`SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`](#save-ficherotipodireccióntamañoentrada)
     - [`SGN(x)`](#sgnx)
@@ -1496,6 +1498,16 @@ PRINT LOWER$(C$)
 PRINT UPPER$(C$)
 ```
 
+### `LTRIM$(string)`
+
+Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al inicio.
+
+```basic
+a$ = "  HOLA"
+PRINT "......"
+PRINT LTRIM$(a$) 
+```
+
 ### `MASK mascara[,puntoinicial]`
 
 Comando. Solo disponible a partir de BASIC 1.1. Cualquier programa compilado usando este comando solo funcionará en ordenadores Amstrad CPC664 y CPC6128. Establece la máscara o plantilla que se utilizará al dibujar líneas. El valor binario `mascara` debe estar en el rango de 0 a 255. Su significado es activar (1) o desactivar (0) los bits de cada grupo adyacente de 8 píxeles. `puntoinicial` determina si el primer punto de la línea se debe dibujar (1) o no (0).
@@ -1875,6 +1887,15 @@ FOR I=0 TO 4
     PRINT ROUND(PI, I)
 NEXT
 PRINT ROUND(PI,-3)
+```
+
+### `RTRIM$(string)`
+
+Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al final.
+
+```basic
+a$ = "HOLA  "
+PRINT RTRIM$(a$), LEN(a$)
 ```
 
 ### `RUN [etiqueta | fichero]`
@@ -3230,7 +3251,8 @@ SUB         rsSetMode(nmode)
 
 - Versión 1.1.2
   - Añade soporte para el símbolo "!" en el comando LOAD
-  - Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND
+  - Añade las funciones de Locomotive BASIC 2 LBOUND y RBOUND
+  - Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$ 
   - Añade soporte para patrones en el comando DEC$
 
 - Versión 1.1.1

@@ -1654,6 +1654,15 @@ class LocBasParser:
         return AST.Function(name="LOWER$", etype=AST.ExpType.String, args=args)
 
     @astnode
+    def _parse_LTRIMSS(self) -> AST.Function:
+        """ <LTRIMSS> ::= LTRIM$(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="LTRIM$", etype=AST.ExpType.String, args=args)
+
+    @astnode
     def _parse_MASK(self) -> AST.Command:
         """ <MASK> ::= MASK <int_expression>[,<int_expression>] """
         self._advance()
@@ -2239,6 +2248,15 @@ class LocBasParser:
             args.append(self._parse_int_expression())
         self._expect(TokenType.RPAREN)
         return AST.Function(name="ROUND", etype=AST.ExpType.Real, args=args)
+
+    @astnode
+    def _parse_RTRIMSS(self) -> AST.Function:
+        """ <RTRIMSS> ::= RTRIM$(<str_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args = [self._parse_str_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="RTRIM$", etype=AST.ExpType.String, args=args)
 
     @astnode
     def _parse_RUN(self) -> AST.Command:

@@ -2099,7 +2099,7 @@ __extract_end:
 """
 ; RT_STRZ_LSTRIP
 ; Scans the zero-terminated string pointed by HL from the left
-; until if finds a character different from an empty space.
+; until it finds a character different from an empty space.
 ; Inputs:
 ;     HL address to the zero-terminated string to scan
 ; Outputs:
@@ -2118,7 +2118,7 @@ rt_strz_lstrip:
 """
 ; RT_STRZ_RSTRIP
 ; Scans the zero-terminated string pointed by HL from the right
-; until if finds a character different from an empty space.
+; until it finds a character different from an empty space.
 ; Inputs:
 ;     HL address to the zero-terminated string to scan
 ; Outputs:
@@ -2232,6 +2232,98 @@ __input_end:
     call    {FWCALL.TXT_CUR_OFF} ; TXT_CUR_OFF
     ld      hl,rt_input_buf
     jp      rt_count_substrz      
+"""
+),
+    "rt_ltrim": ([],"",
+"""
+; RT_LTRIM
+; Scans the string pointed by HL from the left until it finds 
+; a character different from an empty space, copying the
+; remaining substring into the string pointed by DE.
+; Inputs:
+;     HL address to the string to scan
+;     DE address to the destination string
+; Outputs:
+;     HL address to the resulting string
+;     AF and HL are modified
+rt_ltrim:
+    ld      c,0
+    push    de
+    ld      a,(hl)
+    or      a
+    jr      z,__ltrim_end
+    ld      b,a   
+    ld      a," "
+    inc     hl
+__ltrim_spaces:
+    cp      (hl)
+    jr      nz,__ltrim_copystr
+    inc     hl
+    djnz    __ltrim_spaces
+    jr      __ltrim_end
+__ltrim_copystr:
+    inc     de
+    inc     c
+    ld      a,(hl)
+    ld      (de),a
+    inc     hl
+    djnz    __ltrim_copystr
+__ltrim_end:
+    pop     hl
+    ld      (hl),c
+    ret
+"""
+),
+    "rt_rtrim": ([],"",
+"""
+; RT_RTRIM
+; Scans the string pointed by HL from the right until it finds 
+; a character different from an empty space, copying the
+; remaining substring into the string pointed by DE.
+; Inputs:
+;     HL address to the string to scan
+;     DE address to the destination string
+; Outputs:
+;     HL address to the resulting string
+;     AF and HL are modified
+rt_rtrim:
+    ld      a,(hl)
+    or      a
+    jr      z,__rtrim_empty
+    push    hl
+    push    de
+    ld      b,a
+    add     a,l               ; doing HL + current length
+    ld      l,a
+    adc     a,h
+    sub     l
+    ld      h,a
+    ld      a," "
+__rtrim_spaces:
+    cp      (hl)
+    jr      nz,__rtrim_copystr
+    dec     hl
+    djnz    __rtrim_spaces
+    pop     de
+    pop     hl
+    jr      __rtrim_empty
+__rtrim_copystr:
+    pop     de
+    pop     hl
+    ld      a,b
+    ld      (de),a            ; remaining chars
+    push    de
+    ld      c,b
+    ld      b,0
+    inc     de
+    inc     hl
+    ldir
+    pop     hl
+    ret
+__rtrim_empty:
+    ex      de,hl
+    ld      (hl),0
+    ret
 """
 ),
     "rt_writestr": ([],"",

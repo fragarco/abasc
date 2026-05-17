@@ -124,6 +124,7 @@
     - [`LOG(x)`](#logx)
     - [`LOG10(x)`](#log10x)
     - [`LOWER$(string)`](#lowerstring)
+    - [`LTRIM$(string)`](#ltrimstring)
     - [`MASK mask[,startPoint]`](#mask-maskstartpoint)
     - [`MAX(a, b[, c, d, e...])`](#maxa-b-c-d-e)
     - [`MEMORY maxAddress`](#memory-maxaddress)
@@ -171,6 +172,7 @@
     - [`RIGHT$(string, n)`](#rightstring-n)
     - [`RND[(0)]`](#rnd0)
     - [`ROUND(x[,n])`](#roundxn)
+    - [`RTRIM$(string)`](#rtrimstring)
     - [`RUN [label | file]`](#run-label--file)
     - [`SAVE file[,type][,address,size[,entry]]`](#save-filetypeaddresssizeentry)
     - [`SGN(x)`](#sgnx)
@@ -1509,6 +1511,16 @@ PRINT LOWER$(C$)  ' Output: "amstrad"
 PRINT UPPER$(C$)  ' Output: "AMSTRAD"
 ```
 
+### `LTRIM$(string)`
+
+**Función**. Returns the string expression with any leading spaces removed.
+
+```basic
+a$ = "  HELLO"
+PRINT "......"
+PRINT LTRIM$(a$) 
+```
+
 ### `MASK mask[,startPoint]`
 
 **Command**. Available only from BASIC 1.1 onward. Programs compiled using this command will only run on Amstrad CPC 664 or CPC 6128 computers.
@@ -1893,6 +1905,15 @@ FOR I=0 TO 4
     PRINT ROUND(PI, I)
 NEXT
 PRINT ROUND(PI, -3)
+```
+
+### `RTRIM$(string)`
+
+**Función**. Returns the string expression with any trailing spaces removed.
+
+```basic
+a$ = "HELLO  "
+PRINT RTRIM$(a$) , LEN(a$)
 ```
 
 ### `RUN [label | file]`
@@ -3280,7 +3301,8 @@ SUB         rsSetMode(nmode)
 
 - Version 1.1.2
   - Adds support for character "!" in LOAD command
-  - Adds Locomotive BASIC functions LBOUND and RBOUND
+  - Adds Locomotive BASIC 2 functions LBOUND and RBOUND
+  - Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$ 
   - Adds support for USING templates in DEC$ command
 
 - Version 1.1.1

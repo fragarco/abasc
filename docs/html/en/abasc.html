@@ -418,6 +418,7 @@ href="#locate-channel-x-y"><code>LOCATE [#channel,] x, y</code></a></li>
 <li><a href="#logx"><code>LOG(x)</code></a></li>
 <li><a href="#log10x"><code>LOG10(x)</code></a></li>
 <li><a href="#lowerstring"><code>LOWER$(string)</code></a></li>
+<li><a href="#ltrimstring"><code>LTRIM$(string)</code></a></li>
 <li><a
 href="#mask-maskstartpoint"><code>MASK mask[,startPoint]</code></a></li>
 <li><a
@@ -489,6 +490,7 @@ href="#renum-new-line-origin-line-step"><code>RENUM new-line, origin-line, step<
 <li><a href="#rightstring-n"><code>RIGHT$(string, n)</code></a></li>
 <li><a href="#rnd0"><code>RND[(0)]</code></a></li>
 <li><a href="#roundxn"><code>ROUND(x[,n])</code></a></li>
+<li><a href="#rtrimstring"><code>RTRIM$(string)</code></a></li>
 <li><a href="#run-label--file"><code>RUN [label | file]</code></a></li>
 <li><a
 href="#save-filetypeaddresssizeentry"><code>SAVE file[,type][,address,size[,entry]]</code></a></li>
@@ -2186,6 +2188,12 @@ characters converted to lowercase.</p>
 <pre class="basic"><code>C$ = &quot;AmsTRaD&quot;
 PRINT LOWER$(C$)  &#39; Output: &quot;amstrad&quot;
 PRINT UPPER$(C$)  &#39; Output: &quot;AMSTRAD&quot;</code></pre>
+<h3 id="ltrimstring"><code>LTRIM$(string)</code></h3>
+<p><strong>Función</strong>. Returns the string expression with any
+leading spaces removed.</p>
+<pre class="basic"><code>a$ = &quot;  HELLO&quot;
+PRINT &quot;......&quot;
+PRINT LTRIM$(a$) </code></pre>
 <h3 id="mask-maskstartpoint"><code>MASK mask[,startPoint]</code></h3>
 <p><strong>Command</strong>. Available only from BASIC 1.1 onward.
 Programs compiled using this command will only run on Amstrad CPC 664 or
@@ -2597,6 +2605,11 @@ NEXT</code></pre>
     PRINT ROUND(PI, I)
 NEXT
 PRINT ROUND(PI, -3)</code></pre>
+<h3 id="rtrimstring"><code>RTRIM$(string)</code></h3>
+<p><strong>Función</strong>. Returns the string expression with any
+trailing spaces removed.</p>
+<pre class="basic"><code>a$ = &quot;HELLO  &quot;
+PRINT RTRIM$(a$) , LEN(a$)</code></pre>
 <h3 id="run-label-file"><code>RUN [label | file]</code></h3>
 <p><strong>Command.</strong> In Locomotive BASIC, this command runs the
 program already in memory from the beginning (no argument), starts the
@@ -3157,13 +3170,13 @@ commands from the directory containing <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Type checking:</strong></li>
 </ul>
-<div class="sourceCode" id="cb122"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb124"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Unit testing:</strong></li>
 </ul>
-<div class="sourceCode" id="cb123"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb125"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finally, the <code>examples</code> directory contains several sample
 programs that can be compiled and also used for testing and
 experimenting with the compiler.</p>
@@ -3952,7 +3965,8 @@ version 2 and version 2 plus.</p>
 <li>Version 1.1.2
 <ul>
 <li>Adds support for character “!” in LOAD command</li>
-<li>Adds Locomotive BASIC functions LBOUND and RBOUND</li>
+<li>Adds Locomotive BASIC 2 functions LBOUND and RBOUND</li>
+<li>Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$</li>
 <li>Adds support for USING templates in DEC$ command</li>
 </ul></li>
 <li>Version 1.1.1

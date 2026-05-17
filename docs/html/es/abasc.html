@@ -419,6 +419,7 @@ href="#load-ficherodirección"><code>LOAD fichero[,dirección]</code></a></li>
 <li><a href="#logx"><code>LOG(x)</code></a></li>
 <li><a href="#log10x"><code>LOG10(x)</code></a></li>
 <li><a href="#lowercadena"><code>LOWER$(cadena)</code></a></li>
+<li><a href="#ltrimstring"><code>LTRIM$(string)</code></a></li>
 <li><a
 href="#mask-mascarapuntoinicial"><code>MASK mascara[,puntoinicial]</code></a></li>
 <li><a href="#maxabcde"><code>MAX(a,b[,c,d,e...])</code></a></li>
@@ -487,6 +488,7 @@ href="#renum-nueva-linea-linea-origen-incremento"><code>RENUM nueva-linea, linea
 <li><a href="#rightcadenan"><code>RIGHT$(cadena,n)</code></a></li>
 <li><a href="#rnd0"><code>RND[(0)]</code></a></li>
 <li><a href="#roundxn"><code>ROUND(x[,n])</code></a></li>
+<li><a href="#rtrimstring"><code>RTRIM$(string)</code></a></li>
 <li><a
 href="#run-etiqueta--fichero"><code>RUN [etiqueta | fichero]</code></a></li>
 <li><a
@@ -2213,6 +2215,12 @@ a minúsculas.</p>
 <pre class="basic"><code>C$=&quot;AmsTRaD&quot;
 PRINT LOWER$(C$)
 PRINT UPPER$(C$)</code></pre>
+<h3 id="ltrimstring"><code>LTRIM$(string)</code></h3>
+<p>Función. Devuelve la cadena de texto pasada como argumento eliminado
+cualquier espacio al inicio.</p>
+<pre class="basic"><code>a$ = &quot;  HOLA&quot;
+PRINT &quot;......&quot;
+PRINT LTRIM$(a$) </code></pre>
 <h3
 id="mask-mascarapuntoinicial"><code>MASK mascara[,puntoinicial]</code></h3>
 <p>Comando. Solo disponible a partir de BASIC 1.1. Cualquier programa
@@ -2621,6 +2629,11 @@ indicada por <code>n</code> (0 por defecto).</p>
     PRINT ROUND(PI, I)
 NEXT
 PRINT ROUND(PI,-3)</code></pre>
+<h3 id="rtrimstring"><code>RTRIM$(string)</code></h3>
+<p>Función. Devuelve la cadena de texto pasada como argumento eliminado
+cualquier espacio al final.</p>
+<pre class="basic"><code>a$ = &quot;HOLA  &quot;
+PRINT RTRIM$(a$), LEN(a$)</code></pre>
 <h3 id="run-etiqueta-fichero"><code>RUN [etiqueta | fichero]</code></h3>
 <p>Comando. En BASIC este comando permite ejecutar desde el principio el
 programa actualmente en memoria (sin argumentos), ejecutar un programa
@@ -3178,13 +3191,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb121"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb123"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb122"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb124"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -3977,7 +3990,8 @@ describe a continuación.</p>
 <li>Versión 1.1.2
 <ul>
 <li>Añade soporte para el símbolo “!” en el comando LOAD</li>
-<li>Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND</li>
+<li>Añade las funciones de Locomotive BASIC 2 LBOUND y RBOUND</li>
+<li>Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$</li>
 <li>Añade soporte para patrones en el comando DEC$</li>
 </ul></li>
 <li>Versión 1.1.1

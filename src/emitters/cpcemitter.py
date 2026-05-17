@@ -2310,6 +2310,17 @@ class CPCEmitter:
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
+    def _emit_LTRIMSS(self, node:AST.Function) -> None:
+        """
+        Returns the string expression with any leading spaces removed.
+        """
+        self._emit_import("rt_ltrim")
+        self._emit_code("; LTRIM$(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._reserve_heapmem_de(255, node)
+        self._emit_code("call    rt_ltrim")
+        self._emit_code(";")
+
     def _emit_MASK(self, node:AST.Command) -> None:
         """
         Only available with BASIC 1.1
@@ -3290,6 +3301,17 @@ class CPCEmitter:
         self._emit_code("pop     bc")
         self._emit_code("call    rt_real_round")
         self._moveflo_heap(node)   
+        self._emit_code(";")
+
+    def _emit_RTRIMSS(self, node:AST.Function) -> None:
+        """
+        Returns the string expression with any trailing spaces removed.
+        """
+        self._emit_import("rt_rtrim")
+        self._emit_code("; RTRIM$(<string expression>)")
+        self._emit_expression(node.args[0])
+        self._reserve_heapmem_de(255, node)
+        self._emit_code("call    rt_rtrim")
         self._emit_code(";")
 
     def _emit_RUN(self, node:AST.Command) -> None:
