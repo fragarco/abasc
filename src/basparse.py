@@ -553,7 +553,7 @@ class LocBasParser:
             return AST.Real(value=cast(float, tok.value))
         elif tok.type == TokenType.STRING:
             self._advance()
-            return AST.String(value=tok.lexeme.strip('"'))
+            return AST.String(cast(str, tok.value))
         else:
             text = self._advance().text
             return AST.String(value=text)
@@ -566,7 +566,7 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_num_expression()]
         self._expect(TokenType.COMMA)
         tk = self._expect(TokenType.STRING)
-        args.append(AST.String(value=tk.lexeme))
+        args.append(AST.String(cast(str, tk.value)))
         self._expect(TokenType.RPAREN)
         return AST.Function(name="DEC$", args=args, etype=AST.ExpType.String)
 
@@ -1388,7 +1388,7 @@ class LocBasParser:
             self._expect(TokenType.COMMA)
         if self._current_is(TokenType.STRING):
             tk = self._advance()
-            prompt = tk.lexeme.strip('"')
+            prompt = cast(str, tk.value)
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2, tk)
         if self._match(TokenType.COMMA): question = False
@@ -1558,7 +1558,8 @@ class LocBasParser:
             else:
                 carriage = False
         if self._current_is(TokenType.STRING):
-            prompt = self._advance().lexeme.strip('"')    
+            tk = self._advance()
+            prompt = cast(str, tk.value)
             if not self._current_in((TokenType.COMMA, TokenType.SEMICOLON)):
                 self._raise_error(2, self._current())
             question = False if self._advance().type == TokenType.COMMA else True
@@ -3055,7 +3056,7 @@ class LocBasParser:
             return AST.Real(value=cast(float, tok.value))
         if tok.type == TokenType.STRING:
             self._advance()
-            return AST.String(value=tok.lexeme.strip('"'))
+            return AST.String(cast(str, tok.value))
         if tok.type == TokenType.IDENT:
             # FUNCTIONs must be declared before use
             entry = self.symtable.find("FUN" + tok.lexeme, SymType.Function)

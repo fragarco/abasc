@@ -904,7 +904,7 @@ DECLARE A            ' que A.
 
 ### `DEC$(numero,patron)`
 
-Función. Esta función apareció con la versión 1.1 de BASIC. Permite convertir `numero` en una cadena aplicando un patrón para indicar el número de espacios antes o después del punto decimal. ABASC no soporta todavía el uso de estos patrones, por lo que esta llamada se comporta, básicamente, igual que `STR$`.
+Función. Esta función apareció con la versión 1.1 de BASIC. Permite convertir `numero` en una cadena aplicando un patrón para indicar el número de espacios antes o después del punto decimal. A la hora de indicar el patrón, solo se soporta el uso de `#` para indicar dígitos.
 
 ```basic
 PRINT DEC$(15.5, "###.##")
@@ -3231,6 +3231,7 @@ SUB         rsSetMode(nmode)
 - Versión 1.1.2
   - Añade soporte para el símbolo "!" en el comando LOAD
   - Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND
+  - Añade soporte para patrones en el comando DEC$
 
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto

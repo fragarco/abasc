@@ -1498,8 +1498,8 @@ DECLARE A             &#39; declares integer A</code></pre>
 <h3 id="decnumber-pattern"><code>DEC$(number, pattern)</code></h3>
 <p><strong>Function</strong>. Introduced in BASIC 1.1, <code>DEC$</code>
 converts <code>number</code> to a string using a pattern to define the
-number of spaces before or after the decimal point. ABASC currently
-ignores the pattern, so this behaves similarly to <code>STR$</code>.</p>
+number of spaces before or after the decimal point. Only the use of
+<code>#</code> to indicate digits is supported.</p>
 <pre class="basic"><code>PRINT DEC$(15.5, &quot;###.##&quot;)</code></pre>
 <h3
 id="def-fn-nameparameters-expression"><code>DEF FN name(parameters) = expression</code></h3>
@@ -3953,6 +3953,7 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>Adds support for character “!” in LOAD command</li>
 <li>Adds Locomotive BASIC functions LBOUND and RBOUND</li>
+<li>Adds support for USING templates in DEC$ command</li>
 </ul></li>
 <li>Version 1.1.1
 <ul>

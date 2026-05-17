@@ -902,7 +902,7 @@ DECLARE A             ' declares integer A
 
 ### `DEC$(number, pattern)`
 
-**Function**. Introduced in BASIC 1.1, `DEC$` converts `number` to a string using a pattern to define the number of spaces before or after the decimal point. ABASC currently ignores the pattern, so this behaves similarly to `STR$`.
+**Function**. Introduced in BASIC 1.1, `DEC$` converts `number` to a string using a pattern to define the number of spaces before or after the decimal point. Only the use of `#` to indicate digits is supported.
 
 ```basic
 PRINT DEC$(15.5, "###.##")
@@ -3281,6 +3281,7 @@ SUB         rsSetMode(nmode)
 - Version 1.1.2
   - Adds support for character "!" in LOAD command
   - Adds Locomotive BASIC functions LBOUND and RBOUND
+  - Adds support for USING templates in DEC$ command
 
 - Version 1.1.1
   - Fixes a problem reserving string memory when using DECLARE FIXED

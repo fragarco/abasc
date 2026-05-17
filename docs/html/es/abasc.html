@@ -1546,9 +1546,9 @@ DECLARE A            &#39; que A.</code></pre>
 <h3 id="decnumeropatron"><code>DEC$(numero,patron)</code></h3>
 <p>Función. Esta función apareció con la versión 1.1 de BASIC. Permite
 convertir <code>numero</code> en una cadena aplicando un patrón para
-indicar el número de espacios antes o después del punto decimal. ABASC
-no soporta todavía el uso de estos patrones, por lo que esta llamada se
-comporta, básicamente, igual que <code>STR$</code>.</p>
+indicar el número de espacios antes o después del punto decimal. A la
+hora de indicar el patrón, solo se soporta el uso de <code>#</code> para
+indicar dígitos.</p>
 <pre class="basic"><code>PRINT DEC$(15.5, &quot;###.##&quot;)</code></pre>
 <h3
 id="def-fn-nombreparametrosexpresion"><code>DEF FN nombre(parametros)=expresion</code></h3>
@@ -3978,6 +3978,7 @@ describe a continuación.</p>
 <ul>
 <li>Añade soporte para el símbolo “!” en el comando LOAD</li>
 <li>Añade las funcioniones de Locomotive BASIC 2 LBOUND y RBOUND</li>
+<li>Añade soporte para patrones en el comando DEC$</li>
 </ul></li>
 <li>Versión 1.1.1
 <ul>

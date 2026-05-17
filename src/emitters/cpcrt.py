@@ -539,13 +539,15 @@ __usingint_done:
     ld      hl,rt_scratch_pad
     ret
 __usingint_copyspaces:
-    ld      a,&20             ; empty space
-__usingint_repeatchar:
     dec     de
+    ld      a,(de)
+    cp      "#"
+    jr      nz,__usingint_done
+    ld      a,&20             ; empty space
     ld      (de),a
     dec     c
     jr      z,__usingint_done
-    jr      __usingint_repeatchar
+    jr      __usingint_copyspaces
 """
 ),
     "rt_using_str": (["rt_scratch_pad"],"",

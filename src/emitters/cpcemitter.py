@@ -996,26 +996,32 @@ class CPCEmitter:
         The format template may contain ONLY the characters: + - £ $ * # , . ^
         """
         self._emit_code("; DEC$(<numeric expression>,<format template>)")
-        # TODO: apply format
-        arg = node.args[0]
-        self._emit_expression(arg)
-        if arg.etype == AST.ExpType.Integer:
+        self._emit_import("rt_strcopy")
+        self._emit_expression(node.args[1])
+        self._emit_code("ex      de,hl")    
+        self._emit_code("ld      hl,rt_scratch_pad")
+        self._emit_code("call    rt_strcopy", info="copy format template to scratch buffer")
+        self._emit_expression(node.args[0])
+        if node.args[0].etype == AST.ExpType.Integer:
             self._emit_import("rt_int2str")
+            self._emit_import("rt_using_int")
             self._emit_code("call    rt_int2str")
-            self._reserve_heapmem_de(8, node)
-            self._emit_code("push    de")
-            self._emit_code("ldir")
-            self._emit_code("pop     hl")
-        else:
+            self._emit_code("call    rt_using_int")
+        elif node.args[0].etype == AST.ExpType.Real:
+            self._emit_import("rt_math_call")
             self._emit_import("rt_real2strz")
-            self._emit_import("rt_strzcopy")
+            self._emit_import("rt_using_real")
             self._emit_pushcontext()
+            self._moveflo_accum1()
             self._emit_code("call    rt_real2strz")
-            self._reserve_heapmem(12, node)
-            self._emit_code("ld      de,rt_real2strz_buf")
-            self._emit_code("call    rt_strzcopy")
+            self._emit_code("call    rt_using_real")
             self._emit_popcontext()
-        self._raise_warning(WL.MEDIUM, "text patterns are not supported yet", node)
+        else:
+            self._raise_error(2, node.args[0], "type not supported by USING")
+        self._reserve_heapmem_de(255, node)
+        self._emit_code("push    de")
+        self._emit_code("ldir")
+        self._emit_code("pop     hl")
         self._emit_code(";")
 
     def _emit_DEFINT(self, node:AST.Command) -> None:
