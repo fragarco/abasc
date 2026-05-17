@@ -1513,7 +1513,7 @@ PRINT UPPER$(C$)  ' Output: "AMSTRAD"
 
 ### `LTRIM$(string)`
 
-**Función**. Returns the string expression with any leading spaces removed.
+**Función**. Returns the string expression with any leading spaces removed. This command was introduced in Locomotive BASIC 2.
 
 ```basic
 a$ = "  HELLO"
@@ -1909,7 +1909,7 @@ PRINT ROUND(PI, -3)
 
 ### `RTRIM$(string)`
 
-**Función**. Returns the string expression with any trailing spaces removed.
+**Función**. Returns the string expression with any trailing spaces removed. This command was introduced in Locomotive BASIC 2.
 
 ```basic
 a$ = "HELLO  "

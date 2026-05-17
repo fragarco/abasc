@@ -1500,7 +1500,7 @@ PRINT UPPER$(C$)
 
 ### `LTRIM$(string)`
 
-Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al inicio.
+Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al inicio. Esta función se introdujo en la versión 2 de Locomotive BASIC.
 
 ```basic
 a$ = "  HOLA"
@@ -1891,7 +1891,7 @@ PRINT ROUND(PI,-3)
 
 ### `RTRIM$(string)`
 
-Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al final.
+Función. Devuelve la cadena de texto pasada como argumento eliminado cualquier espacio al final. Esta función se introdujo en la versión 2 de Locomotive BASIC.
 
 ```basic
 a$ = "HOLA  "
