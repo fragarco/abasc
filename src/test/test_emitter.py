@@ -111,5 +111,8 @@ class TestEmitter(unittest.TestCase):
     def test_while(self):
         self._compare_bins("while.bas", "while.bin")
 
+    def test_using(self):
+        self._compare_bins("using.bas", "using.bin")
+
 if __name__ == "__main__":
     unittest.main()
