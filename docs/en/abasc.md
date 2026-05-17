@@ -158,7 +158,6 @@
     - [`PRINT USING literal;[list of variables]`](#print-using-literallist-of-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
-    - [`RBOUND(array, dimension)`](#rboundarray-dimension)
     - [`READ variable-list`](#read-variable-list)
     - [`READIN variable-list`](#readin-variable-list)
     - [`RECORD name;variable-list`](#record-namevariable-list)
@@ -199,6 +198,7 @@
     - [`TIME[(n)]`](#timen)
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
+    - [`UBOUND(array, dimension)`](#uboundarray-dimension)
     - [`UNT(n)`](#untn)
     - [`UPPER$(cadena)`](#uppercadena)
     - [`VAL(cadena)`](#valcadena)
@@ -1786,17 +1786,6 @@ FOR I=1 TO 20
 NEXT
 ```
 
-### `RBOUND(array, dimension)`
-
-**Function**. This function may be used to determine the upper bound of one of the dimensions of an array. 
-
-```basic
-DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
-PRINT RBOUND(myarray)     ' returns 10
-PRINT RBOUND(myarray, 1)  ' returns 10
-PRINT RBOUND(myarray, 2)  ' returns 20
-```
-
 ### `READ variable-list`
 
 **Command.** Reads the next datum from those declared using `DATA` and assigns it to the corresponding variable in the list. It is the programmer’s responsibility to ensure that the data type matches the type of the target variable.
@@ -2215,6 +2204,17 @@ See also `TRON`.
 ### `TRON`
 
 **Command.** In Locomotive BASIC, enables execution tracing during program interpretation. ABASC ignores this command when compiling and emits a warning.
+
+### `UBOUND(array, dimension)`
+
+**Function**. This function may be used to determine the upper bound of one of the dimensions of an array. 
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT UBOUND(myarray)     ' returns 10
+PRINT UBOUND(myarray, 1)  ' returns 10
+PRINT UBOUND(myarray, 2)  ' returns 20
+```
 
 ### `UNT(n)`
 
@@ -3301,7 +3301,7 @@ SUB         rsSetMode(nmode)
 
 - Version 1.1.2
   - Adds support for character "!" in LOAD command
-  - Adds Locomotive BASIC 2 functions LBOUND and RBOUND
+  - Adds Locomotive BASIC 2 functions LBOUND and UBOUND
   - Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$ 
   - Adds support for USING templates in DEC$ command
 

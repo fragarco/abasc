@@ -158,7 +158,6 @@
     - [`PRINT USING literal;[lista de variables]`](#print-using-literallista-de-variables)
     - [`RAD`](#rad)
     - [`RANDOMIZE [n]`](#randomize-n)
-    - [`RBOUND(array, dimension)`](#rboundarray-dimension)
     - [`READ lista-de-variables`](#read-lista-de-variables)
     - [`READIN lista-de-variables`](#readin-lista-de-variables)
     - [`RECORD nombre;lista-de-variables`](#record-nombrelista-de-variables)
@@ -199,6 +198,7 @@
     - [`TIME[(n)]`](#timen)
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
+    - [`UBOUND(array, dimension)`](#uboundarray-dimension)
     - [`UNT(n)`](#untn)
     - [`UPPER$(cadena)`](#uppercadena)
     - [`VAL(cadena)`](#valcadena)
@@ -1768,17 +1768,6 @@ FOR I=1 TO 20
 NEXT
 ```
 
-### `RBOUND(array, dimension)`
-
-Función. Devuelve el límite superior para la dimesión indicada de un array (1 por defecto).
-
-```basic
-DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
-PRINT RBOUND(myarray)     ' returns 10
-PRINT RBOUND(myarray, 1)  ' returns 10
-PRINT RBOUND(myarray, 2)  ' returns 20
-```
-
 ### `READ lista-de-variables`
 
 Comando. Lee el siguiente dato de los declarados con `DATA` y lo asigna a la variable correspondiente de su lista. El programador es el responsable de que el tipo de dato actual y el tipo de la variable coincidan.
@@ -2174,6 +2163,17 @@ Comando. Desactiva la impresión de trazas. ABASC ignora este comando si lo encu
 ### `TRON`
 
 Comando. En Locomotive BASIC permite emitir trazas según se interpreta un programa. ABASC ignora este comando si lo encuentra como parte del código y emite una advertencia.
+
+### `UBOUND(array, dimension)`
+
+Función. Devuelve el límite superior para la dimesión indicada de un array (1 por defecto).
+
+```basic
+DIM myarray(10,20)        ' array of two dimensions: 0..10, 0..20
+PRINT UBOUND(myarray)     ' returns 10
+PRINT UBOUND(myarray, 1)  ' returns 10
+PRINT UBOUND(myarray, 2)  ' returns 20
+```
 
 ### `UNT(n)`
 
@@ -3251,7 +3251,7 @@ SUB         rsSetMode(nmode)
 
 - Versión 1.1.2
   - Añade soporte para el símbolo "!" en el comando LOAD
-  - Añade las funciones de Locomotive BASIC 2 LBOUND y RBOUND
+  - Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND
   - Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$ 
   - Añade soporte para patrones en el comando DEC$
 

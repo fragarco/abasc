@@ -469,8 +469,6 @@ href="#print-using-literallista-de-variables"><code>PRINT USING literal;[lista d
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
 <li><a
-href="#rboundarray-dimension"><code>RBOUND(array, dimension)</code></a></li>
-<li><a
 href="#read-lista-de-variables"><code>READ lista-de-variables</code></a></li>
 <li><a
 href="#readin-lista-de-variables"><code>READIN lista-de-variables</code></a></li>
@@ -522,6 +520,8 @@ href="#symbol-caráctervalor1valor2valor8"><code>SYMBOL carácter,valor1,valor2,
 <li><a href="#timen"><code>TIME[(n)]</code></a></li>
 <li><a href="#troff"><code>TROFF</code></a></li>
 <li><a href="#tron"><code>TRON</code></a></li>
+<li><a
+href="#uboundarray-dimension"><code>UBOUND(array, dimension)</code></a></li>
 <li><a href="#untn"><code>UNT(n)</code></a></li>
 <li><a href="#uppercadena"><code>UPPER$(cadena)</code></a></li>
 <li><a href="#valcadena"><code>VAL(cadena)</code></a></li>
@@ -2519,14 +2519,6 @@ FOR I=1 TO 20
     PRINT RND
 NEXT</code></pre>
 <h3
-id="rboundarray-dimension"><code>RBOUND(array, dimension)</code></h3>
-<p>Función. Devuelve el límite superior para la dimesión indicada de un
-array (1 por defecto).</p>
-<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
-PRINT RBOUND(myarray)     &#39; returns 10
-PRINT RBOUND(myarray, 1)  &#39; returns 10
-PRINT RBOUND(myarray, 2)  &#39; returns 20</code></pre>
-<h3
 id="read-lista-de-variables"><code>READ lista-de-variables</code></h3>
 <p>Comando. Lee el siguiente dato de los declarados con
 <code>DATA</code> y lo asigna a la variable correspondiente de su lista.
@@ -2966,6 +2958,14 @@ si lo encuentra como parte del código y emite una advertencia. Ver
 <p>Comando. En Locomotive BASIC permite emitir trazas según se
 interpreta un programa. ABASC ignora este comando si lo encuentra como
 parte del código y emite una advertencia.</p>
+<h3
+id="uboundarray-dimension"><code>UBOUND(array, dimension)</code></h3>
+<p>Función. Devuelve el límite superior para la dimesión indicada de un
+array (1 por defecto).</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT UBOUND(myarray)     &#39; returns 10
+PRINT UBOUND(myarray, 1)  &#39; returns 10
+PRINT UBOUND(myarray, 2)  &#39; returns 20</code></pre>
 <h3 id="untn"><code>UNT(n)</code></h3>
 <p>Comando. Convierte un valor sin signo (como una dirección de memoria)
 en el rango 0..65535 en un entero con signo en el rango
@@ -3992,7 +3992,7 @@ describe a continuación.</p>
 <li>Versión 1.1.2
 <ul>
 <li>Añade soporte para el símbolo “!” en el comando LOAD</li>
-<li>Añade las funciones de Locomotive BASIC 2 LBOUND y RBOUND</li>
+<li>Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND</li>
 <li>Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$</li>
 <li>Añade soporte para patrones en el comando DEC$</li>
 </ul></li>

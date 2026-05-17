@@ -116,8 +116,8 @@ _KEYWORDS = {
     "ABS","ASC","ATN","BIN$","CHR$","CINT","COS","CREAL","DEC$","EOF","ERR",
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
     "JOY","LEFT$","LEN","LOG","LOG10","LBOUND","LOWER$","LTRIM$","MAX","MIN","PEEK",
-    "PI","POS","RBOUND","REMAIN","RIGHT$","RND","ROUND","RTRIM$","SGN","SIN","SPACE$",
-    "SQ","SQR","STR$","STRING$","TAN","TEST","TESTR","TIME","UNT","UPPER$","VAL","VPOS",
+    "PI","POS","REMAIN","RIGHT$","RND","ROUND","RTRIM$","SGN","SIN","SPACE$","SQ","SQR",
+    "STR$","STRING$","TAN","TEST","TESTR","TIME","UBOUND","UNT","UPPER$","VAL","VPOS",
     "XPOS","YPOS"
 }
 

@@ -3023,24 +3023,6 @@ class CPCEmitter:
         self._emit_code("call    rt_randomize")
         self._emit_code(";")
 
-    def _emit_RBOUND(self, node:AST.Function) -> None:
-        """
-        This function may be used to determine the upper bound of one of the
-        dimensions of an array.
-        """
-        self._emit_code("; RBOUND(IDENT [,<integer expression>])")
-        array = node.args[0].name  # type: ignore [attr-defined, union-attr]
-        entry = self.symtable.find(array, SymType.Array, context=self.context)
-        if entry is None:
-            self._raise_error(2, node, "undefined array")
-        if not isinstance(node.args[1], AST.Integer):
-            self._raise_error(2, node.args[1], info="Array index must be a constant expression")
-        index = node.args[1].value # type: ignore [attr-defined, union-attr]
-        if index < 1 or index > len(entry.indexes):
-            self._raise_error(2, node.args[1], info="dimension out of bounds")
-        self._emit_code(f"ld      hl,{entry.indexes[index-1]}", info=f"Array upper bound for dimension {index}")
-        self._emit_code(";")
-
     def _emit_READ(self, node:AST.Command) -> None:
         """
         READ fetches data from the list of constants supplied in the corresponding
@@ -3866,6 +3848,24 @@ class CPCEmitter:
         self._emit_code("; TRON")
         self._raise_warning(WL.LOW, "TRON is ignored and has not effect", node)
         self._emit_code("; IGNORED")
+
+    def _emit_UBOUND(self, node:AST.Function) -> None:
+        """
+        This function may be used to determine the upper bound of one of the
+        dimensions of an array.
+        """
+        self._emit_code("; UBOUND(IDENT [,<integer expression>])")
+        array = node.args[0].name  # type: ignore [attr-defined, union-attr]
+        entry = self.symtable.find(array, SymType.Array, context=self.context)
+        if entry is None:
+            self._raise_error(2, node, "undefined array")
+        if not isinstance(node.args[1], AST.Integer):
+            self._raise_error(2, node.args[1], info="Array index must be a constant expression")
+        index = node.args[1].value # type: ignore [attr-defined, union-attr]
+        if index < 1 or index > len(entry.indexes):
+            self._raise_error(2, node.args[1], info="dimension out of bounds")
+        self._emit_code(f"ld      hl,{entry.indexes[index-1]}", info=f"Array upper bound for dimension {index}")
+        self._emit_code(";")
 
     def _emit_UNT(self, node:AST.Function) -> None:
         """

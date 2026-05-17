@@ -472,8 +472,6 @@ href="#print-using-literallist-of-variables"><code>PRINT USING literal;[list of 
 <li><a href="#rad"><code>RAD</code></a></li>
 <li><a href="#randomize-n"><code>RANDOMIZE [n]</code></a></li>
 <li><a
-href="#rboundarray-dimension"><code>RBOUND(array, dimension)</code></a></li>
-<li><a
 href="#read-variable-list"><code>READ variable-list</code></a></li>
 <li><a
 href="#readin-variable-list"><code>READIN variable-list</code></a></li>
@@ -524,6 +522,8 @@ href="#symbol-charactervalue1value2value8"><code>SYMBOL character,value1,value2,
 <li><a href="#timen"><code>TIME[(n)]</code></a></li>
 <li><a href="#troff"><code>TROFF</code></a></li>
 <li><a href="#tron"><code>TRON</code></a></li>
+<li><a
+href="#uboundarray-dimension"><code>UBOUND(array, dimension)</code></a></li>
 <li><a href="#untn"><code>UNT(n)</code></a></li>
 <li><a href="#uppercadena"><code>UPPER$(cadena)</code></a></li>
 <li><a href="#valcadena"><code>VAL(cadena)</code></a></li>
@@ -2493,14 +2493,6 @@ and <code>RND</code> require the use of real numbers.</p>
 FOR I=1 TO 20
     PRINT RND
 NEXT</code></pre>
-<h3
-id="rboundarray-dimension"><code>RBOUND(array, dimension)</code></h3>
-<p><strong>Function</strong>. This function may be used to determine the
-upper bound of one of the dimensions of an array.</p>
-<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
-PRINT RBOUND(myarray)     &#39; returns 10
-PRINT RBOUND(myarray, 1)  &#39; returns 10
-PRINT RBOUND(myarray, 2)  &#39; returns 20</code></pre>
 <h3 id="read-variable-list"><code>READ variable-list</code></h3>
 <p><strong>Command.</strong> Reads the next datum from those declared
 using <code>DATA</code> and assigns it to the corresponding variable in
@@ -2950,6 +2942,14 @@ command when compiling and emits a warning. See also
 <p><strong>Command.</strong> In Locomotive BASIC, enables execution
 tracing during program interpretation. ABASC ignores this command when
 compiling and emits a warning.</p>
+<h3
+id="uboundarray-dimension"><code>UBOUND(array, dimension)</code></h3>
+<p><strong>Function</strong>. This function may be used to determine the
+upper bound of one of the dimensions of an array.</p>
+<pre class="basic"><code>DIM myarray(10,20)        &#39; array of two dimensions: 0..10, 0..20
+PRINT UBOUND(myarray)     &#39; returns 10
+PRINT UBOUND(myarray, 1)  &#39; returns 10
+PRINT UBOUND(myarray, 2)  &#39; returns 20</code></pre>
 <h3 id="untn"><code>UNT(n)</code></h3>
 <p><strong>Command.</strong> Converts an unsigned value (such as a
 memory address) in the range 0..65535 into a signed integer in the range
@@ -3967,7 +3967,7 @@ version 2 and version 2 plus.</p>
 <li>Version 1.1.2
 <ul>
 <li>Adds support for character “!” in LOAD command</li>
-<li>Adds Locomotive BASIC 2 functions LBOUND and RBOUND</li>
+<li>Adds Locomotive BASIC 2 functions LBOUND and UBOUND</li>
 <li>Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$</li>
 <li>Adds support for USING templates in DEC$ command</li>
 </ul></li>
