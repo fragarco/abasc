@@ -2272,7 +2272,7 @@ PRINT "VENTANA 0"
 
 ### `WRITE [#canal],dato1,dato2,...`
 
-Comando. En Locomotive BASIC escribe los valores proporcionados en el canal indicado (#0 por defecto). ABASC ignora el valor del canal y siempre lo considera #9, el canal para operaciones con ficheros. Por tanto, `WRITE` se puede utilizar para escribir en un fichero mientras que `READIN` serviría para leer los datos de vuelta. Los números reales no están soportados, solo se pueden escribir datos enteros o cadenas de texto.
+Comando. En Locomotive BASIC escribe los valores proporcionados en el canal indicado (#0 por defecto). Sin embargo, `Abasc` ignora el valor del canal y siempre lo considera #9, el canal para operaciones con ficheros. Por tanto, `WRITE` se puede utilizar para escribir en un fichero mientras que `READIN` serviría para leer los datos de vuelta.
 
 ```basic
 A=15

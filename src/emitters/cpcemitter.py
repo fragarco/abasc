@@ -4104,7 +4104,9 @@ class CPCEmitter:
                 self._emit_import("rt_writeint")
                 self._emit_code("call    rt_writeint")
             elif item.etype == AST.ExpType.Real:
-                self._raise_error(2, item, 'item not supported yet')
+                self._emit_import("rt_writereal")
+                self._moveflo_accum1()
+                self._emit_code("call    rt_writereal")
             else:
                 self._raise_error(13, item)
             if i < (len(node.items) - 1):

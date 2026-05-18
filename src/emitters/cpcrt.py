@@ -2366,6 +2366,26 @@ rt_writeint:
     ret     
 """
 ),
+    "rt_writereal": (["rt_real2strz"],"",
+f"""
+; RT_WRITEREAL
+; Writes the real number pointed by HL to an already open file (with OPENIN)
+; Inputs:
+;     HL pointer to a 5-byte real number
+; Outputs:
+;     A, B and HL are modified
+rt_writereal:
+    call    rt_real2strz
+    ld      hl,rt_real2strz_buf
+    __writereal_loop:
+    ld      a,(hl)
+    or      a
+    ret     z
+    call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
+    inc     hl
+    jr      __writereal_loop
+"""
+),
     "rt_writenl": (["rt_int2str"],"",
 f"""
 ; RT_WRITENL

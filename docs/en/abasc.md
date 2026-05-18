@@ -2313,7 +2313,7 @@ PRINT "WINDOW 0"
 
 ### `WRITE [#channel,]data1,data2,...`
 
-**Command.** In Locomotive BASIC, writes the specified values to the indicated channel (#0 by default). ABASC ignores the channel parameter and always uses #9, the channel for file operations. Therefore, `WRITE` can be used to save data to a file, while `READIN` can be used to read it back. Real numbers are **not supported**; only integers or text strings can be written.
+**Command.** In Locomotive BASIC, writes the specified values to the indicated channel (#0 by default). However, `Abasc` ignores the channel parameter and always uses #9, the channel for file operations. Therefore, `WRITE` can be used to save data to a file, while `READIN` can be used to read it back.
 
 ```basic
 A = 15
