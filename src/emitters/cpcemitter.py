@@ -3303,17 +3303,19 @@ class CPCEmitter:
         self._emit_import("rt_reset_vars")
         self._emit_code("; RUN [<str_expression> | <int_expression>]")
         self._emit_code("call    rt_reset_vars")
-        self._emit_code(f"call    {FWCALL.CAS_INITIALISE}", info="CAS_INITIALISE")
         if len(node.args) == 0:
             self._emit_code("jp      _code_")
-        elif isinstance(node.args[0], AST.Integer):
+        elif isinstance(node.args[0], AST.Integer) or isinstance(node.args[0], AST.Label):
             sym = self.symtable.find(str(node.args[0].value), SymType.Label, "")
             if sym is not None:
                 self._emit_code(f"jp      {sym.label}")
             else:
                 self._raise_error(38, node.args[0])
         else:
-            self._raise_error(2, node, "RUN file is not supported")
+            # Run file
+            self._emit_import("rt_runfile")
+            self._emit_expression(node.args[0])
+            self._emit_code("call    rt_runfile")
         self._emit_code(";")
 
     def _emit_SAVE(self, node:AST.Command) -> None:

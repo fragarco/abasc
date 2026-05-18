@@ -2608,10 +2608,11 @@ PRINT RTRIM$(a$) , LEN(a$)</code></pre>
 <p><strong>Command.</strong> In Locomotive BASIC, this command runs the
 program already in memory from the beginning (no argument), starts the
 program in memory at the specified <code>label</code>, or loads a
-program from <code>file</code> and executes it from the beginning. ABASC
-only supports the first two forms. Bedore jumping to the start or the
-<code>label</code>, ABASC executes a <code>CLEAR</code> command to
-ensure some consistency between executions.</p>
+program from <code>file</code> and executes it from the beginning. In
+the fist case, before jumping to the start or the <code>label</code>,
+<code>Abasc</code> executes a <code>CLEAR</code> command to ensure some
+consistency between executions. Regarding the load and execution of
+files, <code>Abasc</code> only supports binary files.</p>
 <h3
 id="save-filetypeaddresssizeentry"><code>SAVE file[,type][,address,size[,entry]]</code></h3>
 <p><strong>Command.</strong> In Locomotive BASIC, this instruction saves
@@ -3970,6 +3971,8 @@ version 2 and version 2 plus.</p>
 <li>Adds Locomotive BASIC 2 functions LBOUND and UBOUND</li>
 <li>Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$</li>
 <li>Adds support for USING templates in DEC$ command</li>
+<li>Adds support for loading and running binary files using the command
+RUN “file”</li>
 </ul></li>
 <li>Version 1.1.1
 <ul>

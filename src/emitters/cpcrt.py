@@ -3353,6 +3353,51 @@ rt_loadaddr:
     jp      {FWCALL.CAS_IN_CLOSE}  ; CAS_IN_CLOSE
 """
 ),
+    "rt_runfile": (["rt_restoreroms"],"",
+f"""
+; RT_RUNFILE
+; Reads an AMSDOS file (with header) and extracts length and
+; target address, loading there the content and finally running
+; its code. It stores the rutine to start the code in an unused
+; area in the Firmware variables, so the code doesn't get overwritten
+; by the loaded program.
+; Inputs:
+;   HL address to the file name
+; Outputs:
+;   None
+;   AF, HL, BC, DE and IX are modified
+rt_runfile:
+    ld      de,0   ; 2K buffer not needed with disks
+    ld      b,(hl) ; filename length
+    inc     hl
+    ld      a,"!"  ; remove initial ! if present
+    cp      (hl)
+    jr      nz,$+4
+    dec     b
+    inc     hl
+    call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
+    ret     nc     ; Error
+    ex      de,hl
+    push    de
+    push    hl
+    ld      hl,&A7BB         ; unused Firmware variables area
+    ld      (hl),&CD: inc hl ; routine to load a new program
+    ld      (hl),&83: inc hl
+    ld      (hl),&BC: inc hl ; call CAS_IN_DIRECT
+    ld      (hl),&E5: inc hl ; push hl
+    ld      (hl),&CD: inc hl
+    ld      (hl),&7A: inc hl
+    ld      (hl),&BC: inc hl ; call CAS_IN_CLOSE
+    ld      (hl),&E1: inc hl ; pop  hl
+    ld      (hl),&D2: inc hl
+    ld      (hl),&13: inc hl
+    ld      (hl),&BD: inc hl ; jp   nc,MC_BOOT_PROGRAM
+    ld      (hl),&C9         ; ret
+    pop     hl
+    pop     de
+    jp      &A7BB
+"""
+),
     "rt_save": (["rt_restoreroms"],"",
 f"""
 ; RT_SAVE
@@ -3439,14 +3484,19 @@ __speedwrite_1
 """
 ; RT_RESET_VARS
 ; Fills with 0 all memory area between the labels
-; _data_variables_ and _data_variables_end_
+; _data_variables_ and _data_variables_end_. If there are any
+; variables, we at least will have two bytes (an integer variable).
 ; Inputs:
 ;   None
 ; Outputs:
 ;   None
 ;   AF, HL, DE and BC are modified
 rt_reset_vars:
-    ld      bc,_data_variables_end_ - _data_variables_ - 1
+    ld      bc,_data_variables_end_ - _data_variables_
+    ld      a,b
+    or      c
+    ret     z
+    dec     bc
     ld      hl,_data_variables_
     ld      de,_data_variables_ + 1
     ld      (hl),0

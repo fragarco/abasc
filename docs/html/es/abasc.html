@@ -2631,11 +2631,12 @@ PRINT RTRIM$(a$), LEN(a$)</code></pre>
 <h3 id="run-etiqueta-fichero"><code>RUN [etiqueta | fichero]</code></h3>
 <p>Comando. En BASIC este comando permite ejecutar desde el principio el
 programa actualmente en memoria (sin argumentos), ejecutar un programa
-en memoria desde la <code>etiqueta</code> indicada o carga un programa
-desde <code>fichero</code> y lo ejecuta desde el principio. ABASC solo
-soporta las dos primeras formas. En ambas, ejecuta un <code>CLEAR</code>
-antes de saltar al principio del programa o la <code>etiqueta</code>
-indicada para asegurar cierta consistencia entre ejecuciones.</p>
+en memoria desde la <code>etiqueta</code> indicada o cargar y ejecutar
+un programa desde <code>fichero</code>. En las dos primeras formas,
+<code>Abasc</code> ejecuta un <code>CLEAR</code> antes de saltar al
+principio del programa o la <code>etiqueta</code> indicada para asegurar
+cierta consistencia entre ejecuciones. En la última forma,
+<code>Abasc</code> solo soporta la carga de ficheros binarios.</p>
 <h3
 id="save-ficherotipodireccióntamañoentrada"><code>SAVE fichero[,tipo][,dirección,tamaño[,entrada]]</code></h3>
 <p>Comando. En BASIC permite grabar un programa a disco o cassette.
@@ -3995,6 +3996,8 @@ describe a continuación.</p>
 <li>Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND</li>
 <li>Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$</li>
 <li>Añade soporte para patrones en el comando DEC$</li>
+<li>Añade soporte para carga y ejecucción de binarios con el comando RUN
+“file”</li>
 </ul></li>
 <li>Versión 1.1.1
 <ul>

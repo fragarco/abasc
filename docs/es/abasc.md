@@ -1889,7 +1889,7 @@ PRINT RTRIM$(a$), LEN(a$)
 
 ### `RUN [etiqueta | fichero]`
 
-Comando. En BASIC este comando permite ejecutar desde el principio el programa actualmente en memoria (sin argumentos), ejecutar un programa en memoria desde la `etiqueta` indicada o carga un programa desde `fichero` y lo ejecuta desde el principio. ABASC solo soporta las dos primeras formas. En ambas, ejecuta un `CLEAR` antes de saltar al principio del programa o la `etiqueta` indicada para asegurar cierta consistencia entre ejecuciones.
+Comando. En BASIC este comando permite ejecutar desde el principio el programa actualmente en memoria (sin argumentos), ejecutar un programa en memoria desde la `etiqueta` indicada o cargar y ejecutar un programa desde `fichero`. En las dos primeras formas, `Abasc` ejecuta un `CLEAR` antes de saltar al principio del programa o la `etiqueta` indicada para asegurar cierta consistencia entre ejecuciones. En la última forma, `Abasc` solo soporta la carga de ficheros binarios.
 
 ### `SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`
 
@@ -3254,6 +3254,7 @@ SUB         rsSetMode(nmode)
   - Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND
   - Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$ 
   - Añade soporte para patrones en el comando DEC$
+  - Añade soporte para carga y ejecucción de binarios con el comando RUN "file"
 
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto

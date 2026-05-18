@@ -2098,6 +2098,36 @@ class LocBasParser:
         return AST.Command(name="READ", args=vars)
 
     @astnode
+    def _parse_READIN(self) -> AST.ReadIn:
+        """ <READIN> ::= READIN <ident>[,<ident>]* """
+        self._advance()
+        vars: list[AST.Statement] = []
+        while True:
+            var = self._parse_ident()
+            vars.append(var)
+            # READIN can declare new variables so we need to add any new ones to the symtable
+            # but not if they are Array items.
+            # If the variable already exists, this call will increase the number of
+            # writes which is used by the optimizer
+            if isinstance(var, AST.Variable):
+                tk = self._current()
+                self._check_noconst(var.name, tk)
+                self.symtable.add(
+                    ident=var.name,
+                    info=SymEntry(
+                        symtype=SymType.Variable,
+                        exptype=var.etype,
+                        locals=SymTable(),
+                        datasz=AST.exptype_memsize(var.etype)
+                    ),
+                    context=self.context
+                )
+            if not self._current_is(TokenType.COMMA):
+                break
+            self._advance()
+        return AST.ReadIn(vars=vars)
+
+    @astnode
     def _parse_RECORD(self) -> AST.Command:
         """ <RECORD> ::= RECORD IDENT; IDENT[,IDENT]* """
         tk = self._advance()
@@ -2242,14 +2272,24 @@ class LocBasParser:
 
     @astnode
     def _parse_RUN(self) -> AST.Command:
-        """ <RUN> ::= RUN [<str_expression> | <int_expression> """
+        """ <RUN> ::= RUN [INT | IDENT | STRING] """
         self._advance()
         args: list[AST.Statement] = []
-        if not self._end_of_statement():
-            tk = self._current()
-            args = [self._parse_expression()]
-            if args[0].etype not in (AST.ExpType.String, AST.ExpType.Integer):
-                self._raise_error(13, tk)  
+        tk = self._current()
+        if self._current_is(TokenType.INT):
+            num = self._advance()
+            args = [AST.Integer(value = cast(int, num.value))]
+            args[0].set_origin(num.line, num.col)
+        elif self._current_is(TokenType.IDENT):
+            label = self._advance()
+            args = [AST.Label(value = label.lexeme)]
+            args[0].set_origin(label.line, label.col)
+        elif self._current_is(TokenType.STRING):
+            fname = self._advance()
+            args = [AST.String(value = cast(str, fname.value))]
+            args[0].set_origin(fname.line, fname.col)
+        else:
+            self._raise_error(13, tk)  
         return AST.Command(name="RUN", args=args)
 
     @astnode

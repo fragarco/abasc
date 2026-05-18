@@ -1907,7 +1907,7 @@ PRINT RTRIM$(a$) , LEN(a$)
 
 ### `RUN [label | file]`
 
-**Command.** In Locomotive BASIC, this command runs the program already in memory from the beginning (no argument), starts the program in memory at the specified `label`, or loads a program from `file` and executes it from the beginning. ABASC only supports the first two forms. Bedore jumping to the start or the `label`, ABASC executes a `CLEAR` command to ensure some consistency between executions.
+**Command.** In Locomotive BASIC, this command runs the program already in memory from the beginning (no argument), starts the program in memory at the specified `label`, or loads a program from `file` and executes it from the beginning. In the fist case, before jumping to the start or the `label`, `Abasc` executes a `CLEAR` command to ensure some consistency between executions. Regarding the load and execution of files, `Abasc` only supports binary files.
 
 ### `SAVE file[,type][,address,size[,entry]]`
 
@@ -3304,6 +3304,7 @@ SUB         rsSetMode(nmode)
   - Adds Locomotive BASIC 2 functions LBOUND and UBOUND
   - Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$ 
   - Adds support for USING templates in DEC$ command
+  - Adds support for loading and running binary files using the command RUN "file"
 
 - Version 1.1.1
   - Fixes a problem reserving string memory when using DECLARE FIXED
