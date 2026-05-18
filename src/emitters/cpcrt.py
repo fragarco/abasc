@@ -2470,6 +2470,41 @@ __readint_end:
     jp      rt_readnext
 """
 ),
+    "rt_readreal": (["rt_scratch_pad", "rt_strz2real", "rt_readnext"],"",
+f"""
+; RT_READREAL
+; Reads a real number from an already open file (with OPENIN).
+; It consumes any comma used to separate values.
+; Inputs:
+;     None
+; Outputs:
+;     HL contains the integer value
+;     A, B and HL are modified
+rt_readreal:
+    ld      hl,0
+    ld      de,rt_scratch_pad
+__readreal_loop:
+    call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
+    jr      nc,__readreal_end  ; if error jump to end
+    cp      &2c               ; ","
+    jr      z,__readreal_end
+    cp      &0d               ; EOL
+    jr      z,__readreal_end
+    cp      &0a               ; EOL
+    jr      z,__readreal_end
+    cp      &20               ; " "
+    jr      z,__readreal_loop
+    ld      (de),a
+    inc     de
+    jr      __readreal_loop
+__readreal_end:
+    xor     a
+    ld      (de),a   ; zero-terminated string
+    ld      de,rt_scratch_pad
+    call    rt_strz2real
+    jp      rt_readnext
+"""
+),  
     "rt_readnext": ([],"",
 f"""
 ; RT_READNEXT

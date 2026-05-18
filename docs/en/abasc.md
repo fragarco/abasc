@@ -1804,7 +1804,20 @@ DATA "Anabel","Rachel","Elvira"
 
 ### `READIN variable-list`
 
-**Command.** Equivalent to `INPUT #9`; that is, it reads data from the currently open input file and assigns them to the variables in the list. At present, ABASC does not support real variables with this command.
+**Command.** Equivalent to `INPUT #9`; that is, it reads data from the currently open input file and assigns them to the variables in the list.
+
+```basic
+a! = 1.5
+OPENOUT "data.txt"
+WRITE #9,a!
+CLOSEOUT
+
+a! = 0.0
+OPENIN "data.txt"
+READIN a!
+CLOSEIN
+PRINT a!
+```
 
 ### `RECORD name;variable-list`
 
@@ -3299,12 +3312,13 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
-- Version 1.1.2
+- Version 1.2.0
   - Adds support for character "!" in LOAD command
   - Adds Locomotive BASIC 2 functions LBOUND and UBOUND
   - Adds Locomotive BASIC 2 functions LTRIM$ and RTRIM$ 
   - Adds support for USING templates in DEC$ command
   - Adds support for loading and running binary files using the command RUN "file"
+  - Adds support for real numbers in WRITE and READIN commands
 
 - Version 1.1.1
   - Fixes a problem reserving string memory when using DECLARE FIXED

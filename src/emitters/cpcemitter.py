@@ -3055,7 +3055,6 @@ class CPCEmitter:
         to read from a file open using OPENIN keyword.
         """
         self._emit_code("; READIN <list of vars> (alias of INPUT #9,<list of vars>)")
-        # TODO: reals
         self._emit_pushcontext()
         self._emit_code("di")
         for v in node.vars:
@@ -3077,7 +3076,12 @@ class CPCEmitter:
                     self._emit_code("inc     hl")
                     self._emit_code("ld      (hl),d")
                 elif v.etype == AST.ExpType.Real:
-                    self._raise_error(13, node, 'REAL variables are not supported')
+                    self._emit_import("rt_readreal")
+                    self._emit_import("rt_move_real")
+                    self._emit_code("push    hl")
+                    self._emit_code("call    rt_readreal")
+                    self._emit_code("pop     de")
+                    self._emit_code("call    rt_move_real")
             else:
                 self._raise_error(2, v, "unsupported identifier")
         self._emit_code("ei")
@@ -4090,7 +4094,6 @@ class CPCEmitter:
         """
         # In our case WRITE always writes to dist/tape so stream is just ignored and
         # always considered to be 9. That saves a couple of bytes and cicles.
-        # TODO: reals
         self._emit_code("; WRITE [#<stream expression >, ][<write list>]")
         self._emit_import("rt_writenl")
         self._emit_pushcontext()
