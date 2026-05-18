@@ -625,9 +625,9 @@ class CPCEmitter:
             self._emit_code("add     ix,sp")
         if isinstance(node.args[0],AST.Integer):
             address = f"{node.args[0].value:#X}".replace("0X","&")
-            self._emit_code(f"call     {address}", info=f"calling {address}")
+            self._emit_code(f"call    {address}", info=f"calling {address}")
         elif isinstance(node.args[0],AST.String):
-            self._emit_code(f"call     {node.args[0].value}", info=f"calling asm routine")
+            self._emit_code(f"call    {node.args[0].value}", info=f"calling asm routine")
         elif node.args[0].etype == AST.ExpType.Integer:
             self._emit_import("rt_call")
             self._emit_expression(node.args[0])
