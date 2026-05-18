@@ -193,6 +193,11 @@ class BasOptimizer:
         node.condition = self._op_statement(node.condition)
         return node
 
+    def _op_WRITE(self, node:AST.Write) -> AST.Write:
+        for i in range(0, len(node.items)):
+            node.items[i] = self._op_statement(node.items[i])
+        return node
+
     def _op_variable(self, node: AST.Variable) -> AST.Statement:
         """ 
         Variables as part of expressions. Integer ones that are
@@ -288,6 +293,8 @@ class BasOptimizer:
             for i in range(0, len(stmt.args)):
                 stmt.args[i] = self._op_statement(stmt.args[i])
             stmt = self._op_keyword(stmt)
+        elif isinstance(stmt, AST.Write):
+            stmt = self._op_WRITE(stmt)
         elif isinstance(stmt, AST.Command):
             if stmt.name == "CONST":
                 # CONST is special because the first argument is the variable

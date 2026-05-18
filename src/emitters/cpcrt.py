@@ -2362,7 +2362,7 @@ rt_writeint:
     inc     hl
     ld      a,(hl)
     call    {FWCALL.CAS_OUT_CHAR}  ; CAS_OUT_CHAR
-    djnz    __writestr_loop
+    djnz    __writeint_loop
     ret     
 """
 ),
@@ -2431,16 +2431,18 @@ rt_readint:
 __readint_loop:
     call    {FWCALL.CAS_IN_CHAR}  ; CAS_IN_CHAR
     jr      nc,__readint_end  ; if error jump to end
-    cp      &2c
+    cp      &2c               ; ","
     jr      z,__readint_end
-    cp      &0d
+    cp      &0d               ; EOL
     jr      z,__readint_end
-    cp      &0a
+    cp      &0a               ; EOL
     jr      z,__readint_end
+    cp      &20               ; " "
+    jr      z,__readint_loop
     ld      (de),a
+    inc     de
     djnz    __readint_loop
 __readint_end:
-    inc     de
     xor     a
     ld      (de),a   ; zero-terminated string
     ld      de,rt_readint_bufz
