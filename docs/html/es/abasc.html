@@ -2536,8 +2536,17 @@ DATA &quot;Anabel&quot;,&quot;Rachel&quot;,&quot;Elvira&quot;</code></pre>
 <h3
 id="readin-lista-de-variables"><code>READIN lista-de-variables</code></h3>
 <p>Comando. Es equivalente a <code>INPUT #9</code>, es decir, lee datos
-del fichero de entrada abierto y los asigna a la lista de variables.
-Actualmente, ABASC no soporta variables reales en este comando.</p>
+del fichero de entrada abierto y los asigna a la lista de variables.</p>
+<pre class="basic"><code>a! = 1.5
+OPENOUT &quot;data.txt&quot;
+WRITE #9,a!
+CLOSEOUT
+
+a! = 0.0
+OPENIN &quot;data.txt&quot;
+READIN a!
+CLOSEIN
+PRINT a!</code></pre>
 <h3
 id="record-nombrelista-de-variables"><code>RECORD nombre;lista-de-variables</code></h3>
 <p>Comando. Permite declarar un registro que puede aplicarse a variables
@@ -3042,12 +3051,11 @@ PRINT &quot;VENTANA 0&quot;</code></pre>
 <h3
 id="write-canaldato1dato2..."><code>WRITE [#canal],dato1,dato2,...</code></h3>
 <p>Comando. En Locomotive BASIC escribe los valores proporcionados en el
-canal indicado (#0 por defecto). ABASC ignora el valor del canal y
-siempre lo considera #9, el canal para operaciones con ficheros. Por
-tanto, <code>WRITE</code> se puede utilizar para escribir en un fichero
-mientras que <code>READIN</code> serviría para leer los datos de vuelta.
-Los números reales no están soportados, solo se pueden escribir datos
-enteros o cadenas de texto.</p>
+canal indicado (#0 por defecto). Sin embargo, <code>Abasc</code> ignora
+el valor del canal y siempre lo considera #9, el canal para operaciones
+con ficheros. Por tanto, <code>WRITE</code> se puede utilizar para
+escribir en un fichero mientras que <code>READIN</code> serviría para
+leer los datos de vuelta.</p>
 <pre class="basic"><code>A=15
 NOM$=&quot;Juan&quot;
 OPENOUT &quot;DATOS.TXT&quot;
@@ -3194,13 +3202,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb123"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb124"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb124"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb125"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -3990,7 +3998,7 @@ describe a continuación.</p>
 <hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li>Versión 1.1.2
+<li>Versión 1.2.0
 <ul>
 <li>Añade soporte para el símbolo “!” en el comando LOAD</li>
 <li>Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND</li>
@@ -3998,6 +4006,8 @@ describe a continuación.</p>
 <li>Añade soporte para patrones en el comando DEC$</li>
 <li>Añade soporte para carga y ejecucción de binarios con el comando RUN
 “file”</li>
+<li>Añade soporte para números reales en los comandos WRITE y
+READIN</li>
 </ul></li>
 <li>Versión 1.1.1
 <ul>
