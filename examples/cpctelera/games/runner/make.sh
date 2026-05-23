@@ -7,11 +7,11 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python3 ../../../../src/abasc.py"
-DSK="python3  ../../../../src/utils/dsk.py"
-CDT="python3  ../../../../src/utils/cdt.py"
-IMG="python3  ../../../../src/utils/img.py"
-ASM="python3  ../../../../src/utils/abasm.py"
+BASC="python ../../../../src/abasc.py"
+DSK="python  ../../../../src/utils/dsk.py"
+CDT="python  ../../../../src/utils/cdt.py"
+IMG="python  ../../../../src/utils/img.py"
+ASM="python  ../../../../src/utils/abasm.py"
 
 SOURCE=main
 TARGET=runner

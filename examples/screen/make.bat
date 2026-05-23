@@ -8,11 +8,11 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python3 "..\..\src\abasc.py"
-set DSK=python3  "..\..\src\utils\dsk.py"
-set CDT=python3  "..\..\src\utils\cdt.py"
-set IMG=python3  "..\..\src\utils\img.py"
-set ASM=python3  "..\..\src\utils\abasm.py"
+set BASC=python "..\..\src\abasc.py"
+set DSK=python  "..\..\src\utils\dsk.py"
+set CDT=python  "..\..\src\utils\cdt.py"
+set IMG=python  "..\..\src\utils\img.py"
+set ASM=python  "..\..\src\utils\abasm.py"
 
 set SOURCE=main
 set TARGET=retropoli

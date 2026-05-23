@@ -7,9 +7,9 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python3 ../../../../src/abasc.py"
-DSK="python3 ../../../../src/utils/dsk.py"
-IMG="python3 ../../../../src/utils/img.py"
+BASC="python ../../../../src/abasc.py"
+DSK="python ../../../../src/utils/dsk.py"
+IMG="python ../../../../src/utils/img.py"
 
 SOURCE=main
 TARGET=keyascii

@@ -8,9 +8,9 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python3 "..\..\..\..\src\abasc.py"
-set DSK=python3 "..\..\..\..\src\utils\dsk.py"
-set IMG=python3 "..\..\..\..\src\utils\img.py"
+set BASC=python "..\..\..\..\src\abasc.py"
+set DSK=python "..\..\..\..\src\utils\dsk.py"
+set IMG=python "..\..\..\..\src\utils\img.py"
 
 set SOURCE=main
 set TARGET=keyboard

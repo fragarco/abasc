@@ -13,8 +13,8 @@ set TARGET=clipping
 
 set LOADADDR=0x0040
 
-set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/utils/dsk.py %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
+set RUNBAS=python ../../src/abasc.py %SOURCE%.bas
+set RUNDSK=python ../../src/utils/dsk.py %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"

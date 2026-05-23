@@ -13,9 +13,9 @@ set TARGET=type
 
 set LOADADDR=0x0040
 
-set RUNBAS=python3 ../../src/abasc.py %SOURCE%.bas
-set RUNDSK=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
-set ADDTXT=python3 ../../src/utils/dsk.py %DSK% %TARGET%.dsk --put-ascii TEST.TXT
+set RUNBAS=python ../../src/abasc.py %SOURCE%.bas
+set RUNDSK=python ../../src/utils/dsk.py %DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
+set ADDTXT=python ../../src/utils/dsk.py %DSK% %TARGET%.dsk --put-ascii TEST.TXT
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"

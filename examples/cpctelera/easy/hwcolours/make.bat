@@ -8,8 +8,8 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python3 "..\..\..\..\src\abasc.py"
-set DSK=python3 "..\..\..\..\src\utils\dsk.py"
+set BASC=python "..\..\..\..\src\abasc.py"
+set DSK=python "..\..\..\..\src\utils\dsk.py"
 
 set SOURCE=main
 set TARGET=hwcolors

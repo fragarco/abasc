@@ -7,8 +7,8 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python3 ../../src/abasc.py"
-DSK="python3 ../../src/utils/dsk.py"
+BASC="python ../../src/abasc.py"
+DSK="python ../../src/utils/dsk.py"
 
 SOURCE=main
 TARGET=fill
