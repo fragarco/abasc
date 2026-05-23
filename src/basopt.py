@@ -89,8 +89,8 @@ class BasOptimizer:
     def _op_CONST(self, node: AST.Command) -> AST.Statement:
         if not isinstance(node.args[1], AST.Integer):
             node.args[1] = self._op_statement(node.args[1])
-            if isinstance(node.args[1], AST.Integer):
-                varname = node.args[0].name # type: ignore [attr-defined]
+            if isinstance(node.args[1], AST.Integer) and isinstance(node.args[0], AST.Variable):
+                varname = node.args[0].name
                 entry = self.syms.find(varname, SYM.SymType.Variable, self.context)
                 if entry is not None:
                     entry.const = node.args[1]
@@ -259,7 +259,7 @@ class BasOptimizer:
                 nnode.line = node.line
                 nnode.col = node.col
                 return nnode
-            except:
+            except Exception:
                 return node
         # functions calls, variables, etc.
         if node.right.id not in literals:
