@@ -73,7 +73,7 @@ class TestEmitter(unittest.TestCase):
         self._compare_bins("fill.bas", "fill.bin")
 
     def test_for(self):
-        self._compare_bins("fill.bas", "fill.bin")
+        self._compare_bins("for.bas", "for.bin")
 
     def test_guante(self):
         self._compare_bins("guante.bas", "guante.bin")
