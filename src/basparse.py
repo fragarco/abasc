@@ -130,11 +130,6 @@ class LocBasParser:
         self.pos += 1
         return tok
 
-    def _rewind(self) -> Token:
-        tok = self.tokens[self.pos]
-        self.pos -= 1
-        return tok
-
     def _match(self, type: TokenType, lex: Optional[str] = None) -> Optional[Token]:
         if self._current_is(type, lex):
             return self._advance()
@@ -2101,7 +2096,7 @@ class LocBasParser:
     def _parse_READIN(self) -> AST.ReadIn:
         """ <READIN> ::= READIN <ident>[,<ident>]* """
         self._advance()
-        vars: list[AST.Statement] = []
+        vars: list[AST.Variable | AST.ArrayItem] = []
         while True:
             var = self._parse_ident()
             vars.append(var)
@@ -2288,8 +2283,6 @@ class LocBasParser:
             fname = self._advance()
             args = [AST.String(value = cast(str, fname.value))]
             args[0].set_origin(fname.line, fname.col)
-        else:
-            self._raise_error(13, tk)  
         return AST.Command(name="RUN", args=args)
 
     @astnode
