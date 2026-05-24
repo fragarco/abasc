@@ -1,5 +1,5 @@
 r"""
-Lexycal scanner for Amstrad locomotive BASIC code.
+Lexycal Analyzer for Amstrad Locomotive BASIC code.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

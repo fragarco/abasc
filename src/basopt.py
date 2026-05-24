@@ -1,4 +1,6 @@
 """
+Optimizer module for Amstrad Locomotive BASIC code.
+
 Applies some optimizations to an Abstract Syntatic Tree (AST)
 and, as a result, returns a modified AST ready for code generation 
 
