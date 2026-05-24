@@ -3269,6 +3269,7 @@ SUB         rsSetMode(nmode)
   - Añade soporte para patrones en el comando DEC$
   - Añade soporte para carga y ejecucción de binarios con el comando RUN "file"
   - Añade soporte para números reales en los comandos WRITE y READIN
+  - Algunos pequeños arreglos y ajustes
 
 - Versión 1.1.1
   - Arregla un error al reservar espacio usando DECLARE y FIXED en cadenas de texto

@@ -3319,6 +3319,7 @@ SUB         rsSetMode(nmode)
   - Adds support for USING templates in DEC$ command
   - Adds support for loading and running binary files using the command RUN "file"
   - Adds support for real numbers in WRITE and READIN commands
+  - Some other minor fixes and tweaks
 
 - Version 1.1.1
   - Fixes a problem reserving string memory when using DECLARE FIXED
