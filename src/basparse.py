@@ -298,7 +298,10 @@ class LocBasParser:
             if entry is not None:
                 return self._parse_user_fun()
         tk = self._current()
-        dir = self._parse_expression()
+        if tk.type == TokenType.INT:
+            dir = self._parse_uint_expression()
+        else:
+            dir = self._parse_expression()
         if dir.etype not in (AST.ExpType.Integer, AST.ExpType.String):
             self._raise_error(13, tk)
         args = [dir]
@@ -1604,7 +1607,7 @@ class LocBasParser:
         args = [self._parse_str_expression()]
         if self._current_is(TokenType.COMMA):
             self._advance()
-            args.append(self._parse_int_expression())
+            args.append(self._parse_uint_expression())
         return AST.Command(name="LOAD", args=args)
 
     @astnode
@@ -1690,7 +1693,7 @@ class LocBasParser:
     def _parse_MEMORY(self) -> AST.Command:
         """ <MEMORY> ::= MEMORY <int_expression>"""
         self._advance()
-        args = [self._parse_int_expression()]
+        args = [self._parse_uint_expression()]
         return AST.Command(name="MEMORY", args=args)
 
     @astnode
@@ -1942,7 +1945,7 @@ class LocBasParser:
         """ <PEEK> ::= PEEK(<int_expression>) """
         self._advance()
         self._expect(TokenType.LPAREN)
-        args = [self._parse_int_expression()]
+        args = [self._parse_uint_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="PEEK", etype=AST.ExpType.Integer, args=args)
 
@@ -1992,7 +1995,7 @@ class LocBasParser:
     def _parse_POKE(self) -> AST.Command:
         """ <POKE> ::= POKE <int_expression>,<int_expression> """
         self._advance()
-        args = [self._parse_int_expression()]
+        args = [self._parse_uint_expression()]
         self._expect(TokenType.COMMA)
         args.append(self._parse_int_expression())
         return AST.Command(name="POKE", args=args)
@@ -2299,7 +2302,7 @@ class LocBasParser:
             args.append(AST.String(value=lex))
             while not self._end_of_statement():
                 self._expect(TokenType.COMMA)
-                args.append(self._parse_int_expression())
+                args.append(self._parse_uint_expression())
         return AST.Command(name="SAVE", args=args)
 
     @astnode
