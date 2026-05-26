@@ -348,12 +348,13 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 ### Opciones
 
 - `--version` --- muestra la versión del compilador.
-- `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).\
-- `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).\
+- `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).
+- `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).
 - `--start <n>`--- dirección de inicio del programa (por defecto es 0x0040, ver sección sobre `Gestión de la memoria`).
 - `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
-- `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).\
-- `-o`, `--out` --- nombre de salida sin extensión.\
+- `-v`, `--verbose` --- genera archivos auxiliares del proceso de compilación (resultado del preproceso, tabla de símbolos, arbol de sintáxis, etc.).
+- `--strchars` --- Establece el número máximo de caracteres a reservar para cadenas de texto temporales (1–254). Por defecto: 254.
+- `-o`, `--out` --- nombre de salida sin extensión.
 
 ## Creación de un proyecto usando BASPRJ
 
@@ -414,6 +415,8 @@ DECLARE A$ FIXED 10  ' La cadena A$ podrá contener hasta 10 carácteres
 
 La cadena anterior reservará un total de 11 bytes (1 de longitud + 10 de contenido).
 Es importante destacar que, al no existir comprobaciones en tiempo de ejecución —como sí ocurre en un intérprete—, nada impide que el programador intente almacenar más carácteres de los permitidos en `A$`, lo que provocará comportamientos impredecibles.
+
+Por último, las operaciones con cadenas de texto suelen requerir que se dedique espacio para los resultados intermedios. Estas cadenas temporales también reservan por defecto 255 bytes en total (254 caracteres más un byte para la longitud). Si se desea reducir este valor, se puede utilizar el flag de compilación `--strchars`. Así, `--strchars 10` forzará al compilador a reservar solo 11 bytes para cada cadena temporal que se necesite (10 caracteres + 1 byte para la longitud).
 
 ### Arrays
 
@@ -3269,6 +3272,7 @@ SUB         rsSetMode(nmode)
   - Añade soporte para patrones en el comando DEC$
   - Añade soporte para carga y ejecucción de binarios con el comando RUN "file"
   - Añade soporte para números reales en los comandos WRITE y READIN
+  - añade el flag --strchars para controlar el número de caracteres máximo de los strings temporales
   - Algunos pequeños arreglos y ajustes
 
 - Versión 1.1.1

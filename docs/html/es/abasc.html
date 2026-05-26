@@ -728,12 +728,10 @@ comenzar a trabajar. <a href="basprj.html">manual</a></li>
 <ul>
 <li><code>--version</code> — muestra la versión del compilador.</li>
 <li><code>-O &lt;n&gt;</code> — nivel de optimización (0 = ninguna, 1 =
-peephole, 2 = completa).<br />
-</li>
+peephole, 2 = completa).</li>
 <li><code>-W &lt;n&gt;</code> — nivel de las advertencias (warnings) a
 mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media
-importancia, 3 = todas).<br />
-</li>
+importancia, 3 = todas).</li>
 <li><code>--start &lt;n&gt;</code>— dirección de inicio del programa
 (por defecto es 0x0040, ver sección sobre
 <code>Gestión de la memoria</code>).</li>
@@ -742,11 +740,12 @@ datos del programa (por defecto es 0x4000, ver sección sobre
 <code>Gestión de la memoria</code>).</li>
 <li><code>-v</code>, <code>--verbose</code> — genera archivos auxiliares
 del proceso de compilación (resultado del preproceso, tabla de símbolos,
-arbol de sintáxis, etc.).<br />
-</li>
+arbol de sintáxis, etc.).</li>
+<li><code>--strchars</code> — Establece el número máximo de caracteres a
+reservar para cadenas de texto temporales (1–254). Por defecto:
+254.</li>
 <li><code>-o</code>, <code>--out</code> — nombre de salida sin
-extensión.<br />
-</li>
+extensión.</li>
 </ul>
 <h2 id="creación-de-un-proyecto-usando-basprj">Creación de un proyecto
 usando BASPRJ</h2>
@@ -855,6 +854,14 @@ de contenido). Es importante destacar que, al no existir comprobaciones
 en tiempo de ejecución —como sí ocurre en un intérprete—, nada impide
 que el programador intente almacenar más carácteres de los permitidos en
 <code>A$</code>, lo que provocará comportamientos impredecibles.</p>
+<p>Por último, las operaciones con cadenas de texto suelen requerir que
+se dedique espacio para los resultados intermedios. Estas cadenas
+temporales también reservan por defecto 255 bytes en total (254
+caracteres más un byte para la longitud). Si se desea reducir este
+valor, se puede utilizar el flag de compilación <code>--strchars</code>.
+Así, <code>--strchars 10</code> forzará al compilador a reservar solo 11
+bytes para cada cadena temporal que se necesite (10 caracteres + 1 byte
+para la longitud).</p>
 <h3 id="arrays">Arrays</h3>
 <p>En el Locomotive BASIC interpretado, un array que no ha sido
 declarado previamente con <code>DIM</code> se considera que tiene 10
@@ -4008,6 +4015,8 @@ describe a continuación.</p>
 “file”</li>
 <li>Añade soporte para números reales en los comandos WRITE y
 READIN</li>
+<li>añade el flag –strchars para controlar el número de caracteres
+máximo de los strings temporales</li>
 <li>Algunos pequeños arreglos y ajustes</li>
 </ul></li>
 <li>Versión 1.1.1

@@ -49,6 +49,7 @@ class CPCEmitter:
         self.startaddr = 0x0040
         self.symbolafter = 9999
         self.memlimit = 99999
+        self.tmpstrsz = 255
 
         self.context = ""
         self.headcode = ""
@@ -91,6 +92,9 @@ class CPCEmitter:
     def cfgset_startaddr(self, startaddr: int) -> None:
         self.startaddr = startaddr
 
+    def cfgset_tmpstrsz(self, strsz: int) -> None:
+        self.tmpstrsz = strsz
+    
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
         for _ in range(indent): pad = pad + " "
@@ -1018,7 +1022,7 @@ class CPCEmitter:
             self._emit_popcontext()
         else:
             self._raise_error(2, node.args[0], "type not supported by USING")
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("push    de")
         self._emit_code("ldir")
         self._emit_code("pop     hl")
@@ -2147,7 +2151,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strleft")
         self._emit_code(";")
@@ -2306,7 +2310,7 @@ class CPCEmitter:
         self._emit_import("rt_lower")
         self._emit_code("; LOWER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("call    rt_lower")
         self._emit_code(";")
 
@@ -2317,7 +2321,7 @@ class CPCEmitter:
         self._emit_import("rt_ltrim")
         self._emit_code("; LTRIM$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("call    rt_ltrim")
         self._emit_code(";")
 
@@ -2410,10 +2414,10 @@ class CPCEmitter:
             self._emit_code("ld      b,l")
             self._emit_code("push    bc")
         else:
-            self._emit_code("ld       h,255")
+            self._emit_code(f"ld       h,{self.tmpstrsz}")
             self._emit_code("push     hl")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_substr")
         self._emit_code(";")
@@ -3242,7 +3246,7 @@ class CPCEmitter:
         self._emit_expression(node.args[-1])
         self._emit_code("push    hl")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strright")
         self._emit_code(";")
@@ -3296,7 +3300,7 @@ class CPCEmitter:
         self._emit_import("rt_rtrim")
         self._emit_code("; RTRIM$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("call    rt_rtrim")
         self._emit_code(";")
 
@@ -3460,7 +3464,7 @@ class CPCEmitter:
         self._emit_import("rt_strfill")
         self._emit_code("; SPACE$(<integer expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("ld      c,32")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
@@ -3593,7 +3597,7 @@ class CPCEmitter:
             self._emit_code("ld      c,l")
         self._emit_code("push    bc")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("pop     bc")
         self._emit_code("call    rt_strfill")
         self._emit_code(";")
@@ -3890,7 +3894,7 @@ class CPCEmitter:
         self._emit_import("rt_upper")
         self._emit_code("; UPPER$(<string expression>)")
         self._emit_expression(node.args[0])
-        self._reserve_heapmem_de(255, node)
+        self._reserve_heapmem_de(self.tmpstrsz, node)
         self._emit_code("call    rt_upper")
         self._emit_code(";")
 
@@ -4496,7 +4500,7 @@ class CPCEmitter:
             self._emit_import("rt_strcat")
             self._emit_code("push    de")
             self._emit_code("ex      de,hl")
-            self._reserve_heapmem(255, node)
+            self._reserve_heapmem(self.tmpstrsz, node)
             self._emit_code("call    rt_strcopy", info="(HL) <- (DE)")
             self._emit_code("pop     de")
             self._emit_code("call    rt_strcat", info="(HL) <- (HL) + (DE)")

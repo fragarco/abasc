@@ -727,6 +727,8 @@ by default)</li>
 <li><code>-v</code>, <code>--verbose</code> — Generates auxiliary
 compilation files (preprocessed output, symbol table, syntax tree,
 etc.).</li>
+<li><code>--strchars</code> — Sets the maximum number of characters to
+preallocate for temporary strings (1–254). Default: 254.</li>
 <li><code>-o</code>, <code>--out</code> — Output file name (without
 extension).</li>
 </ul>
@@ -828,9 +830,15 @@ buffer size:</p>
 <pre class="basic"><code>DECLARE A$ FIXED 10  &#39; A$ may contain up to 10 characters</code></pre>
 <p>The above sentence reserves 11 bytes total (1 length byte + 10
 characters). It is important to note that ABASC does <strong>not perform
-runtime bounds checking</strong>—unlike an interpreter—so writing more
+runtime bounds checking</strong> —unlike an interpreter— so writing more
 characters than the space allocated for <code>A$</code> will lead to
 unpredictable behavior.</p>
+<p>Finally, string expressions allocate memory for intermediate results
+too. By default, these strings will consume 255 bytes in the heap. The
+compiler flag <code>--strchars</code> can be used to control this
+behavious so, for example, <code>--strchars 10</code> will force the
+compiler to reserve 11 bytes in total per each temporal string adding
+one extra byte to store the string length.</p>
 <h3 id="arrays">Arrays</h3>
 <p>In Locomotive BASIC, an array that has not been explicitly declared
 with <code>DIM</code> is assumed to contain 10 elements. ABASC is
@@ -3982,6 +3990,8 @@ version 2 and version 2 plus.</p>
 <li>Adds support for loading and running binary files using the command
 RUN “file”</li>
 <li>Adds support for real numbers in WRITE and READIN commands</li>
+<li>Adds –strchars to control the maximum number of chars to preallocate
+for temporary strings</li>
 <li>Some other minor fixes and tweaks</li>
 </ul></li>
 <li>Version 1.1.1

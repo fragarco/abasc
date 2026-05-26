@@ -352,6 +352,7 @@ python abasc.py [options] file.bas [-o output]
 - `--start <n>` — Program area starting address (0x0040 by default)
 - `--data <n>` — Data area starting address (0x4000 by default)
 - `-v`, `--verbose` — Generates auxiliary compilation files (preprocessed output, symbol table, syntax tree, etc.).
+- `--strchars` — Sets the maximum number of characters to preallocate for temporary strings (1–254). Default: 254.
 - `-o`, `--out` — Output file name (without extension).
 
 ## Creating a Project Using BASPRJ
@@ -409,7 +410,9 @@ In addition, programmers may not always want to reserve the full 254 bytes for e
 DECLARE A$ FIXED 10  ' A$ may contain up to 10 characters
 ```
 
-The above sentence reserves 11 bytes total (1 length byte + 10 characters). It is important to note that ABASC does **not perform runtime bounds checking**—unlike an interpreter—so writing more characters than the space allocated for `A$` will lead to unpredictable behavior.
+The above sentence reserves 11 bytes total (1 length byte + 10 characters). It is important to note that ABASC does **not perform runtime bounds checking** —unlike an interpreter— so writing more characters than the space allocated for `A$` will lead to unpredictable behavior.
+
+Finally, string expressions allocate memory for intermediate results too. By default, these strings will consume 255 bytes in the heap. The compiler flag `--strchars` can be used to control this behavious so, for example, `--strchars 10` will force the compiler to reserve 11 bytes in total per each temporal string adding one extra byte to store the string length.
 
 ### Arrays
 
@@ -3319,6 +3322,7 @@ SUB         rsSetMode(nmode)
   - Adds support for USING templates in DEC$ command
   - Adds support for loading and running binary files using the command RUN "file"
   - Adds support for real numbers in WRITE and READIN commands
+  - Adds --strchars to control the maximum number of chars to preallocate for temporary strings
   - Some other minor fixes and tweaks
 
 - Version 1.1.1

@@ -48,6 +48,7 @@ class AbascOptions:
     warninglevel: WL = WL.ALL
     verbose: bool = False
     debug: bool = False
+    strsz: int = 255
 
 def aux_int(param: Any) -> int:
     """
@@ -70,6 +71,7 @@ def process_args() -> AbascOptions:
     parser.add_argument('-v', '--verbose', action='store_true', help="Save to file the outputs of each compile step.")
     parser.add_argument('--version', action='version', version=f' ABASC (Locomotive BASIC Cross Compiler) Version {__version__}', help = "Shows program's version and exits")
     parser.add_argument('--debug', action='store_true', help="Shows some extra information when compilation fails")
+    parser.add_argument('--strchars', type=int, default=254, help="Sets the maximum number of characters to preallocate for temporary strings (1–254). Default: 254.")
     args = parser.parse_args()
 
     outfile = args.out if args.out is not None else args.infile.rsplit('.')[0]
@@ -83,6 +85,7 @@ def process_args() -> AbascOptions:
     opts.startaddr = args.start
     opts.dataaddr = args.data
     opts.verbose = args.verbose
+    opts.strsz = min(max(1, args.strchars), 254) + 1
     return opts
 
 def clear(srcfile: str) -> None:
@@ -149,6 +152,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: A
     emitter.cfgset_verbose(opts.verbose)
     emitter.cfgset_startaddr(opts.startaddr)
     emitter.cfgset_dataaddr(opts.dataaddr)
+    emitter.cfgset_tmpstrsz(opts.strsz)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
