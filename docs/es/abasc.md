@@ -3265,6 +3265,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.2.1
+  - 
+
 - Versión 1.2.0
   - Añade soporte para el símbolo "!" en el comando LOAD
   - Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND

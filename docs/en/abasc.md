@@ -3315,6 +3315,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+- Version 1.2.1
+  - 
+  
 - Version 1.2.0
   - Adds support for character "!" in LOAD command
   - Adds Locomotive BASIC 2 functions LBOUND and UBOUND
