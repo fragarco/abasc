@@ -3270,7 +3270,7 @@ SUB         rsSetMode(nmode)
   - Añade las funciones de Locomotive BASIC 2 LBOUND y UBOUND
   - Añade las funciones de Locomotive BASIC 2 LTRIM$ y RTRIM$ 
   - Añade soporte para patrones en el comando DEC$
-  - Añade soporte para carga y ejecucción de binarios con el comando RUN "file"
+  - Añade soporte para carga y ejecución de binarios con el comando RUN "file"
   - Añade soporte para números reales en los comandos WRITE y READIN
   - añade el flag --strchars para controlar el número de caracteres máximo de los strings temporales
   - Algunos pequeños arreglos y ajustes
