@@ -22,11 +22,11 @@ import json
 
 class ExpType(str, Enum):
     """ Nodes related to expressions have a result type """
-    Void = "Void",
-    Integer = "Integer",
-    Real = "Real",
-    String = "String",
-    Mismatch = "Mismatch",
+    Void = "Void"
+    Integer = "Integer"
+    Real = "Real"
+    String = "String"
+    Mismatch = "Mismatch"
     
 def exptype_derive(op1: "Statement", op2: "Statement") -> ExpType:
     """
@@ -177,7 +177,7 @@ class Assignment(Statement):
 
     def to_json(self) -> dict:
         d = super().to_json()
-        d["target"] = self.target.to_json(),
+        d["target"] = self.target.to_json()
         d["source"] = self.source.to_json()
         return d
 
@@ -226,7 +226,7 @@ class Range(Statement):
     def to_json(self) -> dict:
         d = super().to_json()
         d["low"] = self.low
-        d["hight"] = self.high
+        d["high"] = self.high
         return d
 
 class Integer(Statement):
@@ -370,8 +370,8 @@ class If(Statement):
     condition: Statement
     has_else: bool
     is_inline: bool
-    inline_then: list[Statement] = []
-    inline_else: list[Statement] = []
+    inline_then: list[Statement]
+    inline_else: list[Statement]
     else_label: str    # used during code generation
     end_label: str      # used during code generation
 

@@ -3266,7 +3266,9 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.1
-  - 
+  - Arregla un error en la optimización de la función INT()
+  - ABASM actualizado a la versión 1.4.3
+  - Otros pequeños arreglos y mejoras
 
 - Versión 1.2.0
   - Añade soporte para el símbolo "!" en el comando LOAD

@@ -31,10 +31,10 @@ class CodeLine:
 
 class LocBasPreprocessor:
 
-    def _raise_error(self, ecode: int, info: str, file: str = "", line: int = -1, code: str= "") -> None:
+    def _raise_error(self, ecode: int, info: str, srcfile: str = "", line: int = -1, code: str= "") -> None:
         raise BasError(
             ecode = ecode,
-            source = file,
+            source = srcfile,
             info = info,
             code = code,
             line = line
@@ -78,10 +78,11 @@ class LocBasPreprocessor:
         
 
     def extract_linenum(self, line: str) -> int | None:
-        numend = 0
-        while line[numend].isdigit(): numend += 1
-        if numend != 0:
-            return int(line[0:numend])
+        if len(line) > 0:
+            numend = 0
+            while line[numend].isdigit(): numend += 1
+            if numend != 0:
+                return int(line[0:numend])
         return None
 
     def preprocess(self, inputfile: str, code: str, increment: int = 10) -> tuple[list[CodeLine],str]:
@@ -111,7 +112,7 @@ class LocBasPreprocessor:
                             ecode=2,
                             info=f"explicit line number {num} is under current auto value {autonum}",
                             line=srcline+1,
-                            file=inputfile)
+                            srcfile=inputfile)
                     lastnum = num
                     autonum = num + increment
                     

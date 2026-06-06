@@ -129,7 +129,7 @@ _ERRORCODES = {
     "006": "Overflow",
     "007": "Memory full",
     "008": "Line does not exist",
-    "009": "Subcript out of range",
+    "009": "Subscript out of range",
     "010": "Array already dimensioned",
     "011": "Division by zero",
     "012": "Invalid direct command",
@@ -194,8 +194,8 @@ class BasError(Exception):
         return msg
 
 class WarningLevel(int, Enum):
-    NONE     = 0,
-    HIGH     = 1,
-    MEDIUM   = 2,
-    LOW      = 3,
+    NONE     = 0
+    HIGH     = 1
+    MEDIUM   = 2
+    LOW      = 3
     ALL      = 4

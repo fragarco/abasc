@@ -32,9 +32,9 @@ from .cpcrt import FWCALL, RT
 
 class DataSec(str, Enum):
     """ Nodes related to sections of data """
-    GEN = "General",
-    VARS = "Variables",
-    DATA = "DataBlock",
+    GEN = "General"
+    VARS = "Variables"
+    DATA = "DataBlock"
     CONST = "Constants"
 
 class CPCEmitter:

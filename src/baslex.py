@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 Use example:
 
-from lexer import LocBasLexer
+from baslex import LocBasLexer
 
 program = '''
 10 REM Demo
@@ -332,7 +332,7 @@ class LocBasLexer:
 
     def _try_word(self, word: str) -> bool:
         pos = self.pos
-        # espaces
+        # spaces
         self._skip_spaces()
         if self.text.startswith(word, self.pos):
             for _ in word:
@@ -475,7 +475,6 @@ class LocBasLexer:
                 break
 
     def tokens_json(self) -> tuple[str, list[Token]]:
-        print("Parsing source files...")
         tokens = list(self.tokens())
         return json.dumps(tokens, indent=4, cls=TokenEncoder), tokens
 

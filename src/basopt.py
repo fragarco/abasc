@@ -19,7 +19,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from typing import List, Optional, cast, Any
+from typing import Any
+import math
 import re
 import astlib as AST
 import symbols as SYM
@@ -54,9 +55,7 @@ class BasOptimizer:
     def _op_CINT(self, node: AST.Function) -> AST.Statement:
         if isinstance(node.args[0], AST.Real):
             self.modified = True
-            fvalue = node.args[0].value
-            roff = -0.5 if fvalue < 0.0 else 0.5
-            nnode = AST.Integer(value=int(fvalue + roff))
+            nnode = AST.Integer(value=round(node.args[0].value))
             nnode.line = node.args[0].line
             nnode.col = node.args[0].col
             return nnode
@@ -67,7 +66,7 @@ class BasOptimizer:
             nnode.col = node.args[0].col
             return nnode
         elif isinstance(node.args[0], AST.Function) and node.args[0].name == "TIME":
-            # Lets use the interger version of TIME
+            # Let's use the interger version of TIME
             self.modified = True
             node.args[0].etype = AST.ExpType.Integer
             return node.args[0]
@@ -164,12 +163,12 @@ class BasOptimizer:
             self.modified = True
             num = node.args[0].value
             if num < 0.0:
-                nnode = AST.Integer(value=int(node.args[0].value))
+                nnode = AST.Integer(value=int(node.args[0].value - 0.999999999))
                 nnode.line = node.args[0].line
                 nnode.col = node.args[0].col
                 return nnode
             else:
-                nnode =  AST.Integer(value=int(node.args[0].value - 0.999999999))
+                nnode =  AST.Integer(value=math.floor(node.args[0].value))
                 nnode.line = node.args[0].line
                 nnode.col = node.args[0].col
                 return nnode

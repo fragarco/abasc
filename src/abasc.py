@@ -18,7 +18,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 from __future__ import annotations
 from typing import Any
-import sys, os, pathlib
+import sys
+import os
+import pathlib
 import argparse
 import time
 import traceback
@@ -59,7 +61,7 @@ def aux_int(param: Any) -> int:
 
 def process_args() -> AbascOptions:
     parser = argparse.ArgumentParser(
-        prog='basc.py',
+        prog='abasc.py',
         description='A Locomotive BASIC compiler for the Amstrad CPC'
     )
     parser.add_argument('infile', help="BAS file with pseudo Locomotive Basic code.")
@@ -103,21 +105,9 @@ def readsourcefile(source: str) -> str:
     with open(source, "r", encoding="utf-8") as fd:
         return fd.read()
 
-def check_linenums(source: str) -> bool:
-    """ 
-    Check if the first character in the source code is a number which indicates
-    line numbers are in use.
-    """
-    code = source.strip()
-    return code[0].isdigit()
-
 def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine], str]:
     pp = LocBasPreprocessor()
-    nopp = False # check_linenums(content)
-    if nopp:
-        codelines, code = pp.ascodelines(infile, content)
-    else:
-        codelines, code = pp.preprocess(infile, content, 10)
+    codelines, code = pp.preprocess(infile, content, 10)
     if verbose:
         ppfile = str(pathlib.Path(infile).with_suffix('.bpp'))
         pp.save_output(ppfile, code)
@@ -125,6 +115,7 @@ def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine]
 
 def lexpass(infile: str, code: str, verbose: bool) -> list[Token]:
     lx = LocBasLexer(code)
+    print("Parsing source files...")
     lexjson, tokens = lx.tokens_json()
     if verbose:
         lexfile: str = str(pathlib.Path(infile).with_suffix('.lex'))
@@ -132,7 +123,7 @@ def lexpass(infile: str, code: str, verbose: bool) -> list[Token]:
             fd.write(lexjson)
     return tokens
 
-def parser(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose: bool, wlevel: WL) -> tuple[AST.Program, SymTable]:
+def parse(infile: str, codelines: list[CodeLine], tokens: list[Token], verbose: bool, wlevel: WL) -> tuple[AST.Program, SymTable]:
     parser = LocBasParser(codelines, tokens, wlevel)
     ast, symtable = parser.parse_program()
     if verbose:
@@ -158,7 +149,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: A
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
     asmfile: str = str(pathlib.Path(outfile).with_suffix('.asm'))
     with open(asmfile, "w", encoding="utf-8") as fd:
-            fd.write(asmcode)
+        fd.write(asmcode)
     # library path for read 'asmfile' directive
     # we add the src/lib directory and also
     # the path to the BAS source file because the output ASM
@@ -175,7 +166,7 @@ def compile(opts: AbascOptions) -> int:
     bascontent = readsourcefile(opts.infile)
     codelines, code = preprocess(opts.infile, bascontent, opts.verbose)
     tokens = lexpass(opts.infile, code, opts.verbose)
-    ast, symtable = parser(opts.infile, codelines, tokens, opts.verbose, opts.warninglevel)
+    ast, symtable = parse(opts.infile, codelines, tokens, opts.verbose, opts.warninglevel)
     optimizer = BasOptimizer()
     if opts.optlevel > 1:
         ast, symtable = optimizer.optimize_ast(ast, symtable)
@@ -190,8 +181,8 @@ def compile(opts: AbascOptions) -> int:
 
 def main() -> None:
     start_t = time.process_time()
+    opts: AbascOptions = process_args()
     try:
-        opts: AbascOptions = process_args()
         heapused = compile(opts)
     except Exception as e:
         print(str(e))

@@ -3316,7 +3316,9 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.1
-  - 
+  - Fixed an error in the INT() function optimization
+  - ABASM upgraded to release 1.4.3
+  - Some other minor fixes and tweaks
   
 - Version 1.2.0
   - Adds support for character "!" in LOAD command
