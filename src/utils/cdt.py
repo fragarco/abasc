@@ -28,7 +28,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.1'
+__version__='1.4.3'
 
 import sys
 import argparse
@@ -541,7 +541,7 @@ class BlockArchiveInfo:
     PUBLISHER   = 0x01
     AUTHOR      = 0x02
     YEAR        = 0x03
-    LANGUAJE    = 0x04
+    LANGUAGE    = 0x04
     TYPE        = 0x05
     PRICE       = 0x06
     LOADER      = 0x07
@@ -650,10 +650,10 @@ class CDT:
         chunksz = 512
         try:
             with open(inputfile, 'rb') as fd:
-                bytes = fd.read(chunksz)
-                while bytes:
-                    content.extend(bytes)
-                    bytes = fd.read(chunksz)
+                fbytes = fd.read(chunksz)
+                while fbytes:
+                    content.extend(fbytes)
+                    fbytes = fd.read(chunksz)
             self.set(content)
             return True      
         except IOError:
@@ -704,7 +704,6 @@ class CDT:
         block = BlockTurboSpeed(speed, DEF_PAUSE_FILE)
         data = bytearray(b'\x16')  # sync byte for data
         crc = AUX_GET_CRC(incontent)
-        data.extend(data)
         data.extend(incontent)
         data.extend(crc.to_bytes(2, 'big'))
         data.extend(b'\xFF\xFF\xFF\xFF')
@@ -712,7 +711,7 @@ class CDT:
         self.blocks.append(block)
 
     def add_file(self, incontent, header, speed):
-        if header != None:
+        if header is not None:
             self._add_file(incontent, header, speed)
         else:
             self._add_raw(incontent, speed)
@@ -788,7 +787,7 @@ def run_put_file(filein, args, cdt, header):
     if len(content) > 65536:
         print("[cdt] ERROR - max input file size is 64K")
         sys.exit(1)
-    if header != None:
+    if header is not None:
         if header.type == DataHeader.FT_ASCII:
             # ASCII files in Amstrad CPC must end their lines in \r\n and not only \n
             # so let's check here and fix it if the input file only uses \n
@@ -798,10 +797,10 @@ def run_put_file(filein, args, cdt, header):
         header.filename = "UNNAMED"
         header.addr_start = 0x4000
         header.addr_load = 0x4000
-        if args.name != None: header.filename = args.name[0:16]
-        if args.map_file != None: mapfile = run_read_mapfile(args.map_file)
-        if args.start_addr != None: header.addr_start = run_get_start(args.start_addr, mapfile)
-        if args.load_addr != None: header.addr_load = args.load_addr
+        if args.name is not None: header.filename = args.name[0:16]
+        if args.map_file is not None: mapfile = run_read_mapfile(args.map_file)
+        if args.start_addr is not None: header.addr_start = run_get_start(args.start_addr, mapfile)
+        if args.load_addr is not None: header.addr_load = args.load_addr
     cdt.add_file(content, header, 2000 if args.speed == 1 else 1000)
     cdt.write(args.cdtfile)
 
@@ -864,9 +863,9 @@ def main():
     if args.new:    run_new(args, cdt)
     if args.check:  run_check(args, cdt)
     if args.cat:    run_cat(args, cdt)
-    if args.put_ascii != None: run_put_asciifile(args, cdt)
-    if args.put_bin != None: run_put_binfile(args, cdt)
-    if args.put_raw != None: run_put_rawfile(args, cdt)
+    if args.put_ascii is not None: run_put_asciifile(args, cdt)
+    if args.put_bin is not None: run_put_binfile(args, cdt)
+    if args.put_raw is not None: run_put_rawfile(args, cdt)
     sys.exit(0)
 
 if __name__ == "__main__":

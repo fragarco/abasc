@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.2'
+__version__='1.4.3'
 
 import sys
 import os
@@ -106,7 +106,7 @@ class DiskHeader:
         if self.tracks < tracks:
             raise FormatError("header number of tracks (%d) differs from expected value (%d)"%(self.tracks, tracks))
         if self.sztrack != sztrack:
-            raise FormatError("header track size (%d) differs from expected value (%d)"%(self.tracks, tracks))
+            raise FormatError("header track size (%d) differs from expected value (%d)"%(self.sztrack, sztrack))
 
     def dump(self):
         print("HEADER:")
@@ -279,7 +279,7 @@ class TrackData:
     def check(self):
         datasz = 512 * DEF_SECTORS
         if len(self.data) != datasz:
-            raise FormatError("track data size (%d) differes from expected value (%d)"% (len(self.data, datasz)))
+            raise FormatError("track data size (%d) differes from expected value (%d)"% (len(self.data), datasz))
 
     def get_sector_data(self, sector, dbytes = 512):
         return self.data[512*sector: 512*sector + dbytes]
@@ -390,10 +390,10 @@ class Disk:
         chunksz = 512
         try:
             with open(inputfile, 'rb') as fd:
-                bytes = fd.read(chunksz)
-                while bytes:
-                    content.extend(bytes)
-                    bytes = fd.read(chunksz)
+                fbytes = fd.read(chunksz)
+                while fbytes:
+                    content.extend(fbytes)
+                    fbytes = fd.read(chunksz)
             self.set(content)
             return True      
         except IOError:
@@ -907,9 +907,9 @@ def run_put_binfile(args, disk, infile):
     print(f"[dsk] adding BIN file {infile} to USER {args.user}")
     mapfile = {}
     header.build(args.user, infile, len(content))
-    if args.map_file != None: mapfile = run_read_mapfile(args.map_file)
-    if args.load_addr != None: header.addr_load = args.load_addr
-    if args.start_addr != None: header.addr_entry = run_get_start(args.start_addr, mapfile)
+    if args.map_file is not None: mapfile = run_read_mapfile(args.map_file)
+    if args.load_addr is not None: header.addr_load = args.load_addr
+    if args.start_addr is not None: header.addr_entry = run_get_start(args.start_addr, mapfile)
     header.update_checksum()
     content = bytearray(header.compose() + content)
     run_put_file(infile, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
@@ -966,11 +966,11 @@ def main():
     if args.check:  run_check(args, disk)
     if args.dump:   run_dump(args, disk)
     if args.cat:    run_cat(args, disk)
-    if args.header != None: run_dump_header(args, disk)
-    if args.get != None: run_get_file(args, disk)
-    if args.put_ascii != None: run_put_asciifile(args, disk)
-    if args.put_bin != None: run_put_binfile(args, disk, args.put_bin)
-    if args.put_raw != None: run_put_rawfile(args, disk, args.put_raw)
+    if args.header is not None: run_dump_header(args, disk)
+    if args.get is not None: run_get_file(args, disk)
+    if args.put_ascii is not None: run_put_asciifile(args, disk)
+    if args.put_bin is not None: run_put_binfile(args, disk, args.put_bin)
+    if args.put_raw is not None: run_put_rawfile(args, disk, args.put_raw)
     sys.exit(0)
 
 if __name__ == "__main__":

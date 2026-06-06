@@ -20,16 +20,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.2'
+__version__='1.4.3'
 
-import sys, os
+import sys
+import os
 import re
 import argparse
 import inspect
 
 IFSTATE_DISABLED = 0 # assemble all encounted code
 IFSTATE_ASSEMBLE = 1 # assemble this code, but stop at ELSE or ELSEIF
-IFSTATE_DISCART  = 2 # do not assemble this code, but might start at ELSE or ELSEIF
+IFSTATE_DISCARD  = 2 # do not assemble this code, but might start at ELSE or ELSEIF
 IFSTATE_FIND_END = 3 # do not assemble any code until ENDIF
 
 WSTATE_DISABLED = 0  # assemble all encounted code
@@ -321,11 +322,8 @@ class AsmContext:
         return None
 
     def check_symbol(self, sym, type):
-        try:
-            if sym in g_context.registernames or "op_" + sym in g_opcode_functions:
-                abort(f"{type} name {sym} matches a directive, opcode or registry name")
-        except Exception as e:
-            pass
+        if sym in g_context.registernames or "op_" + sym in g_opcode_functions:
+            abort(f"{type} name {sym} matches a directive, opcode or registry name")
             
     def process_label(self, p, label):
         if len(label.split()) > 1:
@@ -434,7 +432,7 @@ class AsmContext:
         if self.defining_macro is not None and inst != "ENDM":
             self.defining_macro.code.append(line)
             return 0, []
-        assemble = (self.ifstate < IFSTATE_DISCART) or inst in ("IF", "ELSE", "ELSEIF", "ENDIF")
+        assemble = (self.ifstate < IFSTATE_DISCARD) or inst in ("IF", "ELSE", "ELSEIF", "ENDIF")
         assemble = assemble and ((self.whilestate < WSTATE_FIND_END) or inst in ("WHILE", "WEND"))
         assemble = assemble and ((self.repeatstate < RSTATE_FIND_END) or inst in ("REPEAT", "REND"))
         self.list_instruction = assemble
@@ -747,37 +745,6 @@ def store_register_arg_type(p, opargs, offset, ninstr, step_per_register=1):
     else:
         instr.append(offset + step_per_register * r)
     instr.extend(post)
-    if p == 2:
-        g_context.store(p, instr)
-    return len(instr)
-
-def store_cbshifts_type(p, opargs, offset, step_per_register=1):
-    args = opargs.split(',', 1)
-    if len(args) == 2:
-        # compound instruction of the form RLC B,(IX+c)
-        _, r1, _ = single(p, args[0], allow_half=0, allow_index=0)
-        pre2, r2, post2 = single(p, args[1], allow_half=0, allow_index=1)
-        if r1 == NO_REG or r2 == NO_REG:
-            abort("registers not recognized for compound instruction")
-        if r1 == REG_IND:
-            abort("(HL) not allowed as target of compound instruction")
-        if len(pre2) == 0:
-            abort("must use index register as operand of compound instruction")
-
-        instr = pre2
-        instr.extend([0xcb])
-        instr.extend(post2)
-        instr.append(offset + step_per_register * r1)
-    else:
-        check_args(opargs, 1)
-        pre, r, post = single(p, opargs, allow_half=0)
-        instr = pre
-        instr.extend([0xcb])
-        instr.extend(post)
-        if r == NO_REG:
-            abort("invalid argument")
-        else:
-            instr.append(offset + step_per_register * r)
     if p == 2:
         g_context.store(p, instr)
     return len(instr)
@@ -1270,7 +1237,7 @@ def op_INDR(p, opargs):
 def op_OTDR(p, opargs):
     return store_noargs_type(p, opargs, [0xed, 0xbb])
 
-def store_store_cbshifts_type(p, opargs, offset, step_per_register=1):
+def store_cbshifts_type(p, opargs, offset, step_per_register=1):
     args = opargs.split(',', 1)
     if len(args) == 2:
         # compound instruction of the form RLC B,(IX+c)
@@ -1282,7 +1249,6 @@ def store_store_cbshifts_type(p, opargs, offset, step_per_register=1):
             abort("(HL) not allowed as target of compound instruction")
         if len(pre2) == 0:
             abort("must use index register as operand of compound instruction")
-
         instr=pre2
         instr.extend([0xcb])
         instr.extend(post2)
@@ -1302,28 +1268,28 @@ def store_store_cbshifts_type(p, opargs, offset, step_per_register=1):
     return len(instr)
 
 def op_RLC(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x00)
+    return store_cbshifts_type(p, opargs, 0x00)
 
 def op_RRC(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x08)
+    return store_cbshifts_type(p, opargs, 0x08)
 
 def op_RL(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x10)
+    return store_cbshifts_type(p, opargs, 0x10)
 
 def op_RR(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x18)
+    return store_cbshifts_type(p, opargs, 0x18)
 
 def op_SLA(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x20)
+    return store_cbshifts_type(p, opargs, 0x20)
 
 def op_SRA(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x28)
+    return store_cbshifts_type(p, opargs, 0x28)
 
 def op_SLL(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x30)
+    return store_cbshifts_type(p, opargs, 0x30)
 
 def op_SRL(p, opargs):
-    return store_store_cbshifts_type(p, opargs, 0x38)
+    return store_cbshifts_type(p, opargs, 0x38)
 
 def op_SUB(p, opargs):
     # Z80 Aseembly language programming book lists SUB without register A
@@ -1689,14 +1655,14 @@ def op_IF(p, opargs):
     if '=' in opargs and '==' not in opargs and '!=' not in opargs:
         opargs = opargs.replace('=','==')
     g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
-    if g_context.ifstate < IFSTATE_DISCART:
+    if g_context.ifstate < IFSTATE_DISCARD:
         # No undefined symbols are allowed in IF expressions or we may
         # calculate wrong other symbols
         cond = g_context.parse_expression(opargs)
         if cond:
             g_context.ifstate = IFSTATE_ASSEMBLE
         else:
-            g_context.ifstate = IFSTATE_DISCART
+            g_context.ifstate = IFSTATE_DISCARD
     else:
         g_context.ifstate = IFSTATE_FIND_END
     return 0
@@ -1707,11 +1673,11 @@ def op_IFNOT(p, opargs):
     if '=' in opargs and '==' not in opargs and '!=' not in opargs:
         opargs = opargs.replace('=','==')
     g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
-    if g_context.ifstate < IFSTATE_DISCART:
+    if g_context.ifstate < IFSTATE_DISCARD:
         # This is just the oposite as a regular IF
         cond = g_context.parse_expression(opargs)
         if cond:
-            g_context.ifstate = IFSTATE_DISCART
+            g_context.ifstate = IFSTATE_DISCARD
         else:
             g_context.ifstate = IFSTATE_ASSEMBLE
     else:
@@ -1721,7 +1687,7 @@ def op_IFNOT(p, opargs):
 def op_ELSE(p, opargs):
     if g_context.ifstate == IFSTATE_ASSEMBLE or g_context.ifstate == IFSTATE_FIND_END:
         g_context.ifstate = IFSTATE_FIND_END
-    elif g_context.ifstate == IFSTATE_DISCART:
+    elif g_context.ifstate == IFSTATE_DISCARD:
         if opargs.upper().startswith("IF"):
             ifarg = opargs[2:].strip()
             # WinAPE supports = as equal sym in IF directive while we need ==
@@ -1731,7 +1697,7 @@ def op_ELSE(p, opargs):
             if cond:
                 g_context.ifstate = IFSTATE_ASSEMBLE
             else:
-                g_context.ifstate = IFSTATE_DISCART
+                g_context.ifstate = IFSTATE_DISCARD
         else:
             g_context.ifstate = IFSTATE_ASSEMBLE
     else:
@@ -1822,7 +1788,7 @@ def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x400
         try:
             val = aux_int(sym[1])
         except:
-            print("error: invalid format for command-line symbol definition in" + val)
+            print("error: invalid format for command-line symbol definition in" + sym[1])
             sys.exit(1)
         g_context.set_symbol(sym[0], aux_int(sym[1]), type='predefined symbol')
 

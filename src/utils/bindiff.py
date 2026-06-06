@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.0'
+__version__='1.4.3'
 
 import sys
 import argparse
@@ -27,7 +27,7 @@ import argparse
 def error(message):
     print(f"[bindiff] error: {message}")
 
-def _compare_bins(path1, path2, offset = 0):
+def _compare_bins(path1, path2):
     try:
         with open(path1, "rb") as fd:
             file1 = fd.read()
@@ -44,20 +44,13 @@ def _compare_bins(path1, path2, offset = 0):
     filesize = min(len(file1), len(file2))
     for i in range(0, filesize):
         if file1[i] != file2[i]:
-            print(f"Byte {i+offset:08X}: {file1[i]:02X} <> {file2[i]:02X}")
+            print(f"Byte {i:08X}: {file1[i]:02X} <> {file2[i]:02X}")
             diffs = diffs + 1
     if diffs > 0:
         error(f"files are different ({diffs} differences in total)")
         return 1
     print("[bindiff] files match (0 differences in total)")
     return 0
-
-def aux_int(param):
-    """
-    By default, int params are converted assuming base 10.
-    To allow hex values we need to 'auto' detect the base.
-    """
-    return int(param, 0)
 
 def process_args():
     parser = argparse.ArgumentParser(
@@ -66,7 +59,6 @@ def process_args():
     )
     parser.add_argument('file1', help = 'First binary file.')
     parser.add_argument('file2', help = 'Second binary file.')
-    parser.add_argument('--base', type=aux_int, default=0, help='Starting value for byte positions')
     parser.add_argument('-v', '--version', action='version', version=f'BinDiff Version {__version__}',
                         help = "Shows program's version and exits")
     args = parser.parse_args()
@@ -74,7 +66,7 @@ def process_args():
 
 def main():
     args = process_args()
-    sys.exit(_compare_bins(args.file1, args.file2, args.base))
+    sys.exit(_compare_bins(args.file1, args.file2))
 
 if __name__ == "__main__":
     main()
