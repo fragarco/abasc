@@ -1274,7 +1274,12 @@ FD AE hh    	XOR   (IY+d)    5 Realiza una OR exclusiva entre el valor en (IY+d)
 
 # Historial de cambios
 
-- Versión 1.4.2 -
+- Versión 1.4.3
+  * Arreglos en algunos mensajes de error en la herramienta DSK.
+  * Arreglada la codificación de bloques raw en la herramienta CDT.
+  * Otras pequeñas mejoras y arreglos.
+
+- Versión 1.4.2
   * Eliminamos los finales de línea ya que pueden afectar a los mensajes de error.
   * La herramienta DSK permite indicar el usuario y añadir los flags read-only y system.
 

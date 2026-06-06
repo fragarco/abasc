@@ -3265,6 +3265,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.2.2
+  - 
+  
 - Versión 1.2.1
   - Arregla un error en la optimización de la función INT()
   - ABASM actualizado a la versión 1.4.3
