@@ -1,5 +1,7 @@
 # An Amstrad Locomotive BASIC cross compiler (ABASC)
 
+![ABASC](docs/img/abasc.png)
+
 ## Español:
 
 **ABASC (Amstrad BASic cross Compiler)** es un compilador cruzado escrito íntegramente en Python y sin dependencias externas, lo que favorece su portabilidad a cualquier sistema que disponga de una instalación estándar de **Python 3**.
