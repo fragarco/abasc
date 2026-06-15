@@ -1381,7 +1381,7 @@ __a2bin_loop:
     ret
 """
 ),
-    "rt_strz2real": ([],
+    "rt_strz2real": (["rt_math_call"],
 """
 rt_strz2real_buf: defs 5
 __strz2real_0: db &00,&00,&00,&28,&00
