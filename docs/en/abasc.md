@@ -3317,6 +3317,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+- Version 1.2.3
+  - 
+
 - Version 1.2.2
   - Fixed an error using real variables with INPUT
   - Fixed description of scrFillBox

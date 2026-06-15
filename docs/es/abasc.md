@@ -3267,6 +3267,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.2.3
+  - 
+
 - Versión 1.2.2
   - Arregla un error usando variables reales con el comando INPUT
   - Arregla la descripción del comando scrFillBox

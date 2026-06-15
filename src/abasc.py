@@ -37,7 +37,7 @@ from basopt import BasOptimizer
 import json
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__= "1.2.2"
+__version__= "1.2.3"
 
 
 @dataclass
