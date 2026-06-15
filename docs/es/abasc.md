@@ -3266,7 +3266,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.2
-  - 
+  - Arregla un error usando variables reales con el comando INPUT
   
 - Versión 1.2.1
   - Arregla un error en la optimización de la función INT()
