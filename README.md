@@ -1,6 +1,6 @@
 # An Amstrad Locomotive BASIC cross compiler (ABASC)
 
-![ABASC](docs/img/abasc.png)
+![ABASC](docs/img/Abasc.png)
 
 ## Español:
 
