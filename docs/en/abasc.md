@@ -2510,10 +2510,12 @@ FUNCTION scrPrevLine(vmem)
 ' Drawing routines for shapes. X and Y ranges are
 ' independent from the screen video mode: 0-639 in X,
 ' 0-399 in Y (from screen bottom to top)
-SUB scrFillBox(x1, y1, x2, y2, npen)
 SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
+
+' X and Y use cursor coordinates (same as LOCATE)
+SUB scrFillBox(x1, y1, x2, y2, npen)
 
 ' Returns the pixel color value. X and Y ranges are
 ' independent from the screen video mode: 0-639 in X,
@@ -3317,7 +3319,8 @@ SUB         rsSetMode(nmode)
 
 - Version 1.2.2
   - Fixed an error using real variables with INPUT
-  
+  - Fixed description of scrFillBox
+
 - Version 1.2.1
   - Fixed an error in the INT() function optimization
   - ABASM upgraded to release 1.4.3

@@ -3234,9 +3234,10 @@ scrPrevByte(vmem) FUNCTION scrNextLine(vmem) FUNCTION
 scrPrevLine(vmem)</p>
 <p>’ Drawing routines for shapes. X and Y ranges are ’ independent from
 the screen video mode: 0-639 in X, ’ 0-399 in Y (from screen bottom to
-top) SUB scrFillBox(x1, y1, x2, y2, npen) SUB scrDrawBox(x1, y1, x2, y2)
-SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3) SUB scrDrawPolygon(x1, y1,
-x2, y2, x3, y3, x4, y4)</p>
+top) SUB scrDrawBox(x1, y1, x2, y2) SUB scrDrawTriangle(x1, y1, x2, y2,
+x3, y3) SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)</p>
+<p>’ X and Y use cursor coordinates (same as LOCATE) SUB scrFillBox(x1,
+y1, x2, y2, npen)</p>
 <p>’ Returns the pixel color value. X and Y ranges are ’ independent
 from the screen video mode: 0-639 in X, ’ 0-399 in Y (from screen bottom
 to top) FUNCTION scrPeekColor(x, y)</p>
@@ -3984,6 +3985,7 @@ version 2 and version 2 plus.</p>
 <li>Version 1.2.2
 <ul>
 <li>Fixed an error using real variables with INPUT</li>
+<li>Fixed description of scrFillBox</li>
 </ul></li>
 <li>Version 1.2.1
 <ul>

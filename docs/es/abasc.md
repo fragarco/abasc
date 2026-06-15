@@ -2459,10 +2459,12 @@ FUNCTION scrPrevLine(vmem)
 
 ' Rutinas de dibujo de formas. Las coordenadas son independientes del
 ' modo de pantalla: 0-639 (en X), 0-399 (en Y, de abajo a arriba)
-SUB scrFillBox(x1, y1, x2, y2, npen)
 SUB scrDrawBox(x1, y1, x2, y2)
 SUB scrDrawTriangle(x1, y1, x2, y2, x3, y3)
 SUB scrDrawPolygon(x1, y1, x2, y2, x3, y3, x4, y4)
+
+' X e Y utilizan el sistema de coordenadas de texto (las mismas que LOCATE)
+SUB scrFillBox(x1, y1, x2, y2, npen)
 
 ' Permite obtener el color de un pixel en pantalla. Las coordenadas son
 ' independientes del modo de pantalla: 0-639 (en X), 0-399 (en Y, de abajo a arriba)
@@ -3267,7 +3269,8 @@ SUB         rsSetMode(nmode)
 
 - Versión 1.2.2
   - Arregla un error usando variables reales con el comando INPUT
-  
+  - Arregla la descripción del comando scrFillBox
+
 - Versión 1.2.1
   - Arregla un error en la optimización de la función INT()
   - ABASM actualizado a la versión 1.4.3
