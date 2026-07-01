@@ -524,6 +524,8 @@ href="#symbol-charactervalue1value2value8"><code>SYMBOL character,value1,value2,
 <li><a href="#tron"><code>TRON</code></a></li>
 <li><a
 href="#uboundarray-dimension"><code>UBOUND(array, dimension)</code></a></li>
+<li><a href="#unsignedn"><code>UNSIGNED(n)</code></a></li>
+<li><a href="#ustrn"><code>USTR$(n)</code></a></li>
 <li><a href="#untn"><code>UNT(n)</code></a></li>
 <li><a href="#uppercadena"><code>UPPER$(cadena)</code></a></li>
 <li><a href="#valcadena"><code>VAL(cadena)</code></a></li>
@@ -2968,6 +2970,20 @@ upper bound of one of the dimensions of an array.</p>
 PRINT UBOUND(myarray)     &#39; returns 10
 PRINT UBOUND(myarray, 1)  &#39; returns 10
 PRINT UBOUND(myarray, 2)  &#39; returns 20</code></pre>
+<h3 id="unsignedn"><code>UNSIGNED(n)</code></h3>
+<p><strong>FUNCTION.</strong> Converts a signed integer in the range
+-32768..+32767 to an unsigned integer in the range 0..65535. Mainly it
+removes warnings of REAL to INT conversions when direct numbers are
+assigned to variables.</p>
+<pre class="basic"><code>x% = 65000           &#39; Issues a warning as 65000 is considered a REAL initially
+                     &#39; for being higher than +32767.
+y% = UNSINGED(65000) &#39; Doesn&#39;t emit a conversion warning.</code></pre>
+<h3 id="ustrn"><code>USTR$(n)</code></h3>
+<p><strong>FUNCTION.</strong> Converts an unsigned integer value in the
+range 0..65535 to a string in the same way as <code>STR$</code> does
+with signed integers in the range -32768..+32767.</p>
+<pre class="basic"><code>x% = UNSIGNED(65000)
+print x%, USTR$(x%)</code></pre>
 <h3 id="untn"><code>UNT(n)</code></h3>
 <p><strong>Command.</strong> Converts an unsigned value (such as a
 memory address) in the range 0..65535 into a signed integer in the range
@@ -3189,13 +3205,13 @@ commands from the directory containing <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Type checking:</strong></li>
 </ul>
-<div class="sourceCode" id="cb125"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb127"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Unit testing:</strong></li>
 </ul>
-<div class="sourceCode" id="cb126"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb128"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finally, the <code>examples</code> directory contains several sample
 programs that can be compiled and also used for testing and
 experimenting with the compiler.</p>
@@ -3982,7 +3998,11 @@ version 2 and version 2 plus.</p>
 <hr />
 <h1 id="changelog">Changelog</h1>
 <ul>
-<li><h2 id="version-1.2.3">Version 1.2.3</h2></li>
+<li>Version 1.2.3
+<ul>
+<li>Adds UNSIGNED and USTR$ functions to deal with unsigned
+integers.</li>
+</ul></li>
 <li>Version 1.2.2
 <ul>
 <li>Fixed an error using real variables with INPUT</li>

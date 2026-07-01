@@ -2664,6 +2664,15 @@ class LocBasParser:
         return AST.Function(name="UBOUND", etype=AST.ExpType.Integer, args=args)
 
     @astnode
+    def _parse_UNSIGNED(self) -> AST.Function:
+        """ <UNSIGNED> ::= UNSIGNED(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_uint_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="UNSIGNED", etype=AST.ExpType.Integer, args=args)
+
+    @astnode
     def _parse_UNT(self) -> AST.Function:
         """ <UNT> ::= UNT(<int_expression>) """
         self._advance()
@@ -2680,6 +2689,15 @@ class LocBasParser:
         args: list[AST.Statement] = [self._parse_str_expression()]
         self._expect(TokenType.RPAREN)
         return AST.Function(name="UPPER$", etype=AST.ExpType.String, args=args)
+
+    @astnode
+    def _parse_USTRSS(self) -> AST.Function:
+        """ <USTRSS> ::= USTR$(<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_uint_expression()]
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="USTRSS", etype=AST.ExpType.String, args=args)
 
     @astnode
     def _parse_VAL(self) -> AST.Function:

@@ -3602,7 +3602,7 @@ class CPCEmitter:
 
     def _emit_STRSS(self, node:AST.Function) -> None:
         """
-        Converts the numeric expression) to a decimal string representation in the
+        Converts the numeric expression to a decimal string representation in the
         same form as used in the PRINT command.
         """
         self._emit_code("; STR$(<numeric expression>)")
@@ -3875,6 +3875,15 @@ class CPCEmitter:
         self._emit_code(f"ld      hl,{entry.indexes[index-1]}", info=f"Array upper bound for dimension {index}")
         self._emit_code(";")
 
+    def _emit_UNSIGNED(self, node:AST.Function) -> None:
+        """
+        Converts a signed 16-bit integer in the range -32768 to +32767 to
+        an unsinged 16-bit integer in the range 0 to 65535.
+        """
+        self._emit_code("; UNSIGNED(<int expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code(";")
+
     def _emit_UNT(self, node:AST.Function) -> None:
         """
         Converts an unsigned 16-bit integer in the range 0 to 65535. Returns an
@@ -3933,6 +3942,24 @@ class CPCEmitter:
             else:
                 self._raise_error(2, arg, "type not supported by USING")
         self._emit_code("call    rt_print_str")
+        self._emit_code(";")
+
+    def _emit_USTRSS(self, node:AST.Function) -> None:
+        """
+        Converts the numeric expression to an unsigned integer string representation.
+        """
+        self._emit_code("; USTR$(<unsigned numeric expression>)")
+        arg = node.args[0]
+        self._emit_expression(arg)
+        if arg.etype == AST.ExpType.Integer:
+            self._emit_import("rt_uint2str")
+            self._emit_code("call    rt_uint2str")
+            self._reserve_heapmem_de(8, node)
+            self._emit_code("push    de")
+            self._emit_code("ldir")
+            self._emit_code("pop     hl")
+        else:
+            self._raise_error(13, node)
         self._emit_code(";")
 
     def _emit_VAL(self, node:AST.Function) -> None:

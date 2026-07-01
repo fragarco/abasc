@@ -199,6 +199,8 @@
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
     - [`UBOUND(array, dimension)`](#uboundarray-dimension)
+    - [`UNSIGNED(n)`](#unsignedn)
+    - [`USTR$(n)`](#ustrn)
     - [`UNT(n)`](#untn)
     - [`UPPER$(cadena)`](#uppercadena)
     - [`VAL(cadena)`](#valcadena)
@@ -2191,6 +2193,25 @@ PRINT UBOUND(myarray, 1)  ' returns 10
 PRINT UBOUND(myarray, 2)  ' returns 20
 ```
 
+### `UNSIGNED(n)`
+
+Función. Convierte un entero con signo en el rango de -32768..+32767 a un entero sin signo en el rango 0..65535. Su función principal es permitir asignar números en el rango 32768..65535 sin que el compilador emita un warning de conversión de REAL a INT.
+
+```basic
+x% = 65000           ' Produce un warning de conversion de REAL a INT
+                     ' por ser el valor asignado mayor de +32767.
+y% = UNSINGED(65000) ' De esta forma se evita el warning.
+```
+
+### `USTR$(n)`
+
+Función. Convierte un valor entero sin signo en el rango 0..65535 a una cadena de texto, de forma similar a como lo hace `STR$` con enteros con signo en el rango -32768..+32767.
+
+```basic
+x% = UNSIGNED(65000)
+print x%, USTR$(x%)
+```
+
 ### `UNT(n)`
 
 Comando. Convierte un valor sin signo (como una dirección de memoria) en el rango 0..65535 en un entero con signo en el rango -32768..+32767.
@@ -3268,7 +3289,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.3
-  - 
+  - Añade las funciones UNSIGNED y USTR$ para tratamiento de enteros sin signo.
 
 - Versión 1.2.2
   - Arregla un error usando variables reales con el comando INPUT

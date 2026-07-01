@@ -199,6 +199,8 @@
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
     - [`UBOUND(array, dimension)`](#uboundarray-dimension)
+    - [`UNSIGNED(n)`](#unsignedn)
+    - [`USTR$(n)`](#ustrn)
     - [`UNT(n)`](#untn)
     - [`UPPER$(cadena)`](#uppercadena)
     - [`VAL(cadena)`](#valcadena)
@@ -2232,6 +2234,25 @@ PRINT UBOUND(myarray, 1)  ' returns 10
 PRINT UBOUND(myarray, 2)  ' returns 20
 ```
 
+### `UNSIGNED(n)`
+
+**FUNCTION.** Converts a signed integer in the range -32768..+32767 to an unsigned integer in the range 0..65535. Mainly it removes warnings of REAL to INT conversions when direct numbers are assigned to variables.
+
+```basic
+x% = 65000           ' Issues a warning as 65000 is considered a REAL initially
+                     ' for being higher than +32767.
+y% = UNSINGED(65000) ' Doesn't emit a conversion warning.
+```
+
+### `USTR$(n)`
+
+**FUNCTION.** Converts an unsigned integer value in the range 0..65535 to a string in the same way as `STR$` does with signed integers in the range -32768..+32767.
+
+```basic
+x% = UNSIGNED(65000)
+print x%, USTR$(x%)
+```
+
 ### `UNT(n)`
 
 **Command.** Converts an unsigned value (such as a memory address) in the range 0..65535 into a signed integer in the range -32768..+32767.
@@ -3318,7 +3339,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.3
-  - 
+  - Adds UNSIGNED and USTR$ functions to deal with unsigned integers.
 
 - Version 1.2.2
   - Fixed an error using real variables with INPUT

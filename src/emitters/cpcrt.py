@@ -926,6 +926,24 @@ __int2str_loop2:
     ret
 """
 ),
+"rt_uint2str": (["rt_int2str"],"",
+"""
+; RT_UINT2STR
+; HL starts containing the unsigned number to convert to string
+; HL ends storing the memory address to the buffer
+; Inputs:
+;     HL unsigned number to convert to string
+; Outputs:
+;     HL points to the temporal address in memory with the string
+;     HL, DE, AF and B are modified
+rt_uint2str:
+    ld      de,rt_int2str_buf+1 ; first byte stores string length
+    ld      a,32   ; empty space for positive numbers
+    ld      (de),a
+    ld      e,0    ; number of characters
+    jp      __int2str_loop1
+"""
+),
     "rt_long2str": (["rt_div32_by10"],"",
 """
 ; RT_LONG2STR

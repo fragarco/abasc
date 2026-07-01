@@ -522,6 +522,8 @@ href="#symbol-caráctervalor1valor2valor8"><code>SYMBOL carácter,valor1,valor2,
 <li><a href="#tron"><code>TRON</code></a></li>
 <li><a
 href="#uboundarray-dimension"><code>UBOUND(array, dimension)</code></a></li>
+<li><a href="#unsignedn"><code>UNSIGNED(n)</code></a></li>
+<li><a href="#ustrn"><code>USTR$(n)</code></a></li>
 <li><a href="#untn"><code>UNT(n)</code></a></li>
 <li><a href="#uppercadena"><code>UPPER$(cadena)</code></a></li>
 <li><a href="#valcadena"><code>VAL(cadena)</code></a></li>
@@ -2983,6 +2985,20 @@ array (1 por defecto).</p>
 PRINT UBOUND(myarray)     &#39; returns 10
 PRINT UBOUND(myarray, 1)  &#39; returns 10
 PRINT UBOUND(myarray, 2)  &#39; returns 20</code></pre>
+<h3 id="unsignedn"><code>UNSIGNED(n)</code></h3>
+<p>Función. Convierte un entero con signo en el rango de -32768..+32767
+a un entero sin signo en el rango 0..65535. Su función principal es
+permitir asignar números en el rango 32768..65535 sin que el compilador
+emita un warning de conversión de REAL a INT.</p>
+<pre class="basic"><code>x% = 65000           &#39; Produce un warning de conversion de REAL a INT
+                     &#39; por ser el valor asignado mayor de +32767.
+y% = UNSINGED(65000) &#39; De esta forma se evita el warning.</code></pre>
+<h3 id="ustrn"><code>USTR$(n)</code></h3>
+<p>Función. Convierte un valor entero sin signo en el rango 0..65535 a
+una cadena de texto, de forma similar a como lo hace <code>STR$</code>
+con enteros con signo en el rango -32768..+32767.</p>
+<pre class="basic"><code>x% = UNSIGNED(65000)
+print x%, USTR$(x%)</code></pre>
 <h3 id="untn"><code>UNT(n)</code></h3>
 <p>Comando. Convierte un valor sin signo (como una dirección de memoria)
 en el rango 0..65535 en un entero con signo en el rango
@@ -3209,13 +3225,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb124"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb126"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb125"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb127"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -4006,7 +4022,11 @@ describe a continuación.</p>
 <hr />
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
-<li><h2 id="versión-1.2.3">Versión 1.2.3</h2></li>
+<li>Versión 1.2.3
+<ul>
+<li>Añade las funciones UNSIGNED y USTR$ para tratamiento de enteros sin
+signo.</li>
+</ul></li>
 <li>Versión 1.2.2
 <ul>
 <li>Arregla un error usando variables reales con el comando INPUT</li>
