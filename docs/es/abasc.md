@@ -3317,6 +3317,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.2.4
+  -
+ 
 - Versión 1.2.3
   - Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de enteros sin signo.
 

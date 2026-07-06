@@ -3367,6 +3367,9 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
+- Version 1.2.4
+  -
+
 - Version 1.2.3
   - Adds UNSIGNED, UGREATER and USTR$ functions to deal with unsigned integers.
 
