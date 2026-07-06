@@ -522,6 +522,7 @@ href="#symbol-caráctervalor1valor2valor8"><code>SYMBOL carácter,valor1,valor2,
 <li><a href="#tron"><code>TRON</code></a></li>
 <li><a
 href="#uboundarray-dimension"><code>UBOUND(array, dimension)</code></a></li>
+<li><a href="#ugreatern1-n2"><code>UGREATER(n1, n2)</code></a></li>
 <li><a href="#unsignedn"><code>UNSIGNED(n)</code></a></li>
 <li><a href="#ustrn"><code>USTR$(n)</code></a></li>
 <li><a href="#untn"><code>UNT(n)</code></a></li>
@@ -787,8 +788,8 @@ intérprete de BASIC.</p>
 <h2 id="tipos-y-variables">Tipos y variables</h2>
 <p>ABASC utiliza un sistema de tipado algo más estricto que el
 proporcionado por el intérprete original de BASIC. Para empezar, todas
-las variables son de tipo <strong>entero</strong> por defecto, salvo que
-se utilice un sufijo para indicar otro tipo de dato.</p>
+las variables son de tipo entero con signo por defecto, salvo que se
+utilice un sufijo para indicar otro tipo de dato.</p>
 <table>
 <colgroup>
 <col style="width: 6%" />
@@ -817,10 +818,31 @@ exponente)</td>
 <tr>
 <td>Texto</td>
 <td>$</td>
-<td>Cadenas de hasta 254 carácteres (ver siguiente sección)</td>
+<td>Cadenas de hasta 254 caracteres (véase la siguiente sección)</td>
 </tr>
 </tbody>
 </table>
+<p>En el caso de los enteros, también es posible utilizar valores sin
+signo en el rango 0..65535. Normalmente, los comandos y funciones que
+aceptan enteros ya tienen en cuenta cuándo deben tratar los valores como
+enteros con signo (comportamiento por defecto) o sin signo (por ejemplo,
+cuando se esperan direcciones de memoria). Sin embargo, ABASC incluye
+las funciones <code>UNSIGNED</code>, <code>UGREATER</code> y
+<code>USTR$</code> para aquellos casos en los que el comportamiento por
+defecto no es el deseado.</p>
+<p>Por ejemplo, el siguiente código no producirá el resultado esperado,
+ya que la comparación retornará el valor 0 (FALSE) al interpretar el
+valor de n1 como -1. Además, el compilador emitirá un mensaje de
+advertencia (<em>warning</em>) al detectar que se está asignando un
+valor mayor que 32767 a una variable entera.</p>
+<pre class="basic"><code>n1 = 65535
+n2 = 100
+print n1 &gt; n2</code></pre>
+<p>Para obtener el resultado esperado, el código anterior puede
+reescribirse de la siguiente forma:</p>
+<pre class="basic"><code>n1 = UNSIGNED(65535)
+n2 = 100
+print UGREATER(n1,n2)</code></pre>
 <h3 id="cadenas-de-texto">Cadenas de texto</h3>
 <p>En la implementación original de Locomotive BASIC para los Amstrad
 CPC, las cadenas utilizaban una estructura de <strong>doble
@@ -2985,6 +3007,13 @@ array (1 por defecto).</p>
 PRINT UBOUND(myarray)     &#39; returns 10
 PRINT UBOUND(myarray, 1)  &#39; returns 10
 PRINT UBOUND(myarray, 2)  &#39; returns 20</code></pre>
+<h3 id="ugreatern1-n2"><code>UGREATER(n1, n2)</code></h3>
+<p><strong>Function</strong>. Compara dos enteros sin signo en el rango
+0..65535. La función devuelve -1 (TRUE) si el primer entero es mayor que
+el segundo y 0 (FALSE) en otro caso.</p>
+<pre class="basic"><code>n1 = &amp;FFFF
+n2 = &amp;00FF
+PRINT UGREATER(n1,n2)</code></pre>
 <h3 id="unsignedn"><code>UNSIGNED(n)</code></h3>
 <p>Función. Convierte un entero con signo en el rango de -32768..+32767
 a un entero sin signo en el rango 0..65535. Su función principal es
@@ -3225,13 +3254,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb126"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb129"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb127"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb130"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -4024,8 +4053,8 @@ describe a continuación.</p>
 <ul>
 <li>Versión 1.2.3
 <ul>
-<li>Añade las funciones UNSIGNED y USTR$ para tratamiento de enteros sin
-signo.</li>
+<li>Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de
+enteros sin signo.</li>
 </ul></li>
 <li>Versión 1.2.2
 <ul>

@@ -199,6 +199,7 @@
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
     - [`UBOUND(array, dimension)`](#uboundarray-dimension)
+    - [`UGREATER(n1, n2)`](#ugreatern1-n2)
     - [`UNSIGNED(n)`](#unsignedn)
     - [`USTR$(n)`](#ustrn)
     - [`UNT(n)`](#untn)
@@ -382,13 +383,31 @@ Although ABASC aims to compile programs written for BASIC 1.0 and 1.1 with littl
 
 ## Types and Variables
 
-ABASC uses a somewhat stricter type system than the original Locomotive BASIC interpreter. By default, **all variables are integers**, unless a suffix is used to indicate a different data type.
+ABASC uses a type system that is somewhat stricter than the one provided by the original BASIC interpreter. By default, all variables are signed integers unless a type suffix is used to specify a different data type.
 
-| Type    | Suffix       | Notes                                                            |
-| ------- | ------------ | ---------------------------------------------------------------- |
-| Integer | % (optional) | Integer values in the range -32768 to 32767                      |
-| Real    | !            | 5-byte floating-point values (4-byte mantissa + 1-byte exponent) |
-| String  | $            | Strings of up to 254 characters (see next section)               |
+| Type    | Suffix       | Notes                                                               |
+| ------- | ------------ | ------------------------------------------------------------------- |
+| Integer | % (optional) | Integer values in the range -32768...32767                          |
+| Real    | !            | 5-byte floating-point numbers (4-byte mantissa and 1-byte exponent) |
+| String  | $            | Strings of up to 254 characters (see the next section)              |
+
+For integer values, it is also possible to use unsigned values in the range 0..65535. In most cases, commands and functions that accept integer arguments automatically determine whether the values should be treated as signed (the default) or unsigned (for example, when they represent memory addresses). However, ABASC provides the `UNSIGNED`, `UGREATER`, and `USTR$` functions for situations where the default behavior is not appropriate.
+
+For example, the following code does not produce the expected result because the comparison returns `0` (`FALSE`), interpreting the value of `n1` as `-1`. In addition, the compiler emits a warning because a value greater than `32767` is being assigned to an integer variable.
+
+```basic
+n1 = 65535
+n2 = 100
+print n1 > n2
+```
+
+To obtain the expected result, the previous code can be rewritten as follows:
+
+```basic
+n1 = UNSIGNED(65535)
+n2 = 100
+print UGREATER(n1,n2)
+```
 
 ### String Handling
 
@@ -2234,6 +2253,16 @@ PRINT UBOUND(myarray, 1)  ' returns 10
 PRINT UBOUND(myarray, 2)  ' returns 20
 ```
 
+### `UGREATER(n1, n2)`
+
+**Function**. Compares two unsigned integers in the range 0..65535. The function returns -1 (TRUE) if the first integer is greater than the second one. Otherwise it returns 0 (FALSE).
+
+```basic
+n1 = &FFFF
+n2 = &00FF
+PRINT UGREATER(n1,n2)
+```
+
 ### `UNSIGNED(n)`
 
 **FUNCTION.** Converts a signed integer in the range -32768..+32767 to an unsigned integer in the range 0..65535. Mainly it removes warnings of REAL to INT conversions when direct numbers are assigned to variables.
@@ -3339,7 +3368,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.3
-  - Adds UNSIGNED and USTR$ functions to deal with unsigned integers.
+  - Adds UNSIGNED, UGREATER and USTR$ functions to deal with unsigned integers.
 
 - Version 1.2.2
   - Fixed an error using real variables with INPUT

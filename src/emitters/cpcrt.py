@@ -2807,7 +2807,7 @@ __comp16_cs1:
 ;     AF ZF=1 if HL=DE; ZF=0 & CF=1 if HL < DE
 ;     HL is modified
 ;     BC, DE are preserved
-rt_cuomp16:
+rt_ucomp16:
     xor     a          ; clear CF
     sbc     hl,de
     ret

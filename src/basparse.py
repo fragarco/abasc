@@ -2664,6 +2664,17 @@ class LocBasParser:
         return AST.Function(name="UBOUND", etype=AST.ExpType.Integer, args=args)
 
     @astnode
+    def _parse_UGREATER(self) -> AST.Function:
+        """ <UGREATER> ::= UGREATER(<int_expression>,<int_expression>) """
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        args: list[AST.Statement] = [self._parse_uint_expression()]
+        self._expect(TokenType.COMMA)
+        args.append(self._parse_uint_expression())
+        self._expect(TokenType.RPAREN)
+        return AST.Function(name="UGREATER", etype=AST.ExpType.Integer, args=args)
+
+    @astnode
     def _parse_UNSIGNED(self) -> AST.Function:
         """ <UNSIGNED> ::= UNSIGNED(<int_expression>) """
         self._advance()

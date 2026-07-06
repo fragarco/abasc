@@ -199,6 +199,7 @@
     - [`TROFF`](#troff)
     - [`TRON`](#tron)
     - [`UBOUND(array, dimension)`](#uboundarray-dimension)
+    - [`UGREATER(n1, n2)`](#ugreatern1-n2)
     - [`UNSIGNED(n)`](#unsignedn)
     - [`USTR$(n)`](#ustrn)
     - [`UNT(n)`](#untn)
@@ -383,13 +384,31 @@ Aunque el objetivo de ABASC es permitir la compilación, sin apenas cambios, de 
 
 ## Tipos y variables
 
-ABASC utiliza un sistema de tipado algo más estricto que el proporcionado por el intérprete original de BASIC. Para empezar, todas las variables son de tipo **entero** por defecto, salvo que se utilice un sufijo para indicar otro tipo de dato.
+ABASC utiliza un sistema de tipado algo más estricto que el proporcionado por el intérprete original de BASIC. Para empezar, todas las variables son de tipo entero con signo por defecto, salvo que se utilice un sufijo para indicar otro tipo de dato.
 
 | Tipo   | Sufijo       | Notas                                                                         |
 | ------ | ------------ | ----------------------------------------------------------------------------- |
 | Entero | % (opcional) | Valores enteros en el rango -32768...32767                                    |
 | Real   | !            | Números en coma flotante de 5 bytes (4 para la mantisa y 1 para el exponente) |
-| Texto  | $            | Cadenas de hasta 254 carácteres (ver siguiente sección)                       |
+| Texto  | $            | Cadenas de hasta 254 caracteres (véase la siguiente sección)                  |
+
+En el caso de los enteros, también es posible utilizar valores sin signo en el rango 0..65535. Normalmente, los comandos y funciones que aceptan enteros ya tienen en cuenta cuándo deben tratar los valores como enteros con signo (comportamiento por defecto) o sin signo (por ejemplo, cuando se esperan direcciones de memoria). Sin embargo, ABASC incluye las funciones `UNSIGNED`, `UGREATER` y `USTR$` para aquellos casos en los que el comportamiento por defecto no es el deseado.
+
+Por ejemplo, el siguiente código no producirá el resultado esperado, ya que la comparación retornará el valor 0 (FALSE) al interpretar el valor de n1 como -1. Además, el compilador emitirá un mensaje de advertencia (*warning*) al detectar que se está asignando un valor mayor que 32767 a una variable entera.
+
+```basic
+n1 = 65535
+n2 = 100
+print n1 > n2
+```
+
+Para obtener el resultado esperado, el código anterior puede reescribirse de la siguiente forma:
+
+```basic
+n1 = UNSIGNED(65535)
+n2 = 100
+print UGREATER(n1,n2)
+```
 
 ### Cadenas de texto
 
@@ -2193,6 +2212,16 @@ PRINT UBOUND(myarray, 1)  ' returns 10
 PRINT UBOUND(myarray, 2)  ' returns 20
 ```
 
+### `UGREATER(n1, n2)`
+
+**Function**. Compara dos enteros sin signo en el rango 0..65535. La función devuelve -1 (TRUE) si el primer entero es mayor que el segundo y 0 (FALSE) en otro caso.
+
+```basic
+n1 = &FFFF
+n2 = &00FF
+PRINT UGREATER(n1,n2)
+```
+
 ### `UNSIGNED(n)`
 
 Función. Convierte un entero con signo en el rango de -32768..+32767 a un entero sin signo en el rango 0..65535. Su función principal es permitir asignar números en el rango 32768..65535 sin que el compilador emita un warning de conversión de REAL a INT.
@@ -3289,7 +3318,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.3
-  - Añade las funciones UNSIGNED y USTR$ para tratamiento de enteros sin signo.
+  - Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de enteros sin signo.
 
 - Versión 1.2.2
   - Arregla un error usando variables reales con el comando INPUT

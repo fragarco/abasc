@@ -3875,6 +3875,23 @@ class CPCEmitter:
         self._emit_code(f"ld      hl,{entry.indexes[index-1]}", info=f"Array upper bound for dimension {index}")
         self._emit_code(";")
 
+    def _emit_UGREATER(self, node:AST.Function) -> None:
+        """
+        Compares two unsigned integers in the range 0..65535. The function returns -1 (TRUE) if the first
+        integer is greater than the second one. Otherwise it returns 0 (FALSE).
+        """
+        self._emit_code("; UGREATER(<int expression>,<int_expression>)")
+        self._emit_expression(node.args[0])
+        self._emit_code("push    hl")
+        self._emit_expression(node.args[1])
+        self._emit_code("pop     de")
+        self._emit_code("xor     a")
+        self._emit_code("sbc     hl,de", info="CF=1 if DE > HL")
+        self._emit_code("ld      hl,-1")
+        self._emit_code("jr      c,$+3")
+        self._emit_code("inc     hl")
+        self._emit_code(";")
+
     def _emit_UNSIGNED(self, node:AST.Function) -> None:
         """
         Converts a signed 16-bit integer in the range -32768 to +32767 to

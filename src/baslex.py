@@ -118,8 +118,8 @@ _KEYWORDS = {
     "EXP","FIX","FRE","HEX$","HIMEM","INKEY","INKEY$","INP","INT","INSTR",
     "JOY","LEFT$","LEN","LOG","LOG10","LBOUND","LOWER$","LTRIM$","MAX","MIN",
     "PEEK","PI","POS","REMAIN","RIGHT$","RND","ROUND","RTRIM$","SGN","SIN","SPACE$",
-    "SQ","SQR","STR$","STRING$","TAN","TEST","TESTR","TIME","UBOUND","UNSIGNED",
-    "UNT","UPPER$","USTR$","VAL","VPOS","XPOS","YPOS"
+    "SQ","SQR","STR$","STRING$","TAN","TEST","TESTR","TIME","UBOUND","UGREATER",
+    "UNSIGNED","UNT","UPPER$","USTR$","VAL","VPOS","XPOS","YPOS"
 }
 
 # Operators and comparators that will share the type TokenType.OP
