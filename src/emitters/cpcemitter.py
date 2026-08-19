@@ -4704,12 +4704,12 @@ class CPCEmitter:
             self._emit_code("jr      nz,$+3")
             self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<=':
-            self._emit_code("inc     hl", info="HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("dec     a")
             self._emit_code("jr      z,$+3")
             self._emit_code("dec     hl", info="HL =-1 TRUE")
         elif node.op == '>=':
-            self._emit_code("inc     hl", info="HL = 0 FALSE")
+            self._emit_code("ld      hl,0", info="HL = 0 FALSE")
             self._emit_code("inc     a")
             self._emit_code("jr      z,$+3")
             self._emit_code("dec     hl", info="HL =-1 TRUE")

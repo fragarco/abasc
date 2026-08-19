@@ -3368,7 +3368,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.4
-  -
+  - Fixed <= and >= comparation operations with real numbers.
 
 - Version 1.2.3
   - Adds UNSIGNED, UGREATER and USTR$ functions to deal with unsigned integers.

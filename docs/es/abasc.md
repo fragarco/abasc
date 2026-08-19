@@ -3318,7 +3318,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.4
-  -
+  - Arregla la comparación <= y >= con números reales.
  
 - Versión 1.2.3
   - Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de enteros sin signo.
