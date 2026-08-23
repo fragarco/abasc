@@ -3317,6 +3317,9 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
+- Versión 1.2.5
+  - 
+
 - Versión 1.2.4
   - Arregla la comparación <= y >= con números reales.
  
