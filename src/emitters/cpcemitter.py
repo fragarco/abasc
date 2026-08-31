@@ -1126,6 +1126,7 @@ class CPCEmitter:
         if isinstance(arg, AST.Range):
             self._emit_code(f"ld      hl,{arg.high}")
             self._emit_code(f"ld      de,{arg.low}")
+            self._emit_code("or      a", info="clear carry flag before using SBC")
             self._emit_code("sbc     hl,de")
             self._emit_code("push    hl")
             self._emit_code(f"ld      hl,{arg.low}")
