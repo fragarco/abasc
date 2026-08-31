@@ -1585,22 +1585,22 @@ class CPCEmitter:
         self._emit_code("; FRE(<num expression>|<str expression>)")
         arg = node.args[0]
         if arg.etype == AST.ExpType.String:
-            # Free memory between the high limit and our program binary end
-            # Free temporal memory too
+            # Return free memory between the high limit and our program binary end
+            # Force a delete of the temporal memory too
             self.free_heap_memory = True
             self._emit_free_heapmem()
             self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
             self._emit_code("ld      de,_program_end_")
         else: # should be isinstance(arg, AST.Integer)
             if arg.etype == AST.ExpType.Integer and arg.value == 1: #type: ignore [attr-defined]
-                # Current free temporal memory
-                self._emit_code("ld      hl,_startup_")
-                self._emit_code("ld      de,(_memory_next)")
+                # Current amount of free heap memory
+                self._emit_code("ld      hl,rt_heapmem_end")
+                self._emit_code("ld      de,(rt_heapmem_next)")
             else:
-                # Free memory between the high limit and our program binary end
+                # return free memory between the high limit and our program binary end
                 self._emit_code(f"ld      hl,{FWCALL.HIGH_LIMIT}")
                 self._emit_code("ld      de,_program_end_")
-        self._emit_code("or      a")
+        self._emit_code("or      a", info="clear carry before SBC call")
         self._emit_code("sbc     hl,de")
         self._emit_code(";")
 
@@ -2677,8 +2677,8 @@ class CPCEmitter:
         self._emit_code("ld      de,rt_fileinbuf", info="2K buffer to contain the data")
         self._emit_code(f"call    {FWCALL.CAS_IN_OPEN}", info="CAS_IN_OPEN")
         self._emit_code("ex      de,hl")
-        self._emit_code("xor     a")
-        self._emit_code("jr      c,$+4", info="if CF the file was open")
+        self._emit_code("ld      a,0", info="do not clear flags")
+        self._emit_code("jr      c,$+4", info="if CF no error")
         self._emit_code("ld      a,31", info="File not open error code")
         self._emit_code("ld      (rt_error),a", info="update ERR")
         self._emit_popcontext()
@@ -2700,8 +2700,8 @@ class CPCEmitter:
         self._emit_code("ld      de,rt_fileoutbuf", info="2K buffer to contain the data")
         self._emit_code(f"call    {FWCALL.CAS_OUT_OPEN}", info="CAS_OUT_OPEN")
         self._emit_code("ex      de,hl")
-        self._emit_code("xor     a")
-        self._emit_code("jr      c,$+4", info="if CF the file was open")
+        self._emit_code("ld      a,0", info="do not clear flags")
+        self._emit_code("jr      c,$+4", info="if CF no error")
         self._emit_code("ld      a,31", info="File not open error code")
         self._emit_code("ld      (rt_error),a", info="update ERR")
         self._emit_popcontext()
@@ -3474,7 +3474,7 @@ class CPCEmitter:
         (assuming the follown <print item> will fit onto the line). Hence it is
         not necessary to terminate SPC with a semicolon. 
         """
-        self._emit_import("rt_print")
+        self._emit_import("rt_print_spc")
         self._emit_code("; PRINT SPC(<integer expression>)]")
         self._emit_expression(node.args[0])
         self._emit_code("call    rt_print_spc")
