@@ -1716,7 +1716,7 @@ __strright_empty:
 ;     AF, HL, DE and B are modified
 rt_strfill:
     xor     a
-    cp      c       ; check number of characters is not 0
+    cp      l       ; check number of characters is not 0
     jr      z,__strfill_empty
     ld      a,l
     ld      b,a
@@ -1950,7 +1950,7 @@ rt_print_spc:
     ret     z
     ld      b,a
     ld      a,32   ; white space
-__print_spc_loop:"
+__print_spc_loop:
     call    {FWCALL.TXT_OUTPUT}
     djnz    __print_spc_loop
     ret
@@ -3712,7 +3712,7 @@ rt_intsgn:
 ),
     "rt_realsgn": (["rt_math_call"],"",
 f"""
-; RT_INTSGN
+; RT_REALSGN
 ; Checks the sign of the float pointed by accum1 and returns
 ; -1 (negative), 0 or 1 (positive) in HL
 ; Inputs:
@@ -3722,12 +3722,13 @@ f"""
 ;   AF, HL and DE are modified
 rt_realsgn:
     ld      ix,{FWCALL.MATH_REAL_SIGNUM}  ; MATH_REAL_SIGNUM
+    call    rt_math_call
     ld      hl,0
     or      a
     ret     z
     dec     hl
-    cp      1
-    ret     c
+    cp      &FF
+    ret     z
     inc     hl
     inc     hl
     ret
