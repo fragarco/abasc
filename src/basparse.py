@@ -3069,31 +3069,38 @@ class LocBasParser:
     def _parse_unary(self) -> AST.Statement:
         """ <unary> ::= ( - | NOT ) <primary> | <primary> """
         # NOT only work with INT while '-' works with INT and REAL
-        if self._current_in((TokenType.OP,), ('NOT','-')):
-            op = self._advance()
+        if self._current_is(TokenType.OP, lexeme='NOT'):
+            self._advance()
             tk = self._current()
             right = self._parse_primary()
             if not AST.exptype_isnum(right.etype):
                 self._raise_error(13, tk)
-            if op.lexeme == 'NOT':    
-                right = self._cast_numtype(right, AST.ExpType.Integer)
+            right = self._cast_numtype(right, AST.ExpType.Integer)
+            return AST.UnaryOp(op='NOT', operand=right, etype=right.etype)
+        elif self._current_is(TokenType.OP, lexeme='-'):
+            self._advance()
+            tk = self._current()
+            # We may have the case of negative numbers that must be <primary>
+            # instead of (OP(-),NUM)
+            if tk.type == TokenType.INT:
+                right = AST.Integer(value=tk.value)
+                self._advance()
             else:
-                # We may have the case of negative numbers that must be <primary>
-                # instead of (OP(-),NUM)
-                if isinstance(right, AST.Integer):
-                    right.value = -right.value
-                    # we need to check again the needed bytes as negative numbers
-                    # need more and may jump into REAL
-                    nbytes = self._int_to_bytes('', right.value)
-                    if nbytes == 0:
-                        self._raise_error(6, tk)
-                    if nbytes > 2:
-                        return AST.Real(value=right.value)
-                    return right
-                elif isinstance(right, AST.Real):
-                    right.value = -right.value
-                    return right
-            return AST.UnaryOp(op=op.lexeme, operand=right, etype=right.etype)
+                right = self._parse_primary()
+            if not AST.exptype_isnum(right.etype):
+                self._raise_error(13, tk)
+            if isinstance(right, AST.Integer):
+                right.value = -right.value
+                nbytes = self._int_to_bytes('', right.value)
+                if nbytes == 0:
+                    self._raise_error(6, tk)
+                if nbytes > 2:
+                    return AST.Real(value=right.value)
+                return right
+            else:
+                # Real
+                right.value = -right.value
+                return right
         return self._parse_primary()
 
     def _int_to_bytes(self, lex: str, n: int) -> int:
@@ -3101,20 +3108,16 @@ class LocBasParser:
         Returns the bytes needed to represent the number n.
         Options are integers of 16 bits or integers of 32 bits.
         Hex/binary numbers are unsigned while regular numbers are
-        signed. In the last case, we multiply by 2 to add the sign bit.
+        signed.
         """
-        if n == 0:
-            return 2
-        if self.unsignedmode and n < 0:
-            return 0  # Overflow
         if '&' not in lex and not self.unsignedmode:
-            n = abs(n) * 2
-        minbytes = int(log(n, 256)) + 1
-        if minbytes > 4 or (minbytes > 2 and self.unsignedmode):
-            return 0  # Overflow
-        if minbytes > 2:
-            return 4
-        return 2
+            if n < -32768 or n > 32767:
+                return 4
+            return 2
+        # unsigned or hex
+        if n >= 0 and n < 65536:
+            return 2
+        return 0 # Overflow
 
     @astnode
     def _parse_primary(self) -> AST.Statement:
