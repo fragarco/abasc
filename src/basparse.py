@@ -996,7 +996,7 @@ class LocBasParser:
     def _parse_EXIT_FOR(self) -> AST.Command:
         """ <EXIT FOR> ::= EXIT FOR """
         tk = self._advance()
-        # EXIT FOR can be inside an IF codeblock but not anything else from WHILE codeblock
+        cblock: Optional[CodeBlock] = None
         for cblock in reversed(self.codeblocks):
             if "NEXT" in cblock.until_keywords:
                 break
@@ -1010,7 +1010,7 @@ class LocBasParser:
     def _parse_EXIT_WHILE(self) -> AST.Command:
         """ <EXIT WHILE> ::= EXIT WHILE """
         tk = self._advance()
-        # EXIT WHILE can be inside an IF codeblock but not anything else from WHILE codeblock
+        cblock: Optional[CodeBlock] = None
         for cblock in reversed(self.codeblocks):
             if "WEND" in cblock.until_keywords:
                 break
