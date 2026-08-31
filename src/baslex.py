@@ -34,7 +34,7 @@ for t in lx.tokens():
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Union, Any, Optional, Tuple, Iterator
 import re
@@ -79,7 +79,7 @@ class Token:
 
 class TokenEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
-        if is_dataclass(o):
+        if isinstance(o, Token):
             return {
                 "type": str(o.type).split('.')[1],
                 "lexeme": o.lexeme,
