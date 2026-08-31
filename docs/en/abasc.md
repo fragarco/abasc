@@ -3368,13 +3368,16 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.5
-  -
+  - EXIT FOR and EXIT WHILE out of loops where crashing the compiler
+  - FRE(1) was reporting a wrong value
+  - SGN(x) did not return the right value for negative reals
+  - Some other minor fixes and tweaks
 
 - Version 1.2.4
-  - Fixed <= and >= comparation operations with real numbers.
+  - Fixed <= and >= comparation operations with real numbers
 
 - Version 1.2.3
-  - Adds UNSIGNED, UGREATER and USTR$ functions to deal with unsigned integers.
+  - Adds UNSIGNED, UGREATER and USTR$ functions to deal with unsigned integers
 
 - Version 1.2.2
   - Fixed an error using real variables with INPUT

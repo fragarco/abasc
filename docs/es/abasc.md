@@ -3318,13 +3318,16 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.5
-  - 
+  - El uso de EXIT FOR y EXIT WHILE fuera de los bucles detenía la compilación
+  - FRE(1) devolvía un valor erróneo
+  - SGN(x) no devolvía el valor correcto para números reales negativos
+  - Otros pequeños arreglos y mejoras
 
 - Versión 1.2.4
-  - Arregla la comparación <= y >= con números reales.
+  - Arregla la comparación <= y >= con números reales
  
 - Versión 1.2.3
-  - Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de enteros sin signo.
+  - Añade las funciones UNSIGNED, UGREATER y USTR$ para tratamiento de enteros sin signo
 
 - Versión 1.2.2
   - Arregla un error usando variables reales con el comando INPUT
