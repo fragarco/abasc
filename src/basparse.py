@@ -3083,7 +3083,7 @@ class LocBasParser:
             # We may have the case of negative numbers that must be <primary>
             # instead of (OP(-),NUM)
             if tk.type == TokenType.INT:
-                right = AST.Integer(value=tk.value)
+                right = AST.Integer(value=tk.value) # type: ignore[arg-type]
                 self._advance()
             else:
                 right = self._parse_primary()
@@ -3097,10 +3097,10 @@ class LocBasParser:
                 if nbytes > 2:
                     return AST.Real(value=right.value)
                 return right
-            else:
-                # Real
+            elif isinstance(right, AST.Real):
                 right.value = -right.value
                 return right
+            return AST.UnaryOp(op='-', operand=right, etype=right.etype)
         return self._parse_primary()
 
     def _int_to_bytes(self, lex: str, n: int) -> int:
