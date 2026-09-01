@@ -269,6 +269,10 @@ class BasOptimizer:
             node.left = self._op_statement(node.left)    
         return node 
 
+    def _op_unaryop(self, node: AST.UnaryOp) -> AST.Statement:
+        node.operand = self._op_statement(node.operand)
+        return node
+
     def _op_keyword(self, stmt: AST.Command | AST.Function) -> AST.Statement:
         keyword = stmt.name
         funcname = "_op_" + keyword.replace('$','SS').replace(' ', '_')
@@ -318,6 +322,8 @@ class BasOptimizer:
             stmt = self._op_assignment(stmt)
         elif isinstance(stmt, AST.BinaryOp):
             stmt = self._op_binaryop(stmt)
+        elif isinstance(stmt, AST.UnaryOp):
+            stmt = self._op_unaryop(stmt)
         elif isinstance(stmt, AST.Variable):
             stmt = self._op_variable(stmt)
         elif isinstance(stmt, AST.ArrayItem):
