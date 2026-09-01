@@ -806,8 +806,9 @@ __strcat_loop:
 rt_strcmp:
     ld      a,(de)
     cp      (hl)
-    jr      nc,$+3
+    jr      nc,__strcmp_chkempty
     ld      a,(hl)
+__strcmp_chkempty:
     or      a
     ret     z              ; empty strings
     push    hl
@@ -889,9 +890,10 @@ rt_int2str_buf: defs 8
 rt_int2str:
     ld      de,rt_int2str_buf+1 ; first byte stores string length
     ld      a,32   ; empty space for positive numbers
-    bit     7,h
-    jr      z,$+4  ; positive?
+    bit     7,h    ; check if number is negative
+    jr      z,__int2str_init
     ld      a,"-"  ; HL is negative so add '-' to string and negate HL
+__int2str_init:
     ld      (de),a
     ld      e,0    ; number of characters
     cp      32
@@ -1049,8 +1051,9 @@ __r2str_calculate_digits_next:
     ld      a,d    ; A is now the sign: 01 for + and FF for -
     inc     a
     ld      a,32
-    jr      nz,$+4
+    jr      nz,__r2str_writesign
     ld      a,"-"
+__r2str_writesign:
     ld      (hl),a ; Lets write the sign: ' ' or '-'
     inc     hl
 __float_check_exp:
@@ -1390,10 +1393,12 @@ __a2bin:
     ld      b,8
 __a2bin_loop:
     rla
-    jr      c,$+6
-    ld      (hl),&30
-    jr      $+4
+    jr      c,__a2bin_write1
+    ld      (hl),&30   ; write '0'
+    jr      __a2bin_next
+__a2bin_write1:
     ld      (hl),&31
+__a2bin_next:
     inc     hl
     djnz    __a2bin_loop
     ret
@@ -1445,16 +1450,18 @@ __strz2real_loop:
     jr      z,__strz2real_end
     inc     de
     bit     7,c
-    jr      z,$+5    ; do not increase B no '.' found yet 
+    jr      z,__strz2real_chkdecimal 
     inc     b
-    jr      $+10     ; do not check for '.' it was already found
+    jr      __strz2real_processnum      ; do not check for '.' it was already found
+__strz2real_chkdecimal:
     cp      "."
-    jr      nz,$+6   ; it's not '.' so jump to number processing
+    jr      nz,__strz2real_processnum   ; it's not '.' so jump to number processing
     set     7,c
     jr      __strz2real_loop
-    sub     &30      ; convert char to number substracting '0' character
+__strz2real_processnum:
+    sub     &30                         ; convert char to number substracting '0' character
     cp      10
-    jr      nc,__strz2real_end  ; some other character > 9
+    jr      nc,__strz2real_end          ; some other character > 9
     push    de
     push    bc
     push    af
@@ -1481,9 +1488,10 @@ __strz2real_end:
     push    bc
     xor     a
     sub     b
-    jr      z,$+9
+    jr      z,__strz2real_chksign
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
     call    rt_math_call
+__strz2real_chksign:
     pop     bc
     bit     0,c
     ret     z
@@ -1540,8 +1548,9 @@ rt_findstr:
     sub     b       ; apply starting position
     jr      c,__findstr_nomatch+1
     inc     a       ; bacause starting pos starts in 1
+__findstr_loop0:    ; point to initial character
     inc     hl
-    djnz    $-1
+    djnz    __findstr_loop0
     ld      b,a
 __findstr_find1st:
     ld      a,(de)  ; substring len
@@ -1608,13 +1617,15 @@ rt_substr:
     ld      (hl),0
     inc     a       ; source string remaining chars
     cp      b
-    jr      nc,$+3
+    jr      nc,__substr_copy
     ld      b,a
+__substr_copy:
     ld      (hl),b
     ex      de,hl
+__substr_findini:
     inc     hl
     dec     c
-    jr      nz,$-2
+    jr      nz,__substr_findini
     push    de
     inc     de
     ld      c,b
@@ -1691,8 +1702,9 @@ rt_strright:
     push    de
     inc     b
     inc     de
+__strright_findini:
     inc     hl
-    djnz    $-1
+    djnz    __strright_findini
     ldir
     pop     hl
     ret
@@ -1723,9 +1735,10 @@ rt_strfill:
     ld      (de),a
     push    de
     ld      a,c
+__strfill_loop:
     inc     de
     ld      (de),a
-    djnz    $-2
+    djnz    __strfill_loop
     pop     hl
     ret
 __strfill_empty:
@@ -1994,8 +2007,7 @@ rt_print_strz:
     ret     z
     inc     hl
     call    {FWCALL.TXT_OUTPUT}
-    djnz    rt_print_strz
-    ret
+    jr      rt_print_strz
 """
 ),
     "rt_print_int": (["rt_print_str", "rt_int2str"],"",
@@ -2833,22 +2845,26 @@ rt_div32_by10:
     rla
     add     hl,hl
     rla
+__div32_loop0:
     add     hl,hl
     rla
     cp      c
-    jr      c,$+4
+    jr      c,__div32_next0
     sub     c
     inc     l
-    djnz    $-7
+__div32_next0:
+    djnz    __div32_loop0
     ex      de,hl
     ld      b,16
+__div32_loop1:
     add     hl,hl
     rla
     cp      c
-    jr      c,$+4
+    jr      c,__div32_next1
     sub     c
     inc     l
-    djnz    $-7
+__div32_next1:
+    djnz    __div32_loop1
     ret
 """
 ),
@@ -2874,13 +2890,15 @@ rt_div16_by10:
     rla
     add     hl,hl
     rla
+__div16b10_loop:
     add     hl,hl
     rla
     cp      c
-    jr      c,$+4
+    jr      c,__div16b10_next
     sub     c
     inc     l
-    djnz    $-7
+__div16b10_next:
+    djnz    __div16b10_loop
     ret
 """
 ),
@@ -2946,8 +2964,9 @@ rt_mul16_A:
 __mult16_a_loop:
     add     hl,hl
     rlca
-    jr      nc,$+3
+    jr      nc,__mult16_a_next
     add     hl,de
+__mult16_a_next:
     djnz    __mult16_a_loop
     ret
 """
@@ -2967,13 +2986,14 @@ f"""
 rt_real2int:
     ld      ix,{FWCALL.MATH_REAL_TO_INT}  ; MATH_REAL_TO_INT
     call    rt_math_call
-    jp      p,$+9
+    jp      p,__real2int_end
     xor     a       ; HL = - HL
     sub     l       ; one byte less then HL = 0 - HL
     ld      l,a
     sbc     a,h
     sub     l
     ld      h,a
+__real2int_end:
     ret
 """
 ),
@@ -2987,13 +3007,14 @@ f"""
 ;     rt_math_accum1 holds the converted number pointed by HL
 ;     AF, HL, DE and IX are modified
 rt_int2real:
-    xor     a
+    xor     a      ; clear CF 
     ld      a,h    ; bit 7 sets the sign
-    bit     7,a
-    jr      z,$+8
+    bit     7,a    ; 0 means positive
+    jr      z,__int2real_convert
     ex      de,hl
     ld      hl,0
     sbc     hl,de
+__int2real_convert:
     ld      de,rt_math_accum1
     ld      ix,{FWCALL.MATH_INT_TO_REAL}  ; MATH_INT_TO_REAL
     jp      rt_math_call
@@ -3074,9 +3095,10 @@ __real_round_toint:
     pop     bc
     xor     a
     sub     b
-    jr      z,$+9
+    jr      z,__real_round_chksign
     ld      ix,{FWCALL.MATH_REAL_10A}  ; MATH_REAL_A10
     call    rt_math_call
+__real_round_chksign:
     pop     af    ; check original sign
     ret     nc    ; positive number
     ld      ix,{FWCALL.MATH_REAL_UMINUS}  ; MATH_REAL_UMINUS
@@ -3180,7 +3202,7 @@ rt_inkey:
     ld      a,l
     call    {FWCALL.KM_TEST_KEY}  ; KM_TEST_KEY
     ld      hl,&FFFF  ; -1 (the key is not pressed)
-    jr      z,$+4
+    ret     z
     inc     h
     ld      l,c
     ret
@@ -3198,7 +3220,7 @@ f"""
 rt_inkeys:
     ld      (hl),0
     call    {FWCALL.KM_READ_CHAR}  ; KM_READ_CHAR
-    jr      nc,$+7  ; if CF we have a character
+    ret     nc      ; if not CF we don't have a character
     ld      (hl),1
     inc     hl
     ld      (hl),a
@@ -3388,11 +3410,12 @@ rt_load:
     ld      de,0   ; 2K buffer not needed with disks
     ld      b,(hl) ; filename length
     inc     hl
-    ld      a,"!"  ; remove initial ! if present
+    ld      a,"!"  ; check if ! symbol is present
     cp      (hl)
-    jr      nz,$+4
-    dec     b
+    jr      nz,__load_poenfile
+    dec     b      ; remove ! symbol
     inc     hl
+__load_openfile:
     call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
     ret     nc     ; Error
     ex      de,hl
@@ -3416,11 +3439,12 @@ rt_loadaddr:
     ld      de,0   ; 2K buffer not needed with CAS_IN_DIRECT
     ld      b,(hl) ; filename length
     inc     hl
-    ld      a,"!"  ; remove initial ! if present
+    ld      a,"!"  ; check if ! symbol is present
     cp      (hl)
-    jr      nz,$+4
-    dec     b
+    jr      nz,__loadaddr_openin
+    dec     b      ; remove ! symbol
     inc     hl
+__loadaddr_openin:
     call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
     ret     nc     ; Error
     pop     hl
@@ -3445,11 +3469,12 @@ rt_runfile:
     ld      de,0   ; 2K buffer not needed with disks
     ld      b,(hl) ; filename length
     inc     hl
-    ld      a,"!"  ; remove initial ! if present
+    ld      a,"!"  ; check if ! symbol exists
     cp      (hl)
-    jr      nz,$+4
-    dec     b
+    jr      nz,__runfile_openin
+    dec     b      ; remove ! symbol
     inc     hl
+__runfile_openin:
     call    {FWCALL.CAS_IN_OPEN}  ; CAS_IN_OPEN
     ret     nc     ; Error
     ex      de,hl
