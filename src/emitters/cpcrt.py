@@ -3531,24 +3531,15 @@ rt_save:
     "rt_onjump": ([],"",
 """
 ; RT_ONJUMP
-; Given a number in A, this routine jumps to the corresponding
-; address stored in memory and pointed by HL
+; Given a number in HL, this routine jumps to the corresponding
+; address in the array pointed by DE
 ; Inputs:
 ;   DE address to the list of addresses in memory
-;    A number to select one of the addresses, starting in 1
-;    B number of options
+;   HL number to select one of the addresses, starting in 1
 ; Outputs:
 ;   None
-;   AF, DE and HL are modified
+;   DE and HL are modified
 rt_onjump:
-    or      a
-    ret     z      ; do nothing if index is 0
-    ld      l,a
-    ld      a,b
-    cp      l
-    ret     c
-    dec     l
-    ld      h,0
     add     hl,hl
     add     hl,de
     ld      e,(hl)

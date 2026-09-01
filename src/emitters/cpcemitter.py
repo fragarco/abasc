@@ -2585,9 +2585,15 @@ class CPCEmitter:
             if sym is not None:
                 datastr = datastr + f"{sym.label},"
         self._emit_expression(node.args[0])
-        self._emit_code("ld      a,l")
         self._emit_code(f"ld      b,{len(node.args[1:])}")
         self._emit_code(f"ld      de,{addresses}")
+        self._emit_code("xor     a")
+        self._emit_code("or      l")
+        self._emit_code("jr      z,$+10", info="do nothing if index is 0")
+        self._emit_code("ld      a,b")
+        self._emit_code("cp      l")
+        self._emit_code("jr      c,$+6", info="do nothing if index > options")
+        self._emit_code("dec     l", info="address offset starts at 0")
         addresses = addresses + f": dw {datastr[:-1]}"
         self._emit_data(addresses, section=DataSec.CONST)
 
