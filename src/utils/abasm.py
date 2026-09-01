@@ -27,6 +27,7 @@ import os
 import re
 import argparse
 import inspect
+from typing import Any
 
 IFSTATE_DISABLED = 0 # assemble all encounted code
 IFSTATE_ASSEMBLE = 1 # assemble this code, but stop at ELSE or ELSEIF
@@ -604,7 +605,7 @@ class AsmContext:
 
 
 g_context = AsmContext()
-g_opcode_functions = {}
+g_opcode_functions: Any = {}
 
 ###########################################################################
 # Error and warning reporting
