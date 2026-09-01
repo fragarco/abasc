@@ -2785,6 +2785,26 @@ rt_div16:
     jp      __sign_strip_neghl
 """
 ),
+"rt_mod16": (["rt_compute_sign", "rt_sign_strip", "rt_udiv16"],"",
+"""
+; RT_MOD16
+; Based on code developed by Nils M. Holm (cc0) 
+; Inputs:
+;     HL, DE
+; Outputs:
+;     HL is the remainder
+;     HL, DE, AF, BC are changed
+rt_mod16:
+    call    rt_compute_sign
+    push    af
+    call    rt_sign_strip
+    call    rt_udiv16
+    pop     af
+    ex      de,hl
+    ret     nc
+    jp      __sign_strip_neghl
+"""
+),
     "rt_comp16": ([],"",
 """
 ; RT_COMP16

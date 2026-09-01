@@ -4514,9 +4514,8 @@ class CPCEmitter:
             self._emit_import("rt_div16")
             self._emit_code("call    rt_div16", info="HL = HL \\ DE ")
         elif op == 'MOD':
-            self._emit_import("rt_udiv16")
-            self._emit_code("call    rt_udiv16")
-            self._emit_code("ex      de,hl", info="HL = HL MOD DE")
+            self._emit_import("rt_mod16")
+            self._emit_code("call    rt_mod16")
         elif op == 'AND':
             self._emit_code("ld      a,h")
             self._emit_code("and     d")
