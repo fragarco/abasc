@@ -1310,7 +1310,7 @@ def op_AND(p, opargs):
     # lets support that in case we get two parameters and issue a warning
     args = opargs.strip().split(',')
     if len(args) > 1:
-        warning('invalid ADD <expr>,<expr> opcode, ADD <expr> expected', TLEVEL_LOW)
+        warning('invalid AND <expr>,<expr> opcode, AND <expr> expected', TLEVEL_LOW)
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xa0, [0xe6])
 
