@@ -152,11 +152,6 @@ class LocBasParser:
             self._raise_error(2, self._current(), info)
         return self._advance()
 
-    def _next_token(self) -> Token:
-        if (self.pos+1) >= len(self.tokens):
-            self._raise_error(2, self.tokens[-1], "unexpected EOF")
-        return self.tokens[self.pos+1]
-
     def _current_is(self, type: TokenType, lexeme: Optional[str] = None) -> bool:
         tk = self.tokens[self.pos]
         if tk.type != type: return False
@@ -786,19 +781,6 @@ class LocBasParser:
             if not self.symtable.add(ident=var.name, info=info, context=self.context): #type: ignore[attr-defined]
                 self._raise_error(10, tk)
         return AST.Command(name="DIM", args=args)
-
-    def _parse_int_or_constant(self) -> Token:
-        """ <const_int> ::= IDENT.const | INT """
-        if self._current_is(TokenType.INT):
-            return self._advance()
-        tk = self._current()
-        if tk.type == TokenType.IDENT:
-            self._advance()
-            entry = self.symtable.find(tk.lexeme, SymType.Variable, self.context)
-            if entry is not None and entry.const is not None:
-                if isinstance(entry.const, AST.Integer):
-                    return Token(TokenType.INT, "", tk.line, tk.col, entry.const.value)
-        self._raise_error(2, tk, "constant or literal integer was expected")
 
     @astnode
     def _parse_array_declaration(self, onlybracket = False) -> AST.Array:
@@ -3051,14 +3033,14 @@ class LocBasParser:
 
     @astnode
     def _parse_pow(self) -> AST.Statement:
-        """ <pow> ::= <unary> ^ <unary> | <unary> """
-        left = self._parse_unary()
+        """ <pow> ::= <not> ^ <not> | <not> """
+        left = self._parse_not()
         if self._current_is(TokenType.OP, lexeme='^'):
             # As per Locomotive BASIC documentation, the pow operation
             # is always Real
             op = self._advance()
             tk = self._current()
-            right = self._parse_unary()
+            right = self._parse_not()
             dtype = AST.ExpType.Real
             left, right = self._cast_numtypes(left, right, dtype, tk)
             left = AST.BinaryOp(op=op.lexeme, left=left, right=right, etype=dtype)
@@ -3066,18 +3048,24 @@ class LocBasParser:
         return left
 
     @astnode
-    def _parse_unary(self) -> AST.Statement:
-        """ <unary> ::= ( - | NOT ) <primary> | <primary> """
-        # NOT only work with INT while '-' works with INT and REAL
+    def _parse_not(self) -> AST.Statement:
+        """ <not> ::= NOT <unary> | <unary> """
+        # NOT only works with INT
         if self._current_is(TokenType.OP, lexeme='NOT'):
             self._advance()
             tk = self._current()
-            right = self._parse_primary()
+            right = self._parse_unary()
             if not AST.exptype_isnum(right.etype):
                 self._raise_error(13, tk)
             right = self._cast_numtype(right, AST.ExpType.Integer)
             return AST.UnaryOp(op='NOT', operand=right, etype=right.etype)
-        elif self._current_is(TokenType.OP, lexeme='-'):
+        return self._parse_unary()
+
+    @astnode
+    def _parse_unary(self) -> AST.Statement:
+        """ <unary> ::= -<primary> | <primary> """
+        # '-' works with INT and REAL
+        if self._current_is(TokenType.OP, lexeme='-'):
             self._advance()
             tk = self._current()
             # We may have the case of negative numbers that must be <primary>
