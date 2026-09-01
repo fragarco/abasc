@@ -2191,23 +2191,6 @@ __remove_quotes_loop:
     jr      __remove_quotes_loop
 """
 ),
-    "rt_extract_num": (["rt_strz2num"],"",
-"""
-; RT_EXTRACT_NUM
-; Converts and string with an integer or hexadecimal number
-; Inputs:
-;     DE address to the null-terminated string with the number
-; Outputs:
-;     HL resulting number
-;     AF, HL, DE and BC are modified
-rt_extract_num:
-    ld      a,(de)
-    cp      "&"
-    jp      nz,rt_strz2int
-    inc     de
-    jp      rt_strz2hex
-"""
-),
     "rt_input": (["rt_print_nl", "rt_print_str", "rt_count_substrz", "rt_extract_substrz", "rt_strz_lstrip", "rt_strz_rstrip", "rt_remove_quotes"],
 """
 rt_input_question: db 2,"? "
