@@ -3558,8 +3558,8 @@ class CPCEmitter:
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
         self._emit_code(f"call    {FWCALL.SOUND_CHECK}", info="SOUND_CHECK")
-        self._emit_code("ld      h,0\n")
-        self._emit_code("ld      l,a\n")
+        self._emit_code("ld      h,0")
+        self._emit_code("ld      l,a")
         self._emit_code(";")
 
     def _emit_SQR(self, node:AST.Function) -> None:
