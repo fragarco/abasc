@@ -3368,6 +3368,7 @@ SUB         rsSetMode(nmode)
 # Changelog
 
 - Version 1.2.5
+  - NOT inverts each bit as does Locomotive BASIC interpreter
   - EXIT FOR and EXIT WHILE out of loops where crashing the compiler
   - FRE(1) was reporting a wrong value
   - SGN(x) did not return the right value for negative reals
