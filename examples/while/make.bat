@@ -9,7 +9,7 @@ REM * USAGE: make [clear][dsk]
 @setlocal
 
 set SOURCE=main
-set TARGET=for
+set TARGET=while
 
 set LOADADDR=0x0040
 
