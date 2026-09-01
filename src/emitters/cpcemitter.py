@@ -469,7 +469,7 @@ class CPCEmitter:
             self._moveflo_accum1()
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_SIGNUM}", info="MATH_REAL_SIGNUM")
             self._emit_code("call    rt_math_call")
-            self._emit_code("jr      nc,$+8")
+            self._emit_code("jr      nc,$+9")
             self._emit_code(f"ld      ix,{FWCALL.MATH_REAL_UMINUS}", info="MATH_REAL_UMINUS")
             self._emit_code("call    rt_math_call")
             self._moveflo_heap(node)
@@ -1994,7 +1994,7 @@ class CPCEmitter:
         self._emit_code("ld      (hl),c", info="string len")
         self._emit_code("ld      a,c", info="empty string?")
         self._emit_code("or      a")
-        self._emit_code("jr      z,$+9")
+        self._emit_code("jr      z,$+8")
         self._emit_code("inc     hl")
         self._emit_code("ex      de,hl")
         self._emit_code("ld      b,0")
@@ -2081,7 +2081,7 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.KM_GET_JOYSTICK}", info="KM_GET_JOYSTICK")
         self._emit_code("ld      a,e")
         self._emit_code("or      a")
-        self._emit_code("jr      nz,$+3")
+        self._emit_code("jr      nz,$+3", info="L already has the value for JOY 1")
         self._emit_code("ld      l,h")
         self._emit_code("ld      h,0")
         self._emit_code(";")
@@ -3147,7 +3147,7 @@ class CPCEmitter:
         self._emit_code("call    rt_timer_get", info="HL address to event block")
         self._emit_code(f"call    {FWCALL.KL_DEL_TICKER}", info="KL_DEL_TICKER")
         self._emit_code("jr      c,$+5")
-        self._emit_code("ld      de,0")
+        self._emit_code("ld      de,0", info="If error we return 0")
         self._emit_code("ex      de,hl")
         self._emit_code(";") 
 
@@ -3985,7 +3985,7 @@ class CPCEmitter:
         Extracts a <numeric expression> from the beginning of the string expression.
         The opposite of STR$. 
         """
-        # In our case, VAL is restricted to integer convertions
+        # In our case, VAL is restricted to integer conversions
         self._emit_import("rt_strz2num")
         self._emit_import("rt_scratch_pad")
         self._emit_code("; VAL(<string expression>)")
@@ -4466,12 +4466,12 @@ class CPCEmitter:
         self._emit_expression(node.operand)
         if node.etype == AST.ExpType.Integer:
             if node.op == 'NOT':
-                self._emit_code("ex      de,hl")
-                self._emit_code("ld      hl,&FFFF")
-                self._emit_code("ld      a,d")
-                self._emit_code("or      e")
-                self._emit_code("jr      z,$+3")
-                self._emit_code("inc     hl")
+                self._emit_code("ld      a,h", info="inverts each bit")
+                self._emit_code("cpl")
+                self._emit_code("ld      h,a")
+                self._emit_code("ld      a,l")
+                self._emit_code("cpl")
+                self._emit_code("ld      l,a")
             elif node.op == '-':
                 self._emit_code("ld      de,0")
                 self._emit_code("ex      de,hl")
@@ -4701,8 +4701,8 @@ class CPCEmitter:
             self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '>':
             self._emit_code("ld      hl,&FFFF", info="HL =-1 TRUE")
-            self._emit_code("inc     a")
-            self._emit_code("jr      nz,$+3")
+            self._emit_code("dec     a")
+            self._emit_code("jr      z,$+3")
             self._emit_code("inc     hl", info="HL = 0 FALSE")
         elif node.op == '<=':
             self._emit_code("ld      hl,0", info="HL = 0 FALSE")
