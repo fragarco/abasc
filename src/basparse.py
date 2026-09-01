@@ -2962,7 +2962,6 @@ class LocBasParser:
         left = self._parse_term()
         while self._current_is(TokenType.COMP):
             op = self._advance()
-            self._current()
             right = self._parse_term()
             dtype = AST.exptype_derive(left, right)
             if not AST.exptype_isvalid(dtype):
