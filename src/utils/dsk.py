@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.3'
+__version__='1.4.4'
 
 import sys
 import os
@@ -366,7 +366,7 @@ class Disk:
         content = self.header.set(content)
         self.ntracks = self.header.tracks
         self.nsides = self.header.sides
-        self.sztrack = self.sztrack
+        self.sztrack = self.header.sztrack
         # default number of sectors
         if self.ntracks < len(self.tracks):
             raise FormatError("unexpected number of tracks (%d vs %d)"%(self.ntracks, len(self.tracks)))
