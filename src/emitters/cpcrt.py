@@ -1170,7 +1170,10 @@ __float_remove_decimal_char:
 ;     HL resulting number
 ;     AF, HL, DE and BC are modified
 rt_strz2num:
+    ld      hl,0
     ld      a,(de)
+    or      a
+    ret     z       ; the string is empty
     cp      "&"
     jr      nz,rt_strz2int
     inc     de
@@ -1186,23 +1189,28 @@ __strz2num_bin:
 
 ; RT_STRZ2INT
 ; DE address to the null-terminated string, ends pointing to first
-; char not converted.
+; char not converted. The caller already checked that the string
+; is not empty and set HL to its default value.
 ; Routine based in the library created by Zeda:
 ; https://github.com/Zeda/Z80-Optimized-Routines
 ; Inputs:
 ;     DE address to the source null-terminated string
+;      A first character
 ; Outputs:
 ;     HL contains the converted number
 ;     HL, BC, DE, AF are modified
 rt_strz2int:
-    ld      hl,0
+    cp      "-"    ; check sign
+    push    af     ; keep CF to determine sign at the end
+    jr      nz,__strz2int_loop
+    inc     de
 __strz2int_loop:
     ld      a,(de)
     or      a
-    ret     z      ; end of string
+    jr      z,__strz2int_setsign   ; end-of-string
     sub     &30    ; '0' character
     cp      10
-    ret     nc     ; some other character > 9
+    jr      nc,__strz2int_setsign  ; some other character > 9
     inc     de
     ld      b,h
     ld      c,l
@@ -1215,17 +1223,28 @@ __strz2int_loop:
     jr      nc,__strz2int_loop
     inc     h
     jr      __strz2int_loop
+__strz2int_setsign:
+    pop     af
+    ret     nz     ; positive number
+    ld      a,l
+    cpl
+    ld      l,a
+    ld      a,h
+    cpl
+    ld      h,a
+    inc     hl
+    ret
 
 ; RT_STRZ2HEX
 ; DE address to the null-terminated string with a hexadecimal number,
-; ends pointing to first char not converted.
+; ends pointing to first char not converted. The caller already set
+; the default HL value in case the string is empty.
 ; Inputs:
 ;     DE address to the source null-terminated string
 ; Outputs:
 ;     HL contains the converted number
 ;     HL, BC, DE, AF are modified
 rt_strz2hex:
-    ld      hl,0
 __str2hex_next:
     ld      a,(de)
     or      a
@@ -1275,14 +1294,14 @@ __str2hex_shiftadd          ; HL = HL*16 + C
 
 ; RT_STRZ2BIN
 ; DE address to the null-terminated string with a binary number,
-; ends pointing to first char not converted.
+; ends pointing to first char not converted. The caller already set
+; the default HL value in case the string is empty.
 ; Inputs:
 ;     DE address to the source null-terminated string
 ; Outputs:
 ;     HL contains the converted number
 ;     HL, BC, DE, AF are modified
 rt_strz2bin:
-    ld      hl,0
 __str2bin_next:
     ld      a,(de)
     or      a
