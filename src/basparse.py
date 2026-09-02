@@ -2908,12 +2908,12 @@ class LocBasParser:
         return stat
 
     def _parse_expression(self) -> AST.Statement:
-        """ <expression> ::= <logic_or> """
+        """ <expression> ::= <logic_xor> """
         return self._parse_logic_xor()
 
     @astnode
     def _parse_logic_xor(self) -> AST.Statement:
-        """ <logic_xor> ::= <logic_or> [OR <logic_or>] """
+        """ <logic_xor> ::= <logic_or> [XOR <logic_or>] """
         left = self._parse_logic_or()
         while self._current_is(TokenType.OP, "XOR"):
             op = self._advance()
