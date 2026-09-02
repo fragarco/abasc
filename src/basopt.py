@@ -19,16 +19,31 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import NoReturn
+from baserror import BasError
+from baspp import CodeLine
 import math
 import re
 import astlib as AST
 import symbols as SYM
 
+
 class BasOptimizer:
-    def __init__(self) -> None:
+    def __init__(self, code: list[CodeLine]) -> None:
+        self.source = code
         self.modified = False
         self.context = ""
+
+    def _raise_error(self, codenum: int, node: AST.ASTNode, info: str = "") -> NoReturn:
+        codeline = self.source[node.line - 1]
+        raise BasError(
+            codenum,
+            codeline.source,
+            codeline.code,
+            codeline.line,
+            node.col,
+            info
+        )
 
     # ----------------- AST optimizations -----------------
 
@@ -241,9 +256,65 @@ class BasOptimizer:
     def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
         literals = ("String", "Integer", "Real")
         if node.right.id in literals and node.left.id in literals:
+            self.modified = True
+            if   node.op == 'XOR':
+                return AST.Integer(value = node.left.value ^ node.right.value) # type: ignore [attr-defined]
+            elif node.op == 'OR':
+                return AST.Integer(value = node.left.value | node.right.value) # type: ignore [attr-defined]
+            elif node.op == 'AND':
+                return AST.Integer(value = node.left.value & node.right.value) # type: ignore [attr-defined]       
+            elif node.op == '=':
+                return AST.Integer(value = -1 if node.left.value == node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '>':
+                return AST.Integer(value = -1 if node.left.value > node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '<':
+                return AST.Integer(value = -1 if node.left.value < node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '>=' or node.op == '=>':
+                return AST.Integer(value = -1 if node.left.value >= node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '<=' or node.op == '=<':
+                return AST.Integer(value = -1 if node.left.value <= node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '<>':
+                return AST.Integer(value = -1 if node.left.value != node.right.value else 0) # type: ignore [attr-defined]
+            elif node.op == '+':
+                v = node.left.value + node.right.value # type: ignore [attr-defined]
+                if   node.etype == AST.ExpType.Integer: return AST.Integer(value = v)
+                elif node.etype == AST.ExpType.Real:    return AST.Real(value = v)
+                elif node.etype == AST.ExpType.String:  return AST.String(value = v)
+                else: self._raise_error(47, node, "Unexpected expresion type")
+            elif node.op == '-':
+                v = node.left.value - node.right.value # type: ignore [attr-defined]
+                if   node.etype == AST.ExpType.Integer: return AST.Integer(value = v)
+                elif node.etype == AST.ExpType.Real:    return AST.Real(value = v)
+                else: self._raise_error(47, node, "Unexpected expresion type")
+            elif node.op == 'MOD':
+                # this is a complicated operation because the rules in Python and BASIC
+                # are different so optimized results for negative numbers doesn't match
+                return AST.Integer(value = node.left.value % node.right.value) # type: ignore [attr-defined]
+            elif node.op == '*':
+                v = node.left.value * node.right.value # type: ignore [attr-defined]
+                if   node.etype == AST.ExpType.Integer: return AST.Integer(value = v)
+                elif node.etype == AST.ExpType.Real:    return AST.Real(value = v)
+                else: self._raise_error(47, node, "Unexpected expresion type")
+            elif node.op == '/':
+                return AST.Real(value = node.left.value / node.right.value) # type: ignore [attr-defined]
+            elif node.op == '\\':
+                return AST.Integer(value = int(node.left.value / node.right.value)) # type: ignore [attr-defined]
+            elif node.op == '^':
+                return AST.Real(value = int(node.left.value ** node.right.value)) # type: ignore [attr-defined]
+            else:
+                return self._raise_error(47, node, "Unexpected binary operation")
+        if node.right.id not in literals:
+            node.right = self._op_statement(node.right)
+        if node.left.id not in literals:
+            node.left = self._op_statement(node.left)    
+        return node 
+    """
+    def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
+        literals = ("String", "Integer", "Real")
+        if node.right.id in literals and node.left.id in literals:
             # We replace MOD, POW, INT DIV, AND and OR by their Python operators
             command = f'''{repr(node.left.value)}'''   # type: ignore [attr-defined]
-            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "//").replace("^", "**")
+            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "/").replace("^", "**")
             command += f'''{repr(node.right.value)}''' # type: ignore [attr-defined]
             try:
                 result = eval(command)                 
@@ -268,7 +339,7 @@ class BasOptimizer:
         if node.left.id not in literals:
             node.left = self._op_statement(node.left)    
         return node 
-
+    """
     def _op_unaryop(self, node: AST.UnaryOp) -> AST.Statement:
         node.operand = self._op_statement(node.operand)
         return node

@@ -167,7 +167,7 @@ def compile(opts: AbascOptions) -> int:
     codelines, code = preprocess(opts.infile, bascontent, opts.verbose)
     tokens = lexpass(opts.infile, code, opts.verbose)
     ast, symtable = parse(opts.infile, codelines, tokens, opts.verbose, opts.warninglevel)
-    optimizer = BasOptimizer()
+    optimizer = BasOptimizer(codelines)
     if opts.optlevel > 1:
         ast, symtable = optimizer.optimize_ast(ast, symtable)
     asmcode, heapused = emit(codelines, ast, symtable, opts)

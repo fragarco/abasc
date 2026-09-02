@@ -38,5 +38,5 @@ def compile_and_optimize(code: str) -> Tuple[AST.Program, SymTable]:
     Returns (optimized_program, symtable).
     """
     program, symtable = compile_program(code)
-    optimizer = BasOptimizer()
+    optimizer = BasOptimizer([])
     return optimizer.optimize_ast(program, symtable)

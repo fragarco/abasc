@@ -273,7 +273,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    ld      hl,(G_VAR_J)\n"
             "    pop     de\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ex      de,hl", result)
 
@@ -283,7 +283,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    ld      hl,0\n"
             "    add     hl,hl\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ld      hl,0", result)
         self.assertNotIn("add     hl,hl", result)
@@ -295,7 +295,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    ld      de,256\n"
             "    add     hl,de\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ld      hl,256", result)
 
@@ -306,7 +306,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    ld      e,l\n"
             "    dec     e\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ld      e,(10 & 0xFF)-1", result)
 
@@ -317,7 +317,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    ld      a,(ix+5)\n"
             "    pop     bc\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ld      a,(ix+5)", result)
         self.assertNotIn("push    bc", result)
@@ -330,7 +330,7 @@ class TestPeepholeRemaining(unittest.TestCase):
             "    push    de\n"
             "    ex      de,hl\n"
         )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source)
         self.assertIn("ex      de,hl", result)
         self.assertNotIn("pop     de", result)

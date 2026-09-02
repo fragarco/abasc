@@ -168,6 +168,7 @@ _ERRORCODES = {
     "044": "END FUNCTION missing",
     "045": "END SELECT missing",
     "046": "Unexpected END SELECT",
+    "047": "Optimization failure"
 }
 
 class BasError(Exception):

@@ -30,7 +30,7 @@ class TestOptimize(unittest.TestCase):
     ld      (hl),a
     dec     hl
     """)
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
@@ -50,7 +50,7 @@ class TestOptimize(unittest.TestCase):
     call    &BC32             ; SCR_SET_INK
     """
     )
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
@@ -71,7 +71,7 @@ class TestOptimize(unittest.TestCase):
     ld      b,1 & 0xFF
     call    rt_timer_get      ; HL address to event block
     """)
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
@@ -90,7 +90,7 @@ class TestOptimize(unittest.TestCase):
     ld      c,12 & 0xFF               ; second color
     pop     de
     """)
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
@@ -111,7 +111,7 @@ class TestOptimize(unittest.TestCase):
     xor     a
     sbc     hl,de
     """)
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
@@ -133,7 +133,7 @@ class TestOptimize(unittest.TestCase):
     ld      a,6 & 0xFF
     call    &BC32
     """)
-        optimizer = BasOptimizer()
+        optimizer = BasOptimizer([])
         result = optimizer.optimize_peephole(source[0])
         self.assertEqual(source[1], result)
 
