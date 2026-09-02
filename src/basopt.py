@@ -288,8 +288,9 @@ class BasOptimizer:
                 else: self._raise_error(47, node, "Unexpected expresion type")
             elif node.op == 'MOD':
                 # this is a complicated operation because the rules in Python and BASIC
-                # are different so optimized results for negative numbers doesn't match
-                return AST.Integer(value = node.left.value % node.right.value) # type: ignore [attr-defined]
+                # are different. The equivalence in Python is a - int(a / b) * b
+                a, b = node.left.value, node.right.value # type: ignore [attr-defined]
+                return AST.Integer(value = a - int(a/b) * b)
             elif node.op == '*':
                 v = node.left.value * node.right.value # type: ignore [attr-defined]
                 if   node.etype == AST.ExpType.Integer: return AST.Integer(value = v)

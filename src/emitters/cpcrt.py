@@ -2797,13 +2797,13 @@ rt_div16:
 ;     HL is the remainder
 ;     HL, DE, AF, BC are changed
 rt_mod16:
-    call    rt_compute_sign
+    bit     7,h
     push    af
     call    rt_sign_strip
     call    rt_udiv16
-    pop     af
     ex      de,hl
-    ret     nc
+    pop     af
+    ret     z       ; positive number
     jp      __sign_strip_neghl
 """
 ),
