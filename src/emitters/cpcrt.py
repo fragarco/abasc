@@ -173,7 +173,7 @@ class FWCALL:
     SCR_SET_FLASHING    = "&BC3E"
     SCR_GET_FLASHING    = "&BC41"
     SCR_FILL_BOX        = "&BC44"
-    SCR_FLOOD_BOX       = "&BC17"
+    SCR_FLOOD_BOX       = "&BC47"
     SCR_CHAR_INVERT     = "&BC4A"
     SCR_HW_ROLL         = "&BC4D"
     SCR_SW_ROLL         = "&BC50"

@@ -2189,24 +2189,17 @@ class CPCEmitter:
         fileinput = False
         if node.stream:
             if isinstance(node.stream, AST.Integer):
-                self._emit_expression(node.stream)
-                self._emit_stream()
-                if node.stream.value == 9: fileinput = True
+                if node.stream.value == 9:
+                    fileinput = True    # Files don't modify the window stream
+                else:
+                    self._emit_expression(node.stream)
+                    self._emit_stream()
             else:
                 self._raise_error(2, node.stream, info="stream must be an integer")
         if fileinput:
             self._emit_import("rt_freadstr")
-            if node.prompt != "":
-                self._print_str(AST.String(value=node.prompt))
-            if node.question:
-                self._emit_import("rt_input")
-                self._emit_code("ld      hl,rt_input_question")
-                self._emit_code("call    rt_print_str")
             self._emit_pointer(node.var)
             self._emit_code("call    rt_freadstr")
-            if node.carriage:
-                self._emit_import("rt_print_nl")
-                self._emit_code("call    rt_print_nl")
         else:
             # like a regular INPUT
             self._emit_INPUT(AST.Input(
@@ -2215,8 +2208,9 @@ class CPCEmitter:
                 question=node.question,
                 vars=[node.var],
             ), carriage=node.carriage)
-        if node.stream:
-            self._emit_stream_0()
+        if node.stream and isinstance(node.stream, AST.Integer):
+            if node.stream.value != 9:
+                self._emit_stream_0()
         self._emit_code(";")
 
     def _emit_LIST(self, node:AST.Command) -> None:
