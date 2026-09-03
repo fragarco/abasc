@@ -16,7 +16,7 @@ while not eof
     if vpos(#0) > 23 then
         print chr$(24) + "Press any key to continue..." + chr$(24)
         while inkey$="":wend
-        mode 2
+        cls
     end if
 wend
 closein
