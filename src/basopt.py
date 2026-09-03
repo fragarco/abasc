@@ -309,38 +309,7 @@ class BasOptimizer:
         if node.left.id not in literals:
             node.left = self._op_statement(node.left)    
         return node 
-    """
-    def _op_binaryop(self, node: AST.BinaryOp) -> AST.Statement:
-        literals = ("String", "Integer", "Real")
-        if node.right.id in literals and node.left.id in literals:
-            # We replace MOD, POW, INT DIV, AND and OR by their Python operators
-            command = f'''{repr(node.left.value)}'''   # type: ignore [attr-defined]
-            command += f" {node.op} ".replace("AND", "&").replace("OR", "|").replace("MOD", "%").replace("\\", "/").replace("^", "**")
-            command += f'''{repr(node.right.value)}''' # type: ignore [attr-defined]
-            try:
-                result = eval(command)                 
-                self.modified = True
-                nnode: AST.Statement = node
-                if node.etype == AST.ExpType.String:
-                    nnode = AST.String(value=str(result))
-                elif node.etype == AST.ExpType.Real:
-                    nnode = AST.Real(value=float(result))
-                else:
-                    if type(result) == bool:
-                        result = -1 if result else 0
-                    nnode = AST.Integer(value=int(result))
-                nnode.line = node.line
-                nnode.col = node.col
-                return nnode
-            except Exception:
-                return node
-        # functions calls, variables, etc.
-        if node.right.id not in literals:
-            node.right = self._op_statement(node.right)
-        if node.left.id not in literals:
-            node.left = self._op_statement(node.left)    
-        return node 
-    """
+
     def _op_unaryop(self, node: AST.UnaryOp) -> AST.Statement:
         node.operand = self._op_statement(node.operand)
         return node
