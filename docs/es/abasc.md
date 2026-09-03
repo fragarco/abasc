@@ -3318,6 +3318,7 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.2.5
+  - LINE INPUT #9 producia un salto de línea adicional no deseado
   - El comando NOT invierte los bits tal y como hace el interprete de Locomotive BASIC
   - El uso de EXIT FOR y EXIT WHILE fuera de los bucles detenía la compilación
   - FRE(1) devolvía un valor erróneo
