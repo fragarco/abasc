@@ -3021,6 +3021,8 @@ class LocBasParser:
             right = self._parse_pow()
             if op.lexeme == '\\':
                 dtype = AST.ExpType.Integer
+            elif op.lexeme == '/':
+                dtype = AST.ExpType.Real
             else:
                 dtype = AST.exptype_derive(left, right)
             left, right = self._cast_numtypes(left, right, dtype, tk)

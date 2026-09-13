@@ -55,9 +55,9 @@ sub initialize
    ' Draw floor. As cpct_drawSolidBox cannot draw boxes wider than 63 bytes
    ' and Screen width is 80 bytes, we draw 2 boxes of SCR_W/2 (40 bytes) each
    pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART,       0, FLOOR.Y)
-   call cpctDrawSolidBox(pvideomem, FLOOR.COLOR, SCR.W/2, FLOOR.HEIGHT)
-   pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART, SCR.W/2, FLOOR.Y)
-   call cpctDrawSolidBox(pvideomem, FLOOR.COLOR, SCR.W/2, FLOOR.HEIGHT)
+   call cpctDrawSolidBox(pvideomem, FLOOR.COLOR, SCR.W\2, FLOOR.HEIGHT)
+   pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART, SCR.W\2, FLOOR.Y)
+   call cpctDrawSolidBox(pvideomem, FLOOR.COLOR, SCR.W\2, FLOOR.HEIGHT)
 
    ' Draw instructions
    pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART,  0, 20)

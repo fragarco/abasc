@@ -4938,7 +4938,7 @@ class CPCEmitter:
                     entry = self.symtable.find(a.name, SymType.Array, self.context)
                     if entry is not None:
                         self._emit_code(f"ld      hl,{entry.label}")
-                else:   
+                else:
                     self._emit_expression(a)
                 self._emit_code("push    hl")
             self._emit_code("ld      ix,0", info="last parameter position")
@@ -5056,10 +5056,10 @@ class CPCEmitter:
         program = program + self.startupcode + "_startup_end_:\n"
         program = program + "_code_:\n"
         program = program + self.srccode + "\n"
-        program = program + self.data[DataSec.RUT] + "\n"
         program = program + self._emit_runtime()
 
         program = program + self.data[DataSec.GEN] + "\n"
+        program = program + self.data[DataSec.RUT] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_constants_end_:\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"

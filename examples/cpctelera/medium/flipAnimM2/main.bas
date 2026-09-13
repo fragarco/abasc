@@ -65,8 +65,8 @@ sub initialize
 
    ' Draw Demo banner at top-left corner of the screen (Start of video memory).
    ' We draw it in 2 parts, as cpct_drawSprite cannot draw sprites wider than 63 bytes.
-   call cpctDrawSprite(@LABEL("g_banner_0"), CPCT.VMEMSTART             , BANNER.W/2, BANNER.H)
-   call cpctDrawSprite(@LABEL("g_banner_1"), CPCT.VMEMSTART + BANNER.W/2, BANNER.W/2, BANNER.H)
+   call cpctDrawSprite(@LABEL("g_banner_0"), CPCT.VMEMSTART             , BANNER.W\2, BANNER.H)
+   call cpctDrawSprite(@LABEL("g_banner_1"), CPCT.VMEMSTART + BANNER.W\2, BANNER.W\2, BANNER.H)
 
    ' Draw instructions
    pvideomem = cpctGetScreenPtr(CPCT.VMEMSTART, 29, 60)
