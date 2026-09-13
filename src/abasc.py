@@ -81,7 +81,7 @@ def process_args() -> AbascOptions:
     if ".bin" not in outfile.lower(): outfile = outfile + ".bin"
     if ".bas" not in infile.lower():  infile = infile + ".bas"
     opts = AbascOptions(infile, outfile)
-    opts.optlevel = args.O if args.O in [0,1,2] else 2
+    opts.optlevel = args.O if args.O in [0,1,2,3] else 2
     opts.warninglevel = args.W if args.W in [0,1,2,3] else WL.ALL
     opts.debug = args.debug
     opts.startaddr = args.start
@@ -144,6 +144,7 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: A
     emitter.cfgset_startaddr(opts.startaddr)
     emitter.cfgset_dataaddr(opts.dataaddr)
     emitter.cfgset_tmpstrsz(opts.strsz)
+    emitter.cfgset_compactcode(opts.optlevel == 3)
     return emitter.emit_program()
     
 def assemble(infile: str, outfile: str, asmcode: str) -> None:

@@ -51,6 +51,7 @@ class CPCEmitter:
         self.symbolafter = 9999
         self.memlimit = 99999
         self.tmpstrsz = 255
+        self.compactcode = False
 
         self.context = ""
         self.headcode = ""
@@ -96,7 +97,10 @@ class CPCEmitter:
 
     def cfgset_tmpstrsz(self, strsz: int) -> None:
         self.tmpstrsz = strsz
-    
+
+    def cfgset_compactcode(self, compact: bool) -> None:
+        self.compactcode = compact
+
     def _emit_prepare_line(self, line: str, indent: int, info: str) -> str:
         pad = ""
         for _ in range(indent): pad = pad + " "
@@ -5057,9 +5061,12 @@ class CPCEmitter:
         program = program + "_code_:\n"
         program = program + self.srccode + "\n"
         program = program + self._emit_runtime()
+        if self.compactcode:
+            program = program + self.data[DataSec.RUT] + "\n"
 
         program = program + self.data[DataSec.GEN] + "\n"
-        program = program + self.data[DataSec.RUT] + "\n"
+        if not self.compactcode:
+            program = program + self.data[DataSec.RUT] + "\n"
         program = program + "_data_constants_:\n" + self.data[DataSec.CONST] + "\n"
         program = program + "_data_constants_end_:\n"
         program = program + "_data_variables_:\n" + self.data[DataSec.VARS] + "\n"

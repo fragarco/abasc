@@ -350,7 +350,7 @@ python abasc.py [options] file.bas [-o output]
 ### Options
 
 - `--version` — Displays the compiler version.
-- `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full).
+- `-O <n>` — Optimization level (0 = none, 1 = peephole, 2 = full, 3 = full + compact code).
 - `-W <n>` — Warning level (0 = none, 1 = important, 2 = important and medium, 3 = all).
 - `--start <n>` — Program area starting address (0x0040 by default)
 - `--data <n>` — Data area starting address (0x4000 by default)

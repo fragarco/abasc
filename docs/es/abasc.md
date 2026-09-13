@@ -351,7 +351,7 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 ### Opciones
 
 - `--version` --- muestra la versión del compilador.
-- `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa).
+- `-O <n>` --- nivel de optimización (0 = ninguna, 1 = peephole, 2 = completa, 3 = completa + codigo compacto).
 - `-W <n>` --- nivel de las advertencias (warnings) a mostrar (0 = ninguna, 1 = solo importantes, 2 = importantes y de media importancia, 3 = todas).
 - `--start <n>`--- dirección de inicio del programa (por defecto es 0x0040, ver sección sobre `Gestión de la memoria`).
 - `--data <n>`--- dirección de inicio para el área de datos del programa (por defecto es 0x4000, ver sección sobre `Gestión de la memoria`).
