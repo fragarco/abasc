@@ -1003,17 +1003,17 @@ statement, as shown in the following example:</p>
 <pre class="basic"><code>ASM &quot;mylabel: ret ; empty routine&quot;
 
 CALL &quot;mylabel&quot;</code></pre>
-<p>It is possible to pass arguments to assembly routines, although this
-requires understanding ABASC’s calling convention. Parameters are
-<strong>pushed onto the stack in order</strong>, from first to last, and
-the routine is invoked with the <strong>IX register pointing to the last
-parameter</strong>. The callee <strong>must not</strong> remove
-parameters from the stack; this is handled by the caller after the
-routine returns.</p>
-<p>For example, a routine receiving three integer parameters (each 2
-bytes long):</p>
+<p>According to Appendix 2 of the BASIC Programmer’s Reference Manual,
+the parameters used in a CALL statement are available through the IX
+register, which points to the last parameter, as follows:</p>
+<p>param N : IX+0, IX+1 param N-1 : IX+2, IX+3 param N-2 : IX+4, IX+5
+…</p>
+<p>According to Appendix 2 of the BASIC PROGRAMMER’S REFERENCE MANUAL,
+the parameters used in a CALL statement are available through the IX
+register, which points to the last parameter. For example, a routine
+receiving three integer parameters (each 2 bytes long) can access them
+using the following layout:</p>
 <pre><code>CALL myroutine(param1, param2, param3)</code></pre>
-<p>can access them using the following layout:</p>
 <table>
 <thead>
 <tr>
@@ -1036,6 +1036,16 @@ bytes long):</p>
 </tr>
 </tbody>
 </table>
+<p>It seems that the original BASIC interpreter also left the last
+parameter loaded in the DE register. Although this behavior is not
+documented as part of the CALL interface, some assembly routines
+designed to be called from BASIC took advantage of it to access the last
+parameter directly. For this reason, ABASC partially reproduces this
+behavior so that existing code that was already assembled, as well as
+example routines published in books and magazines of the time, can
+continue to work. However, this is an undocumented behavior that depends
+on the implementation of the original interpreter. Therefore, it should
+not be used in new code or considered a guaranteed feature of CALL.</p>
 <p>Finally, you can append the <code>ASM</code> clause to the
 declaration of a function or subroutine. This indicates that the entire
 routine is written in assembly and that the compiler does not need to
@@ -1409,6 +1419,9 @@ CALL nothing()     &#39; Call a BASIC subroutine
 CALL &quot;infinite_loop&quot;
 PRINT &quot;We will never reach here&quot;
 ASM &quot;infinite_loop: jr infinite_loop&quot;</code></pre>
+<p>Programmers are advised to read <strong>Using Assembly Code</strong>
+section in the <strong>Peculiarities of the Compiler</strong> chapter to
+obtain more information about parameter handling in CALL statements.</p>
 <h3 id="cat"><code>CAT</code></h3>
 <p><strong>Command</strong>. Displays the contents of the current
 storage device. The device can be changed using RSX commands such as
@@ -4041,6 +4054,7 @@ version 2 and version 2 plus.</p>
 <li>Version 1.2.6
 <ul>
 <li>Fixed a problem when optimizing OUT and INP code</li>
+<li>Some other minor fixes and tweaks</li>
 </ul></li>
 <li>Version 1.2.5
 <ul>

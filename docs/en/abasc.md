@@ -547,22 +547,26 @@ ASM "mylabel: ret ; empty routine"
 CALL "mylabel"
 ```
 
-It is possible to pass arguments to assembly routines, although this requires understanding ABASC’s calling convention. Parameters are **pushed onto the stack in order**, from first to last, and the routine is invoked with the **IX register pointing to the last parameter**.
-The callee **must not** remove parameters from the stack; this is handled by the caller after the routine returns.
+According to Appendix 2 of the BASIC Programmer's Reference Manual, the parameters used in a CALL statement are available through the IX register, which points to the last parameter, as follows:
 
-For example, a routine receiving three integer parameters (each 2 bytes long):
+param N   : IX+0, IX+1
+param N-1 : IX+2, IX+3
+param N-2 : IX+4, IX+5
+...
+
+According to Appendix 2 of the BASIC PROGRAMMER'S REFERENCE MANUAL, the parameters used in a CALL statement are available through the IX register, which points to the last parameter. For example, a routine receiving three integer parameters (each 2 bytes long) can access them using the following layout:
 
 ```
 CALL myroutine(param1, param2, param3)
 ```
-
-can access them using the following layout:
 
 | Parameter | Relative Address |
 | --------- | ---------------- |
 | param1    | IX+4, IX+5       |
 | param2    | IX+2, IX+3       |
 | param3    | IX+0, IX+1       |
+
+It seems that the original BASIC interpreter also left the last parameter loaded in the DE register. Although this behavior is not documented as part of the CALL interface, some assembly routines designed to be called from BASIC took advantage of it to access the last parameter directly. For this reason, ABASC partially reproduces this behavior so that existing code that was already assembled, as well as example routines published in books and magazines of the time, can continue to work. However, this is an undocumented behavior that depends on the implementation of the original interpreter. Therefore, it should not be used in new code or considered a guaranteed feature of CALL.
 
 Finally, you can append the `ASM` clause to the declaration of a function or subroutine. This indicates that the entire routine is written in assembly and that the compiler does not need to allocate or manage temporary memory (heap) for it.
 
@@ -789,6 +793,8 @@ CALL "infinite_loop"
 PRINT "We will never reach here"
 ASM "infinite_loop: jr infinite_loop"
 ```
+
+Programmers are advised to read **Using Assembly Code** section in the **Peculiarities of the Compiler** chapter to obtain more information about parameter handling in CALL statements.
 
 ### `CAT`
 
@@ -3369,6 +3375,7 @@ SUB         rsSetMode(nmode)
 
 - Version 1.2.6
   - Fixed a problem when optimizing OUT and INP code
+  - Some other minor fixes and tweaks
 
 - Version 1.2.5
   - LINE INPUT #9 was generating an extra carriage return

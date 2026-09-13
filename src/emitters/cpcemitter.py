@@ -36,6 +36,7 @@ class DataSec(str, Enum):
     VARS = "Variables"
     DATA = "DataBlock"
     CONST = "Constants"
+    RUT = "Rutines"
 
 class CPCEmitter:
     def __init__(self, code: list[CodeLine], program: AST.Program, symtable: SymTable) -> None:
@@ -61,7 +62,8 @@ class CPCEmitter:
             DataSec.GEN: "",
             DataSec.VARS: "",
             DataSec.DATA: "",
-            DataSec.CONST: ""
+            DataSec.CONST: "",
+            DataSec.RUT: "",
         }
         self.rtcode: str = ""
         self.rtvars: str = ""
@@ -627,6 +629,7 @@ class CPCEmitter:
             for a in params:
                 self._emit_expression(a)
                 self._emit_code("push    hl")
+            self._emit_code("ex      de,hl", info="BASIC interpreter leaves last parameter in DE too")
             self._emit_code("ld      ix,0")
             self._emit_code("add     ix,sp")
         if isinstance(node.args[0],AST.Integer):
@@ -1092,8 +1095,8 @@ class CPCEmitter:
         self.srccode = currentcode  # restore previous generated code
         self.context=""
         flabel = self._get_userfun_label(node.name)
-        self._emit_data(f"{flabel}:", 0)
-        self._emit_data(fcode, 0)
+        self._emit_data(f"{flabel}:", 0, section=DataSec.RUT)
+        self._emit_data(fcode, 0, section=DataSec.RUT)
         # If the expresion required heap memory (tmp memory)
         # we store the amount
         entry = self.symtable.find(node.name, SymType.Function)
@@ -1812,7 +1815,7 @@ class CPCEmitter:
         # we only really emit this code if the function was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Function)
         if entry and entry.calls > 0:
-            self._emit_data(subfun, 0)
+            self._emit_data(subfun, 0, section=DataSec.RUT)
             if not node.args[0].asm:        # type: ignore [attr-defined]
                 entry.heapused = self.max_heap_memory
                 self._pop_heapvalues()
@@ -1853,7 +1856,7 @@ class CPCEmitter:
         # we only really emit this code if the subrutine was called
         entry = self.symtable.find(ident=self.context, stype=SymType.Procedure)
         if entry and entry.calls > 0:
-            self._emit_data(subfun, 0)
+            self._emit_data(subfun, 0, section=DataSec.RUT)
             if not node.args[0].asm:        # type: ignore [attr-defined]
                 entry.heapused = self.max_heap_memory
                 self._pop_heapvalues()
@@ -5053,6 +5056,7 @@ class CPCEmitter:
         program = program + self.startupcode + "_startup_end_:\n"
         program = program + "_code_:\n"
         program = program + self.srccode + "\n"
+        program = program + self.data[DataSec.RUT] + "\n"
         program = program + self._emit_runtime()
 
         program = program + self.data[DataSec.GEN] + "\n"

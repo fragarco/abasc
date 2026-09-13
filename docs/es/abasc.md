@@ -551,22 +551,21 @@ ASM "mylabel: ret ; rutina vacía"
 CALL "mylabel"
 ```
 
-Es posible pasar argumentos a las rutinas ensambladas, aunque esto requiere conocer la convención de llamadas utilizada por ABASC. Los parámetros se apilan **en orden**, del primero al último, y la función se invoca con el registro **IX apuntando al último parámetro**.
-La rutina llamada **no** debe desapilar los parámetros; es el llamante quien se encarga de ello tras el retorno.
-
-Por ejemplo, una rutina que reciba tres parámetros enteros (cada uno de 2 bytes):
+Es posible pasar argumentos a las rutinas ensambladas, aunque esto requiere conocer la convención de llamadas utilizada por ABASC. Siguiendo lo recogido en el Apéndice 2 del MANUAL DE REFERENCIA BASIC PARA EL PROGRAMADOR, los parámetros utilizados en una llamada CALL están disponibles a través del registro IX, que apunta al último parámetro. Por ejemplo, para una rutina que reciba tres parámetros enteros (cada uno de 2 bytes) tendríamos:
 
 ```
 CALL mirutina(param1, param2, param3)
 ```
-
-Podrá acceder a ellos mediante el siguiente esquema:
 
 | Parámetro | Direcciones relativas |
 | --------- | --------------------- |
 | param1    | IX+4, IX+5            |
 | param2    | IX+2, IX+3            |
 | param3    | IX+0, IX+1            |
+
+Parece que el intérprete original de BASIC dejaba también el último parámetro cargado en el registro DE. Aunque este comportamiento no está documentado como parte de la interfaz de CALL, algunas rutinas en ensamblador diseñadas para ser llamadas desde BASIC lo aprovechaban, evitando tener que leer el último parámetro a través de IX. Por este motivo, ABASC reproduce este comportamiento si la dirección de llamada no es una expresión que deba calcularse. De este modo, código antiguo ya ensamblado y algunas rutinas de ejemplo publicadas en libros y revistas de la época pueden seguir funcionando.
+
+No obstante, se trata de un comportamiento de la implementación del intérprete original no documentado. Por tanto, no debe utilizarse en código nuevo ni considerarse una característica garantizada de CALL. El acceso a los parámetros mediante IX es la interfaz que debería utilizarse.
 
 Por último, es posible añadir la cláusula `ASM` a la declaración de una función o subrutina, indicando que todo el código va a ser ensamblador y que el compilador no necesita gestionar la memoria temporal (montículo).
 
@@ -794,6 +793,8 @@ CALL "bucle_eterno"
 PRINT "aqui no llegaremos"
 ASM "bucle_eterno: jr bucle_eterno"
 ```
+
+Se recomienda al programador leer la sección `Uso de código ensamblador` del capítulo `Peculiaridades del compilador` para obtener más información sobre el tratamiento de los parámetros en una instrucción CALL.
 
 ### `CAT`
 
@@ -3319,6 +3320,7 @@ SUB         rsSetMode(nmode)
 
 - Versión 1.2.6
   - Arreglado un problema con la optimización de los comandos OUT e INP
+  - Otros pequeños arreglos y mejoras
 
 - Versión 1.2.5
   - LINE INPUT #9 producia un salto de línea adicional no deseado
