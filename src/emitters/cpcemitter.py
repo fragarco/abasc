@@ -2245,7 +2245,7 @@ class CPCEmitter:
         commands.
         """
         self._emit_code("; LOAD <file name>[, <address expression>]")
-        self._emit_import("rt_Error")
+        self._emit_import("rt_error")
         if len(node.args) == 1:
             self._emit_import("rt_load")
             self._emit_expression(node.args[0])
