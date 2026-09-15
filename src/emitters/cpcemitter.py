@@ -2245,6 +2245,7 @@ class CPCEmitter:
         commands.
         """
         self._emit_code("; LOAD <file name>[, <address expression>]")
+        self._emit_import("rt_Error")
         if len(node.args) == 1:
             self._emit_import("rt_load")
             self._emit_expression(node.args[0])
@@ -2256,6 +2257,10 @@ class CPCEmitter:
             self._emit_expression(node.args[0])
             self._emit_code("pop     de")
             self._emit_code("call    rt_loadaddr")
+        self._emit_code("ld      a,0", info="do not clear flags")
+        self._emit_code("jr      c,$+4", info="if CF no error")
+        self._emit_code("ld      a,31", info="File not open error code")
+        self._emit_code("ld      (rt_error),a", info="update ERR")
         self._emit_code(";")
 
     def _emit_LOCATE(self, node:AST.Command) -> None:
@@ -3349,6 +3354,7 @@ class CPCEmitter:
         # result, we ignore the third parameter that we will always consider to
         # be 'B'
         self._emit_import("rt_save")
+        self._emit_import("rt_error")
         self._emit_code(";  SAVE <filename>[,<file type>][,<address>,<length>[,<entry point>]]")
         if len(node.args) < 4:
             self._raise_error(2, node, "only saving binaries is supported")
@@ -3367,6 +3373,10 @@ class CPCEmitter:
             self._emit_code("add     ix,sp")
             self._emit_expression(node.args[0]) # filename
             self._emit_code("call    rt_save")
+            self._emit_code("ld      a,0", info="do not clear flags")
+            self._emit_code("jr      c,$+4", info="if CF no error")
+            self._emit_code("ld      a,31", info="File not open error code")
+            self._emit_code("ld      (rt_error),a", info="update ERR")
             self._emit_popcontext()
         self._emit_code(";")
 
