@@ -483,9 +483,10 @@ class AsmContext:
 
     def write_listinfo(self, line: str) -> None:
         """ Adds the given line to the LST file """
-        if self.listingfile == None:
+        if self.listingfile is not None:
+            self.listingfile.write(line + "\n")
+        else:
             self.listingfile = open(os.path.splitext(self.outputfile)[0] + '.lst', "wt")
-        self.listingfile.write(line + "\n")
 
     def save_assembledcode(self, filename: str) -> None:
         if self.memory_bytes > 0:
@@ -693,7 +694,7 @@ class AsmContext:
             self.assembled_code = []
             self.assembler_pass(p, inputfile)
 
-        if self.listingfile != None:
+        if self.listingfile is not None:
             self.listingfile.close()
 
         if len(self.ifstack) > 0:
@@ -737,7 +738,7 @@ def abort(message: str, tolerancelevel: int=0, errortype: str = "Syntax Error") 
     line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: {errortype} ({message})"
     code = g_context.currentline.strip()
     line2 = '' if code == '' else f"in {code}"
-    if g_context.listingfile != None:
+    if g_context.listingfile is not None:
         g_context.listingfile.close()
     if __name__ == "__main__":
         print(line1, line2)
@@ -957,7 +958,7 @@ def store_bit_type(p: int, opargs: str, offset: int) -> int:
     arg1,arg2 = opargs.split(',',1)
     allowundef = 1 if p == 1 else 0
     b = g_context.parse_expression(arg1, allowundef)
-    if b == None:
+    if b is None:
         b = 0  # lets wait until the second pass for missing symbols
     if b > 7 or b < 0:
         abort("argument out of range")
@@ -1060,7 +1061,7 @@ def op_EQU(p: int, opargs: str) -> int:
     expr = expr.strip()
     if p == 1:
         v = g_context.parse_expression(expr, signed=1, allowundef=1)
-        if v != None: g_context.set_symbol(symbol, v, type='alias')
+        if v is not None: g_context.set_symbol(symbol, v, type='alias')
     else:
         expr_result = cast(int, g_context.parse_expression(expr, signed=1))
         existing = g_context.get_symbol(symbol)
@@ -1151,7 +1152,7 @@ def op_LET(p: int, opargs: str) -> int:
     sym, sval = args
     allowundef = 1 if p == 1 else 0
     nval = g_context.parse_expression(sval, allowundef)
-    if nval != None:
+    if nval is not None:
         g_context.set_symbol(sym, nval, is_let=True, type='let')
     return 0
 
@@ -1233,7 +1234,7 @@ def op_REPEAT(p: int, opargs: str) -> int:
     if g_context.applying_macro != None:
         abort("macro definitions don't support REPEAT loops")
     value = 0
-    if g_context.repeatloop != None:
+    if g_context.repeatloop is not None:
         line, value = g_context.repeatloop
         if line != g_context.linenumber:
             abort("nesting is not supported in REPEAT loops")
@@ -1895,7 +1896,7 @@ def op_ENDM(p: int, opargs: str) -> int:
     return 0
 
 def op__MACRO_ENTER_(p: int, opargs: str) -> int:
-    if g_context.applying_macro != None:
+    if g_context.applying_macro is not None:
         g_context.macros_stack.append((g_context.applying_macro, g_context.macros_applied))
     g_context.macros_applied = g_context.macros_applied + 1
     g_context.applying_macro = opargs.strip()
@@ -1927,7 +1928,7 @@ def assemble(inputfile: str,
              tolerance: int = 0,
              libpaths: list[str] = []) -> None:
     create_opdict()
-    if (outputfile == None):
+    if (outputfile is None):
         outputfile = os.path.splitext(inputfile)[0] + ".bin"
     
     g_context.reset()
