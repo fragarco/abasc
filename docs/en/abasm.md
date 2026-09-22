@@ -1265,6 +1265,11 @@ FD AE hh    	XOR   (IY+d)    5 Exclusive OR value at location in IY+d and accumu
 
 # Changelog
 
+- Version 1.4.5
+  * Fixed exporting files greather than 16K from DSK files.
+  * DSK tool now reports the consumed and free space when using --cat option.
+  * Some other minor fixes and improvements.
+  
 - Version 1.4.4
   * Some minor fixes and improvements.
   

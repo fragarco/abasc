@@ -27,44 +27,59 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-__author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.4'
+from __future__ import annotations
+
+__author__: str = 'Javier "Dwayne Hicks" Garcia'
+__version__: str = '1.4.5'
 
 import sys
 import argparse
 import math
+from typing import Any, NoReturn
 
-AMSDOS_BAS_TYPE = 0
+#
+# CUSTOM TYPES
+#
+Buffer = bytes | bytearray
+
+#
+# CONSTANTS
+#
+AMSDOS_BAS_TYPE       = 0
 AMSDOS_PROTECTED_TYPE = 1
-AMSDOS_BIN_TYPE = 2
+AMSDOS_BIN_TYPE       = 2
 
-DEF_DATA_BLOCK_SZ = 2048   # max size for a data block (2K)
+DEF_DATA_BLOCK_SZ   = 2048  # max size for a data block (2K)
 DEF_DATA_SEGMENT_SZ = 256
-DEF_DATA_TRAIL = [0xFF, 0xFF, 0xFF, 0xFF]
-DEF_WRITE_SPEED = 2000  # 1000 is another common value
-DEF_PAUSE_HEADER = 15   # ms
-DEF_PAUSE_DATA  = 2560  # ms
-DEF_PAUSE_FILE  = 12000 # ms
+DEF_DATA_TRAIL      = [0xFF, 0xFF, 0xFF, 0xFF]
+DEF_WRITE_SPEED     = 2000  # 1000 is another common value
+DEF_PAUSE_HEADER    = 15    # ms
+DEF_PAUSE_DATA      = 2560  # ms
+DEF_PAUSE_FILE      = 12000 # ms
 
-def AUX_GET_CRC(data):
+#
+# CODE
+#
+
+def AUX_GET_CRC(data: Buffer) -> int:
     """
     Auxiliary function that calculates the CRC on 256 bytes of data
     using CRC-16-CCITT Polynomial: X^16+X^12+X^5+1 and an initial 
     seed 0xFFFF
     """
-    crc = 0xFFFF
+    crc: int = 0xFFFF
     for i in range(0, 256):
-        k = crc >> 8 ^ data[i]
+        k: int = crc >> 8 ^ data[i]
         k = k ^ k >> 4
         crc = crc << 8 ^ k << 12 ^ k << 5 ^ k
         crc	= crc & 0xFFFF
-    crc = crc ^ 0xFFFF		
+    crc = crc ^ 0xFFFF
     return crc
 
-def AUX_BAUDS2PULSE(speed):
+def AUX_BAUDS2PULSE(speed: int) -> int:
     # Let's calculate de pulse time in nanoseconds following the
     # firmware guide
-    pulse = 333333 / speed
+    pulse: float = 333333 / speed
     # following the CDT format guide lets calculate the pulse
     # as CPU cycles (aka T steps): (pulse / 1000000) * 3500000
     return math.ceil(pulse * 3.5)
@@ -73,10 +88,12 @@ class FormatError(Exception):
     """
     Raised when procesing a file and its format is not the expected one.
     """
-    def __init__(self, message):
+    message: str
+
+    def __init__(self, message: str) -> None:
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -88,32 +105,36 @@ class CDTHeader:
     8       Major version number
     9       Minor version number
     """
-    def __init__(self):
+    title: str
+    major: int
+    minor: int
+
+    def __init__(self) -> None:
         self.title = "ZXTape!"
         self.major = 1
         self.minor = 13
 
-    def compose(self):
+    def compose(self) -> bytearray:
         # Total size of 10 bytes
-        header = bytearray(self.title.encode('utf-8'))
+        header: bytearray = bytearray(self.title.encode('utf-8'))
         header.extend(b'\x1A')
         header.extend(self.major.to_bytes(1, 'little'))
         header.extend(self.minor.to_bytes(1, 'little'))
         return header
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         if len(content) < 10:
             raise FormatError("header size is less than 10 bytes")
         self.title = content[0:7].decode('utf-8')
         self.major = int(content[8])
         self.minor = int(content[9])
         return content[10:]
-    
-    def check(self):
+
+    def check(self) -> None:
         if "ZXTape!" not in self.title:
             raise FormatError("CDT header title doesn't contain 'ZXTape!' text")
 
-    def dump(self):
+    def dump(self) -> None:
         print("CDT HEADER title:", self.title, "version:", self.major, '.', self.minor)
 
 class DataHeader:
@@ -133,12 +154,22 @@ class DataHeader:
     1B   2   call address
     """
 
-    FT_BAS = 0x00
-    FT_BIN = 0x02
-    FT_ASCII = 0x16
-    SYNC  = 0x2C
+    FT_BAS  = 0x00
+    FT_BIN  = 0x02
+    FT_ASCII= 0x16
+    SYNC    = 0x2C
 
-    def __init__(self):
+    filename: str
+    block_id: int
+    last_block: int
+    type: int
+    block_sz: int
+    addr_load: int
+    first_block: int
+    length: int
+    addr_start: int
+
+    def __init__(self) -> None:
         self.filename = "UNNAMED"
         self.block_id = 1
         self.last_block = 0x00
@@ -149,7 +180,7 @@ class DataHeader:
         self.length = 0
         self.addr_start = 0x4000
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         self.filename = content[0:16].decode('utf-8')
         self.block_id = int(content[16])
         self.last_block = int(content[17])
@@ -162,10 +193,10 @@ class DataHeader:
         # Segments are always of 256 bytes plus CRC (2) and trail (4)
         return content[256+2+4:]
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(b'\x2C')    # sync byte
-        name = bytearray(self.filename[0:16].encode('utf-8'))
+        name: bytearray = bytearray(self.filename[0:16].encode('utf-8'))
         name.extend(0x00 for i in range(len(name), 16))
         content.extend(name)
         content.extend(self.block_id.to_bytes(1, 'little'))
@@ -179,17 +210,17 @@ class DataHeader:
         # segment must be of 256 bytes plus the sync byte
         content.extend(0x00 for i in range(len(content), 256 + 1))
         # but CRC only on data
-        crc = AUX_GET_CRC(content[1:])
+        crc: int = AUX_GET_CRC(content[1:])
         content.extend(crc.to_bytes(2, 'big'))  # !!! here MSB first
         content.extend(b'\xFF\xFF\xFF\xFF')     # trail
         return content
 
-    def dump(self):
+    def dump(self) -> None:
         print("Name:", self.filename.encode('utf-8'), "type:", hex(self.type), "Number:", self.block_id)
         print("Size:", self.block_sz, "First:", hex(self.first_block), "Last:", hex(self.last_block))
         print("Load Addr:", hex(self.addr_load), "Call addr:", hex(self.addr_start), "Length:", self.length)
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockNormalSpeed:
@@ -198,30 +229,33 @@ class BlockNormalSpeed:
     02 2  Length of following data
     04 x  Data
     """
-    ID = 0x10
+    ID  = 0x10
 
-    def __init__(self, pause = DEF_PAUSE_DATA):
+    pause: int
+    data: bytearray
+
+    def __init__(self, pause: int = DEF_PAUSE_DATA) -> None:
         self.pause = pause
         self.data = bytearray()
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(self.pause.to_bytes(2, 'little'))
         content.extend(len(self.data).to_bytes(2, 'little'))
         content.extend(self.data)
         return content
-    
-    def set(self, content):
+
+    def set(self, content: Buffer) -> Buffer:
         self.pause = int.from_bytes(content[0:2], 'little')
-        sz = int.from_bytes(content[2:4], 'little')
-        self.data = content[4:4+sz]
+        sz: int = int.from_bytes(content[2:4], 'little')
+        self.data = bytearray(content[4:4+sz])
         return content[4+sz:]
 
-    def dump(self):
+    def dump(self) -> None:
         print("Data block of standard speed (id 0x10), data (bytes)", len(self.data))
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockTurboSpeed:
@@ -249,9 +283,19 @@ class BlockTurboSpeed:
     """
     ID = 0x11
 
-    def __init__(self, speed = DEF_WRITE_SPEED, pause = DEF_PAUSE_DATA):
-        bit0 = AUX_BAUDS2PULSE(speed)
-        bit1 = bit0 * 2
+    pilot_len: int
+    sync1_len: int
+    sync2_len: int
+    zero_len: int
+    one_len: int
+    ppulses_count: int
+    used_bits: int
+    pause: int
+    data: bytearray
+
+    def __init__(self, speed: int = DEF_WRITE_SPEED, pause: int = DEF_PAUSE_DATA) -> None:
+        bit0: int = AUX_BAUDS2PULSE(speed)
+        bit1: int = bit0 * 2
         self.pilot_len = bit1
         self.sync1_len = bit0
         self.sync2_len = bit0
@@ -262,8 +306,8 @@ class BlockTurboSpeed:
         self.pause = pause
         self.data = bytearray()
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(self.pilot_len.to_bytes(2, 'little'))
         content.extend(self.sync1_len.to_bytes(2, 'little'))
@@ -276,8 +320,8 @@ class BlockTurboSpeed:
         content.extend(len(self.data).to_bytes(3, 'little'))
         content.extend(self.data)
         return content
-    
-    def set(self, content):
+
+    def set(self, content: Buffer) -> Buffer:
         self.pilot_len = int.from_bytes(content[0:2], 'little')
         self.sync1_len = int.from_bytes(content[2:4], 'little')
         self.sync2_len = int.from_bytes(content[4:6], 'little')
@@ -286,16 +330,16 @@ class BlockTurboSpeed:
         self.ppulses_count = int.from_bytes(content[10:12], 'little')
         self.used_bits = content[12]
         self.pause = int.from_bytes(content[13:15], 'little')
-        sz = int.from_bytes(content[15:18], 'little')
-        self.data = content[18:18+sz]
+        sz: int = int.from_bytes(content[15:18], 'little')
+        self.data = bytearray(content[18:18+sz])
         return content[18+sz:]
 
-    def dump(self):
+    def dump(self) -> None:
         print("Data block of turbo speed (id 0x11), data block (bytes)", len(self.data))
         print( "Lenghts: pilot %d sync1 %d sync2 %d zero %d one %d pulses %d pause %d"
               %(self.pilot_len, self.sync1_len, self.sync2_len, self.zero_len, self.one_len, self.ppulses_count, self.pause))
         if self.data[0] == 0x2C:
-            header = DataHeader()
+            header: DataHeader = DataHeader()
             header.set(self.data[1:])
             header.dump()
         elif self.data[0] == 0x16:
@@ -304,7 +348,7 @@ class BlockTurboSpeed:
             print("Uknown sync code:", hex(self.data[0]))
         print("")
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockPureTone:
@@ -314,26 +358,29 @@ class BlockPureTone:
     """
     ID = 0x12
 
-    def __init__(self):
+    length: int
+    pulses: int
+
+    def __init__(self) -> None:
         self.length = 0
         self.pulses = 0
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(self.length.to_bytes(2, 'little'))
         content.extend(self.pulses.to_bytes(2, 'little'))
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         self.length = int.from_bytes(content[0:2], 'little')
         self.pulses = int.from_bytes(content[2:4], 'little')
         return content[4:]
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("Pure tone (id 0x12), pulse length:", self.length, "number of pulses:", self.pulses)
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockDifferentPulses:
@@ -346,29 +393,31 @@ class BlockDifferentPulses:
     """
     ID = 0x13
 
-    def __init__(self):
+    lengths: list[int]
+
+    def __init__(self) -> None:
         self.lengths = []
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(len(self.lengths).to_bytes(1, 'little'))
         for length in self.lengths:
             content.extend(length.to_bytes(2, 'little'))
         return content
 
-    def set(self, content):
-        pulses = int(content[0])
+    def set(self, content: Buffer) -> Buffer:
+        pulses: int = int(content[0])
         self.lengths = []
         for i in range(0, pulses):
-            value = int.from_bytes(content[i*2 + 1: (i+1)*2 + 1], 'little')
+            value: int = int.from_bytes(content[i*2 + 1: (i+1)*2 + 1], 'little')
             self.lengths.append(value)
         return content[pulses*2+1:]
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("Different pulses (id 0x13), number of pulses:", len(self.lengths))
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockPureData:
@@ -382,15 +431,21 @@ class BlockPureData:
     """
     ID = 0x14
 
-    def __init__(self, speed = DEF_WRITE_SPEED, pause = DEF_PAUSE_DATA):
+    zerop: int
+    onep: int
+    used: int
+    pause: int
+    data: bytearray
+
+    def __init__(self, speed: int = DEF_WRITE_SPEED, pause: int = DEF_PAUSE_DATA) -> None:
         self.zerop = AUX_BAUDS2PULSE(speed)
         self.onep = self.zerop * 2
         self.used = 8
         self.pause = pause
         self.data = bytearray()
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(self.zerop.to_bytes(2, 'little'))
         content.extend(self.onep.to_bytes(2, 'little'))
@@ -400,19 +455,19 @@ class BlockPureData:
         content.extend(self.data)
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         self.zerop = int.from_bytes(content[0:2], 'little')
         self.onep = int.from_bytes(content[2:4], 'little')
         self.used = int(content[4])
         self.pause = int.from_bytes(content[5:7], 'little')
-        sz = int.from_bytes(content[7:10], 'little')
-        self.data = content[10:10+sz]
+        sz: int = int.from_bytes(content[7:10], 'little')
+        self.data = bytearray(content[10:10+sz])
         return content[10+sz:]
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("Pure data (id 0x14), total data (bytes):", len(self.data))
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockPause:
@@ -421,23 +476,25 @@ class BlockPause:
     """
     ID = 0x20
 
-    def __init__(self, pause = 3000):
+    pause: int
+
+    def __init__(self, pause: int = 3000) -> None:
         self.pause = pause
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(self.pause.to_bytes(2, 'little'))
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         self.pause = int.from_bytes(content[0:2], 'little')
         return content[2:]
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("Pause (id 0x20), time (ms):", self.pause)
 
-    def check(self):
+    def check(self) -> None:
         if self.pause < 0:
             raise FormatError("negative pause time in Pause block")
 
@@ -448,26 +505,28 @@ class BlockGroupStart:
     """
     ID = 0x21
 
-    def __init__(self):
+    name: str
+
+    def __init__(self) -> None:
         self.name = ""
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(len(self.name[0:30]).to_bytes(1, 'little'))
         if len(self.name):
             content.extend(self.name[0:30].encode('utf-8'))
         return content
 
-    def set(self, content):
-        sz = int(content[0])
+    def set(self, content: Buffer) -> Buffer:
+        sz: int = int(content[0])
         self.name = "" if sz == 0 else content[1:sz+1].decode('utf-8')
         return content[sz+1:]
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("GroupStart (id 0x21), name:", self.name if len(self.name) else "(void)")
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockGroupEnd:
@@ -476,16 +535,16 @@ class BlockGroupEnd:
     """
     ID = 0x22
 
-    def compose(self):
-        return self.ID.to_bytes(1, 'little')
-    
-    def set(self, content):
+    def compose(self) -> bytearray:
+        return bytearray(self.ID.to_bytes(1, 'little'))
+
+    def set(self, content: Buffer) -> Buffer:
         return content
 
-    def dump(self):
+    def dump(self) -> None:
         print("GroupEnd (id 0x22)")
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockDescription:
@@ -495,25 +554,27 @@ class BlockDescription:
     """
     ID = 0x30
 
-    def __init__(self):
+    text: str
+
+    def __init__(self) -> None:
         self.text = ""
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
         content.extend(len(self.text[0:256]).to_bytes(1, 'little'))
         content.extend(self.text[0:256].encode('utf-8'))
         return content
 
-    def set(self, content):
-        sz = int(content[0])
+    def set(self, content: Buffer) -> Buffer:
+        sz: int = int(content[0])
         self.text = content[1:sz+1].decode('utf-8')
         return content[sz+1:]
 
-    def dump(self):
+    def dump(self) -> None:
         print("Description (id 0x30), text:", self.text)
 
-    def check(self):
+    def check(self) -> None:
         pass
 
 class BlockArchiveInfo:
@@ -549,16 +610,18 @@ class BlockArchiveInfo:
     COMMENT     = 0xFF
     ID          = 0x32
 
-    def __init__(self):
+    strings: list[tuple[int, str]]
+
+    def __init__(self) -> None:
         self.strings = []
 
-    def add_string(self, type, string):
+    def add_string(self, type: int, string: str) -> None:
         self.strings.append((type, string[0:256]))
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.ID.to_bytes(1, 'little'))
-        strings = bytearray()
+        strings: bytearray = bytearray()
         strings.extend(len(self.strings).to_bytes(1, 'little'))
         for s in self.strings:
             strings.extend(s[0].to_bytes(1, 'little'))
@@ -568,29 +631,29 @@ class BlockArchiveInfo:
         content.extend(strings)
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         # remove block size
         content = content[2:]
         strings = content[0]
         content = content[1:]
         self.strings = []
         while strings > 0:
-            type = content[0]
-            sz = content[1]
-            text = content[2:2+sz].decode('utf-8')
+            type: int = content[0]
+            sz: int = content[1]
+            text: str = content[2:2+sz].decode('utf-8')
             self.strings.append((type, text))
             strings = strings - 1
             content = content[2+sz:]
         return content
-    
-    def dump(self):
+
+    def dump(self) -> None:
         print("ArchiveInfo (id 0x32), strings:", len(self.strings))
         for s in self.strings:
             print("Type", hex(s[0]), "value:", s[1])
         
 class CDT:
 
-    BLOCKS = {
+    BLOCKS: dict[int, Any] = {
         BlockNormalSpeed.ID: BlockNormalSpeed,
         BlockTurboSpeed.ID: BlockTurboSpeed,
         BlockPureTone.ID: BlockPureTone,
@@ -603,82 +666,86 @@ class CDT:
         BlockArchiveInfo.ID: BlockArchiveInfo
     }
 
-    def __init__(self):
+    header: CDTHeader
+    blocks: list[Any]
+
+    def __init__(self) -> None:
         self.header = CDTHeader()
         self.blocks = []
 
-    def compose(self):
-        content = bytearray()
+    def compose(self) -> bytearray:
+        content: bytearray = bytearray()
         content.extend(self.header.compose())
         for block in self.blocks:
             content.extend(block.compose())
         return content
 
-    def add_block(self, content):
+    def add_block(self, content: Buffer) -> None:
         if len(content) > 0:
-            ID = content[0]
+            ID: int = content[0]
             content = content[1:]
             if ID in self.BLOCKS:
-                b = self.BLOCKS[ID]()
+                b: Any = self.BLOCKS[ID]()
                 content = b.set(content)
                 self.blocks.append(b)
                 self.add_block(content)
             else:
                 raise FormatError("unsupported block ID %s"%(hex(ID)))
 
-    def set(self, content):
+    def set(self, content: Buffer) -> None:
         content = self.header.set(content)
         self.blocks = []
         self.add_block(content)
 
-    def format(self):
+    def format(self) -> None:
         """ Empty CDT with just a puse block with its default time of 3 seconds. """
-        self.__init__()
-        start_block = BlockPause()
+        self.header = CDTHeader()
+        self.blocks = []
+        start_block: BlockPause = BlockPause()
         self.blocks = [start_block]
 
-    def write(self, outputfile):
-        content = self.compose()
+    def write(self, outputfile: str) -> None:
+        content: bytearray = self.compose()
         try:
             with open(outputfile, 'wb') as fd:
                 fd.write(content)
         except IOError:
             print("[cdt] error trying to create the file:", outputfile)
 
-    def read(self, inputfile):
-        content = bytearray()
-        chunksz = 512
+    def read(self, inputfile: str) -> bool:
+        content: bytearray = bytearray()
+        chunksz: int = 512
         try:
             with open(inputfile, 'rb') as fd:
-                fbytes = fd.read(chunksz)
+                fbytes: bytes = fd.read(chunksz)
                 while fbytes:
                     content.extend(fbytes)
                     fbytes = fd.read(chunksz)
             self.set(content)
-            return True      
+            return True
         except IOError:
             print("[cdt] could not read file:", inputfile)
         except FormatError as e:
             print("[cdt] error in input file:", e.message)
         return False
 
-    def _add_file(self, segments, header, speed):
+    def _add_file(self, segments: list[bytearray], header: DataHeader, speed: int) -> None:
         while len(segments) > 0:
             """ Header """
-            blocksegments = segments[0:8]
+            blocksegments: list[bytearray] = segments[0:8]
             header.block_sz = 0
             for s in blocksegments:
                 header.block_sz = header.block_sz + len(s)
             header.last_block = 0x00 if len(segments) > 8 else 0xFF
-            hblock = BlockTurboSpeed(speed, DEF_PAUSE_HEADER)
+            hblock: BlockTurboSpeed = BlockTurboSpeed(speed, DEF_PAUSE_HEADER)
             hblock.data = header.compose()
             self.blocks.append(hblock)
 
-            dblock = BlockTurboSpeed(speed, DEF_PAUSE_DATA)
-            data = bytearray(b'\x16')  # sync byte for data
+            dblock: BlockTurboSpeed = BlockTurboSpeed(speed, DEF_PAUSE_DATA)
+            data: bytearray = bytearray(b'\x16')  # sync byte for data
             """ data segments up to 8 (256 * 8 = 2K) """
             for s in blocksegments:
-                crc = AUX_GET_CRC(s)
+                crc: int = AUX_GET_CRC(s)
                 data.extend(s)
                 data.extend(crc.to_bytes(2, 'big'))  # !!! MSB first here
             data.extend(b'\xFF\xFF\xFF\xFF')  # trail
@@ -688,25 +755,25 @@ class CDT:
             header.block_id = header.block_id + 1
             header.first_block = 0x00
 
-        endpause = BlockPause(DEF_PAUSE_FILE)
+        endpause: BlockPause = BlockPause(DEF_PAUSE_FILE)
         self.blocks.append(endpause)
 
-    def _add_raw(self, segments, speed):
+    def _add_raw(self, segments: list[bytearray], speed: int) -> None:
         for segment in segments:
-            block = BlockTurboSpeed(speed, DEF_PAUSE_FILE)
-            data = bytearray(b'\x16')  # sync byte for data
-            crc = AUX_GET_CRC(segment)
+            block: BlockTurboSpeed = BlockTurboSpeed(speed, DEF_PAUSE_FILE)
+            data: bytearray = bytearray(b'\x16')  # sync byte for data
+            crc: int = AUX_GET_CRC(segment)
             data.extend(segment)
             data.extend(crc.to_bytes(2, 'big'))
             data.extend(b'\xFF\xFF\xFF\xFF')
             block.data = data
             self.blocks.append(block)
 
-    def add_file(self, incontent, header, speed):
+    def add_file(self, incontent: bytearray, header: DataHeader|None, speed: int) -> None:
         # calculate total number of data segments of 256 bytes
-        segments = []
+        segments: list[bytearray] = []
         while len(incontent) > 0:
-            s = incontent[0:256]
+            s: bytearray = bytearray(incontent[0:256])
              # Check padding, all segments must be of 256 bytes
             if len(s) < 256: s.extend(0x00 for i in range(len(s), 256))
             segments.append(s)
@@ -716,40 +783,40 @@ class CDT:
             self._add_file(segments, header, speed)
         else:
             self._add_raw(segments, speed)
-    
-    def check(self):
+
+    def check(self) -> None:
         self.header.check()
         for b in self.blocks: b.check()
 
-    def dump(self):
+    def dump(self) -> None:
         self.header.dump()
         print("")
         print(len(self.blocks), "BLOCKS:")
         for b in self.blocks: b.dump()
 
 
-def run_read_input_file(inputfile):
+def run_read_input_file(inputfile: str) -> bytearray:
     content = bytearray()
     chunksz = 65536 # 64K
     try:
         with open(inputfile, 'rb') as fd:
-            bytes = fd.read(chunksz)
-            while bytes:
-                content.extend(bytes)
-                bytes = fd.read(chunksz)
-        return content      
+            chunk: bytes = fd.read(chunksz)
+            while chunk:
+                content.extend(chunk)
+                chunk = fd.read(chunksz)
+        return content
     except IOError:
         print("[cdt] ERROR - trying to read file:", inputfile)
         sys.exit(1)
 
-def run_new(args, cdt):
+def run_new(args: argparse.Namespace, cdt: CDT) -> None:
     print("[cdt] creating", args.cdtfile)
     cdt.format()
     cdt.write(args.cdtfile)
     pass
 
-def run_check(args, cdt):
-    content = run_read_input_file(args.cdtfile)
+def run_check(args: argparse.Namespace, cdt: CDT) -> None:
+    content: bytearray = run_read_input_file(args.cdtfile)
     try:
         cdt.set(content)
         cdt.check()
@@ -757,35 +824,35 @@ def run_check(args, cdt):
         print("[cdt] ERROR - unsupported CDT format:", str(e))
         sys.exit(1)
 
-def run_cat(args, cdt):
+def run_cat(args: argparse.Namespace, cdt: CDT) -> None:
     run_check(args, cdt)
     cdt.dump()
 
-def run_read_mapfile(mapfile):
+def run_read_mapfile(mapfile: str) -> Any:
     print("[cdt] reading map file", mapfile)
     try:
         with open(mapfile, 'r') as fd:
-            content = str.join('', fd.readlines())
-            return eval(content)
+            content: str = str.join('', fd.readlines())
+            return eval(content)  # noqa: S307
     except IOError:
         print("[cdt] ERROR - trying to read file:", mapfile)
         sys.exit(1)
 
-def run_get_start(startaddr, mapfile):
+def run_get_start(startaddr: str, mapfile: dict[str, Any]) -> int:
     try:
-        addr = aux_int(startaddr)
+        addr: int = aux_int(startaddr)
         return addr
-    except:
+    except Exception:
         startaddr = startaddr.upper()
         if startaddr in mapfile:
-            return mapfile[startaddr][0]
+            return int(mapfile[startaddr][0])
         print("[cdt] ERROR - invalid start address value")
         sys.exit(1)
 
-def run_put_file(filein, args, cdt, header):
+def run_put_file(filein: str, args: argparse.Namespace, cdt: CDT, header: DataHeader|None) -> None:
     run_check(args, cdt)
-    content = run_read_input_file(filein)
-    if len(content) > 65536:
+    content: bytearray = run_read_input_file(filein)
+    if len(content) > 65535:
         print("[cdt] ERROR - max input file size is 64K")
         sys.exit(1)
     if header is not None:
@@ -794,10 +861,11 @@ def run_put_file(filein, args, cdt, header):
             # so let's check here and fix it if the input file only uses \n
             if b'\r\n' not in content:
                 content = content.replace(b'\n', b'\r\n')
-        mapfile = {}
+        mapfile: dict[str, Any] = {}
         header.filename = "UNNAMED"
         header.addr_start = 0x4000
         header.addr_load = 0x4000
+        header.length = len(content)
         if args.name is not None: header.filename = args.name[0:16]
         if args.map_file is not None: mapfile = run_read_mapfile(args.map_file)
         if args.start_addr is not None: header.addr_start = run_get_start(args.start_addr, mapfile)
@@ -805,13 +873,13 @@ def run_put_file(filein, args, cdt, header):
     cdt.add_file(content, header, 2000 if args.speed == 1 else 1000)
     cdt.write(args.cdtfile)
 
-def run_put_asciifile(args, cdt):
+def run_put_asciifile(args: argparse.Namespace, cdt: CDT) -> None:
     header = DataHeader()
     header.type = DataHeader.FT_ASCII
     print("[cdt] adding ASCII file", args.put_ascii)
     run_put_file(args.put_ascii, args, cdt, header)
 
-def run_put_binfile(args, cdt):
+def run_put_binfile(args: argparse.Namespace, cdt: CDT) -> None:
     header = DataHeader()
     if ".BAS" in args.put_bin.upper():
         header.type = DataHeader.FT_BAS
@@ -820,18 +888,18 @@ def run_put_binfile(args, cdt):
     print("[cdt] adding BIN file", args.put_bin)
     run_put_file(args.put_bin, args, cdt, header)
 
-def run_put_rawfile(args, cdt):
+def run_put_rawfile(args: argparse.Namespace, cdt: CDT) -> None:
     print("[cdt] adding raw file", args.put_raw)
     run_put_file(args.put_raw, args, cdt, None)
 
-def aux_int(param):
+def aux_int(param: str) -> int:
     """
     By default, int params are converted assuming base 10.
     To allow hex values we need to 'auto' detect the base.
     """
     return int(param, 0)
 
-def process_args():
+def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='cdt.py',
         description='Simple tool to create and manage Amstrad CDT files'
@@ -854,13 +922,21 @@ def process_args():
     parser.add_argument('--speed', type=int, default=1, help='Write speed: 0 = 1000 bauds, 1 (default) = 2000 bauds.')
     parser.add_argument('-v', '--version', action='version', version=f' CDT Tool Version {__version__}', help = "Shows program's version and exits")
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
     return args
 
-def main():
-    args = process_args()
-    cdt = CDT()
-    
+def invalid_arguments() -> NoReturn:
+    print("[dsk] ERROR - invalid arguments")
+    sys.exit(1)
+
+def main() -> None:
+    args: argparse.Namespace = process_args()
+    cdt: CDT = CDT()
+    if args.speed < 0 or args.speed  > 1: invalid_arguments()
+    if args.load_addr is not None:
+        loadaddr: int = int(args.load_addr)
+        if loadaddr < 0 or loadaddr > 65535: invalid_arguments()
+
     if args.new:    run_new(args, cdt)
     if args.check:  run_check(args, cdt)
     if args.cat:    run_cat(args, cdt)

@@ -31,22 +31,34 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
+from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.4'
+__version__='1.4.5'
 
 import sys
 import os
 import argparse
 import glob
 from PIL import Image
+from typing import Any
+
+#
+# CUSTOM TYPES
+#
+RGBColor = tuple[int, int, int]
+RGBImage = Image.Image
+
+#
+# CONSTANTS
+#
 
 # Array of CPC colours in the following format:
 # index     = firmware value (1-26) as it is used in INK basic instruction
 # 1st value = hardware byte value (used in assembly to set colors in the PAL chip)
 # (r, g, b) = tuple with RGB (0-255) values
 
-CPC_FW_COLORS = [
+CPC_FW_COLORS: list[tuple[int,RGBColor]] = [
 (0x14, (0, 0, 0)),          # Black
 (0x04, (0, 0, 128)),        # Blue
 (0x15, (0, 0, 255)),        # Bright Blue
@@ -77,7 +89,7 @@ CPC_FW_COLORS = [
 ]
 
 # Translates from HW color value to Firmware index
-CPC_HW_COLORS = {
+CPC_HW_COLORS: dict[int, int] = {
 0x14: 0, 
 0x04: 1,
 0x15: 2,
@@ -107,7 +119,7 @@ CPC_HW_COLORS = {
 0x0B: 26
 }
 
-CPC_RGB_COLORS = [
+CPC_RGB_COLORS: list[RGBColor] = [
 (0, 0, 0),          # Black
 (0, 0, 128),        # Blue
 (0, 0, 255),        # Bright Blue
@@ -137,16 +149,28 @@ CPC_RGB_COLORS = [
 (255, 255, 255),    # Bright White
 ]
 
+#
+# CODE
+#
+
 class ConversionError(Exception):
-    def __init__(self, message):
+    message: str
+
+    def __init__(self, message: str) -> None:
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
     
 
 class ImgConverter:
-    def __init__(self, mode=0, palette = [0x14 for i in range(0,16)]):
+    mode: int
+    palette: list[int]
+    img: bytearray
+    imgw: int
+    imgh: int
+    
+    def __init__(self, mode:int =0, palette: list[int] = [0x14 for i in range(0,16)]) -> None:
         self.mode = mode
         self.palette = palette
         self.img = bytearray()
@@ -154,11 +178,12 @@ class ImgConverter:
         self.imgh = 0
         self._check_palette(mode)
         
-    def _colors_per_mode(self, mode):
+    def _colors_per_mode(self, mode: int) -> int:
         if mode == 0: return 16
         return 4 if mode == 1 else 2
 
-    def _check_palette(self, mode):
+    def _check_palette(self, mode: int) -> None:
+        """ Raises an error exception if the palette is invalid """
         colors = self._colors_per_mode(mode)
         if colors < len(self.palette):
             raise ConversionError("palette has too many entries, max %d vs %d entries"%(colors, len(self.palette)))
@@ -166,25 +191,25 @@ class ImgConverter:
             if color not in CPC_HW_COLORS:
                 raise ConversionError("palette includes an unknown hardware color value: %s"%(hex(color)))
 
-    def _palette2colors(self):
-        colors = []
+    def _palette2colors(self) -> list[RGBColor]:
+        colors: list[RGBColor] = []
         for hwid in self.palette:
             fwid = CPC_HW_COLORS[hwid]
             colors.append(CPC_FW_COLORS[fwid][1])
         return colors
 
-    def _get_color_distance(self, col1, col2):
-        """ colors expected as (r, g, b) values"""
+    def _get_color_distance(self, col1: RGBColor, col2: RGBColor) -> int:
+        """ Calculates de "distance" between two RGB colors """
         return abs(col1[0] - col2[0]) + abs(col1[1] - col2[1]) + abs(col1[2] - col2[2])
     
-    def _findcolor(self, rgbpixel, cpccolors):
-        nearest = (999, -1)
+    def _findcolor(self, rgbpixel: RGBColor, cpccolors: list[RGBColor]) -> tuple[int,int]:
+        nearest: tuple[int,int] = (999, -1)
         for i in range(0, len(cpccolors)):
             diff = (self._get_color_distance(rgbpixel, cpccolors[i]), i)
             nearest = min(nearest, diff)
         return nearest
 
-    def _img2mode(self):
+    def _encode_img(self) -> bytearray:
         """
         self.img contains the array of palette indexes. One value per original image
         pixel. We have to calculate the byte in which each pixel is contained according
@@ -214,17 +239,17 @@ class ImgConverter:
                              (self.img[i] & 0x08) >> (3 - pos)
         return imgdata
 
-    def read_palette(self, palfile):
+    def read_palette(self, palfile: str) -> list[int]:
         """
         Reads a DICT/JSON file with a palette description (HW values or FW values)
-        and returns the palette list in HW values, converting from FW values if
+        and returns the palette list of HW values, converting from FW values if
         needed.
         """
-        palinfo = {}
-        palette = []
+        palinfo: Any = {}
+        palette: list[int] = []
         try:
             with open(palfile, "r") as fd:
-                content = fd.read()
+                content: str = fd.read()
                 palinfo = eval(content)
                 if 'type' not in palinfo:
                     raise ConversionError("'type' field is missing in palette file content")
@@ -238,7 +263,7 @@ class ImgConverter:
             raise ConversionError(f"couldn't process {palfile} file. " + str(e))
         return palette
 
-    def build_palette(self, rgbimg, mode):
+    def build_palette(self, rgbimg: RGBImage, mode: int) -> list[int]:
         """
         Assigns each pixel in the image to the nearest CPC color. When
         all pixels are assigned, the method retains the colors with more
@@ -249,7 +274,7 @@ class ImgConverter:
         cpccolors = [(0, i) for i in range(0, len(CPC_RGB_COLORS))]
         for y in range(0, h):
             for x in range(0, w):
-                pixel = rgbimg.getpixel((x, y))
+                pixel: RGBColor = rgbimg.getpixel((x, y)) # type: ignore [assignment]
                 _, colorindex = self._findcolor(pixel, CPC_RGB_COLORS)
                 pixels, fwvalue = cpccolors[colorindex]
                 cpccolors[colorindex] = (pixels + 1, fwvalue)
@@ -259,7 +284,7 @@ class ImgConverter:
         palette = list(map(lambda item: CPC_FW_COLORS[item[1]][0], cpccolors[0:colors]))
         return palette
 
-    def build_cpcimg(self, rgbimg, mode, palfile):
+    def build_cpcimg(self, rgbimg: RGBImage, mode: int, palfile: str) -> None:
         """
         Convert each RGB value to the nearest CPC HW color value included in the
         palette. If palfile == '' the method identifies the most used colors and
@@ -272,20 +297,20 @@ class ImgConverter:
             print(f"[img] using palette (HW values): {self.palette}")
         else:
             self.palette = self.build_palette(rgbimg, mode)
-        palettecolors = self._palette2colors()
+        palettecolors: list[RGBColor] = self._palette2colors()
         self.img = bytearray()
         self.imgw, self.imgh = rgbimg.size
         for y in range(0, self.imgh):
             for x in range(0, self.imgw):
-                pixel = rgbimg.getpixel((x, y))
+                pixel: RGBColor = rgbimg.getpixel((x, y)) # type: ignore [assignment]
                 _, colorindex = self._findcolor(pixel, palettecolors)
                 self.img.extend(colorindex.to_bytes(1, 'little'))
         if len(self.img) != (self.imgw * self.imgh):
             raise ConversionError("CPC image size doesn't match with source image")
 
-    def write_info(self, target, ext):
-        fwcols  = []
-        paletteinfo = []
+    def write_info(self, target: str, ext: str) -> None:
+        fwcols: list[int]  = []
+        paletteinfo: list[str] = []
         for hw in self.palette:
             fw = CPC_HW_COLORS[hw]
             fwcols.append(fw)
@@ -326,19 +351,19 @@ class ImgConverter:
         except IOError as e:
             raise ConversionError("%s.inf couldn't be create due to %s" % (target + ext, str(e)))
 
-    def write_bin(self, target, ext='.bin', cpcimg = None):
+    def write_bin(self, target: str, ext: str ='.bin', cpcimg = None) -> None:
         print("[img] generating BIN file...")
         try:
-            data = cpcimg if cpcimg != None else self._img2mode()
+            data = cpcimg if cpcimg != None else self._encode_img()
             with open(target + ext, 'wb') as fd:
                 fd.write(data)
         except IOError as e:
             raise ConversionError("%s couldn't be create due to %s" % (target + ext, str(e)))
         self.write_info(target, ext)
 
-    def write_c(self, target):
+    def write_c(self, target: str) -> None:
         print("[img] generating C file...")
-        data = self._img2mode()
+        data: bytearray = self._encode_img()
         target = target.replace('.', '_')
         targetu = target.upper()
         try:
@@ -375,9 +400,9 @@ class ImgConverter:
         except IOError as e:
             raise ConversionError("couldn't create C files due to %s" % str(e))
         
-    def write_asm(self, target):
+    def write_asm(self, target: str) -> None:
         print("[img] generating ASM file...")
-        data = self._img2mode()
+        data: bytearray = self._encode_img()
         target = target.replace('.', '_')
         targetl = target.lower()
         try:
@@ -394,7 +419,7 @@ class ImgConverter:
                     "; \tdb " + fwpalette + "\n\n",
                     "%s_img:\n" % targetl,
                 ])
-                datalines = []
+                datalines: list[str] = []
                 pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
                 row = min(16, int(self.imgw / pixbyte))
                 while len(data) > 0:
@@ -407,9 +432,9 @@ class ImgConverter:
             raise ConversionError("couldn't create asm file due to %s" % str(e))
         self.write_info(target, '.asm')
 
-    def write_bas(self, target):
+    def write_bas(self, target: str) -> None:
         print("[img] generating BAS file...")
-        data = self._img2mode()
+        data: bytearray = self._encode_img()
         target = target.replace('.', '')
         targetl = target.lower().replace('/','').replace('\\','')
         try:
@@ -426,7 +451,7 @@ class ImgConverter:
                     "' \tDATA " + fwpalette + "\n\n",
                     "LABEL " + targetl + "\n",
                 ])
-                datalines = []
+                datalines: list[str] = []
                 pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
                 row = min(16, int(self.imgw / pixbyte))
                 while len(data) > 0:
@@ -440,7 +465,7 @@ class ImgConverter:
             raise ConversionError("couldn't create bas file due to %s" % str(e))
         self.write_info(target, '.bas')
 
-    def write_scn(self, target):
+    def write_scn(self, target: str) -> None:
         """ 
         Images copied to the video memory need to be interlaced:
         25 first 25 cursor lines
@@ -453,7 +478,7 @@ class ImgConverter:
         if self.imgw != requiredw or self.imgh != 200:
             raise ConversionError("input image must be %dx200 for mode %d" % (requiredw, self.mode))
         
-        data = self._img2mode()
+        data: bytearray = self._encode_img()
         interlaced = bytearray()
         # The video memory is divided in 8 blocks of 25 lines (200 lines total, 80 bytes per line):
         #   first block has all cursors first line 
@@ -472,7 +497,7 @@ class ImgConverter:
             interlaced.extend(padding)
         self.write_bin(target, '.scn', interlaced)
 
-def run_read_inputimg(srcfile, format, mode):
+def run_read_inputimg(srcfile:str, format: str, mode: str) -> RGBImage:
     """
     We load the image. If the target format is SCN we check
     the resolution and resize the image if needed. Finally,
@@ -480,33 +505,33 @@ def run_read_inputimg(srcfile, format, mode):
     """
     try:
         print(f"[img] loading {srcfile} file...")
-        img = Image.open(srcfile)
+        imgfile = Image.open(srcfile)
         if format == 'scn':
             requiredw = 160 if mode == 0 else 320 if mode == 1 else 640
-            if img.width != requiredw or img.height != 200:
+            if imgfile.width != requiredw or imgfile.height != 200:
                 print(f"[img] resizing image to {requiredw}x200")
-                img = img.resize((requiredw, 200))
+                img: RGBImage = imgfile.resize((requiredw, 200))
         return img.convert('RGB')
     except Exception as e:
         print("[img] error trying to read the input image", srcfile)
         print(str(e))
         sys.exit(1)
 
-def run_convert(args):
+def run_convert(args: argparse.Namespace) -> None:
     """
     Windows and Linux behave differently when dealing with wildcards in 
     file names. Linux already gives you a list while Windows passes the
     argument unexpaded. As a result, we have to manage inimg param as a 
     list (Linux) and check if each item can be expanded with glob (Windows)
     """
-    images = []
+    images: list[str] = []
     for inputimg in args.inimg: 
         images = images + glob.glob(inputimg)
     for inimg in images:
         inputimg = run_read_inputimg(inimg, args.format, args.mode)
         converter = ImgConverter()
         converter.build_cpcimg(inputimg, args.mode, args.palette)
-        target = args.name if args.name != '' and len(images) == 1 else os.path.splitext(inimg)[0]
+        target: str = args.name if args.name != '' and len(images) == 1 else os.path.splitext(inimg)[0]
         if args.format == 'bin':
             converter.write_bin(target)
         elif args.format == 'c':
@@ -520,7 +545,7 @@ def run_convert(args):
         else:
             raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas.")
 
-def process_args():
+def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='img.py',
         description="""
@@ -542,8 +567,8 @@ def process_args():
     args = parser.parse_args()
     return args
 
-def main():
-    args = process_args()
+def main() -> None:
+    args: argparse.Namespace = process_args()
     try:
         run_convert(args)
     except ConversionError as e:

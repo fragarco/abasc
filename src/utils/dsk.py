@@ -9,7 +9,7 @@ Simple tool to manage Amstrad Data formated disks. Such format is defined as:
  * Sectors numbered 0xC1 to 0xC9.
  * 64 directory entries.
  * The useable capacity is 178k.
- 
+
 INFO about the DSK file format can be read here:
 http://www.benchmarko.de/cpcemu/cpcdoc/chapter/cpcdoc7_e.html#I_FILE_STRUCTURE
 https://www.cpcwiki.eu/index.php/Format:DSK_disk_image_file_format
@@ -28,57 +28,84 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-__author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.4'
+from __future__ import annotations
+
+__author__: str = 'Javier "Dwayne Hicks" Garcia'
+__version__: str = '1.4.5'
 
 import sys
 import os
 import argparse
 import math
+from typing import Any, NoReturn
 
+#
+# CUSTOM TYPES
+#
+Buffer = bytes|bytearray
+SectorRef = tuple[int, int]
+SectorDataRef = tuple[int, int, int]
+
+#
+# CONSTANTS
+#
 ADDR_EXE = 0
 ADDR_LOAD = 0
 
-AMSDOS_BAS_TYPE = 0
+AMSDOS_BAS_TYPE       = 0
 AMSDOS_PROTECTED_TYPE = 1
-AMSDOS_BIN_TYPE = 2
+AMSDOS_BIN_TYPE       = 2
 
-CPM_DELETED = 0xE5
-CPM_TEXT_EOF = 0x1A
-CPM_MIN_SECTOR = 0xC1       # only in data format
-CPM_MAX_SECTOR = 0xC9       # only in data format
-CPM_PAGE_BYTES = 128        # page of data is 128 bytes in CP/M
+CPM_DELETED         = 0xE5
+CPM_TEXT_EOF        = 0x1A
+CPM_MIN_SECTOR      = 0xC1  # only in data format
+CPM_MAX_SECTOR      = 0xC9  # only in data format
+CPM_PAGE_BYTES      = 128   # page of data is 128 bytes in CP/M
 CPM_CLUSTER_SECTORS = 2     # 2 sectors (1K) form a data block or 'cluster'
-CPM_CLUSTER_BYTES = 1024
-CPM_CLUSTER_PAGES = 8
+CPM_CLUSTER_BYTES   = 1024
+CPM_CLUSTER_PAGES   = 8
+CPM_CAPACITY        = 180*1024 - 2048 # 180K - 2K of directory entries
 
 # 9 sectors * 512 bytes/sector + header of 256 bytes
 DEF_TRACK_SZ = 256 + 512 * 9
-DEF_SIDES = 1
-DEF_TRACKS = 40
-DEF_SECTORS = 9
+DEF_SIDES    = 1
+DEF_TRACKS   = 40
+DEF_SECTORS  = 9
 
+#
+# ERROR HANDLING
+#
 class FormatError(Exception):
     """
     Raised when procesing a file and its format is not the expected one.
     """
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, message: str) -> None:
+        self.message: str = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
+
+
+#
+# DSK Standard Format implementation
+#
 
 class DiskHeader:
     """
     Encapsulates the header of a DSK file. It compromises the first 256 bytes.
     """
-    def __init__(self, tracks, sztrack, sides):
+    title: bytes
+    tracks: int
+    sztracks: int
+    sides: int
+
+    def __init__(self, tracks: int, sztrack: int, sides: int) -> None:
         self.title = b'MV - CPCEMU Disk-File\r\nDisk-Info\r\n'
         self.tracks = tracks
         self.sztrack = sztrack
         self.sides = sides
 
-    def compose(self):
+    def compose(self) -> bytearray:
         # Total size of 256 bytes
         header = bytearray()
         header.extend(self.title)
@@ -89,26 +116,26 @@ class DiskHeader:
         header.extend(0x00 for i in range(0, 204))
         return header
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         if len(content) < 256:
             raise FormatError("header size is less than 256 bytes")
-        self.title = content[0:48]
+        self.title = bytes(content[0:48])
         self.tracks = content[48]
         self.sides = content[49]
         self.sztrack = int.from_bytes(content[50:52], 'little')
         return content[256:]
     
-    def check(self, tracks, sztrack, sides):
+    def check(self, tracks: int, sztrack: int, sides: int) -> None:
         if b'MV - CPCEMU' not in self.title:
             raise FormatError("disk header title doesn't contain 'MV - CPCEMU' text")
         if self.sides != sides:
             raise FormatError("header number of sides (%d) differs from expected values (%d)"%(self.sides, sides))
-        if self.tracks < tracks:
+        if self.tracks != tracks:
             raise FormatError("header number of tracks (%d) differs from expected value (%d)"%(self.tracks, tracks))
         if self.sztrack != sztrack:
             raise FormatError("header track size (%d) differs from expected value (%d)"%(self.sztrack, sztrack))
 
-    def dump(self):
+    def dump(self) -> None:
         print("HEADER:")
         print(" title:", self.title)
         print(" tracks:", self.tracks)
@@ -120,16 +147,23 @@ class TrackSectorInfo:
     """
     Encapsulates de sector info section contained in track headers. 8 bytes of size.
     """
-    def __init__(self, sector, track, side, basetrack):
+    C: int
+    H: int
+    R: int
+    N: int
+    ST1: int
+    ST2: int
+    
+    def __init__(self, sector: int, track: int, side: int, basetrack: int) -> None:
         self.C = track
         self.H = side
         self.R = basetrack + sector
-        self.N = 2 # 0x02
+        self.N = 0x02
         # State registers
-        self.ST1 = 0 # 0x00
-        self.ST2 = 0 # 0x00
+        self.ST1 = 0x00
+        self.ST2 = 0x00
         
-    def compose(self):
+    def compose(self) -> bytearray:
         content = bytearray()
         content.extend(self.C.to_bytes(1, 'little'))
         content.extend(self.H.to_bytes(1, 'little'))
@@ -142,7 +176,7 @@ class TrackSectorInfo:
         content.extend(b'\x00\x00')
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         if len(content) < 8:
             raise FormatError("there is a sector info section of less than 8 bytes")
         self.C = content[0]
@@ -153,7 +187,7 @@ class TrackSectorInfo:
         self.ST2 = content[5]
         return content[8:]
 
-    def check(self, track):
+    def check(self, track: int) -> None:
         if self.C != track:
             raise FormatError("unexpected sector info track number (%d), %d was expected"%(self.C, track))
         if self.N != 2:
@@ -163,7 +197,7 @@ class TrackSectorInfo:
         if self.R < CPM_MIN_SECTOR or self.R > CPM_MAX_SECTOR:
             raise FormatError("sector R value (%s) differs from expected value C1-C9"%(hex(self.R)))
 
-    def dump(self):
+    def dump(self) -> None:
         print(hex(self.R), end = ' ')
 
 class TrackHeader:
@@ -172,23 +206,31 @@ class TrackHeader:
     of sectors is 9. Sector's data should follow the same orden than the items in
     the sectors info list contained here. Sectors are not necessarily consecutive. 
     Indeed in many cases they are interleaved, which is the order followed here
-    by default: C1, C6, C2, C7, C3, C8, C4, C8, C5 ...
+    by default: C1, C6, C2, C7, C3, C8, C4, C9, C5 ...
     All track header sizes are 256 bytes.
     """
-    def __init__(self, track, sectors, basetrack, side):
+
+    title: bytes
+    track: int
+    sectors: int
+    side: int
+    szsector: int # Sector size parameter (1=256, 2=512, 3=1024 ...)
+    gap3: int
+    filler: int
+    
+    def __init__(self, track: int, sectors: int, basetrack: int, side: int) -> None:
         self.title = b'Track-Info\r\n'
         self.track = track
         self.sectors = sectors
         self.side = side
-        # Sector size parameter (1=256, 2=512, 3=1024 ...)
-        self.szsector = 2 # 0x02
-        self.gap3 = 78    # 0x4E
+        self.szsector =  0x02
+        self.gap3   =  0x4E
         self.filler = CPM_DELETED  # 0xE5
         # interleaved sectors
         sec_first = 0
         sec_second = 5
         addedsectors = 0
-        self.sectors_info = []
+        self.sectors_info: list[TrackSectorInfo] = []
         while addedsectors < sectors:
             self.sectors_info.append(TrackSectorInfo(sec_first, track, side, basetrack))
             sec_first = sec_first + 1
@@ -198,7 +240,7 @@ class TrackHeader:
                 sec_second = sec_second + 1
                 addedsectors = addedsectors + 1
 
-    def compose(self):
+    def compose(self) -> bytearray:
         # 256 bytes in total, data always starts at 0x100
         # no matter number of sectors
         header = bytearray()
@@ -211,35 +253,36 @@ class TrackHeader:
         header.extend(self.sectors.to_bytes(1, 'little'))
         header.extend(self.gap3.to_bytes(1, 'little'))
         header.extend(self.filler.to_bytes(1, 'little'))
-        # sectors info: secuence is 0, 4, 1, 5, 2, 6, 3, 7, 8 ...
+        # sectors info: secuence is 0, 5, 1, 6, 2, 7, 3, 8, 4 ...
         for s in self.sectors_info:
             header.extend(s.compose())
         header.extend(0x00 for i in range(0, 256-len(header)))
         return header
 
-    def set(self, sectors, content):
+    def set(self, sectors: int, content: Buffer) -> Buffer:
         if len(content) < 256:
             raise FormatError("track header size is less than 256 bytes")
-        self.title = content[0:12]
+        self.title = bytes(content[0:12])
         self.track = content[16]
         self.side = content[17]
         self.szsector = content[20]
         self.sectors = content[21]
         if self.sectors != sectors:
             raise FormatError("expected number of sectors per track is 9, not %d"%(self.sectors))
-        # keep our GAP3 and Filler byte values
-        sectorinfo = content[24:]
+        self.gap3   = content[22]
+        self.filler = content[23]
+        sectorinfo: Buffer = content[24:]
         for i in range(0, DEF_SECTORS):
             sectorinfo = self.sectors_info[i].set(sectorinfo)
         return content[256:]
 
-    def check(self):
+    def check(self) -> None:
         if self.title != b'Track-Info\r\n':
             raise FormatError("unexpected track header title")
         if self.side != 0:
             raise FormatError("track side number should be 0, %d was found"%(self.side))
         if self.sectors != DEF_SECTORS:
-            raise FormatError("track number of sectors (%d) differes from expected value (%d)"%(self.sectors, DEF_SECTORS))
+            raise FormatError("track number of sectors (%d) differs from expected value (%d)"%(self.sectors, DEF_SECTORS))
         if self.szsector != 2:
             raise FormatError("track sector size code (%d) differs from expected value (2)"%(self.szsector))
         if self.gap3 != 78:
@@ -249,7 +292,7 @@ class TrackHeader:
         for i in range(0, DEF_SECTORS):
            self.sectors_info[i].check(self.track)
 
-    def dump(self):
+    def dump(self) -> None:
         print("TRACK %02d"%(self.track), end = ' ')
         print("side:", self.side, "sectors:", end=' ')
         for i in range(0, DEF_SECTORS):
@@ -260,31 +303,34 @@ class TrackData:
     """
     Encapsulates the track data area. Expected size is 512 bytes per sector.
     """
-    def __init__(self, sectors, filler):
+
+    data: bytearray
+
+    def __init__(self, sectors: int, filler: int) -> None:
         self.data = bytearray()
         for i in range(0, 512*sectors): self.data.extend(filler.to_bytes(1, 'little'))
-        self.sectors = sectors
+        self.sectors: int = sectors
 
-    def compose(self):
+    def compose(self) -> bytearray:
         return self.data
 
-    def set(self, sectors, content):
+    def set(self, sectors: int, content: Buffer) -> Buffer:
         self.sectors = sectors
-        datasz = 512 * sectors
+        datasz: int = 512 * sectors
         if len(content) < datasz:
-            raise FormatError("track size area is less than 512 bytes x %d sectors", sectors)
-        self.data = content[0:datasz]
+            raise FormatError("track size area is less than 512 bytes x %d sectors" % sectors)
+        self.data = bytearray(content[0:datasz])
         return content[datasz:]
     
-    def check(self):
-        datasz = 512 * DEF_SECTORS
+    def check(self) -> None:
+        datasz: int = 512 * DEF_SECTORS
         if len(self.data) != datasz:
-            raise FormatError("track data size (%d) differes from expected value (%d)"% (len(self.data), datasz))
+            raise FormatError("track data size (%d) differs from expected value (%d)"% (len(self.data), datasz))
 
-    def get_sector_data(self, sector, dbytes = 512):
-        return self.data[512*sector: 512*sector + dbytes]
+    def get_sector_data(self, sector: int, dbytes: int = 512) -> bytearray:
+        return bytearray(self.data[512*sector: 512*sector + dbytes])
     
-    def set_sector_data(self, sector, data):
+    def set_sector_data(self, sector: int, data: bytearray) -> None:
         # be sure data is 512 bytes
         if len(data) < 512:
             data.extend(0x00 for i in range(0, 512 - len(data)))
@@ -304,7 +350,15 @@ class Track:
     - Head is 256 bytes
     - Data zone is 512 * sectors bytes
     """
-    def __init__(self, track, sectors, basetrack, side = 0):
+
+    header: TrackHeader
+    data: TrackData
+    side: int
+    basetrack: int
+    sectors: int
+    track: int
+    
+    def __init__(self, track: int, sectors: int, basetrack: int, side: int = 0) -> None:
         self.header = TrackHeader(track, sectors, basetrack, side)
         self.data = TrackData(sectors, self.header.filler)
         self.side = side
@@ -312,13 +366,13 @@ class Track:
         self.sectors = sectors
         self.track = track
 
-    def compose(self):
+    def compose(self) -> bytearray:
         content = bytearray()
         content.extend(self.header.compose())
         content.extend(self.data.compose())
         return content
 
-    def set(self, sectors, content):
+    def set(self, sectors: int, content: Buffer) -> Buffer:
         self.sectors = sectors
         content = self.header.set(sectors, content)
         self.track = self.header.track
@@ -326,58 +380,66 @@ class Track:
         content = self.data.set(sectors, content)
         return content
     
-    def check(self):
+    def check(self) -> None:
         if self.side != 0:
             raise FormatError("track side number should be 0, %d was found"%(self.side))
         self.header.check()
         self.data.check()
 
-    def dump(self):
+    def dump(self) -> None:
         self.header.dump()
 
-    def get_sector_data(self, sectorid, dbytes = 512):
+    def get_sector_data(self, sectorid: int, dbytes: int = 512) -> bytearray|None:
         for i in range(0, len(self.header.sectors_info)):
             if self.header.sectors_info[i].R == sectorid:
                 return self.data.get_sector_data(i, dbytes)
+        return None
 
-    def set_sector_data(self, sectorid, content):
+    def set_sector_data(self, sectorid: int, content: bytearray) -> None:
         for i in range(0, len(self.header.sectors_info)):
             if self.header.sectors_info[i].R == sectorid:
                 self.data.set_sector_data(i, content)
 
-class Disk:
+class StandardDisk:
 
-    def __init__(self, tracks = DEF_TRACKS, sectors = DEF_SECTORS, sztrack = DEF_TRACK_SZ , sides = DEF_SIDES):
-        self.ntracks = tracks
-        self.nsectors = sectors
-        self.nsides = sides
-        self.sztrack = sztrack
-        self.header = DiskHeader(self.ntracks, self.sztrack, self.nsides)
-        self.tracks = [Track(i, self.nsectors, CPM_MIN_SECTOR) for i in range(0, self.ntracks)]
+    ntracks:  int
+    nsectors: int
+    nsides:   int
+    sztrack:  int
+    header: DiskHeader
+    tracks: list[Track]
 
-    def compose(self):
+    def __init__(self) -> None:
+        self.format()
+
+    def compose(self) -> bytearray:
         disk = bytearray()
         disk.extend(self.header.compose())
         for t in self.tracks:
             disk.extend(t.compose())
         return disk
 
-    def set(self, content):
+    def set(self, content: Buffer) -> None:
         content = self.header.set(content)
         self.ntracks = self.header.tracks
         self.nsides = self.header.sides
         self.sztrack = self.header.sztrack
         # default number of sectors
-        if self.ntracks < len(self.tracks):
+        if self.ntracks != len(self.tracks):
             raise FormatError("unexpected number of tracks (%d vs %d)"%(self.ntracks, len(self.tracks)))
         self.nsectors = 9
         for t in self.tracks:
             content = t.set(self.nsectors, content)
 
-    def format(self):
-        self.__init__()
+    def format(self) -> None:
+        self.ntracks  = DEF_TRACKS
+        self.nsectors = DEF_SECTORS
+        self.nsides   = DEF_SIDES
+        self.sztrack  = DEF_TRACK_SZ
+        self.header   = DiskHeader(self.ntracks, self.sztrack, self.nsides)
+        self.tracks   = [Track(i, self.nsectors, CPM_MIN_SECTOR) for i in range(0, self.ntracks)]
 
-    def write(self, outputfile):
+    def write(self, outputfile: str) -> None:
         content = self.compose()
         try:
             with open(outputfile, 'wb') as fd:
@@ -385,9 +447,9 @@ class Disk:
         except IOError:
             print("[dsk] ERROR - could not write file:", outputfile)
 
-    def read(self, inputfile):
+    def read(self, inputfile: str) -> bool:
         content = bytearray()
-        chunksz = 512
+        chunksz: int = 512
         try:
             with open(inputfile, 'rb') as fd:
                 fbytes = fd.read(chunksz)
@@ -402,42 +464,44 @@ class Disk:
             print("[dsk] ERROR - input file format:", e.message)
         return False
 
-    def check(self):
+    def check(self) -> None:
         if self.ntracks < len(self.tracks):
             raise FormatError("number of tracks (%d) differs from expected values (%d)"%(self.ntracks, len(self.tracks)))
         self.header.check(DEF_TRACKS, DEF_TRACK_SZ, DEF_SIDES)
         for t in self.tracks:
             t.check()
 
-    def dump(self):
+    def dump(self) -> None:
         self.header.dump()
         for t in self.tracks:
             t.dump()
 
-    def get_dirtable(self):
-        dir = DirTable()
+    def get_dirtable(self) -> DirTable:
+        dir  = DirTable()
         base = CPM_MIN_SECTOR
         content = bytearray()
         for i in range(0, 4):
-            content.extend(self.tracks[0].get_sector_data(base + i))
+            sector_data: bytearray|None = self.tracks[0].get_sector_data(base + i)
+            assert sector_data is not None
+            content.extend(sector_data)
         dir.set(content)
         return dir
 
-    def set_dirtable(self, dirtable):
-        content = dirtable.compose()
+    def set_dirtable(self, dirtable: DirTable) -> None:
+        content: Buffer = dirtable.compose()
         for i in range(0, 4):
-            data = content[0:512]
+            data = bytearray(content[0:512])
             self.tracks[0].set_sector_data(CPM_MIN_SECTOR + i, data)
             content = content[512:]
 
-    def get_content(self, track, sector, dbytes):
+    def get_content(self, track: int, sector: int, dbytes: int) -> bytearray|None:
         """ Returns dbytes of data from the specified track and sector """
-        sectorid = CPM_MIN_SECTOR + sector
+        sectorid: int = CPM_MIN_SECTOR + sector
         return self.tracks[track].get_sector_data(sectorid, dbytes)
 
-    def add_content(self, sectors, content):
+    def add_content(self, sectors: list[SectorRef], content: bytearray) -> None:
         for (t, s) in sectors:
-            data = content[0:512]
+            data: bytearray = bytearray(content[0:512])
             # padding
             data.extend(0x00 for i in range(len(data), 512))
             self.tracks[t].set_sector_data(CPM_MIN_SECTOR + s, data)
@@ -449,16 +513,25 @@ class DirEntry:
     pointing to 'blocks' of data (2 consecutive sectors so 1K). As a result, each entry
     can addres up to 16k of data. Pages indicate the number of clusters in use.  
     """
-    def __init__(self, num):
+
+    entry: int
+    status: int
+    name: bytearray
+    ext: bytearray
+    extend: int
+    pages: int
+    clusters: bytearray
+    
+    def __init__(self, num: int) -> None:
         self.entry = num
         self.status = CPM_DELETED   # usually user ID (0-15) or deleted 0xE5
         self.name = bytearray([CPM_DELETED for i in range(0,8)]) # spaces
-        self.ext = bytearray([CPM_DELETED for i in range(0,3)]) # spaces
+        self.ext = bytearray([CPM_DELETED for i in range(0,3)])  # spaces
         self.extend = CPM_DELETED   # 0-31 (large files can spread through several entries)
         self.pages = CPM_DELETED
         self.clusters = bytearray([CPM_DELETED for i in range(0,16)])
 
-    def compose(self):
+    def compose(self) -> bytearray:
         entry = bytearray()
         if self.status == CPM_DELETED:
             entry.extend(CPM_DELETED for i in range(0, 32))
@@ -472,58 +545,58 @@ class DirEntry:
             entry.extend(self.clusters)
         return entry
 
-    def to_sectors(self, iblock, npages = 0):
+    def to_sectors(self, iblock: int, npages: int = 0) -> list[SectorDataRef]:
         """
         Returns the list of (track, sector, bytes) pointed by data iblock and containing npages of data (0-8).
         If npages == 0 then all pages assigned to the specified block are used
         """
-        sectors = []
-        offset = 0
+        sectors: list[SectorDataRef] = []
+        offset: int = 0
         if npages == 0:
             npages = self.pages
             for i in range(0, iblock): npages = npages - CPM_CLUSTER_PAGES
             npages = min(CPM_CLUSTER_PAGES, npages)
         while npages > 0:
-            sector = (self.clusters[iblock] * 2 + offset)
-            track = int(sector / DEF_SECTORS)
+            sector: int = (self.clusters[iblock] * 2 + offset)
+            track: int = int(sector / DEF_SECTORS)
             sector = sector % DEF_SECTORS
-            dbytes = 512 if npages > 3 else npages * CPM_PAGE_BYTES
+            dbytes: int = 512 if npages > 3 else npages * CPM_PAGE_BYTES
             sectors.append((track, sector, dbytes))
             npages = npages - 4
             offset = 1
         return sectors
     
-    def get_clusters(self):
+    def get_clusters(self) -> int:
         """ Returns number of valid used clusters (1-16) according to current number of data pages """
         return math.ceil(self.pages / CPM_CLUSTER_PAGES)
 
-    def get_filename(self):
-        filename = str.strip(self.name.decode('utf-8')) + '.'
+    def get_filename(self) -> str:
+        filename: str = str.strip(self.name.decode('utf-8')) + '.'
         return filename + str.strip(self.ext.decode('utf-8'))
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         self.status = content[0]
-        self.name = content[1:9]
-        self.ext = content[9:12]
+        self.name = bytearray(content[1:9])
+        self.ext = bytearray(content[9:12])
         self.extend = content[12]
         # 13 and 14 are unused
         self.pages = content[15]
-        self.clusters = content[16:32]
+        self.clusters = bytearray(content[16:32])
         return content[32:]
 
-    def dump(self):
+    def dump(self) -> None:
         print("%02d" % self.entry, end = ': ')
         if self.status == CPM_DELETED:
             print("DELETED/NOT USED")
         else:
-            ext = self.ext
-            flagro  = ext[0] & 0x80   # Read-only and System flags
-            flagsys = ext[1] & 0x80   # are codified in the extension
+            ext = bytearray(self.ext)
+            flagro: int  = ext[0] & 0x80   # Read-only and System flags
+            flagsys: int = ext[1] & 0x80   # are codified in the extension
             ext[0] = ext[0] & 0x7F    # most-significative bit for chars
             ext[1] = ext[1] & 0x7F    # 0 and 1
-            flags = 100 if flagro else 0
+            flags: int = 100 if flagro else 0
             if flagsys: flags += 10
-            print(self.name.decode('utf-8') + '.' + self.ext.decode('utf-8'), end = '  [ ')
+            print(self.name.decode('utf-8') + '.' + ext.decode('utf-8'), end = '  [ ')
             print(f"user: {self.status} extend: {self.extend} flags: {flags:03} pages: {self.pages:03}]")
 
 class DirTable:
@@ -532,86 +605,105 @@ class DirTable:
     32 bytes each, 2K total. In data formated disk, the table is located in track 0,
     sectors C1-C4 (16 entries in each sector)
     """
-    def __init__(self):
+
+    entries: list[DirEntry]
+
+    def __init__(self) -> None:
         self.entries = [DirEntry(i) for i in range(0, 64)]
 
-    def compose(self):
+    def compose(self) -> bytearray:
         content = bytearray()
         for i in range(0, 64):
             content.extend(self.entries[i].compose())
         return content
 
-    def set(self, content):
+    def set(self, content: Buffer) -> None:
         for i in range(0, 64):
             content = self.entries[i].set(content)
 
-    def dump(self):
+    def dump(self) -> None:
         for e in self.entries:
             if e.status != CPM_DELETED:
                 e.dump()
+        print(f"Consumed space: {self.get_storedbytes()}/{CPM_CAPACITY}")
 
-    def can_allocate(self, filebytes):
+    def get_storedbytes(self) -> int:
+        storedpages: int = 0
+        for entry in self.entries:
+            if entry.status != CPM_DELETED:
+                storedpages += entry.pages
+        return storedpages * CPM_PAGE_BYTES
+        
+    def can_allocate(self, filebytes: int) -> int:
         """ 
-        Checks if there are enough consecutive free dir entries to acoomodate a file of the given size.
+        Checks if there are enough consecutive free dir entries to accommodate a file of the given size.
         It returns the first entry to allocate the file or -1 if there are not enough free entries.
         """
-        numentries = math.ceil(filebytes / (16 * 1024)) # each entry points to 16K of data
-        freeentries = 0
-        startentry = 0
+        # First, let's check size
+        storedbytes: int = self.get_storedbytes()
+        if storedbytes + filebytes >= CPM_CAPACITY:
+            return -1
+        reqentries: int = math.ceil(filebytes / (16 * 1024)) # each entry points to 16K of data
+        freeentries: int = 0
+        startentry: int = 0
         for i in range(0, len(self.entries)):
-            entry = self.entries[i]
+            entry: DirEntry = self.entries[i]
             if entry.status == CPM_DELETED:
                 freeentries = freeentries + 1
-                if freeentries >= numentries:
+                if freeentries >= reqentries:
                     break
             else:
                 freeentries = 0
                 startentry = i + 1
-        if freeentries < numentries: startentry = -1
+        if freeentries < reqentries: startentry = -1
         return startentry
  
-    def to_file_sectors(self, ientry):
+    def to_file_sectors(self, ientry: int) -> tuple[list[SectorDataRef], int]:
         """ Returns a list of (track, sector, bytes) for the file pointed by the directory entry """
-        entry = self.entries[ientry]
-        clusters = entry.get_clusters()
-        sectors = []
-        totpages = entry.pages
+        entry: DirEntry = self.entries[ientry]
+        clusters: int = entry.get_clusters()
+        sectors: list[SectorDataRef] = []
+        totpages: int = entry.pages
         for b in range(0, clusters):
             sectors = sectors + entry.to_sectors(b)
         if clusters == 16 and ientry < len(self.entries) - 2:
-            next_entry = self.entries[ientry + 1]
+            next_entry: DirEntry = self.entries[ientry + 1]
             if next_entry.status != CPM_DELETED and next_entry.extend > 0:
                 # This file is assigned to several directory entries
                 # it happens with files bigger than 16k
-                totpages = totpages + next_entry.pages
-                sectors = sectors + self.to_file_sectors(ientry + 1)
+                subsectors: list[SectorDataRef]
+                subpages: int
+                subsectors, subpages = self.to_file_sectors(ientry + 1)
+                sectors += subsectors
+                totpages += subpages
         return sectors, totpages
 
-    def write_entries(self, ientry, filename, fbytes, userid, flagro, flagsys):
+    def write_entries(self, ientry: int, filename: str, fbytes: int, userid: int, flagro: bool, flagsys: bool) -> list[SectorRef]:
         """
         Returns the list of (track, sector) consumed by the file.
         This assumes that ientry was obtained with a call to can_allocate and
         no other write operations where performed since
         """
+        disk_clusters: list[bool]
         disk_clusters, _ = self.get_disk_clusters()
-        file_sectors = []
-        filepages = math.ceil(fbytes/CPM_PAGE_BYTES)
-        filecomp = os.path.basename(filename).split('.')
-        fext = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
+        file_sectors: list[SectorRef] = []
+        filepages: int = math.ceil(fbytes/CPM_PAGE_BYTES)
+        filecomp: list[str] = os.path.basename(filename).split('.')
+        fext: bytearray = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
         if flagro:  fext[0] |= 0x80
         if flagsys: fext[1] |= 0x80
-        fname = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
+        fname: bytearray = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
         fext.extend(0x20 for i in range(3 - len(fext)))
         fname.extend(0x20 for i in range(8 - len(fname)))
-        extend = 0
+        extend: int = 0
         while filepages > 0:
-            e = self.entries[ientry]
+            e: DirEntry = self.entries[ientry]
             e.status = userid
-            e.name = fname
-            e.ext = fext
+            e.name = bytearray(fname)
+            e.ext = bytearray(fext)
             e.pages = min(128, filepages)
-            eclusters = math.ceil(e.pages/CPM_CLUSTER_PAGES)
-            cluster = 0
+            eclusters: int = math.ceil(e.pages/CPM_CLUSTER_PAGES)
+            cluster: int = 0
             for ec in range(0, 16):
                 if ec < eclusters:
                     # find next free cluster
@@ -633,21 +725,21 @@ class DirTable:
         return file_sectors
 
 
-    def get_disk_clusters(self):
+    def get_disk_clusters(self) -> tuple[list[bool], int]:
         """
         Returns a list of all avaliable clusters indicating if they are
         free (True) or used (False) and the total remaining free space in KB
         """
         # 180 clusters of 1K (each one 2 sectors of 512 bytes)
-        nclusters = int((DEF_SECTORS * DEF_TRACKS * 512) / 1024) 
-        clusters = [True for i in range(0, nclusters)]
-        freekb = nclusters  # 180 KB
+        nclusters: int = int((DEF_SECTORS * DEF_TRACKS * 512) / 1024) 
+        clusters: list[bool] = [True for i in range(0, nclusters)]
+        freekb: int = nclusters  # 180 KB
         # dir table space
         clusters[0] = clusters[1] = False
         freekb = freekb - 2
         for e in self.entries:
             if e.status != CPM_DELETED:
-                valid_blocks = math.ceil(e.pages / CPM_CLUSTER_PAGES) 
+                valid_blocks: int = math.ceil(e.pages / CPM_CLUSTER_PAGES) 
                 for i in range(0, valid_blocks):
                     clusters[e.clusters[i]] = False
                     freekb = freekb - 1
@@ -659,42 +751,61 @@ class AmsdosHead:
     Headerless files are often files which were created with OPENOUT and SAVE"filename",a.
     One example is ASCII files. Programs normally have a file header, which consist of 128 bytes.
     """
-    def __init__(self):
-        self.user = 0           # user number (0-15), 0xE5 for deleted entries
-        self.file_name = bytearray(0x20 for i in range(0,8)) # unused chars filled with spaces
-        self.file_ext = bytearray(0x20 for i in range(0,3))  # unused chars filled with spaces
+
+    user: int            # user number (0-15), 0xE5 for deleted entries
+    file_name: bytearray # unused chars filled with spaces
+    file_ext:  bytearray # unused chars filled with spaces
+    file_type: int
+    file_size: int
+    block_num: int        # TAPE only
+    block_last: int       # TAPE only
+    block_first: int      # Only used for output files. Set by default to FF
+    addr_data: int        # Data area (2KB buffer) location
+    addr_load: int        # Memory address where file must be loaded
+    addr_entry: int       # Entry point
+    real_size: int        # copy of file_size, 3 bytes. Not really used
+    custom: bytearray     # unused but affects checksum
+    checksum: int         # 2 bytes. Sum of first 67 bytes
+    
+    def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self.user = 0
+        self.file_name = bytearray(0x20 for i in range(0,8))
+        self.file_ext = bytearray(0x20 for i in range(0,3))
         self.file_type = AMSDOS_BIN_TYPE
         self.file_size = 0
-        self.block_num = 0      # TAPE only
-        self.block_last = 0     # TAPE only
-        self.block_fist = 0xFF  # Only used for output files. Set by default to FF
-        self.addr_data = 0      # Data area (2KB buffer) location
-        self.addr_load = 0      # Memory address where file must be loaded
-        self.addr_entry = 0     # Entry point
-        self.real_size = 0      # copy of file_size, 3 bytes. Not really used
-        self.custom = bytearray(0x00 for i in range(0,36)) # unused but affects checksum
-        self.checksum = 0       # 2 bytes. Sum of first 66 bytes
+        self.block_num = 0
+        self.block_last = 0
+        self.block_first = 0xFF
+        self.addr_data = 0
+        self.addr_load = 0
+        self.addr_entry = 0
+        self.real_size  = 0
+        self.custom = bytearray(0x00 for i in range(0,36))
+        self.checksum = 0
 
-    def set(self, content):
+    def set(self, content: Buffer) -> Buffer:
         if len(content) < 128:
             raise FormatError("AMSDOS header size should be 128 bytes")
         self.user = content[0]
-        self.file_name = content[1:9]
-        self.file_ext = content[9:12]
+        self.file_name = bytearray(content[1:9])
+        self.file_ext = bytearray(content[9:12])
         self.block_num = content[16]
         self.block_last = content[17]
         self.file_type = content[18]
         self.addr_data = int.from_bytes(content[19:21], 'little')
         self.addr_load = int.from_bytes(content[21:23], 'little')
-        self.block_fist = content[23]
+        self.block_first = content[23]
         self.file_size = int.from_bytes(content[24:26], 'little')
         self.addr_entry = int.from_bytes(content[26:28], 'little')
-        self.custom = content[28:64]
+        self.custom = bytearray(content[28:64])
         self.real_size = int.from_bytes(content[64:67], 'little')
         self.checksum = int.from_bytes(content[67:69], 'little')
         return content[128:]
 
-    def compose(self):
+    def compose(self) -> bytearray:
         header = bytearray()
         header.extend(self.user.to_bytes(1, 'little'))
         header.extend(self.file_name)
@@ -705,7 +816,7 @@ class AmsdosHead:
         header.extend(self.file_type.to_bytes(1, 'little'))
         header.extend(self.addr_data.to_bytes(2, 'little'))
         header.extend(self.addr_load.to_bytes(2, 'little'))
-        header.extend(self.block_fist.to_bytes(1, 'little'))
+        header.extend(self.block_first.to_bytes(1, 'little'))
         header.extend(self.file_size.to_bytes(2, 'little'))
         header.extend(self.addr_entry.to_bytes(2, 'little'))
         header.extend(self.custom) # unused area but affects checksum
@@ -715,32 +826,32 @@ class AmsdosHead:
         header.extend(0x00 for i in range(0, 128-len(header)))
         return header
 
-    def calculate_checksum(self):
-        header = self.compose()
-        checksum = 0
+    def calculate_checksum(self) -> int:
+        header: bytearray = self.compose()
+        checksum: int = 0
         # AMSDOS checksum uses 67 bytes
         for i in range(0, 67): checksum = checksum + header[i]
         return checksum
 
-    def update_checksum(self):
+    def update_checksum(self) -> None:
         self.checksum = self.calculate_checksum()
 
-    def is_valid_header(self):
+    def is_valid_header(self) -> bool:
         # We need to double check that not all bytes are 0x00 or we will
         # believe that an empty area is a valid header
-        data = self.compose()
-        accum = 0x00
+        data: bytearray = self.compose()
+        accum: int = 0x00
         for b in data: accum = accum | b
         if accum == 0:
             return False
-        checksum = self.calculate_checksum()
+        checksum: int = self.calculate_checksum()
         return checksum == self.checksum
     
-    def build(self, user, file, filesz):
-        filecomp = os.path.basename(file).split('.')
-        fext = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
-        fname = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
-        self.__init__()
+    def build(self, user: int, file: str, filesz: int) -> None:
+        filecomp: list[str] = os.path.basename(file).split('.')
+        fext: bytearray = bytearray(b'\x20\x20\x20') if len(filecomp) == 1 else bytearray(filecomp[1][0:3].upper().encode('utf-8'))
+        fname: bytearray = bytearray(filecomp[0][0:8].upper().encode('utf-8'))
+        self.reset()
         fext.extend(0x20 for i in range(3 - len(fext)))
         fname.extend(0x20 for i in range(8 - len(fname)))
         self.user = user
@@ -751,18 +862,18 @@ class AmsdosHead:
         self.real_size = filesz
         self.update_checksum()
 
-    def dump(self):
+    def dump(self) -> None:
         print("[dsk] AMSDOS header:")
         print(f"  File: {self.file_name.decode('utf-8') + '.' + self.file_ext.decode('utf-8')}")
         print(f"  File type: {self.file_type} File size: {self.file_size} User ID: {self.user}")
         print(f"  Load address: {hex(self.addr_load)} Exec address: {hex(self.addr_entry)}")
         print(f"  Data address: {hex(self.addr_data)} Checksum: {self.checksum}")
 
-def run_new(args, disk):
+def run_new(args: argparse.Namespace, disk: StandardDisk) -> None:
     print("[dsk] creating", args.dskfile)
     disk.write(args.dskfile)
 
-def run_check(args,disk):
+def run_check(args: argparse.Namespace, disk: StandardDisk) -> None:
     if not disk.read(args.dskfile):
             sys.exit(1)
     try:
@@ -771,20 +882,20 @@ def run_check(args,disk):
         print("[dsk] ERROR - unsupported DSK format:", e.message)
         sys.exit(1)
 
-def run_dump(args, disk):
+def run_dump(args: argparse.Namespace, disk: StandardDisk) -> None:
     run_check(args, disk)
     print("[dsk] dumping information for file", args.dskfile)
     disk.dump()
 
-def run_cat(args, disk):
+def run_cat(args: argparse.Namespace, disk: StandardDisk) -> None:
     run_check(args, disk)
     print("[dsk] listing", args.dskfile, "content:")
-    dirtable = disk.get_dirtable()
+    dirtable: DirTable = disk.get_dirtable()
     dirtable.dump()
 
-def run_check_direntry(disk, ientry):
-    dirtable = disk.get_dirtable()
-    entry = dirtable.entries[ientry]
+def run_check_direntry(disk: StandardDisk, ientry: int) -> tuple[DirTable, DirEntry]:
+    dirtable: DirTable = disk.get_dirtable()
+    entry: DirEntry = dirtable.entries[ientry]
     if entry.status == CPM_DELETED:
         print("[dsk] ERROR - specified directory entry does not contain a file")
         sys.exit(1)
@@ -793,12 +904,13 @@ def run_check_direntry(disk, ientry):
         sys.exit(1)
     return dirtable, entry
 
-def run_dump_header(args, disk):
+def run_dump_header(args: argparse.Namespace, disk: StandardDisk) -> None:
     run_check(args, disk)
     _ ,entry = run_check_direntry(disk, args.header)
     # header is 128 byes so we get the first page of the first data block
     [(t, s, b)] = entry.to_sectors(0, 1)
-    content = disk.get_content(t, s, b)
+    content: bytearray|None = disk.get_content(t, s, b)
+    assert content is not None
     header = AmsdosHead()
     header.set(content)
     print("[dsk] header located at track:", t, "sector:", s)
@@ -808,15 +920,21 @@ def run_dump_header(args, disk):
         sys.exit(1)
     header.dump()
 
-def run_get_file(args, disk):
+def run_get_file(args: argparse.Namespace, disk: StandardDisk) -> None:
     run_check(args, disk)
+    dirtable: DirTable
+    entry: DirEntry
     dirtable, entry = run_check_direntry(disk, args.get)
-    filename = entry.get_filename()
+    filename: str = entry.get_filename()
+    sectors: list[SectorDataRef]
+    npages: int
     sectors, npages = dirtable.to_file_sectors(args.get)
-    realsz = npages * CPM_PAGE_BYTES
+    realsz: int = npages * CPM_PAGE_BYTES
     data = bytearray()
     for (t, s, b) in sectors:
-        data.extend(disk.get_content(t, s, b))
+        chunk: bytearray|None = disk.get_content(t, s, b)
+        assert chunk is not None
+        data.extend(chunk)
     head = AmsdosHead()
     head.set(data[0:128])
     if head.is_valid_header():
@@ -833,17 +951,17 @@ def run_get_file(args, disk):
         print("[dsk] ERROR - trying to write file:", filename)
     print("[dsk] file", filename, "was extracted:", npages, "pages of data,",len(data), "bytes written")
 
-def run_read_input_file(inputfile):
+def run_read_input_file(inputfile: str) -> bytearray:
     content = bytearray()
-    chunksz = 128 * 1024    # 128K is the max disk size
-    filemaxsz = 64 * 1024   # max file size is 64K
+    chunksz: int = 128 * 1024    # 128K is the max disk size
+    filemaxsz: int = 64 * 1024   # max file size is 64K
     try:
         with open(inputfile, 'rb') as fd:
-            bytes = fd.read(chunksz)
-            while bytes:
-                content.extend(bytes)
-                bytes = fd.read(chunksz)
-        if len(content) > filemaxsz:
+            filebytes: bytes = fd.read(chunksz)
+            while filebytes:
+                content.extend(filebytes)
+                filebytes = fd.read(chunksz)
+        if len(content) >= filemaxsz:
             print("[dsk] ERROR - files cannot be bigger than 64K")
             sys.exit(1)
         return content      
@@ -851,40 +969,40 @@ def run_read_input_file(inputfile):
         print("[dsk] ERROR - reading file:", inputfile)
         sys.exit(1)
 
-def run_read_mapfile(mapfile):
+def run_read_mapfile(mapfile: str) -> Any:
     print("[dsk] reading map file", mapfile)
     try:
         with open(mapfile, 'r') as fd:
-            content = str.join('', fd.readlines())
+            content: str = str.join('', fd.readlines())
             return eval(content)
     except IOError:
         print("[dsk] ERROR - reading file:", mapfile)
         sys.exit(1)
 
-def run_get_start(startaddr, mapfile):
+def run_get_start(startaddr: str, mapfile: dict[str, Any]) -> int:
     try:
-        addr = aux_int(startaddr)
+        addr: int = aux_int(startaddr)
         return addr
-    except:
+    except Exception:
         startaddr = startaddr.upper()
         if startaddr in mapfile:
             return mapfile[startaddr][0]
         print(f"[dsk] ERROR - invalid start address value: {startaddr}")
         sys.exit(1)
 
-def run_put_file(infile, dskfile, disk, content, userid, flagro, flagsys):
-    dirtable = disk.get_dirtable()
-    ientry = dirtable.can_allocate(len(content))
+def run_put_file(infile: str, dskfile: str, disk: StandardDisk, content: bytearray, userid: int, flagro: bool, flagsys: bool) -> None:
+    dirtable: DirTable = disk.get_dirtable()
+    ientry: int = dirtable.can_allocate(len(content))
     if ientry == -1:
         print("[dsk] ERROR - not enough space")
         sys.exit(1)
-    sectors = dirtable.write_entries(ientry, infile, len(content), userid, flagro, flagsys)
+    sectors: list[SectorRef] = dirtable.write_entries(ientry, infile, len(content), userid, flagro, flagsys)
     disk.set_dirtable(dirtable)
     disk.add_content(sectors, content)
     disk.write(dskfile)
 
-def run_put_asciifile(args, disk):
-    content = run_read_input_file(args.put_ascii)
+def run_put_asciifile(args: argparse.Namespace, disk: StandardDisk) -> None:
+    content: bytearray = run_read_input_file(args.put_ascii)
     print(f"[dsk] adding ASCII file {args.put_ascii} to USER {args.user}")
     run_check(args, disk)
     # ASCII files always go without AMSDOS header. Additionaly, CPM 2.2 uses a 
@@ -898,8 +1016,8 @@ def run_put_asciifile(args, disk):
         content = content.replace(b'\n', b'\r\n')
     run_put_file(args.put_ascii, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
-def run_put_binfile(args, disk, infile):
-    content = run_read_input_file(infile)
+def run_put_binfile(args: argparse.Namespace, disk: StandardDisk, infile: str) -> None:
+    content: bytearray = run_read_input_file(infile)
     run_check(args, disk)
     header = AmsdosHead()
     if len(content) > 128:
@@ -908,7 +1026,7 @@ def run_put_binfile(args, disk, infile):
             print('[dsk] removing current AMSDOS header for', infile)
             content = content[128:]
     print(f"[dsk] adding BIN file {infile} to USER {args.user}")
-    mapfile = {}
+    mapfile: dict[str, Any] = {}
     header.build(args.user, infile, len(content))
     if args.map_file is not None: mapfile = run_read_mapfile(args.map_file)
     if args.load_addr is not None: header.addr_load = args.load_addr
@@ -917,23 +1035,23 @@ def run_put_binfile(args, disk, infile):
     content = bytearray(header.compose() + content)
     run_put_file(infile, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
-def run_put_rawfile(args, disk, infile):
-    content = run_read_input_file(infile)
+def run_put_rawfile(args: argparse.Namespace, disk: StandardDisk, infile: str) -> None:
+    content: bytearray = run_read_input_file(infile)
     run_check(args, disk)
     print(f"[dsk] adding RAW file {infile} to USER {args.user}")
     run_put_file(infile, args.dskfile, disk, content, args.user, args.flag_ro, args.flag_sys)
 
-def aux_int(param):
+def aux_int(param: str) -> int:
     """
     By default, int params are converted assuming base 10.
     To allow hex values we need to 'auto' detect the base.
     """
     return int(param, 0)
 
-def process_args():
+def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='dsk.py',
-        description='Simple tool to create and manage Amstrad sigle side DSK files'
+        description='Simple tool to create and manage Amstrad single side DSK files'
     )
     parser.add_argument('dskfile', help="DSK file. Used as input/output depending on the arguments used.")
     parser.add_argument('-n', '--new', action='store_true', help='Creates a new empty DSK file.')
@@ -958,13 +1076,22 @@ def process_args():
     parser.add_argument('--user', type=int, default=0, help='Used when adding files. It sets the USER ID (0-15). By default is 0.')
     parser.add_argument('-v', '--version', action='version', version=f' DSK Tool Version {__version__}', help = "Shows program's version and exits")
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
     return args
 
-def main():
-    args = process_args()
-    disk = Disk()
-    
+def invalid_arguments() -> NoReturn:
+    print("[dsk] ERROR - invalid arguments")
+    sys.exit(1)
+
+def main() -> None:
+    args: argparse.Namespace = process_args()
+    disk = StandardDisk()
+    if args.user is not None and (args.user < 0 or args.user > 15): invalid_arguments()
+    if args.get is not None and (args.get < 0 or args.get > 63): invalid_arguments()
+    if args.load_addr is not None:
+        loadaddr: int = int(args.load_addr)
+        if loadaddr < 0 or loadaddr > 65535: invalid_arguments()
+
     if args.new:    run_new(args, disk)
     if args.check:  run_check(args, disk)
     if args.dump:   run_dump(args, disk)

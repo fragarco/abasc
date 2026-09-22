@@ -18,18 +18,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-__author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.4'
+from __future__ import annotations
+
+__author__: str = 'Javier "Dwayne Hicks" Garcia'
+__version__: str = '1.4.5'
 
 import argparse
 import os
 import platform
-import stat
 import re
+import stat
 import sys
-from typing import Tuple
 
-WINDOWS_TEMPLATE: str = r"""@echo off
+WINDOWS_TEMPLATE = r"""@echo off
 
 REM *
 REM * This file is just an example of how ABASM and DSK/CDT utilities can be called to assemble programs
@@ -62,7 +63,7 @@ IF "%1"=="clear" (
 @echo on
 """
 
-UNIX_TEMPLATE: str = """#!/bin/sh
+UNIX_TEMPLATE = """#!/bin/sh
 
 #
 # This file is just an example of how ABASM and DSK/CDT utilities can be called to assemble programs
@@ -91,7 +92,7 @@ else
 fi
 """
 
-MAIN_ASM: str = """OUT_CHAR equ &BB5A    ; Amstrad Firmware routine for char printing
+MAIN_ASM = """OUT_CHAR equ &BB5A    ; Amstrad Firmware routine for char printing
 
 ; Main entry point. Make file will search for this symbol and
 ; set its address as the starting point for the program.
@@ -122,7 +123,7 @@ new_line:
     jp   OUT_CHAR
 """
 
-def script_tools_paths() -> Tuple[str, str]:
+def script_tools_paths() -> tuple[str, str]:
     script_dir: str = os.path.dirname(os.path.abspath(__file__))
     return (
         os.path.join(script_dir, "abasm.py"),
@@ -139,14 +140,14 @@ def update_project_win(content: str, asm_path: str, dsk_path: str) -> str:
     """
     content = re.sub(
         r'^set ASM=.*$',
-        lambda _: f'set ASM=python3 "{asm_path}"',
+        lambda m: f'set ASM=python3 "{asm_path}"',
         content,
         flags=re.MULTILINE,
     )
 
     content = re.sub(
         r'^set DSK=.*$',
-        lambda _: f'set DSK=python3 "{dsk_path}"',
+        lambda m: f'set DSK=python3 "{dsk_path}"',
         content,
         flags=re.MULTILINE,
     )
@@ -159,22 +160,22 @@ def update_project_unix(content: str, asm_path: str, dsk_path: str) -> str:
     """
     content = re.sub(
         r'^ASM=.*$',
-        lambda _: f'ASM="python3 {asm_path}"',
+        lambda m: f'ASM="python3 {asm_path}"',
         content,
         flags=re.MULTILINE,
     )
 
     content = re.sub(
         r'^DSK=.*$',
-        lambda _: f'DSK="python3 {dsk_path}"',
+        lambda m: f'DSK="python3 {dsk_path}"',
         content,
         flags=re.MULTILINE,
     )
     return content
 
 def update_project(target_dir: str, is_windows: bool) -> None:
-    make_name: str = "make.bat" if is_windows else "make.sh"
-    make_path: str = os.path.join(target_dir, make_name)
+    make_name = "make.bat" if is_windows else "make.sh"
+    make_path = os.path.join(target_dir, make_name)
 
     if not os.path.isfile(make_path):
         print(f"{make_name} was not found in {target_dir}", file=sys.stderr)
@@ -196,9 +197,11 @@ def create_project(target_dir: str, is_windows: bool) -> None:
     target_name: str = target_name_from_dir(target_dir)
     asm_path, dsk_path = script_tools_paths()
 
+    make_name: str
+    make_content: str
     if is_windows:
-        make_name: str = "make.bat"
-        make_content: str = WINDOWS_TEMPLATE.format(
+        make_name = "make.bat"
+        make_content = WINDOWS_TEMPLATE.format(
             ASM=asm_path,
             DSK=dsk_path,
             TARGET=target_name,
@@ -210,13 +213,13 @@ def create_project(target_dir: str, is_windows: bool) -> None:
             DSK=dsk_path,
             TARGET=target_name,
         )
-        
+
     make_path: str = os.path.join(target_dir, make_name)
     with open(make_path, "w", newline="\n") as f:
         f.write(make_content)
 
     if not is_windows:
-        st = os.stat(make_path)
+        st: os.stat_result = os.stat(make_path)
         os.chmod(make_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     print(f"Project initialized: {target_dir}")
@@ -228,10 +231,10 @@ def create_project(target_dir: str, is_windows: bool) -> None:
         print(f"- main.asm created")
 
 def create_argv_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Creates or updates an ABASM project skeleton"
     )
-    group = parser.add_mutually_exclusive_group(required=True)
+    group: argparse._MutuallyExclusiveGroup = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "-n", "--new", metavar="TARGET DIRECTORY",
         help="Generates a new project folder with a make file (use '.' for current directory)",
@@ -246,12 +249,13 @@ def create_argv_parser() -> argparse.ArgumentParser:
     return parser
 
 def main() -> None:
-    parser = create_argv_parser()
-    args = parser.parse_args()
+    parser: argparse.ArgumentParser = create_argv_parser()
+    args: argparse.Namespace = parser.parse_args()
     is_windows: bool = platform.system().lower().startswith("win")
 
+    target_dir: str
     if args.update is not None:
-        target_dir: str = (
+        target_dir = (
             os.getcwd() if args.update == "." else os.path.abspath(args.update)
         )
         update_project(target_dir, is_windows)

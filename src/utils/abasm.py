@@ -19,15 +19,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
+from __future__ import annotations
+
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.4'
+__version__='1.4.5'
 
 import sys
 import os
 import re
 import argparse
 import inspect
-from typing import Any
+from typing import Any, TextIO, cast
+
+#
+# CONSTANTS
+#
 
 IFSTATE_DISABLED = 0 # assemble all encounted code
 IFSTATE_ASSEMBLE = 1 # assemble this code, but stop at ELSE or ELSEIF
@@ -66,7 +72,8 @@ REG_IXL = 11
 REG_IYH = 12
 REG_IYL = 13
 
-REG_SINGLES = {
+# Nibble value associated to each registry
+REG_SINGLES: dict[str, int] = {
     'B': REG_B,
     'C': REG_C,
     'D': REG_D,
@@ -91,7 +98,9 @@ REG_IY = 2
 REG_AF = 5
 REG_AFA = 4 # AF'
 
-REG_DOUBLES = {
+# Pair registers nibble plus any additional bytes that
+# should preceed them (IX and IY case)
+REG_DOUBLES: dict[str, tuple[list[int],int]] = {
     "BC": ([], REG_BC),
     "DE": ([], REG_DE),
     "HL": ([], REG_HL),
@@ -102,8 +111,16 @@ REG_DOUBLES = {
     "AF'": ([], REG_AFA)
 }
 
+#
+# CODE
+#
+
 class AsmMacro:
-    def __init__(self, name, argv):
+    name: str
+    argv: list[str]
+    code: list[str]
+
+    def __init__(self, name: str, argv: list[str]) -> None:
         self.name = name
         self.argv = []
         for arg in argv:
@@ -111,7 +128,45 @@ class AsmMacro:
         self.code = []
 
 class AsmContext:
-    def __init__(self):
+    outputfile: str
+    listingfile: TextIO|None
+    origin: int
+    limit: int
+    libpaths: list[str]
+    modulename: str
+    modules: list[str]
+    include_files: list[str]
+    include_stack: list[tuple[str,int]]
+    symboltable: dict[str,tuple[int,str]]
+    lettable: dict[str,int]
+    symusetable: dict[str,int]
+    memory: bytearray
+    memory_high: int
+    memory_low: int
+    memory_bytes: int
+    machine_code: bytearray
+    ifstack: list[tuple[str,int]]
+    ifstate: int
+    whileline: int|None
+    whilestate: int
+    repeatloop: tuple[int,int]|None
+    repeatstate: int
+    currentfile: str
+    currentline: str
+    currentinst: str
+    linenumber: int
+    lstcode: str
+    assembled_code: list[str]
+    macros: dict[str,AsmMacro]
+    macros_stack: list[tuple[str,int]]
+    macros_applied: int
+    defining_macro: AsmMacro|None
+    applying_macro: str|None
+    list_instruction: bool
+    tolerance: int
+    registernames: list[str]
+
+    def __init__(self) -> None:
         self.reset()
         self.verbose = False
         self.tolerance = 0
@@ -121,7 +176,8 @@ class AsmContext:
             "SP", "IX", "IY", "AF'"
         ]
 
-    def reset(self):
+    def reset(self) -> None:
+        """ Sets all default values """
         self.outputfile = ""
         self.listingfile = None
         self.origin = 0x4000
@@ -159,30 +215,35 @@ class AsmContext:
         self.list_instruction = True
         self.tolerance = 0
 
-    def resolve_include(self, fname):
+    def resolve_include(self, fname: str) -> str:
+        """
+        Returns the full path to the file being included. It tries
+        first with library directories and finally with the project
+        local directory.
+        """
         for libpath in self.libpaths:
             filename = os.path.join(libpath, fname)
             if os.path.exists(filename):
                 return filename
         return os.path.join(os.path.dirname(self.currentfile), fname)
 
-    def parse_logic_expr(self, expr):
+    def parse_logic_expr(self, expr: str) -> bool:
         """
         Resolves an expression that can be reduced to 0 = FALSE or !0 = TRUE.
         """
         values = re.findall(r'\w+', expr)
         for i in range(0, len(values)):
-            values[i] = g_context.parse_expression(values[i])
+            values[i] = cast(int, g_context.parse_expression(values[i]))
         logic = re.findall(r'[<|>|=|<=|>=|!=|==]', expr)
         if len(logic) and logic[0] == '=': logic[0] = "=="
 
         if len(values) == 1: return values[0]
-        if len(values) == 2:
-            operation = "%d %s %d" % (values[0], logic[0], values[1])
-            return eval(operation)
-        abort("evaluating logical expression " + expr)
+        if len(values) != 2:
+            abort("evaluating logical expression " + expr)
+        operation = "%d %s %d" % (values[0], logic[0], values[1])
+        return bool(eval(operation))
        
-    def parse_expression(self, arg, signed=0, byte=0, word=0, allowundef=0):
+    def parse_expression(self, arg: str, signed: int=0, byte: int=0, word: int=0, allowundef: int=0) -> int|None:
         """
         Resolves a numeric expression that can be reduced to an integer value.
         To allow using symbols in expressions that are defined later on the code, the
@@ -247,7 +308,7 @@ class AsmContext:
                                 errormsg = f"unexpected register {testsymbol}"
                             elif allowundef != 0:
                                 # Allow undefined symbols if undefsym=1
-                                return None
+                                return -1
                             abort(errormsg)
 
                     elif testsymbol[0] == '0' and len(testsymbol) > 2 and testsymbol[1] == 'b':
@@ -288,7 +349,7 @@ class AsmContext:
                 narg %= 65536
         return narg
 
-    def set_symbol(self, sym, value, is_label=False, is_let=False, type='label'):
+    def set_symbol(self, sym: str, value: int, is_label: bool=False, is_let: bool=False, type: str='label') -> None:
         orgsym = sym = sym.upper()
         if is_label:
             if sym[0] == "!":
@@ -308,7 +369,8 @@ class AsmContext:
         if self.verbose:
             print(f"{self.currentfile} adding {type} {orgsym} to the symbols table with values ({value}, {self.modulename})")
 
-    def get_symbol(self, sym):
+    def get_symbol(self, sym) -> int|None:
+        """ Returns the value associataend with the symbol 'sym' or None """
         sym = sym.upper()
         if sym[0] == '!':
             if self.applying_macro == None:
@@ -322,23 +384,35 @@ class AsmContext:
             return self.symboltable[sym][0]
         return None
 
-    def check_symbol(self, sym, type):
+    def check_symbol(self, sym: str, type: str) -> None:
+        """
+        Raises an exception if the symbol name collides with an opcode, directive
+        or registry name.
+        """
         if sym in g_context.registernames or "op_" + sym in g_opcode_functions:
             abort(f"{type} name {sym} matches a directive, opcode or registry name")
             
-    def process_label(self, p, label):
+    def process_label(self, p: int, label: str) -> None:
+        """
+        During the first pass it checks that label name is correct and assigns
+        its initial value (memory address). During the second pass it checks that
+        the address has not changed (could happen if the label is redefined).
+        """
         if len(label.split()) > 1:
             abort("whitespaces are not allowed in label names")
-
         if label != "":
             if p == 1:
                 self.check_symbol(label, type='label')
                 self.set_symbol(label, self.origin, is_label = True, type='label')
             elif self.get_symbol(label) != self.origin:
-                warning(f'{label} label address redefinition: {hex(self.get_symbol(label)).upper()} != {hex(self.origin).upper()}', TLEVEL_LENIENT)
+                warning(f'{label} label address redefinition: {hex(self.get_symbol(label)).upper()} != {hex(self.origin).upper()}', TLEVEL_LENIENT) # type: ignore [arg-type]
 
-    def process_macro(self, macro, args):
-        argv = []
+    def process_macro(self, macro: str, args: str) -> list[str]:
+        """
+        Returns the code associated to a macro replacing the arguments by the
+        current macro call values.
+        """
+        argv: list[str] = []
         if args.strip() != '':
             argv = args.replace(' ', '').split(',')
         code = self.macros[macro].code
@@ -353,7 +427,11 @@ class AsmContext:
         macrocode.append(f"_MACRO_LEAVE_ {macro}")
         return macrocode
 
-    def store(self, p, content):
+    def store(self, p: int, content: list[int]) -> None:
+        """
+        Only during the second pass, it stores the given bytes starting
+        in the current selected memory address.
+        """
         if p == 2:
             mempos = self.origin
             self.lstcode = ""
@@ -370,7 +448,10 @@ class AsmContext:
             if len(self.lstcode) > 17:
                 self.lstcode = self.lstcode[0:15] + ".."
 
-    def save_mapfile(self, filename):
+    def save_mapfile(self, filename: str) -> None:
+        """
+        Generates a map file content and saves it using the given file name.
+        """
         mapfile = os.path.splitext(filename)[0] + '.map'
         try:
             with open(mapfile, 'w') as f:
@@ -386,7 +467,10 @@ class AsmContext:
         except Exception as e:
             abort(f"couldn't create the file {filename}: " + str(e))
 
-    def save_memory(self, filename, start, size):
+    def save_memory(self, filename, start, size) -> None:
+        """
+        Takes all the current stored bytes and saves them as a binary file.
+        """
         memory = bytearray()
         if size > 0:
             memory = self.memory[start:start+size]
@@ -397,19 +481,24 @@ class AsmContext:
         except Exception as e:
             abort(f"couldn't create the file {filename}: " + str(e))
 
-    def write_listinfo(self, line):
+    def write_listinfo(self, line: str) -> None:
+        """ Adds the given line to the LST file """
         if self.listingfile == None:
             self.listingfile = open(os.path.splitext(self.outputfile)[0] + '.lst', "wt")
         self.listingfile.write(line + "\n")
 
-    def save_assembledcode(self, filename):
+    def save_assembledcode(self, filename: str) -> None:
         if self.memory_bytes > 0:
             filename = filename.lower().replace('.bin', '.s')
             with open(filename, "w") as fd:
                 code = '\n'.join(self.assembled_code)
                 fd.write(code)
 
-    def save_binfile(self, filename):
+    def save_binfile(self, filename: str) -> None:
+        """
+        Generates the resulting BIN and associated MAP file for the
+        current assembled code.
+        """
         if self.memory_bytes > 0:
             # something has been assembled
             size = self.memory_high - self.memory_low + 1
@@ -418,17 +507,23 @@ class AsmContext:
         else:
             abort("EOF and nothing was assembled")
 
-    def parse_instruction(self, line):
-        # Lines must start by characters or underscord or '.'
+    def parse_instruction(self, line: str) -> tuple[str,str]:
+        """
+        Returns the given code line splitted as 'opcode' and 'args'.
+        Lines must start by characters, an underscord or '.'
+        """
         match = re.match(r'^(\.\w+|\!\w+|\w+)(.*)', line.strip())
         if not match:
             abort("valid literals must start with a letter, an underscord, '.' or '!' symbols")
-
-        inst = match.group(1).upper().strip()
-        args = match.group(2).strip()
+        inst = match.group(1).upper().strip() # type: ignore [union-attr]
+        args = match.group(2).strip()         # type: ignore [union-attr]
         return inst, args
 
-    def assemble_instruction(self, p, line):
+    def assemble_instruction(self, p: int, line: str) -> tuple[int, list[str]]:
+        """
+        Returns the number of bytes generated and the list of additional instructions
+        that must be assembled as a follow-up (for example when calling a macro).
+        """
         inst, args = self.parse_instruction(line)
         if self.defining_macro is not None and inst != "ENDM":
             self.defining_macro.code.append(line)
@@ -466,26 +561,29 @@ class AsmContext:
                     return self.assemble_instruction(p, extra_statements[1])
         return 0, []
 
-    def read_srcfile(self, inputfile):
+    def read_srcfile(self, inputfile: str) -> list[str]:
         try:
             fd = open(inputfile, 'rb')
-            content = []
+            content: list[str] = []
             for line in fd.readlines():
-                line = line.decode('utf-8', 'ignore').replace('\n','').replace('\r','')
-                content.append(line)
+                strline = line.decode('utf-8', 'ignore').replace('\n','').replace('\r','')
+                content.append(strline)
             content.insert(0, '') # prepend blank so line numbers are 1-based
             fd.close()
             return content
         except Exception as e:
             print("[abasm]", str(e))
             abort("couldn't open file '" + inputfile + "' for reading")
+            return []
 
     @staticmethod
-    def split_line(instr, sep):
-        # Here we deal with splitting a text line by a separator symbol but
-        # we ignore ':' symbol if it is between quoted colons
-        # the same happens if we find the comment symbol ';'
-        result = []
+    def split_line(instr: str, sep: str) -> list[str]:
+        """
+        This method splits a text line by a separator symbol but
+        ignoring the ':' symbol if it is between quoted colons and
+        the comment symbol ';'
+        """
+        result: list[str] = []
         start = 0
         current = 0
         quoted = False
@@ -504,12 +602,14 @@ class AsmContext:
         result.append(instr[start:])
         return result
 
-    def get_statements(self, codeline):
+    def get_statements(self, codeline: str) -> list[str]:
+        """
+        Splitts the given line of code in its different statements. Each line
+        can have multiple instructions separated by ':'
+        """
         codeline = codeline.strip()
-        # basic sanity checks
-        statements = []
+        statements: list[str] = []
         index = 0
-        # one line can have multiple instructions separated by :
         opcodes = self.split_line(codeline, ':')
         while index < len(opcodes):
             opcode = opcodes[index]
@@ -527,7 +627,10 @@ class AsmContext:
             index = index + 1
         return statements
 
-    def set_module(self, inputfile):
+    def set_module(self, inputfile: str) -> None:
+        """
+        Sets the current module name based in the given file path.
+        """
         self.modulename = os.path.basename(inputfile).upper()
         if self.modulename in self.modules:
             abort(f"file {self.modulename} was already assembled")
@@ -535,7 +638,11 @@ class AsmContext:
             self.modules.append(self.modulename)
             self.include_files.append(inputfile)
 
-    def assembler_pass(self, p, inputfile):
+    def assembler_pass(self, p: int, inputfile: str) -> None:
+        """
+        Applies assembly pass <<p>> to the code contained in the given
+        source file.
+        """
         self.set_module(inputfile)
         self.currentfile = ""
         self.currentline = ""
@@ -563,13 +670,18 @@ class AsmContext:
                 if self.origin > self.limit:
                     abort(message=f"current limit is set to {self.limit}", errortype="Memory Full")
             if self.whilestate == WSTATE_LOOP:
-                self.linenumber = self.whileline
+                self.linenumber = self.whileline     # type: ignore [assignment]
             elif self.repeatstate == RSTATE_LOOP:
-                self.linenumber = self.repeatloop[0]
+                self.linenumber = self.repeatloop[0] # type: ignore [index]
             else:
                 self.linenumber += 1
 
-    def assemble(self, inputfile, outputfile, startaddr):
+    def assemble(self, inputfile: str, outputfile: str, startaddr: int) -> None:
+        """
+        Assembles the source coded contained in the given file. The process includes
+        two passes over the same code. It generates the BIN, LST and MAP files using
+        the name indicated by <<outputfile>>.
+        """
         print("[abasm] input: ", inputfile)
         for p in [1, 2]:
             self.origin = startaddr
@@ -605,12 +717,12 @@ class AsmContext:
 
 
 g_context = AsmContext()
-g_opcode_functions: Any = {}
+g_opcode_functions: dict[str, Any] = {}
 
 ###########################################################################
 # Error and warning reporting
 
-def warning(message, tolerancelevel):
+def warning(message: str, tolerancelevel: int) -> None:
     """
     tolerancelevel > current level -> warning is converted in error
     tolerancelevel = current level -> warning is shown
@@ -621,7 +733,7 @@ def warning(message, tolerancelevel):
     elif tolerancelevel == g_context.tolerance:
         print(f"[WARNING{tolerancelevel:02d}] {os.path.basename(g_context.currentfile)}: {message} in {g_context.currentline.strip()}")
 
-def abort(message, tolerancelevel=0, errortype = "Syntax Error"):
+def abort(message: str, tolerancelevel: int=0, errortype: str = "Syntax Error") -> None:
     line1 = f"[TLV{tolerancelevel:03}] {os.path.basename(g_context.currentfile)}: {errortype} ({message})"
     code = g_context.currentline.strip()
     line2 = '' if code == '' else f"in {code}"
@@ -636,9 +748,13 @@ def abort(message, tolerancelevel=0, errortype = "Syntax Error"):
 ###########################################################################
 # Refactored common code shared by several opcode implementations
 
-def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
+def double(arg: str,
+           allow_af_instead_of_sp: int=0,
+           allow_af_alt: int=0,
+           allow_index: int=1) -> tuple[list[int],int]:
     """
-    Decodes double registers BC, DE, HL, SP, IX, IY, AF and special AF'
+    Decodes double registers BC, DE, HL, SP, IX, IY, AF and special AF'. Check
+    the definition of REG_DOUBLES to see more about the returned tuple.
     """
     rr = REG_DOUBLES.get(arg.strip().upper(), ([], NO_REG))
     if rr[1] == REG_SP and allow_af_instead_of_sp:
@@ -655,12 +771,18 @@ def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
         rr = ([], NO_REG)
     return (list(rr[0]), rr[1])
 
-def single(p, arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=1):
+def single(p: int,
+           arg: str,
+           allow_i: int=0,
+           allow_r: int=0,
+           allow_index: int=1,
+           allow_offset: int=1,
+           allow_half: int=1) -> tuple[list[int],int,list[int]]:
     """
     Decodes single registers B, C, D, E, H, L, A and specials I, R, IXH, IXL, IYH, IYL
     or indirect access using registers (HL) (IX) (IY)
     """
-    m = REG_SINGLES.get(arg.strip().upper(), NO_REG)
+    m: int = REG_SINGLES.get(arg.strip().upper(), NO_REG)
     prefix = []
     postfix = []
     if m == REG_I and not allow_i:
@@ -701,20 +823,25 @@ def single(p, arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_ha
                 m = REG_IND
                 prefix = [0xdd] if match.group(1).lower() == 'ix' else [0xfd]
                 if p == 2:
-                    offset = g_context.parse_expression(match.group(2), byte=1, signed=1)
+                    offset = cast(int, g_context.parse_expression(match.group(2), byte=1, signed=1))
                     if offset < -128 or offset > 127:
-                        abort("invalid index offset: "+str(offset))
-                    postfix = [(offset + 256) % 256]
+                        abort("invalid index offset: " + str(offset))
+                    else:
+                        postfix = [(offset + 256) % 256]
                 else:
                     postfix = [0]
     return prefix, m, postfix
 
-def condition(arg):
+def condition(arg: str) -> int:
     """ decodes condition nz, z, nc, c, po, pe, p, m """
     condition_mapping = {'NZ':0, 'Z':1, 'NC':2, 'C':3, 'PO':4, 'PE':5, 'P':6, 'M':7 }
-    return condition_mapping.get(arg.upper(),-1)
+    return condition_mapping.get(arg.upper(), -1)
 
-def check_args(args, expected):
+def check_args(args: str, expected: int) -> None:
+    """
+    Raises an exception if number of arguments doesn't match with the opcode
+    expected number of arguments.
+    """
     if args == '':
         received = 0
     else:
@@ -722,13 +849,17 @@ def check_args(args, expected):
     if expected != received:
         abort("wrong number of arguments, expected "+str(expected)+" but received "+str(args))
 
-def store_noargs_type(p, opargs, instr):
+def store_noargs_type(p: int, opargs: str, instr: list[int]) -> int:
     check_args(opargs, 0)
     if p == 2:
         g_context.store(p, instr)
     return len(instr)
 
-def store_register_arg_type(p, opargs, offset, ninstr, step_per_register=1):
+def store_register_arg_type(p: int,
+                            opargs: str,
+                            offset: int,
+                            ninstr: list[int],
+                            step_per_register: int=1) -> int:
     check_args(opargs, 1)
     pre, r, post = single(p, opargs, allow_half=1)
     instr = pre
@@ -739,10 +870,10 @@ def store_register_arg_type(p, opargs, offset, ninstr, step_per_register=1):
 
         instr.extend(ninstr)
         if p == 2:
-            n = g_context.parse_expression(opargs, byte=1)
+            n = cast(int, g_context.parse_expression(opargs, byte=1))
         else:
             n = 0
-        instr.append(n)
+        instr.append(n) # type: ignore [arg-type]
     else:
         instr.append(offset + step_per_register * r)
     instr.extend(post)
@@ -750,11 +881,17 @@ def store_register_arg_type(p, opargs, offset, ninstr, step_per_register=1):
         g_context.store(p, instr)
     return len(instr)
 
-def store_registerorpair_arg_type(p, opargs, rinstr, rrinstr, step_per_register=8, step_per_pair=16):
+def store_registerorpair_arg_type(p: int,
+                                  opargs: str,
+                                  rinstr: int,
+                                  rrinstr: int,
+                                  step_per_register: int=8,
+                                  step_per_pair: int=16) -> int:
     check_args(opargs, 1)
+    instr: list[int] = []
     pre, r, post = single(p, opargs)
     if r == NO_REG:
-        pre,rr = double(opargs)
+        pre, rr = double(opargs)
         if rr == NO_REG:
             abort("invalid argument")
 
@@ -768,7 +905,13 @@ def store_registerorpair_arg_type(p, opargs, rinstr, rrinstr, step_per_register=
         g_context.store(p, instr)
     return len(instr)
 
-def store_add_type(p, opargs, rinstr, ninstr, rrinstr, step_per_register=1, step_per_pair=16):
+def store_add_type(p: int,
+                   opargs: str,
+                   rinstr: list[int],
+                   ninstr: list[int],
+                   rrinstr: list[int],
+                   step_per_register: int=1,
+                   step_per_pair: int=16) -> int:
     args = opargs.split(',', 1)
     r=-1
     if len(args) == 2:
@@ -782,10 +925,10 @@ def store_add_type(p, opargs, rinstr, ninstr, rrinstr, step_per_register=1, step
                 abort("illegal indirection")
             instr.extend(ninstr)
             if p == 2:
-                n = g_context.parse_expression (args[-1], byte=1)
+                n = cast(int, g_context.parse_expression (args[-1], byte=1))
             else:
                 n = 0
-            instr.append(n)
+            instr.append(n) # type: ignore [arg-type]
         else:
             instr.extend(rinstr)
             instr[-1] += step_per_register * r
@@ -809,7 +952,7 @@ def store_add_type(p, opargs, rinstr, ninstr, rrinstr, step_per_register=1, step
         g_context.store(p, instr)
     return len(instr)
 
-def store_bit_type(p, opargs, offset):
+def store_bit_type(p: int, opargs: str, offset: int) -> int:
     check_args(opargs,2)
     arg1,arg2 = opargs.split(',',1)
     allowundef = 1 if p == 1 else 0
@@ -829,7 +972,7 @@ def store_bit_type(p, opargs, offset):
         g_context.store(p, instr)
     return len(instr)
 
-def store_pushpop_type(p, opargs, offset):
+def store_pushpop_type(p: int, opargs: str, offset: int) -> int:
     check_args(opargs,1)
     prefix, rr = double(opargs, allow_af_instead_of_sp=1)
     instr = prefix
@@ -841,7 +984,7 @@ def store_pushpop_type(p, opargs, offset):
         g_context.store(p, instr)
     return len(instr)
 
-def store_jumpcall_type(p, opargs, offset, condoffset):
+def store_jumpcall_type(p: int, opargs: str, offset: int, condoffset: int) -> int:
     args = opargs.split(',', 1)
     if len(args) == 1:
         instr = [offset]
@@ -856,7 +999,7 @@ def store_jumpcall_type(p, opargs, offset, condoffset):
         abort("illegal indirection")
 
     if p == 2:
-        nn = g_context.parse_expression(args[-1], word=1)
+        nn = cast(int, g_context.parse_expression(args[-1], word=1))
         instr.extend([nn%256, nn//256])
         g_context.store(p, instr)
     return 3
@@ -864,40 +1007,40 @@ def store_jumpcall_type(p, opargs, offset, condoffset):
 ###########################################################################
 # directives and opcodes
 
-def op_ORG(p, opargs):
+def op_ORG(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     # Not undefined symbols are allowed here
-    g_context.origin = g_context.parse_expression(opargs, word=1)
+    g_context.origin = cast(int, g_context.parse_expression(opargs, word=1))
     return 0
 
-def op_SAVE(p, opargs):
+def op_SAVE(p: int, opargs: str) -> int:
     if p == 2:
         check_args(opargs, 3)
         fname, expr1, expr2 = opargs.split(',')
         fname = fname.replace('"', '')
         fname = fname.replace("'", '')
-        start = g_context.parse_expression(expr1, word=1)
-        size = g_context.parse_expression(expr2, word=1)
+        start = cast(int, g_context.parse_expression(expr1, word=1))
+        size = cast(int, g_context.parse_expression(expr2, word=1))
         g_context.save_memory(fname, start, size)
     return 0
 
-def op_DUMP(p, opargs):
+def op_DUMP(p: int, opargs: str) -> int:
     # Not currently implemented. Maxam used it to write symbol information
     # ABASM outputs the MAP file instead
     warning('directive DUMP found but ignored, Abasm uses MAP files instead', TLEVEL_LOW)
     return 0
 
-def op_BRK(p, opargs):
+def op_BRK(p: int, opargs: str) -> int:
     # Not currently implemented. WinAPE uses it to set a breakpoint using RST &30
     # as MAXAM did back in the day
     warning('directive BRK (breakpoint) found but ignored', TLEVEL_LOW)
     return 0
 
-def op_PRINT(p, opargs):
+def op_PRINT(p: int, opargs: str) -> int:
     sufix = "(pass 1)"
     if p == 2:
         sufix = "(pass 2)"
-    text = []
+    text: list[str] = []
     for expr in opargs.split(","):
         if expr.strip().startswith('"'):
             text.append(expr.strip().rstrip()[1:-1])
@@ -910,7 +1053,7 @@ def op_PRINT(p, opargs):
     print(f"[abasm] {os.path.basename(g_context.currentfile)}: PRINT{sufix} {','.join(text)}")
     return 0
 
-def op_EQU(p, opargs):
+def op_EQU(p: int, opargs: str) -> int:
     check_args(opargs, 2)
     symbol, expr = opargs.split(',')
     symbol = symbol.strip()
@@ -919,7 +1062,7 @@ def op_EQU(p, opargs):
         v = g_context.parse_expression(expr, signed=1, allowundef=1)
         if v != None: g_context.set_symbol(symbol, v, type='alias')
     else:
-        expr_result = g_context.parse_expression(expr, signed=1)
+        expr_result = cast(int, g_context.parse_expression(expr, signed=1))
         existing = g_context.get_symbol(symbol)
         if existing == None:
             g_context.set_symbol(symbol, expr_result, type='alias')
@@ -930,14 +1073,14 @@ def op_EQU(p, opargs):
                       ", has this symbol been used twice?")
     return 0
 
-def op_ALIGN(p, opargs):
+def op_ALIGN(p: int, opargs: str) -> int:
     args = opargs.replace(" ", "").split(",")
     if len(args) < 1:
         abort("ALIGN directive requieres at least one value")
     # Not undefined symbols are allowed in expressions for this
     # directive
-    padding = 0 if len(args) == 1 else g_context.parse_expression(args[1])
-    align = g_context.parse_expression(args[0])
+    padding = 0 if len(args) == 1 else cast(int, g_context.parse_expression(args[1]))
+    align = cast(int, g_context.parse_expression(args[0]))
     if align < 1:
         abort("invalid negative alignment")
     elif (align & (-align)) != align:
@@ -946,45 +1089,45 @@ def op_ALIGN(p, opargs):
     g_context.store(p, [padding for i in range(0, s)])
     return s
 
-def op_DS(p, opargs):
+def op_DS(p: int, opargs: str) -> int:
     return op_DEFS(p, opargs)
 
-def op_DEFS(p, opargs):
+def op_DEFS(p: int, opargs: str) -> int:
     return op_RMEM(p, opargs)
 
-def op_RMEM(p, opargs):
+def op_RMEM(p: int, opargs: str) -> int:
     check_args(opargs, 1)
-    s = g_context.parse_expression(opargs)
+    s = cast(int, g_context.parse_expression(opargs))
     if s < 0:
         abort("allocated invalid space < 0 bytes (" + str(s) + ")")
     g_context.store(p, [0 for i in range(0, s)])
     return s
 
-def op_DW(p, opargs):
+def op_DW(p: int, opargs: str) -> int:
     return op_DEFW(p, opargs)
 
-def op_DEFW(p, opargs):
+def op_DEFW(p: int, opargs: str) -> int:
     s = opargs.split(',')
     if p == 2:
-        words = []
+        words: list[int] = []
         for b in s:
-            b = (g_context.parse_expression(b, word=1))
-            words = words + [b%256, b//256]
+            val = (cast(int, g_context.parse_expression(b, word=1)))
+            words = words + [val%256, val//256]
         g_context.store(p, words)
     return 2 * len(s)
 
-def op_DM(p, opargs):
+def op_DM(p: int, opargs: str) -> int:
     return op_DEFB(p, opargs)
 
-def op_DB(p, opargs):
+def op_DB(p: int, opargs: str) -> int:
     return op_DEFB(p, opargs)
 
-def op_DEFM(p, opargs):
+def op_DEFM(p: int, opargs: str) -> int:
    return op_DEFB(p, opargs)
 
-def op_DEFB(p, opargs):
+def op_DEFB(p: int, opargs: str) -> int:
     args = AsmContext.split_line(opargs, ',')
-    totbytes = []
+    totbytes: list[int] = []
     for arg in args:
         texts = re.findall(r'"(.*?)"', arg)
         if len(texts) == 0: texts = re.findall(r"'(.*?)'", arg)
@@ -996,23 +1139,23 @@ def op_DEFB(p, opargs):
             if len(txtbytes) == 0: txtbytes = [0]
             totbytes = totbytes + txtbytes
         else:
-            byte = 0 if p == 1 else g_context.parse_expression(arg, byte=1)
+            byte = 0 if p == 1 else cast(int, g_context.parse_expression(arg, byte=1))
             totbytes.append(byte)
     if p == 2: g_context.store(p, totbytes)
     return len(totbytes)
 
-def op_LET(p, opargs):
+def op_LET(p: int, opargs: str) -> int:
     args = opargs.replace(" ", "").upper().split("=")
     if len(args) != 2:
         abort("LET directive uses the format SYMBOL=VALUE")
-    sym, val = args
+    sym, sval = args
     allowundef = 1 if p == 1 else 0
-    val = g_context.parse_expression(val, allowundef)
-    if val != None:
-        g_context.set_symbol(sym, val, is_let=True, type='let')
+    nval = g_context.parse_expression(sval, allowundef)
+    if nval != None:
+        g_context.set_symbol(sym, nval, is_let=True, type='let')
     return 0
 
-def op_READ(p, opargs):
+def op_READ(p: int, opargs: str) -> int:
     # WinAPE directive to include other assembly source code
     if g_context.whilestate != WSTATE_DISABLED or g_context.repeatstate != RSTATE_DISABLED:
         abort("READ is not allowed inside WHILE or REPEAT loops")
@@ -1026,7 +1169,7 @@ def op_READ(p, opargs):
     path = re.search(r'(?<=["\'])(.*?)(?=["\'])', opargs)
     if path == None:
         abort("wrong path specified in the READ directive")
-    filename = g_context.resolve_include(path.group(0))
+    filename = g_context.resolve_include(path.group(0)) # type: ignore [union-attr]
     if filename in g_context.include_files:
         g_context.list_instruction = False
         return 0
@@ -1040,31 +1183,31 @@ def op_READ(p, opargs):
     g_context.list_instruction = False
     return 0
 
-def op_INCBIN(p, opargs):
+def op_INCBIN(p: int, opargs: str) -> int:
     # WinAPE directive to include the content of a binary file
     # incbin "file", offset, size
     path = re.search(r'(?<=["\'])(.*?)(?=["\'])', opargs)
     if path == None:
         abort("wrong path specified in the INCBIN directive")
-    filename = os.path.join(os.path.dirname(g_context.currentfile), path.group(0))
+    filename = os.path.join(os.path.dirname(g_context.currentfile), path.group(0)) # type: ignore [union-attr]
     if not os.path.exists(filename):
         abort("couldn't access to the file " + filename)
     args = opargs.split(',')
-    offset = 0 if len(args) < 2 else g_context.parse_expression(args[1].strip())
+    offset = 0 if len(args) < 2 else cast(int, g_context.parse_expression(args[1].strip()))
     try:
         with open(filename, 'rb') as fd:
             content = fd.read()
-        nbytes = len(content) - offset if len(args) < 3 else g_context.parse_expression(args[2].strip())
+        nbytes = len(content) - offset if len(args) < 3 else cast(int, g_context.parse_expression(args[2].strip()))
     except Exception as e:
         abort("cannot read the content of the binary file: " + str(e))
     content = content[offset: offset + nbytes]
-    g_context.store(p, content)
+    g_context.store(p, list(content))
     return len(content)
 
-def op_WHILE(p, opargs):
+def op_WHILE(p: int, opargs: str) -> int:
     if g_context.applying_macro != None:
         abort("macro definitions don't support WHILE loops")
-    do = g_context.parse_expression(opargs)
+    do = cast(int, g_context.parse_expression(opargs))
     if do != 0:
         if g_context.whileline != None and g_context.whileline != g_context.linenumber:
             abort("nesting is not supported in WHILE loops")
@@ -1076,7 +1219,7 @@ def op_WHILE(p, opargs):
     g_context.list_instruction = False
     return 0
 
-def op_WEND(p, opargs):
+def op_WEND(p: int, opargs: str) -> int:
     if g_context.whilestate == WSTATE_DISABLED:
         abort("unexpected WEND")
     elif g_context.whilestate == WSTATE_ASSEMBLE:
@@ -1086,7 +1229,7 @@ def op_WEND(p, opargs):
     g_context.list_instruction = False
     return 0
 
-def op_REPEAT(p, opargs):
+def op_REPEAT(p: int, opargs: str) -> int:
     if g_context.applying_macro != None:
         abort("macro definitions don't support REPEAT loops")
     value = 0
@@ -1095,7 +1238,7 @@ def op_REPEAT(p, opargs):
         if line != g_context.linenumber:
             abort("nesting is not supported in REPEAT loops")
     else:
-        value = g_context.parse_expression(opargs)
+        value = cast(int, g_context.parse_expression(opargs))
 
     if value > 0:
         g_context.repeatloop = (g_context.linenumber, value)
@@ -1106,136 +1249,138 @@ def op_REPEAT(p, opargs):
     g_context.list_instruction = False
     return 0
 
-def op_REND(p, opargs):
+def op_REND(p: int, opargs: str) -> int:
     if g_context.repeatstate == RSTATE_DISABLED:
         abort("unexpected REND")
     elif g_context.repeatstate == RSTATE_ASSEMBLE:
-        line, value = g_context.repeatloop
-        value = value - 1
-        g_context.repeatloop = (line, value)
-        g_context.repeatstate = RSTATE_LOOP
+        if g_context.repeatloop is not None:
+            line, value = g_context.repeatloop
+            value = value - 1
+            g_context.repeatloop = (line, value)
+            g_context.repeatstate = RSTATE_LOOP
     else:
         g_context.repeatstate = RSTATE_DISABLED
     g_context.list_instruction = False
     return 0
 
-def op_LIMIT(p, opargs):
+def op_LIMIT(p: int, opargs: str) -> int:
     check_args(opargs,1)
     if p == 2:
-        g_context.limit = g_context.parse_expression(opargs)
+        g_context.limit = cast(int, g_context.parse_expression(opargs))
     return 0
 
-def op_ASSERT(p, opargs):
+def op_ASSERT(p: int, opargs: str) -> int:
     check_args(opargs,1)
     if p == 2:
-        value = g_context.parse_expression(opargs)
+        value = cast(int, g_context.parse_expression(opargs))
         if value == 0:
             abort("assertion failed (" + opargs + ")")
     return 0
 
-def op_STOP(p, opargs):
+def op_STOP(p: int, opargs: str) -> int:
     abort("directive STOP found")
+    return 0
 
-def op_NOP(p, opargs):
+def op_NOP(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x00])
 
-def op_RLCA(p, opargs):
+def op_RLCA(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x07])
 
-def op_RRCA(p, opargs):
+def op_RRCA(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x0F])
 
-def op_RLA(p, opargs):
+def op_RLA(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x17])
 
-def op_RRA(p, opargs):
+def op_RRA(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x1F])
 
-def op_DAA(p, opargs):
+def op_DAA(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x27])
 
-def op_CPL(p, opargs):
+def op_CPL(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x2F])
 
-def op_SCF(p, opargs):
+def op_SCF(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x37])
 
-def op_CCF(p, opargs):
+def op_CCF(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x3F])
 
-def op_HALT(p, opargs):
+def op_HALT(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0x76])
 
-def op_DI(p, opargs):
+def op_DI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xf3])
 
-def op_EI(p, opargs):
+def op_EI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xfb])
 
-def op_EXX(p, opargs):
+def op_EXX(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xd9])
 
-def op_NEG(p, opargs):
+def op_NEG(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0x44])
 
-def op_RETN(p, opargs):
+def op_RETN(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0x45])
 
-def op_RETI(p, opargs):
+def op_RETI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0x4d])
 
-def op_RRD(p, opargs):
+def op_RRD(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0x67])
 
-def op_RLD(p, opargs):
+def op_RLD(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0x6F])
 
-def op_LDI(p, opargs):
+def op_LDI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa0])
 
-def op_CPI(p, opargs):
+def op_CPI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa1])
 
-def op_INI(p, opargs):
+def op_INI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa2])
 
-def op_OUTI(p, opargs):
+def op_OUTI(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa3])
 
-def op_LDD(p, opargs):
+def op_LDD(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa8])
 
-def op_CPD(p, opargs):
+def op_CPD(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xa9])
 
-def op_IND(p, opargs):
+def op_IND(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xaa])
 
 def op_OUTD(p,opargs):
     return store_noargs_type(p, opargs, [0xed, 0xab])
 
-def op_LDIR(p, opargs):
+def op_LDIR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb0])
 
-def op_CPIR(p, opargs):
+def op_CPIR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb1])
 
-def op_INIR(p, opargs):
+def op_INIR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb2])
 
-def op_OTIR(p, opargs):
+def op_OTIR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb3])
 
-def op_LDDR(p, opargs):
+def op_LDDR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb8])
 
-def op_CPDR(p, opargs):
+def op_CPDR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xb9])
 
-def op_INDR(p, opargs):
+def op_INDR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xba])
 
-def op_OTDR(p, opargs):
+def op_OTDR(p: int, opargs: str) -> int:
     return store_noargs_type(p, opargs, [0xed, 0xbb])
 
 def store_cbshifts_type(p, opargs, offset, step_per_register=1):
@@ -1268,31 +1413,31 @@ def store_cbshifts_type(p, opargs, offset, step_per_register=1):
         g_context.store(p, instr)
     return len(instr)
 
-def op_RLC(p, opargs):
+def op_RLC(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x00)
 
-def op_RRC(p, opargs):
+def op_RRC(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x08)
 
-def op_RL(p, opargs):
+def op_RL(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x10)
 
-def op_RR(p, opargs):
+def op_RR(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x18)
 
-def op_SLA(p, opargs):
+def op_SLA(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x20)
 
-def op_SRA(p, opargs):
+def op_SRA(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x28)
 
-def op_SLL(p, opargs):
+def op_SLL(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x30)
 
-def op_SRL(p, opargs):
+def op_SRL(p: int, opargs: str) -> int:
     return store_cbshifts_type(p, opargs, 0x38)
 
-def op_SUB(p, opargs):
+def op_SUB(p: int, opargs: str) -> int:
     # Z80 Aseembly language programming book lists SUB without register A
     # because always operates with the accumulator BUT WinAPE assembler seems
     # to use the aliases SUB A,r SUB A,n SUB A,(HL) SUB A,(IX + d) SUB A,(IY + d)
@@ -1303,7 +1448,7 @@ def op_SUB(p, opargs):
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0x90, [0xd6])
 
-def op_AND(p, opargs):
+def op_AND(p: int, opargs: str) -> int:
     # Z80 Aseembly language programming book lists AND without register A
     # because always operates with the accumulator BUT WinAPE assembler seems
     # to use the aliases AND A,r AND A,n AND A,(HL) AND A,(IX + d) AND A,(IY + d)
@@ -1314,10 +1459,10 @@ def op_AND(p, opargs):
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xa0, [0xe6])
 
-def op_XOR(p, opargs):
+def op_XOR(p: int, opargs: str) -> int:
     return store_register_arg_type(p, opargs, 0xa8, [0xee])
 
-def op_OR(p, opargs):
+def op_OR(p: int, opargs: str) -> int:
     # Z80 Aseembly language programming book lists OR without register A
     # because always operates with the accumulator BUT WinAPE assembler seems
     # to use the aliases OR A,r OR A,n OR A,(HL) OR A,(IX + d) OR A,(IY + d)
@@ -1328,7 +1473,7 @@ def op_OR(p, opargs):
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xb0, [0xf6])
 
-def op_CP(p, opargs):
+def op_CP(p: int, opargs: str) -> int:
     # Z80 Aseembly language programming book lists CP without register A
     # because always operates with the accumulator BUT WinAPE assembler seems
     # to use the aliases CP A,r CP A,n CP A,(HL) CP A,(IX + d) CP A,(IY + d)
@@ -1339,10 +1484,10 @@ def op_CP(p, opargs):
         opargs = args[1]
     return store_register_arg_type(p, opargs, 0xb8, [0xfe])
 
-def op_INC(p, opargs):
+def op_INC(p: int, opargs: str) -> int:
     return store_registerorpair_arg_type(p, opargs, 0x04, 0x03)
 
-def op_DEC(p, opargs):
+def op_DEC(p: int, opargs: str) -> int:
     return store_registerorpair_arg_type(p, opargs, 0x05, 0x0b)
 
 def op_ADD(p,opargs):
@@ -1363,10 +1508,10 @@ def op_RES(p,opargs):
 def op_SET(p,opargs):
     return store_bit_type(p, opargs, 0xc0)
 
-def op_POP(p, opargs):
+def op_POP(p: int, opargs: str) -> int:
     return store_pushpop_type(p, opargs, 0xc1)
 
-def op_PUSH(p, opargs):
+def op_PUSH(p: int, opargs: str) -> int:
     return store_pushpop_type(p, opargs, 0xc5)
  
 def op_JP(p,opargs):
@@ -1386,14 +1531,14 @@ def op_CALL(p,opargs):
 def op_DJNZ(p,opargs):
     check_args(opargs,1)
     if p == 2:
-        target = g_context.parse_expression(opargs, word=1)
+        target = cast(int, g_context.parse_expression(opargs, word=1))
         displacement = target - (g_context.origin + 2)
         if displacement > 127 or displacement < -128:
             abort ("displacement from " + str(g_context.origin) + " to " + str(target) + " is out of range")
         g_context.store(p, [0x10, (displacement + 256) % 256])
     return 2
 
-def op_JR(p, opargs):
+def op_JR(p: int, opargs: str) -> int:
     args = opargs.split(',', 1)
     if len(args) == 1:
         instr = 0x18
@@ -1405,7 +1550,7 @@ def op_JR(p, opargs):
             abort ("invalid condition for JR")
         instr = 0x20 + 8 * cond
     if p == 2:
-        target = g_context.parse_expression(args[-1], word=1)
+        target = cast(int, g_context.parse_expression(args[-1], word=1))
         displacement = target - (g_context.origin + 2)
         if displacement > 127 or displacement < -128:
             abort ("displacement from " + str(g_context.origin) +
@@ -1413,7 +1558,7 @@ def op_JR(p, opargs):
         g_context.store(p, [instr, (displacement + 256) % 256])
     return 2
 
-def op_RET(p, opargs):
+def op_RET(p: int, opargs: str) -> int:
     if opargs == '':
         if p == 2:
             g_context.store(p, [0xc9])
@@ -1426,10 +1571,10 @@ def op_RET(p, opargs):
             g_context.store(p, [0xc0 + 8 * cond])
     return 1
 
-def op_IM(p, opargs):
+def op_IM(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     if p == 2:
-        mode = g_context.parse_expression(opargs)
+        mode = cast(int, g_context.parse_expression(opargs))
         if mode > 2 or mode < 0:
             abort ("argument out of range")
         if mode > 0:
@@ -1437,16 +1582,16 @@ def op_IM(p, opargs):
         g_context.store(p, [0xed, 0x46 + 8*mode])
     return 2
 
-def op_RST(p, opargs):
+def op_RST(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     if p == 2:
-        vector = g_context.parse_expression(opargs)
+        vector = cast(int, g_context.parse_expression(opargs))
         if vector > 0x38 or vector < 0 or (vector % 8) != 0:
             abort ("argument out of range or doesn't divide by 8")
         g_context.store(p, [0xc7 + vector])
     return 1
 
-def op_EX(p, opargs):
+def op_EX(p: int, opargs: str) -> int:
     check_args(opargs, 2)
     args = opargs.upper().split(',', 1)
 
@@ -1473,7 +1618,7 @@ def op_EX(p, opargs):
         g_context.store(p, instr)
     return len(instr)
 
-def op_IN(p, opargs):
+def op_IN(p: int, opargs: str) -> int:
     check_args(opargs, 2)
     args = opargs.split(',', 1)
     if p == 2:
@@ -1485,13 +1630,13 @@ def op_IN(p, opargs):
             if match == None:
                 abort("no expression in " + args[1])
 
-            n = g_context.parse_expression(match.group(1))
+            n = cast(int, g_context.parse_expression(match.group(1))) # type: ignore [union-attr]
             g_context.store(p, [0xdb, n])
         else:
             abort("invalid argument")
     return 2
 
-def op_OUT(p, opargs):
+def op_OUT(p: int, opargs: str) -> int:
     check_args(opargs, 2)
     args = opargs.split(',', 1)
     if p == 2:
@@ -1500,7 +1645,7 @@ def op_OUT(p, opargs):
             g_context.store(p, [0xed, 0x41 + 8 * r])
         elif r == REG_A:
             match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
-            n = g_context.parse_expression(match.group(1))
+            n = cast(int, g_context.parse_expression(match.group(1)))  # type: ignore [union-attr]
             g_context.store(p, [0xd3, n])
         else:
             abort("invalid argument")
@@ -1523,7 +1668,7 @@ def op_LD(p,opargs):
         if match:
             # ld rr, (nn)
             if p == 2:
-                nn = g_context.parse_expression(match.group(1),word=1)
+                nn = cast(int, g_context.parse_expression(match.group(1),word=1))
             else:
                 nn = 0
             instr = prefix
@@ -1536,7 +1681,7 @@ def op_LD(p,opargs):
         else:
             #ld rr, nn
             if p == 2:
-                nn = g_context.parse_expression(arg2,word=1)
+                nn = cast(int, g_context.parse_expression(arg2,word=1))
             else:
                 nn = 0
             instr = prefix
@@ -1550,7 +1695,7 @@ def op_LD(p,opargs):
         if match:
             # ld (nn), rr
             if p == 2:
-                nn = g_context.parse_expression(match.group(1))
+                nn = cast(int, g_context.parse_expression(match.group(1)))
             else:
                 nn = 0
             instr = prefix
@@ -1618,7 +1763,7 @@ def op_LD(p,opargs):
                 if r1 != REG_A:
                     abort("illegal indirection")
                 if p == 2:
-                    nn = g_context.parse_expression(match.group(1), word=1)
+                    nn = cast(int, g_context.parse_expression(match.group(1), word=1))
                     g_context.store(p, [0x3a, nn%256, nn//256])
                 return 3
 
@@ -1626,7 +1771,7 @@ def op_LD(p,opargs):
             instr.append(0x06 + 8 * r1)
             instr.extend(postfix1)
             if p == 2:
-                n = g_context.parse_expression(arg2, byte=1)
+                n = cast(int, g_context.parse_expression(arg2, byte=1))
             else:
                 n = 0
             instr.append(n)
@@ -1644,13 +1789,13 @@ def op_LD(p,opargs):
         match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
         if match:
             if p == 2:
-                nn = g_context.parse_expression(match.group(1), word=1)
+                nn = cast(int, g_context.parse_expression(match.group(1), word=1))
                 g_context.store(p, [0x32, nn%256, nn//256])
             return 3
     abort("LD args not understood - " + arg1 + ", " + arg2)
     return 1
 
-def op_IF(p, opargs):
+def op_IF(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     # WinAPE supports = as equal sym in IF directive while we need ==
     if '=' in opargs and '==' not in opargs and '!=' not in opargs:
@@ -1659,7 +1804,7 @@ def op_IF(p, opargs):
     if g_context.ifstate < IFSTATE_DISCARD:
         # No undefined symbols are allowed in IF expressions or we may
         # calculate wrong other symbols
-        cond = g_context.parse_expression(opargs)
+        cond = cast(int, g_context.parse_expression(opargs))
         if cond:
             g_context.ifstate = IFSTATE_ASSEMBLE
         else:
@@ -1668,7 +1813,7 @@ def op_IF(p, opargs):
         g_context.ifstate = IFSTATE_FIND_END
     return 0
 
-def op_IFNOT(p, opargs):
+def op_IFNOT(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     # WinAPE supports = as equal sym in IF directive while we need ==
     if '=' in opargs and '==' not in opargs and '!=' not in opargs:
@@ -1676,7 +1821,7 @@ def op_IFNOT(p, opargs):
     g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
     if g_context.ifstate < IFSTATE_DISCARD:
         # This is just the oposite as a regular IF
-        cond = g_context.parse_expression(opargs)
+        cond = cast(int, g_context.parse_expression(opargs))
         if cond:
             g_context.ifstate = IFSTATE_DISCARD
         else:
@@ -1685,7 +1830,7 @@ def op_IFNOT(p, opargs):
         g_context.ifstate = IFSTATE_FIND_END
     return 0
 
-def op_ELSE(p, opargs):
+def op_ELSE(p: int, opargs: str) -> int:
     if g_context.ifstate == IFSTATE_ASSEMBLE or g_context.ifstate == IFSTATE_FIND_END:
         g_context.ifstate = IFSTATE_FIND_END
     elif g_context.ifstate == IFSTATE_DISCARD:
@@ -1694,7 +1839,7 @@ def op_ELSE(p, opargs):
             # WinAPE supports = as equal sym in IF directive while we need ==
             if '=' in ifarg and '==' not in ifarg and '!=' not in ifarg:
                 ifarg = ifarg.replace('=','==')
-            cond = g_context.parse_expression(ifarg)
+            cond = cast(int, g_context.parse_expression(ifarg))
             if cond:
                 g_context.ifstate = IFSTATE_ASSEMBLE
             else:
@@ -1705,11 +1850,11 @@ def op_ELSE(p, opargs):
         abort("mismatched ELSE/ELSEIF directive")
     return 0
 
-def op_ELSEIF(p, opargs):
+def op_ELSEIF(p: int, opargs: str) -> int:
     # Pass "IF (cond)" to op_ELSE
     return op_ELSE(p, "IF " + opargs)
 
-def op_ENDIF(p, opargs):
+def op_ENDIF(p: int, opargs: str) -> int:
     check_args(opargs, 0)
 
     if len(g_context.ifstack) == 0:
@@ -1719,7 +1864,7 @@ def op_ENDIF(p, opargs):
     g_context.ifstate = state
     return 0
 
-def op_MACRO(p, opargs):
+def op_MACRO(p: int, opargs: str) -> int:
     # Macros can contain calls to other macros but can not nest macro definitions
     if g_context.applying_macro != None:
         abort("macro definitions cannot be nested")
@@ -1735,7 +1880,7 @@ def op_MACRO(p, opargs):
     g_context.defining_macro = macro
     return 0
 
-def op_MDELETE(p, opargs):
+def op_MDELETE(p: int, opargs: str) -> int:
     # Macros can contain calls to other macros but can delete macro definitions
     if g_context.applying_macro != None:
         abort("macro deletion cannot be used inside a macro definition")
@@ -1745,18 +1890,18 @@ def op_MDELETE(p, opargs):
         del g_context.macros[args[0]]
     return 0
 
-def op_ENDM(p, opargs):
+def op_ENDM(p: int, opargs: str) -> int:
     g_context.defining_macro = None
     return 0
 
-def op__MACRO_ENTER_(p, opargs):
+def op__MACRO_ENTER_(p: int, opargs: str) -> int:
     if g_context.applying_macro != None:
         g_context.macros_stack.append((g_context.applying_macro, g_context.macros_applied))
     g_context.macros_applied = g_context.macros_applied + 1
     g_context.applying_macro = opargs.strip()
     return 0
 
-def op__MACRO_LEAVE_(p, opargs):
+def op__MACRO_LEAVE_(p: int, opargs: str) -> int:
     if len(g_context.macros_stack) > 0:
         g_context.applying_macro, g_context.macros_applied = g_context.macros_stack.pop()
     else:
@@ -1765,7 +1910,7 @@ def op__MACRO_LEAVE_(p, opargs):
 
 ###########################################################################
 
-def create_opdict():
+def create_opdict() -> None:
     """ Get all functions of this module that start with op_ """
     global g_opcode_functions
     g_opcode_functions = {}
@@ -1775,7 +1920,12 @@ def create_opdict():
         if 'op_' == sym[0:3]:
             g_opcode_functions[sym] = fun
 
-def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x4000, tolerance = 0, libpaths=[]):
+def assemble(inputfile: str,
+             outputfile: str|None = None,
+             predefsymbols: list[tuple[str,str]] = [],
+             startaddr: int = 0x4000,
+             tolerance: int = 0,
+             libpaths: list[str] = []) -> None:
     create_opdict()
     if (outputfile == None):
         outputfile = os.path.splitext(inputfile)[0] + ".bin"
@@ -1785,27 +1935,26 @@ def assemble(inputfile, outputfile = None, predefsymbols = [], startaddr = 0x400
     g_context.tolerance = tolerance
     g_context.libpaths = libpaths
     for sym in predefsymbols:
-        sym[0] = sym[0].upper()
+        sym = (sym[0].upper(), sym[1])
         try:
             val = aux_int(sym[1])
         except:
             print("error: invalid format for command-line symbol definition in" + sym[1])
             sys.exit(1)
         g_context.set_symbol(sym[0], aux_int(sym[1]), type='predefined symbol')
-
     g_context.assemble(inputfile, outputfile, startaddr)
 
-def dump_assembledcode():
+def dump_assembledcode() -> None:
     g_context.save_assembledcode(g_context.outputfile)
 
-def aux_int(param):
+def aux_int(param: str) -> int:
     """
     By default, int params are converted assuming base 10.
     To allow hex values we need to 'auto' detect the base.
     """
     return int(param, 0)
 
-def process_args():
+def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog = 'abasm.py',
         description = f'A Z80 assembler focused on the Amstrad CPC. Based on pyz80 but using a dialect compatible with Maxam/WinAPE and RVM.'
@@ -1828,7 +1977,7 @@ def process_args():
     args = parser.parse_args()
     return args
 
-def main():
+def main() -> None:
     global g_context
     args = process_args()
     g_context.verbose = args.verbose
