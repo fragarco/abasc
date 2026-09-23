@@ -3318,7 +3318,8 @@ SUB         rsSetMode(nmode)
 
 # Historial de cambios
 
-- Versión 1.2.6
+- Versión 1.3.0
+  - Nueva librería cpcplus.bas con soporte para las funciones del ASIC incluido en la gama CPC+ 
   - Arreglado un problema con la optimización de los comandos OUT e INP
   - Otros pequeños arreglos y mejoras
 

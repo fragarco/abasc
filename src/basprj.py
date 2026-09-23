@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__= "0.99 beta"
+__version__= "1.3.0"
 
 import argparse
 import os

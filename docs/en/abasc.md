@@ -3373,7 +3373,8 @@ SUB         rsSetMode(nmode)
 
 # Changelog
 
-- Version 1.2.6
+- Version 1.3.0
+  - New cpcplus.bas library with support for CPC+ ASIC features
   - Fixed a problem when optimizing OUT and INP code
   - Some other minor fixes and tweaks
 
