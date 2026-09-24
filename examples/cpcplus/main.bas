@@ -15,12 +15,21 @@ game.menuopt = 0  ' Menu current selected option
 game.start   = 0  ' Game must start (1)
 game.time    = 0
 game.level   = 1
-game.shots   = 9
-game.warps   = 5
-game.xpos    = 0
-game.ypos    = 0
-game.xenemy  = 0
-game.yenemy  = 0
+game.on  	 = 0  ' Tells if the game is running
+
+player.xpos = 0
+player.ypos = 0
+player.xoff = 2
+player.yoff = 1
+player.shots= 9
+
+enemy.img  	= 0
+enemy.xpos  = 0
+enemy.ypos  = 0
+enemy.xoff 	= 2
+enemy.yoff 	= 1
+enemy.warps = 5
+enemy.alive = 1
 
 ' Startup
 MEMORY &897F: SYMBOL AFTER 48
@@ -38,9 +47,12 @@ LABEL game.MAIN
 		IF game.menuopt = 3 THEN GOSUB game.INSTRUCTIONS
 	WEND
 	GOSUB game.START
+	WHILE game.on = 1: GOSUB game.TICK: WEND
+	GOSUB game.END
 GOTO game.MAIN
 
 LABEL game.INIT
+	game.on = 0
 	MODE 1
 	GOSUB defineChars
 	CALL plusEnableAsic()
@@ -211,14 +223,29 @@ LABEL game.DRAWBKG
 RETURN
 
 LABEL game.DRAWVALUES
-	GRAPHICS PEN 3,0:MOVE 32*4,24: PRINT CHR$(48 + game.shots);
-	GRAPHICS PEN 3,0:MOVE 139*4,24:PRINT CHR$(48 + game.warps);
-	GRAPHICS PEN 3,0:MOVE 80*4,24: PRINT CHR$(48 + game.time\10) + CHR$(48 + game.time MOD 10);
+	GRAPHICS PEN 3,0
+	MOVE 32*4,24: PRINT CHR$(48 + player.shots);
+	MOVE 139*4,24:PRINT CHR$(48 + enemy.warps);
+	IF game.time < 10 THEN GRAPHICS PEN 15,0: SOUND 4,50,30,15,1
+	MOVE 80*4,24: PRINT CHR$(48 + game.time\10) + CHR$(48 + game.time MOD 10);
 RETURN
 
 LABEL game.DRAWCHARACTERS
-	CALL plusSetSPriteAttr(7, game.xpos, game.ypos, PLUS.SPMODE1)
-	CALL plusSetSPriteAttr(8, game.xenemy, game.yenemy, PLUS.SPMODE1)
+	SELECT CASE enemy.img
+	CASE 0:
+		CALL plusSetSpriteRes(9, PLUS.SPOFF)
+		CALL plusSetSpriteRes(10, PLUS.SPOFF)
+		CALL plusSetSPriteAttr(8, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+	CASE 1:
+		CALL plusSetSpriteRes(8, PLUS.SPOFF)
+		CALL plusSetSpriteRes(10, PLUS.SPOFF)
+		CALL plusSetSPriteAttr(9, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+	CASE 2:
+		CALL plusSetSpriteRes(8, PLUS.SPOFF)
+		CALL plusSetSpriteRes(9, PLUS.SPOFF)
+		CALL plusSetSPriteAttr(10, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+	END SELECT
+	CALL plusSetSPriteAttr(7, player.xpos, player.ypos, PLUS.SPMODE1)
 RETURN
 
 LABEL game.START
@@ -228,17 +255,22 @@ LABEL game.START
 	CALL plusWaitFrames(4): BORDER 0
 	CALL NOMUSIC: game.playing = 0
 	FOR i=1 TO 31 STEP 2: SOUND 1,0,3,j,0,0,i: NEXT
-	IF game.level = 1 THEN game.time=60 ':dx1=2:dy1=1:dx2=2:dy2=1
-	IF game.level = 2 THEN game.time=50 ':dx2=4:dy2=2
-	IF game.level = 3 THEN game.time=40 ':dx2=6:dy2=3
+	SELECT CASE game.level
+		CASE 1: game.time=60: enemy.xoff = 2: enemy.yoff = 1
+		CASE 2: game.time=50: enemy.xoff = 4: enemy.yoff = 2
+		CASE 3: game.time=40: enemy.xoff = 6: enemy.yoff = 3
+	END SELECT
 	RANDOMIZE TIME
 	game.start = 0
-	game.shots = 9
-	game.warps = 5
-	game.xpos = 314: game.ypos=90
+	game.on = 1
+	player.shots = 9
+	player.xpos = 314: player.ypos=90
+	enemy.img = 0
+	enemy.warps = 5
+	enemy.alive = 1
 	LABEL ENEMYPOS:
-		game.xenemy = INT(RND(1)*607): game.yenemy = INT(RND(1)*170)
-	IF ABS(game.xpos-game.xenemy) < 100 OR ABS(game.ypos-game.yenemy) < 50 THEN GOTO ENEMYPOS
+		enemy.xpos = INT(RND(1)*607): enemy.ypos = INT(RND(1)*170)
+	IF ABS(player.xpos-enemy.xpos) < 100 OR ABS(player.ypos-enemy.ypos) < 50 THEN GOTO ENEMYPOS
 	' GAME SCREEN
 	CLEAR INPUT: CLG: FOR i=0 TO 15:INK i,0: NEXT
 	CALL plusSetSpriteColors(1, @LABEL(color.SPRPALETTE2), 15)
@@ -251,9 +283,79 @@ LABEL game.START
 	WHILE TIME<t!: WEND
 	GRAPHICS PEN 0,1: MOVE 160,220: PRINT "GET READY!";
 	CALL NOMUSIC
+	EVERY 50,0 GOSUB game.COUNTDOWN
+	EVERY 20,1 GOSUB game.SPACESHIPFLASH
+	SOUND 1,375
+RETURN
+
+LABEL game.MOVEPLAYER2
+	CLEAR INPUT
+	IF game.menuopt=2 THEN
+		mov=JOY(0) ' Segundo player humano
+	ELSE
+		dir=INT(RND(1)*8)+1 'Random Direction
+		SELECT CASE dir
+			CASE 1: mov=1
+			CASE 2: mov=2
+			CASE 3: mov=4
+			CASE 4: mov=8
+			CASE 5: mov=5
+			CASE 6: mov=6
+			CASE 7: mov=9
+			CASE 8: mov=10
+		END SELECT
+	END IF
+	IF mov=0 THEN enemy.img=0
+	IF (mov AND 1) THEN enemy.ypos=enemy.ypos-enemy.yoff: enemy.img=0
+	IF (mov AND 2) THEN enemy.ypos=enemy.ypos+enemy.yoff: enemy.img=0
+	IF (mov AND 4) THEN enemy.xpos=enemy.xpos-enemy.xoff: enemy.img=1
+	IF (mov AND 8) THEN enemy.xpos=enemy.xpos+enemy.xoff: enemy.img=2
+	IF enemy.xpos<0 THEN enemy.xpos=0
+	IF enemy.ypos<0 THEN enemy.ypos=0
+	IF enemy.xpos>607 THEN enemy.xpos=607
+	IF enemy.ypos>169 THEN enemy.ypos=169
+	'IF mov>15 AND enemy.warps>0 THEN GOSUB 3400
+RETURN
+
+LABEL game.MOVEPLAYER1
+	CLEAR INPUT
+	IF INKEY(69)=0 THEN player.ypos=player.ypos-player.yoff
+	IF INKEY(67)=0 THEN player.ypos=player.ypos+player.yoff
+	'IF INKEY()=0 THEN player.xpos=player.xpos-player.xoff
+	'IF INKEY()=0 THEN player.xpos=player.xpos+player.xoff
+	IF player.xpos<0 THEN player.xpos=0
+	IF player.ypos<0 THEN player.ypos=0
+	IF player.xpos>624 THEN player.xpos=624
+	IF player.ypos>175 THEN player.ypos=175
+	'IF mov>15 THEN GOSUB 3500
+RETURN
+
+LABEL game.TICK
+	SOUND 1,375
+	GOSUB game.MOVEPLAYER1
+	GOSUB game.MOVEPLAYER2
+	GOSUB game.DRAWVALUES
 	GOSUB game.DRAWCHARACTERS
+	IF game.time=0 THEN game.on=0
+	IF player.shots=0 THEN game.on=0
+RETURN
+
+LABEL game.END
+	REMAIN(0)
+	REMAIN(1)
 	END
 RETURN
+
+LABEL game.COUNTDOWN
+	game.time = game.time - 1
+RETURN
+
+LABEL game.SPACESHIPFLASH
+	OUT &7F00,&B8
+	IF col=0 THEN POKE &643E,&F0:col=1:OUT &7F00,&A0:RETURN
+	IF col=1 THEN POKE &643E,&70:col=0:OUT &7F00,&A0
+RETURN
+
 
 LABEL color.INTROSPR
 	ASM "db &f0,&00,&f0,&01,&f0,&02,&f0,&03,&f0,&04,&f5,&05,&f0,&06"
