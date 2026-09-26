@@ -116,11 +116,13 @@ class ASTNode:
 class Program(ASTNode):
     lines: list["Line"]
     hasevents: bool
+    basicversion: int
 
     def __init__(self, lines: list["Line"]) -> None:
         super().__init__(id="Program")
         self.lines = lines
         self.hasevents = False
+        self.basicversion = 1
 
     def to_json(self) -> dict:
         d = super().to_json()

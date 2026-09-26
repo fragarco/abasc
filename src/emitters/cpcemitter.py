@@ -1506,7 +1506,8 @@ class CPCEmitter:
         """
         self._emit_import("rt_fill")
         self._emit_code("; FILL <ink>")
-        self._raise_warning(WL.HIGH,"FILL is supported only by 664 and 6128 machines", node)
+        if self.program.basicversion <= 1:
+            self._raise_warning(WL.HIGH,"FILL is supported only by 664 and 6128 machines", node)
         self._emit_expression(node.args[0])
         self._emit_code("call    rt_fill")
         self._emit_code(";")
@@ -1711,7 +1712,8 @@ class CPCEmitter:
         self._emit_code(f"call    {FWCALL.GRA_SET_PEN}", info="GRA_SET_PEN")
         if len(node.args) == 2:
             self._emit_expression(node.args[1])
-            self._raise_warning(WL.MEDIUM,"GRAPHICS PEN transparency is supported only by 664 and 6128 machines", node)
+            if self.program.basicversion <= 1:
+                self._raise_warning(WL.MEDIUM,"GRAPHICS PEN transparency is supported only by 664 and 6128 machines", node)
             self._emit_code("ld      a,l")
             self._emit_code(f"call    {FWCALL.GRA_SET_BACK}", info="GRA_SET_BACK")
         self._emit_code(";")
@@ -2351,7 +2353,8 @@ class CPCEmitter:
         omitted, that particular setting is not changed. 
         """
         self._emit_code("; MASK [<integer expression>l[,<first point setting>]")
-        self._raise_warning(WL.HIGH,"MASK is supported only by 664 and 6128 machines", node)
+        if self.program.basicversion <= 1:
+            self._raise_warning(WL.HIGH,"MASK is supported only by 664 and 6128 machines", node)
         self._emit_expression(node.args[0])
         self._emit_code("ld      a,l")
         self._emit_code(f"call    {FWCALL.GRA_SET_LINEMASK}", info="GRA_SET_LINEMASK")
@@ -2562,6 +2565,9 @@ class CPCEmitter:
             self._emit_code(f"jp      {fornode.start_label}")
             self._emit_code(f"{fornode.end_label}:", 0)
         self._emit_code(";")
+
+    def _emit_NOP(self, node:AST.Command) -> None:
+        pass
 
     def _emit_ON_GOSUB(self, node:AST.Command) -> None:
         """

@@ -83,6 +83,7 @@ class LocBasParser:
         self.current_linelabel = ""
         self.unsignedmode = False
         self.hasevents = False
+        self.basicversion = 1
 
     @staticmethod
     def astnode(func: Callable[[LocBasParser], AST.ASTNode]):
@@ -664,6 +665,22 @@ class LocBasParser:
                 self.symtable.add(ident=paramname, info=info, context=self.context)
             self._expect(TokenType.RPAREN)
         return fargs, argtypes
+
+    @astnode
+    def _parse_DEF_ATTRIBUTE(self) -> AST.Command:
+        """<DEF_ATTRIBUTE> ::== DEF ATTRIBUTE(IDENT,INT)"""
+        self._advance()
+        self._expect(TokenType.LPAREN)
+        tk = self._expect(TokenType.IDENT)
+        if tk.lexeme.upper() not in ["BASIC"]:  # Current list of allowed attributes
+            self._raise_error(2, tk, "unknown attribute")
+        self._expect(TokenType.COMMA)
+        tk = self._expect(TokenType.INT)
+        self.basicversion = cast(int, tk.value)
+        if self.basicversion not in [1,2]:
+            self._raise_error(2, tk, "valid values are 1 and 2")
+        self._expect(TokenType.RPAREN)
+        return AST.Command("NOP", args=[])
 
     @astnode
     def _parse_DEF_FN(self) -> AST.DefFN:
@@ -3453,5 +3470,6 @@ class LocBasParser:
                 self._raise_error(24, self.tokens[-1])
         program = AST.Program(lines=lines)
         program.hasevents = self.hasevents
+        program.basicversion = self.basicversion
         return program, self.symtable
 
