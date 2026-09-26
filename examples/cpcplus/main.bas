@@ -30,6 +30,7 @@ enemy.xoff 	= 2
 enemy.yoff 	= 1
 enemy.warps = 5
 enemy.alive = 1
+enemy.color = 0
 
 ' Startup
 MEMORY &897F: SYMBOL AFTER 48
@@ -60,18 +61,18 @@ LABEL game.INIT
 	' Message and color cycling
 	PEN 3
 	LOCATE 7,12: PRINT "LOADING DATA, PLEASE WAIT..."
-	FOR c=0 TO 15
+	FOR i=0 TO 15
 		CALL plusWaitFrames(5)
-		color = plusEncodeColor(c, c, c)
+		color = plusEncodeColor(i, i, i)
 		CALL plusSetPalColor(3, color)
 	NEXT
 	LOAD "music.bin", &8980
 	LOAD "player.bin",&9600
 	game.playing = 0
 	CALL plusSetSpritesData(@LABEL(data.SPRITES), 11)
-	FOR c=15 TO 0 step -1
+	FOR i=15 TO 0 step -1
 		CALL plusWaitFrames(5)
-		color = plusEncodeColor(c, c, c)
+		color = plusEncodeColor(i, i, i)
 		CALL plusSetPalColor(3, color)
 	NEXT
 RETURN
@@ -79,13 +80,13 @@ RETURN
 LABEL game.INTRO
 	MODE 0								' The MODE call enables again the Firmware color update callback
 	CALL plusDisableFirmwareUpdates()   ' So we have to disable it again
-	FOR c=0 to 15
-		CALL plusSetPalColor(c, 0)
+	FOR i=0 to 15
+		CALL plusSetPalColor(i, 0)
 	NEXT
 	LOAD "TITLE.SCR", &C000
 	CALL PLAYER, MUSIC, 0
 	palrow = @LABEL(color.TITLEFADE) + (15 * 30)
-	FOR v=15 TO 0 STEP -1  ' Fade effect has 16 palette rows
+	FOR i=15 TO 0 STEP -1  ' Fade effect has 16 palette rows
 		FRAME
 		CALL plusSetPalColors(1, palrow, 14)
 		palrow = palrow - 30
@@ -289,21 +290,24 @@ LABEL game.START
 RETURN
 
 LABEL game.MOVEPLAYER2
-	CLEAR INPUT
 	IF game.menuopt=2 THEN
 		mov=JOY(0) ' Segundo player humano
 	ELSE
-		dir=INT(RND(1)*8)+1 'Random Direction
-		SELECT CASE dir
-			CASE 1: mov=1
-			CASE 2: mov=2
-			CASE 3: mov=4
-			CASE 4: mov=8
-			CASE 5: mov=5
-			CASE 6: mov=6
-			CASE 7: mov=9
-			CASE 8: mov=10
+		rndvalue=INT(RND*8) 'Random Direction
+		SELECT CASE rndvalue
+			CASE 0: mov=1
+			CASE 1: mov=2
+			CASE 2: mov=4
+			CASE 3: mov=8
+			CASE 4: mov=5
+			CASE 5: mov=6
+			CASE 6: mov=9
+			CASE 7: mov=10
 		END SELECT
+		IF enemy.warps>0 AND ABS(enemy.xpos-player.xpos)<20 AND ABS(enemy.ypos-player.ypos)<10 THEN
+			rndvalue=INT(RND*10)
+			IF enemy.warps<5 THEN mov=mov + 256
+		END IF
 	END IF
 	IF mov=0 THEN enemy.img=0
 	IF (mov AND 1) THEN enemy.ypos=enemy.ypos-enemy.yoff: enemy.img=0
@@ -314,24 +318,26 @@ LABEL game.MOVEPLAYER2
 	IF enemy.ypos<0 THEN enemy.ypos=0
 	IF enemy.xpos>607 THEN enemy.xpos=607
 	IF enemy.ypos>169 THEN enemy.ypos=169
-	'IF mov>15 AND enemy.warps>0 THEN GOSUB 3400
+	IF mov>15 AND enemy.warps>0 THEN GOSUB game.FIREWARP
 RETURN
 
 LABEL game.MOVEPLAYER1
-	CLEAR INPUT
 	IF INKEY(69)=0 THEN player.ypos=player.ypos-player.yoff
 	IF INKEY(67)=0 THEN player.ypos=player.ypos+player.yoff
-	'IF INKEY()=0 THEN player.xpos=player.xpos-player.xoff
-	'IF INKEY()=0 THEN player.xpos=player.xpos+player.xoff
+	IF INKEY(34)=0 THEN player.xpos=player.xpos-player.xoff
+	IF INKEY(27)=0 THEN player.xpos=player.xpos+player.xoff
 	IF player.xpos<0 THEN player.xpos=0
 	IF player.ypos<0 THEN player.ypos=0
 	IF player.xpos>624 THEN player.xpos=624
 	IF player.ypos>175 THEN player.ypos=175
-	'IF mov>15 THEN GOSUB 3500
+	IF INKEY(47)=0 THEN
+		GOSUB game.FIRELASER
+		IF player.shots = 0 AND enemy.alive THEN game.on = 0
+	END IF
 RETURN
 
 LABEL game.TICK
-	SOUND 1,375
+	CLEAR INPUT
 	GOSUB game.MOVEPLAYER1
 	GOSUB game.MOVEPLAYER2
 	GOSUB game.DRAWVALUES
@@ -340,9 +346,72 @@ LABEL game.TICK
 	IF player.shots=0 THEN game.on=0
 RETURN
 
+LABEL game.EXPLOSION
+	enemy.alive = 0
+	game.on = 0
+RETURN
+
+LABEL game.FIRELASER
+	player.shots = player.shots - 1
+	GRAPHICS PEN 3,1: MOVE 0,36: DRAW player.xpos+6, (195-player.ypos)*2
+	MOVE 639,36: DRAW player.xpos+6, (195-player.ypos)*2
+	BORDER 0
+	i=15
+	FOR j=1 TO 31 STEP 2
+		SOUND 1,0,3,i,0,0,j: v=v-1
+	NEXT
+	FRAME
+	GRAPHICS PEN 0: MOVE 0,36: DRAW player.xpos+6, (195-player.ypos)*2
+	MOVE 639,36: DRAW player.xpos+6, (195-player.ypos)*2
+	SELECT CASE enemy.img
+	CASE 0:
+		IF enemy.xpos-(player.xpos+6)>0 THEN RETURN
+		IF (player.xpos+6)-enemy.xpos>30 THEN RETURN
+		IF (enemy.ypos+3)-(player.ypos+3)>0 THEN RETURN
+		IF (player.ypos+3)-enemy.ypos>10 THEN RETURN
+	CASE 1:
+		IF enemy.xpos-(player.xpos+6)>0 THEN RETURN
+		IF (player.xpos+6)-enemy.xpos>24 THEN RETURN
+		IF (enemy.ypos+2)-(player.ypos+3)>0 THEN RETURN
+		IF (player.ypos+3)-enemy.ypos>12 THEN RETURN
+	CASE 2:
+		IF (enemy.xpos-6)-(player.xpos-6)>0 THEN RETURN
+		IF (player.xpos+6)-enemy.xpos>30 THEN RETURN
+		IF (enemy.ypos+2)-(player.ypos+3)>0 THEN RETURN
+		IF (player.ypos+2)-enemy.ypos>12 THEN RETURN
+	END SELECT
+	GOSUB game.EXPLOSION
+RETURN
+
+LABEL game.FIREWARP
+	REMAIN(1)
+	enemy.warps = enemy.warps - 1
+	SOUND 2,20,90,15,0,1
+	palrow = @LABEL(color.CYCLEWARP)
+	FOR i=1 TO 15
+		CALL plusSetSpriteColors(1, palrow + i*30, 15)
+		FRAME
+	NEXT
+	LABEL NEWENEMYPOS
+		enemy.xpos=INT(RND*614)
+		enemy.ypos=INT(RND*169)
+	IF ABS(player.xpos-enemy.xpos)<100 OR ABS(player.ypos-enemy.ypos)<50 THEN GOTO NEWENEMYPOS
+	GOSUB game.DRAWCHARACTERS
+	FOR i=14 TO 0 STEP -1
+		CALL plusSetSpriteColors(1, palrow + i*30, 15)
+		FRAME
+	NEXT
+	EVERY 20,1 GOSUB game.SPACESHIPFLASH
+RETURN
+
 LABEL game.END
 	REMAIN(0)
 	REMAIN(1)
+	IF enemy.alive=0 THEN
+		PRINT "PLAYER 1 WINS!!"
+	ELSE
+		PRINT "ENEMY WINS!!"
+	END IF
 	END
 RETURN
 
@@ -351,11 +420,17 @@ LABEL game.COUNTDOWN
 RETURN
 
 LABEL game.SPACESHIPFLASH
+	' Change directly one sprite palette's color
 	OUT &7F00,&B8
-	IF col=0 THEN POKE &643E,&F0:col=1:OUT &7F00,&A0:RETURN
-	IF col=1 THEN POKE &643E,&70:col=0:OUT &7F00,&A0
+	IF enemy.color=0 THEN
+		enemy.color=1
+		POKE &643E,&F0
+	ELSE 
+		enemy.color=0
+		POKE &643E,&70
+	END IF
+	OUT &7F00,&A0
 RETURN
-
 
 LABEL color.INTROSPR
 	ASM "db &f0,&00,&f0,&01,&f0,&02,&f0,&03,&f0,&04,&f5,&05,&f0,&06"
