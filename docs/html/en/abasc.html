@@ -343,6 +343,8 @@ href="#declare-variable-fixed-length"><code>DECLARE variable[$ FIXED length],...
 <li><a
 href="#decnumber-pattern"><code>DEC$(number, pattern)</code></a></li>
 <li><a
+href="#def-attributeparamvalue"><code>DEF ATTRIBUTE(param,value)</code></a></li>
+<li><a
 href="#def-fn-nameparameters--expression"><code>DEF FN name(parameters) = expression</code></a></li>
 <li><a
 href="#defint-defstr-defreal"><code>DEFINT, DEFSTR, DEFREAL</code></a></li>
@@ -499,6 +501,8 @@ href="#renum-new-line-origin-line-step"><code>RENUM new-line, origin-line, step<
 <li><a href="#run-label--file"><code>RUN [label | file]</code></a></li>
 <li><a
 href="#save-filetypeaddresssizeentry"><code>SAVE file[,type][,address,size[,entry]]</code></a></li>
+<li><a
+href="#select-case-integer-expression"><code>SELECT CASE integer expression</code></a></li>
 <li><a href="#sgnx"><code>SGN(x)</code></a></li>
 <li><a
 href="#shared-variable--array-variable--array"><code>SHARED variable | array [,variable | array]</code></a></li>
@@ -1559,6 +1563,21 @@ converts <code>number</code> to a string using a pattern to define the
 number of spaces before or after the decimal point. Only the use of
 <code>#</code> to indicate digits is supported.</p>
 <pre class="basic"><code>PRINT DEC$(15.5, &quot;###.##&quot;)</code></pre>
+<h3
+id="def-attributeparamvalue"><code>DEF ATTRIBUTE(param,value)</code></h3>
+<p><strong>Command</strong>. Allows an attribute of the compilation to
+be set directly from the code. Currently, only the BASIC version
+attribute is available. By default, ABASC assumes that the generated
+code is intended to run on any CPC model in the range, starting with the
+CPC 464 (BASIC 1.0). As a result, the compiler issues several warnings
+if it detects the use of commands that are only available in BASIC
+1.1.</p>
+<p>By using this command, it is possible to indicate that these commands
+are intended to be used without generating warnings, as it is assumed
+that the target machine will be at least an Amstrad CPC 664.</p>
+<p>The possible values for the <strong>BASIC</strong> attribute are: 1
+(BASIC 1.0) or 2 (BASIC 1.1).</p>
+<pre class="text"><code>DEF ATTRIBUTE(BASIC,2)</code></pre>
 <h3
 id="def-fn-nameparameters-expression"><code>DEF FN name(parameters) = expression</code></h3>
 <p><strong>Command</strong>. Declares a single-line function applying
@@ -2722,6 +2741,33 @@ SAVE &quot;pantalla.bin&quot;,B,&amp;C000,&amp;4000
 PAPER 0
 CLS
 LOAD &quot;pantalla.bin&quot;</code></pre>
+<h3
+id="select-case-integer-expression"><code>SELECT CASE integer expression</code></h3>
+<p><code>SELECT CASE</code> statements perform a very similar role to
+<code>IF</code> statements. Both can be used to select actions to be
+carried out when particular conditions are met. In fact, it is always
+possible to construct an <code>IF</code> statement that performs the
+same task as a <code>SELECT CASE</code> statement.</p>
+<p>The advantage of <code>SELECT CASE</code> is that it evaluates a
+single integer expression and then executes different statements
+depending on the resulting value. Unlike <code>IF</code> statements, the
+values specified in each <code>CASE</code> must be integer values; they
+cannot themselves be expressions to be evaluated. In this way,
+<code>SELECT CASE</code> can be seen as an advanced version of
+<code>ON GOTO</code>/<code>ON GOSUB</code>.</p>
+<p><code>CASE DEFAULT</code> is an optional condition that will be
+executed if all other conditions failed.</p>
+<pre class="text"><code>INPUT a
+SELECT CASE a
+CASE 0:
+    PRINT &quot;YOU ENTERED A 0&quot;
+CASE 1:
+    PRINT &quot;YOU ENTERED A 1&quot;
+CASE 2:
+    PRINT &quot;YOU ENTERED A 2&quot;
+CASE DEFAULT:
+    PRINT &quot;YOU ENTERED SOMETHING DIFFERENT FROM 0, 1 OR 2&quot;
+END CASE</code></pre>
 <h3 id="sgnx"><code>SGN(x)</code></h3>
 <p><strong>Function.</strong> Returns <strong>–1</strong> if
 <code>x</code> is less than 0, <strong>0</strong> if <code>x</code> is
@@ -3258,13 +3304,13 @@ commands from the directory containing <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Type checking:</strong></li>
 </ul>
-<div class="sourceCode" id="cb130"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb132"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Unit testing:</strong></li>
 </ul>
-<div class="sourceCode" id="cb131"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb133"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finally, the <code>examples</code> directory contains several sample
 programs that can be compiled and also used for testing and
 experimenting with the compiler.</p>
@@ -4054,6 +4100,8 @@ version 2 and version 2 plus.</p>
 <li>Version 1.3.0
 <ul>
 <li>New cpcplus.bas library with support for CPC+ ASIC features</li>
+<li>The new command DEF ATTRIBUTE() allows to set compilation attributes
+from code.</li>
 <li>Fixed a problem when optimizing OUT and INP code</li>
 <li>Some other minor fixes and tweaks</li>
 </ul></li>

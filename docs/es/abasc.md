@@ -64,6 +64,7 @@
     - [`DATA lista-de-constantes`](#data-lista-de-constantes)
     - [`DECLARE variable[$ FIXED longitud]),...`](#declare-variable-fixed-longitud)
     - [`DEC$(numero,patron)`](#decnumeropatron)
+    - [`DEF ATTRIBUTE(param,value)`](#def-attributeparamvalue)
     - [`DEF FN nombre(parametros)=expresion`](#def-fn-nombreparametrosexpresion)
     - [`DEFINT, DEFSTR, DEFREAL`](#defint-defstr-defreal)
     - [`DEG`](#deg)
@@ -174,6 +175,7 @@
     - [`RTRIM$(string)`](#rtrimstring)
     - [`RUN [etiqueta | fichero]`](#run-etiqueta--fichero)
     - [`SAVE fichero[,tipo][,dirección,tamaño[,entrada]]`](#save-ficherotipodireccióntamañoentrada)
+    - [`SELECT CASE expresion entera`](#select-case-expresion-entera)
     - [`SGN(x)`](#sgnx)
     - [`SHARED variable | array [,variable | array]`](#shared-variable--array-variable--array)
     - [`SIN(x)`](#sinx)
@@ -935,6 +937,18 @@ Función. Esta función apareció con la versión 1.1 de BASIC. Permite converti
 
 ```basic
 PRINT DEC$(15.5, "###.##")
+```
+
+### `DEF ATTRIBUTE(param,value)`
+
+Comando. Permite establecer desde el código un atributo de la compilación. Actualmente, solo está disponible el atributo correspondiente a la versión de BASIC. Por defecto, ABASC supone que el código generado tiene como destino cualquier CPC de la gama, empezando por el 464 (BASIC 1.0). Como resultado, el compilador muestra varios *warnings* si detecta el uso de comandos que solo están disponibles en BASIC 1.1.
+
+Mediante el uso de este comando, es posible indicar que se desean utilizar dichos comandos sin generar advertencias, ya que se asume que la máquina de destino será, como mínimo, un Amstrad CPC 664.
+
+Los posibles valores para el atributo **BASIC** son: 1 (BASIC 1.0) o 2 (BASIC 1.1).
+
+```
+DEF ATTRIBUTE(BASIC,2)
 ```
 
 ### `DEF FN nombre(parametros)=expresion`
@@ -1953,6 +1967,28 @@ SAVE "pantalla.bin",B,&C000,&4000
 PAPER 0
 CLS
 LOAD "pantalla.bin"
+```
+
+### `SELECT CASE expresion entera`
+
+Las sentencias `SELECT CASE` desempeñan una función muy similar a las sentencias `IF`. Ambas permiten seleccionar las acciones que se llevarán a cabo cuando se cumplen determinadas condiciones. De hecho, siempre es posible construir una sentencia `IF` que realice la misma tarea que una sentencia `SELECT CASE`.
+
+La ventaja de `SELECT CASE` es que evalúa una única expresión entera y, a continuación, ejecuta diferentes sentencias en función del valor resultante. A diferencia de las sentencias `IF`, los valores especificados en cada `CASE` deben ser valores enteros; no pueden ser, a su vez, expresiones que deban ser evaluadas. De este modo, `SELECT CASE` puede considerarse una versión avanzada de `ON GOTO`/`ON GOSUB`.
+
+`CASE DEFAULT` es una opción optativa que se ejecutará si el resto de condiciones han fallado.
+
+```
+INPUT a
+SELECT CASE a
+CASE 0:
+    PRINT "YOU ENTERED A 0"
+CASE 1:
+    PRINT "YOU ENTERED A 1"
+CASE 2:
+    PRINT "YOU ENTERED A 2"
+CASE DEFAULT:
+    PRINT "YOU ENTERED SOMETHING DIFFERENT FROM 0, 1 OR 2"
+END CASE
 ```
 
 ### `SGN(x)`
@@ -3319,7 +3355,8 @@ SUB         rsSetMode(nmode)
 # Historial de cambios
 
 - Versión 1.3.0
-  - Nueva librería cpcplus.bas con soporte para las funciones del ASIC incluido en la gama CPC+ 
+  - Nueva librería cpcplus.bas con soporte para las funciones del ASIC incluido en la gama CPC+
+  - Nuevo comando para establecer attributos de la compilación: DEF ATTRIBUTE()
   - Arreglado un problema con la optimización de los comandos OUT e INP
   - Otros pequeños arreglos y mejoras
 

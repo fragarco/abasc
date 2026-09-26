@@ -64,6 +64,7 @@
     - [`DATA list-of-constants`](#data-list-of-constants)
     - [`DECLARE variable[$ FIXED length],...`](#declare-variable-fixed-length)
     - [`DEC$(number, pattern)`](#decnumber-pattern)
+    - [`DEF ATTRIBUTE(param,value)`](#def-attributeparamvalue)
     - [`DEF FN name(parameters) = expression`](#def-fn-nameparameters--expression)
     - [`DEFINT, DEFSTR, DEFREAL`](#defint-defstr-defreal)
     - [`DEG`](#deg)
@@ -174,6 +175,7 @@
     - [`RTRIM$(string)`](#rtrimstring)
     - [`RUN [label | file]`](#run-label--file)
     - [`SAVE file[,type][,address,size[,entry]]`](#save-filetypeaddresssizeentry)
+    - [`SELECT CASE integer expression`](#select-case-integer-expression)
     - [`SGN(x)`](#sgnx)
     - [`SHARED variable | array [,variable | array]`](#shared-variable--array-variable--array)
     - [`SIN(x)`](#sinx)
@@ -938,6 +940,18 @@ DECLARE A             ' declares integer A
 
 ```basic
 PRINT DEC$(15.5, "###.##")
+```
+
+### `DEF ATTRIBUTE(param,value)`
+
+**Command**. Allows an attribute of the compilation to be set directly from the code. Currently, only the BASIC version attribute is available. By default, ABASC assumes that the generated code is intended to run on any CPC model in the range, starting with the CPC 464 (BASIC 1.0). As a result, the compiler issues several warnings if it detects the use of commands that are only available in BASIC 1.1.
+
+By using this command, it is possible to indicate that these commands are intended to be used without generating warnings, as it is assumed that the target machine will be at least an Amstrad CPC 664.
+
+The possible values for the **BASIC** attribute are: 1 (BASIC 1.0) or 2 (BASIC 1.1).
+
+```text
+DEF ATTRIBUTE(BASIC,2)
 ```
 
 ### `DEF FN name(parameters) = expression`
@@ -1976,6 +1990,28 @@ SAVE "pantalla.bin",B,&C000,&4000
 PAPER 0
 CLS
 LOAD "pantalla.bin"
+```
+
+### `SELECT CASE integer expression`
+
+`SELECT CASE` statements perform a very similar role to `IF` statements. Both can be used to select actions to be carried out when particular conditions are met. In fact, it is always possible to construct an `IF` statement that performs the same task as a `SELECT CASE` statement.
+
+The advantage of `SELECT CASE` is that it evaluates a single integer expression and then executes different statements depending on the resulting value. Unlike `IF` statements, the values specified in each `CASE` must be integer values; they cannot themselves be expressions to be evaluated. In this way, `SELECT CASE` can be seen as an advanced version of `ON GOTO`/`ON GOSUB`.
+
+`CASE DEFAULT` is an optional condition that will be executed if all other conditions failed.
+
+```text
+INPUT a
+SELECT CASE a
+CASE 0:
+    PRINT "YOU ENTERED A 0"
+CASE 1:
+    PRINT "YOU ENTERED A 1"
+CASE 2:
+    PRINT "YOU ENTERED A 2"
+CASE DEFAULT:
+    PRINT "YOU ENTERED SOMETHING DIFFERENT FROM 0, 1 OR 2"
+END CASE
 ```
 
 ### `SGN(x)`
@@ -3375,6 +3411,7 @@ SUB         rsSetMode(nmode)
 
 - Version 1.3.0
   - New cpcplus.bas library with support for CPC+ ASIC features
+  - The new command DEF ATTRIBUTE() allows to set compilation attributes from code.
   - Fixed a problem when optimizing OUT and INP code
   - Some other minor fixes and tweaks
 

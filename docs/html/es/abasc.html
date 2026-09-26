@@ -347,6 +347,8 @@ href="#data-lista-de-constantes"><code>DATA lista-de-constantes</code></a></li>
 href="#declare-variable-fixed-longitud"><code>DECLARE variable[$ FIXED longitud]),...</code></a></li>
 <li><a href="#decnumeropatron"><code>DEC$(numero,patron)</code></a></li>
 <li><a
+href="#def-attributeparamvalue"><code>DEF ATTRIBUTE(param,value)</code></a></li>
+<li><a
 href="#def-fn-nombreparametrosexpresion"><code>DEF FN nombre(parametros)=expresion</code></a></li>
 <li><a
 href="#defint-defstr-defreal"><code>DEFINT, DEFSTR, DEFREAL</code></a></li>
@@ -498,6 +500,8 @@ href="#renum-nueva-linea-linea-origen-incremento"><code>RENUM nueva-linea, linea
 href="#run-etiqueta--fichero"><code>RUN [etiqueta | fichero]</code></a></li>
 <li><a
 href="#save-ficherotipodireccióntamañoentrada"><code>SAVE fichero[,tipo][,dirección,tamaño[,entrada]]</code></a></li>
+<li><a
+href="#select-case-expresion-entera"><code>SELECT CASE expresion entera</code></a></li>
 <li><a href="#sgnx"><code>SGN(x)</code></a></li>
 <li><a
 href="#shared-variable--array-variable--array"><code>SHARED variable | array [,variable | array]</code></a></li>
@@ -1609,6 +1613,21 @@ indicar el número de espacios antes o después del punto decimal. A la
 hora de indicar el patrón, solo se soporta el uso de <code>#</code> para
 indicar dígitos.</p>
 <pre class="basic"><code>PRINT DEC$(15.5, &quot;###.##&quot;)</code></pre>
+<h3
+id="def-attributeparamvalue"><code>DEF ATTRIBUTE(param,value)</code></h3>
+<p>Comando. Permite establecer desde el código un atributo de la
+compilación. Actualmente, solo está disponible el atributo
+correspondiente a la versión de BASIC. Por defecto, ABASC supone que el
+código generado tiene como destino cualquier CPC de la gama, empezando
+por el 464 (BASIC 1.0). Como resultado, el compilador muestra varios
+<em>warnings</em> si detecta el uso de comandos que solo están
+disponibles en BASIC 1.1.</p>
+<p>Mediante el uso de este comando, es posible indicar que se desean
+utilizar dichos comandos sin generar advertencias, ya que se asume que
+la máquina de destino será, como mínimo, un Amstrad CPC 664.</p>
+<p>Los posibles valores para el atributo <strong>BASIC</strong> son: 1
+(BASIC 1.0) o 2 (BASIC 1.1).</p>
+<pre><code>DEF ATTRIBUTE(BASIC,2)</code></pre>
 <h3
 id="def-fn-nombreparametrosexpresion"><code>DEF FN nombre(parametros)=expresion</code></h3>
 <p>Comando. Permite declarar una función que aplicará la expresión de la
@@ -2750,6 +2769,35 @@ SAVE &quot;pantalla.bin&quot;,B,&amp;C000,&amp;4000
 PAPER 0
 CLS
 LOAD &quot;pantalla.bin&quot;</code></pre>
+<h3
+id="select-case-expresion-entera"><code>SELECT CASE expresion entera</code></h3>
+<p>Las sentencias <code>SELECT CASE</code> desempeñan una función muy
+similar a las sentencias <code>IF</code>. Ambas permiten seleccionar las
+acciones que se llevarán a cabo cuando se cumplen determinadas
+condiciones. De hecho, siempre es posible construir una sentencia
+<code>IF</code> que realice la misma tarea que una sentencia
+<code>SELECT CASE</code>.</p>
+<p>La ventaja de <code>SELECT CASE</code> es que evalúa una única
+expresión entera y, a continuación, ejecuta diferentes sentencias en
+función del valor resultante. A diferencia de las sentencias
+<code>IF</code>, los valores especificados en cada <code>CASE</code>
+deben ser valores enteros; no pueden ser, a su vez, expresiones que
+deban ser evaluadas. De este modo, <code>SELECT CASE</code> puede
+considerarse una versión avanzada de
+<code>ON GOTO</code>/<code>ON GOSUB</code>.</p>
+<p><code>CASE DEFAULT</code> es una opción optativa que se ejecutará si
+el resto de condiciones han fallado.</p>
+<pre><code>INPUT a
+SELECT CASE a
+CASE 0:
+    PRINT &quot;YOU ENTERED A 0&quot;
+CASE 1:
+    PRINT &quot;YOU ENTERED A 1&quot;
+CASE 2:
+    PRINT &quot;YOU ENTERED A 2&quot;
+CASE DEFAULT:
+    PRINT &quot;YOU ENTERED SOMETHING DIFFERENT FROM 0, 1 OR 2&quot;
+END CASE</code></pre>
 <h3 id="sgnx"><code>SGN(x)</code></h3>
 <p>Función. Devuelve -1 si <code>x</code> es menor que 0, devuelve 0 si
 <code>x</code>es igual a 0 o devuelve 1 si <code>x</code> es mayor que
@@ -3280,13 +3328,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb129"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb131"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb130"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb132"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>
@@ -4081,6 +4129,8 @@ describe a continuación.</p>
 <ul>
 <li>Nueva librería cpcplus.bas con soporte para las funciones del ASIC
 incluido en la gama CPC+</li>
+<li>Nuevo comando para establecer attributos de la compilación: DEF
+ATTRIBUTE()</li>
 <li>Arreglado un problema con la optimización de los comandos OUT e
 INP</li>
 <li>Otros pequeños arreglos y mejoras</li>
