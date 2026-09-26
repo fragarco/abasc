@@ -5095,6 +5095,8 @@ class CPCEmitter:
         return program + "_program_end_:\n"
 
     def emit_program(self) -> tuple[str, int]:
+        vbasic = "1.1" if self.program.basicversion > 1 else "1.0"
+        print("Target BASIC version:", vbasic)
         print("Generating assembly code...")
         self.asm = ""
         self._emit_preamble()
