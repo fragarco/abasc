@@ -8,11 +8,12 @@ REM * USAGE: make [clear][dsk]
 
 @setlocal
 
-set SOURCE=GAME
-set TARGET=GAME
+set SOURCE=main
+set TARGET=mchase
 
 set COMPILE=python3 ../../src/abasc.py
 set DSK=python3 ../../src/utils/dsk.py
+set DATAADDR=0x8000
 
 IF "%1"=="clear" (
     IF EXIST "*.bpp" del "*.bpp"
@@ -27,15 +28,13 @@ IF "%1"=="clear" (
     IF EXIST "*.dsk" del "*.dsk"
     IF EXIST "*.cdt" del "*.cdt"
 ) ELSE IF "%1"=="dsk" (
-    call %COMPILE% MAIN.BAS --data=0x8000 %2 %3
-    IF errorlevel 1 EXIT /b %errorlevel%
-    call %DSK% MCHASE.DSK -n --put-bin MAIN.BIN --load-addr=0x0040 --start-addr=0x0040
-    call %DSK% MCHASE.DSK --put-raw assets/TITLE.SCR
-    call %DSK% MCHASE.DSK --put-bin assets/MUSIC.BIN
-    call %DSK% MCHASE.DSK --put-raw assets/INSTR.SCR
-    call %DSK% MCHASE.DSK --put-bin assets/PLAYER.BIN
+    call %DSK% %TARGET%.dsk -n --put-raw assets/TITLE.SCR
+    call %DSK% %TARGET%.dsk --put-raw assets/INSTR.SCR
+    call %DSK% %TARGET%.dsk --put-raw assets/MUSIC.BIN
+    call %DSK% %TARGET%.dsk --put-raw assets/PLAYER.BIN
+    call %COMPILE% %SOURCE%.bas --data=%DATAADDR% %2 %3 && call %DSK% %TARGET%.dsk --put-bin %SOURCE%.bin --load-addr=0x0040 --start-addr=0x0040
 ) ELSE (
-    call %COMPILE% MAIN.BAS --data=0x8000 %*
+    call %COMPILE% %SOURCE%.bas --data=%DATAADDR% %*
 )
 
 @endlocal

@@ -419,7 +419,7 @@ LABEL game.END
 	IF enemy.alive=0 THEN
 		PRINT "player "+CHR$(131)+" wins!!";
 	ELSE
-		IF game.menuopt=1 THEN PRINT "cpu wins!!"; ELSE PRINT "player "+CHR$(132)+" wins!!";
+		IF game.menuopt=1 THEN PRINT "   cpu wins!!  "; ELSE PRINT "player "+CHR$(132)+" wins!!";
 	END IF
 	CALL PLAYER,MUSIC,3
 	t!=TIME+1100: WHILE TIME<t!: WEND
