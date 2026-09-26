@@ -13,8 +13,7 @@ CONST NOMUSIC= &9603
 game.playing = 0  ' Set if the music is already playing
 game.menuopt = 0  ' Menu current selected option
 game.start   = 0  ' Game must start (1)
-game.time    = 0
-game.level   = 1
+game.seconds = 0
 game.on  	 = 0  ' Tells if the game is running
 
 player.xpos = 0
@@ -30,17 +29,18 @@ enemy.xoff 	= 2
 enemy.yoff 	= 1
 enemy.warps = 5
 enemy.alive = 1
-enemy.color = 0
+enemy.ticks = 0
+enemy.mov   = 0
 
 ' Startup
-MEMORY &897F: SYMBOL AFTER 48
+MEMORY &897F: SYMBOL AFTER 97
 BORDER 0: INK 0,0: INK 1,0
 ENV 1,15,-1,2
 ENT -1,4,50,2,4,-50,2
 
 GOSUB game.INIT
+GOSUB game.INTRO
 LABEL game.MAIN
-	GOSUB game.INTRO
 	WHILE game.start = 0
 		GOSUB game.MENU
 		IF game.menuopt = 1 THEN game.start = 1
@@ -60,7 +60,7 @@ LABEL game.INIT
 	CALL plusDisableFirmwareUpdates()
 	' Message and color cycling
 	PEN 3
-	LOCATE 7,12: PRINT "LOADING DATA, PLEASE WAIT..."
+	LOCATE 7,12: PRINT "loading data, please wait..."
 	FOR i=0 TO 15
 		CALL plusWaitFrames(5)
 		color = plusEncodeColor(i, i, i)
@@ -103,11 +103,11 @@ LABEL game.INTRO
 	palrow = @LABEL(color.INTROSPR)
 	LABEL loop
 		IF JOY(0)>15 OR INKEY(47)=0 THEN GOTO endloop
-		CALL plusSetSpriteColors(1, palrow, 14)
+		CALL plusSetSpriteColors(1, palrow, 7)
 		color = plusEncodeColor(fadestep, fadestep, fadestep)
 		CALL plusSetPalColor(16, color)
 		fadestep = fadestep + fadedir
-		IF fadestep MOD 2 = 0 THEN palrow = palrow + (28 * fadedir)  ' 5 rows of 14 colors of 2 bytes
+		IF fadestep MOD 2 = 0 THEN palrow = palrow + (14 * fadedir)  ' 5 rows of 7 colors of 2 bytes
 		IF fadestep=9 THEN fadedir = -1
 		IF fadestep=1 THEN fadedir = 1
 		CALL plusWaitFrames(3)
@@ -133,12 +133,14 @@ LABEL game.INTRO
 	palrow = @LABEL(color.TITLEFADE) + 30 ' Lets start in row 2 as we are already in row 1
 	FOR v=1 TO 15
 		FRAME
-		CALL plusSetPalColors(1, palrow, 14)
+		CALL plusSetPalColors(1, palrow, 15)
 		palrow = palrow + 30
 	NEXT
 RETURN
 
 LABEL game.MENU
+	palrow = @LABEL(color.INTROSPR)
+	CALL plusSetSpriteColors(1, palrow, 7)
 	game.menuopt = 1					' In this case we use regular Firmware INK calls to control
 	MODE 0: CLG: RANDOMIZE TIME: TAG	' colors so we do not stop the Firmware update callback
 	FOR i=0 TO 15: INK i,0: NEXT
@@ -151,16 +153,16 @@ LABEL game.MENU
 	FOR i=0 TO 60
 		PLOT INT(RND(1)*639), INT(RND(1)*399), 7
 	NEXT
-	MOVE 38,368: GRAPHICS PEN 6,1: PRINT "+++ MEGA CHASE +++";
-	MOVE 35,370: GRAPHICS PEN 9,1: PRINT"++";: GRAPHICS PEN 10,1: PRINT"+ M";: GRAPHICS PEN 11,1: PRINT "EG";: GRAPHICS PEN 12,1: PRINT "A CH";
-	GRAPHICS PEN 11,1: PRINT "AS";: GRAPHICS PEN 10,1: PRINT "E ++";: GRAPHICS PEN 9,1: PRINT "+";
-	MOVE 222,340: GRAPHICS PEN 15,1: PRINT "-2026-";
-	MOVE 16,290:  GRAPHICS PEN 13,1: PRINT "CODE,GFX & SOUND BY";
-	MOVE 180,270: GRAPHICS PEN 14,1: PRINT "SHAD0WFAX";
-	MOVE 100,200: GRAPHICS PEN 8:PRINT "SELECT OPTION:";
-	MOVE 180,140: GRAPHICS PEN 3:PRINT "1 PLAYER";
-	MOVE 180,104: GRAPHICS PEN 4:PRINT "2 PLAYERS";
-	MOVE 180,66:  GRAPHICS PEN 5: PRINT "INSTRUCTIONS";
+	MOVE 38,368: GRAPHICS PEN 6,1: PRINT "+++ mega chase +++";
+	MOVE 35,370: GRAPHICS PEN 9,1: PRINT"++";: GRAPHICS PEN 10,1: PRINT"+ m";: GRAPHICS PEN 11,1: PRINT "eg";: GRAPHICS PEN 12,1: PRINT "a ch";
+	GRAPHICS PEN 11,1: PRINT "as";: GRAPHICS PEN 10,1: PRINT "E ++";: GRAPHICS PEN 9,1: PRINT "+";
+	MOVE 222,340: GRAPHICS PEN 15,1: PRINT "-"+CHR$(132)+CHR$(130)+CHR$(132)+CHR$(136)+"-";
+	MOVE 16,290:  GRAPHICS PEN 13,1: PRINT "code,gfx & sound by";
+	MOVE 180,270: GRAPHICS PEN 14,1: PRINT "shad0wfax";
+	MOVE 100,200: GRAPHICS PEN 8:PRINT "select option:";
+	MOVE 180,140: GRAPHICS PEN 3:PRINT CHR$(131)+" player";
+	MOVE 180,104: GRAPHICS PEN 4:PRINT CHR$(132)+" players";
+	MOVE 180,66:  GRAPHICS PEN 5: PRINT "instructions";
 	INK 1,26,13:INK 2,13,26:INK 3,26:INK 4,26:INK 5,26:INK 6,13:INK 7,24,22
 	INK 8,6,3:INK 9,3:INK 10,6:INK 11,15:INK 12,24:INK 13,18:INK 14,11:INK 15,8
 	' Move selection arrow
@@ -225,10 +227,9 @@ RETURN
 
 LABEL game.DRAWVALUES
 	GRAPHICS PEN 3,0
-	MOVE 32*4,24: PRINT CHR$(48 + player.shots);
-	MOVE 139*4,24:PRINT CHR$(48 + enemy.warps);
-	IF game.time < 10 THEN GRAPHICS PEN 15,0: SOUND 4,50,30,15,1
-	MOVE 80*4,24: PRINT CHR$(48 + game.time\10) + CHR$(48 + game.time MOD 10);
+	MOVE 32*4,24: PRINT CHR$(130 + player.shots);
+	MOVE 139*4,24:PRINT CHR$(130 + enemy.warps);
+	MOVE 80*4,24: PRINT CHR$(130 + game.seconds\10) + CHR$(130 + game.seconds MOD 10);
 RETURN
 
 LABEL game.DRAWCHARACTERS
@@ -256,19 +257,18 @@ LABEL game.START
 	CALL plusWaitFrames(4): BORDER 0
 	CALL NOMUSIC: game.playing = 0
 	FOR i=1 TO 31 STEP 2: SOUND 1,0,3,j,0,0,i: NEXT
-	SELECT CASE game.level
-		CASE 1: game.time=60: enemy.xoff = 2: enemy.yoff = 1
-		CASE 2: game.time=50: enemy.xoff = 4: enemy.yoff = 2
-		CASE 3: game.time=40: enemy.xoff = 6: enemy.yoff = 3
-	END SELECT
 	RANDOMIZE TIME
+	game.seconds=60
 	game.start = 0
 	game.on = 1
 	player.shots = 9
 	player.xpos = 314: player.ypos=90
 	enemy.img = 0
+	enemy.xoff = 2
+	enemy.yoff = 1
 	enemy.warps = 5
 	enemy.alive = 1
+	enemy.ticks = 0
 	LABEL ENEMYPOS:
 		enemy.xpos = INT(RND(1)*607): enemy.ypos = INT(RND(1)*170)
 	IF ABS(player.xpos-enemy.xpos) < 100 OR ABS(player.ypos-enemy.ypos) < 50 THEN GOTO ENEMYPOS
@@ -277,53 +277,54 @@ LABEL game.START
 	CALL plusSetSpriteColors(1, @LABEL(color.SPRPALETTE2), 15)
 	GOSUB game.DRAWBKG
 	GOSUB game.DRAWVALUES
-	GRAPHICS PEN 4,1:MOVE 160,220:PRINT"GET READY!";
+	GRAPHICS PEN 4,1:MOVE 160,220:PRINT"get ready!";
 	INK 1,13,26:INK 2,26,13:INK 3,26:INK 4,6,0:INK 5,13:INK 6,12:INK 7,24:INK 8,25:INK 9,9:INK 10,18:INK 11,22:INK 12,10:INK 13,20:INK 14,23:INK 15,6
 	CALL PLAYER, MUSIC, 2: game.playing = 1
-	t!=TIME+1000
-	WHILE TIME<t!: WEND
-	GRAPHICS PEN 0,1: MOVE 160,220: PRINT "GET READY!";
+	t!=TIME+1000: WHILE TIME<t!: WEND
+	GRAPHICS PEN 0,1: MOVE 160,220: PRINT "get ready!";
 	CALL NOMUSIC
-	EVERY 50,0 GOSUB game.COUNTDOWN
-	EVERY 20,1 GOSUB game.SPACESHIPFLASH
-	SOUND 1,375
 RETURN
 
 LABEL game.MOVEPLAYER2
 	IF game.menuopt=2 THEN
-		mov=JOY(0) ' Segundo player humano
+		enemy.mov=JOY(0) ' Segundo player humano
 	ELSE
-		rndvalue=INT(RND*8) 'Random Direction
-		SELECT CASE rndvalue
-			CASE 0: mov=1
-			CASE 1: mov=2
-			CASE 2: mov=4
-			CASE 3: mov=8
-			CASE 4: mov=5
-			CASE 5: mov=6
-			CASE 6: mov=9
-			CASE 7: mov=10
-		END SELECT
-		IF enemy.warps>0 AND ABS(enemy.xpos-player.xpos)<20 AND ABS(enemy.ypos-player.ypos)<10 THEN
-			rndvalue=INT(RND*10)
-			IF enemy.warps<5 THEN mov=mov + 256
+		IF enemy.ticks > 0 THEN
+			enemy.ticks = enemy.ticks - 1
+		ELSE
+			rndvalue=INT(RND*8) 'Random Direction
+			SELECT CASE rndvalue
+				CASE 0: enemy.mov=1
+				CASE 1: enemy.mov=2
+				CASE 2: enemy.mov=4
+				CASE 3: enemy.mov=8
+				CASE 4: enemy.mov=5
+				CASE 5: enemy.mov=6
+				CASE 6: enemy.mov=9
+				CASE 7: enemy.mov=10
+			END SELECT
+			IF enemy.warps>0 AND ABS(enemy.xpos-player.xpos)<20 AND ABS(enemy.ypos-player.ypos)<10 THEN
+				rndvalue=INT(RND*10)
+				IF rndvalue<5 THEN enemy.mov=enemy.mov + 256
+			END IF
+			enemy.ticks = 10
 		END IF
 	END IF
-	IF mov=0 THEN enemy.img=0
-	IF (mov AND 1) THEN enemy.ypos=enemy.ypos-enemy.yoff: enemy.img=0
-	IF (mov AND 2) THEN enemy.ypos=enemy.ypos+enemy.yoff: enemy.img=0
-	IF (mov AND 4) THEN enemy.xpos=enemy.xpos-enemy.xoff: enemy.img=1
-	IF (mov AND 8) THEN enemy.xpos=enemy.xpos+enemy.xoff: enemy.img=2
+	IF enemy.mov=0 THEN enemy.img=0
+	IF (enemy.mov AND 1) THEN enemy.ypos=enemy.ypos-enemy.yoff: enemy.img=0
+	IF (enemy.mov AND 2) THEN enemy.ypos=enemy.ypos+enemy.yoff: enemy.img=0
+	IF (enemy.mov AND 4) THEN enemy.xpos=enemy.xpos-enemy.xoff: enemy.img=1
+	IF (enemy.mov AND 8) THEN enemy.xpos=enemy.xpos+enemy.xoff: enemy.img=2
 	IF enemy.xpos<0 THEN enemy.xpos=0
 	IF enemy.ypos<0 THEN enemy.ypos=0
 	IF enemy.xpos>607 THEN enemy.xpos=607
 	IF enemy.ypos>169 THEN enemy.ypos=169
-	IF mov>15 AND enemy.warps>0 THEN GOSUB game.FIREWARP
+	IF enemy.mov>15 AND enemy.warps>0 THEN enemy.ticks=0: GOSUB game.FIREWARP
 RETURN
 
 LABEL game.MOVEPLAYER1
-	IF INKEY(69)=0 THEN player.ypos=player.ypos-player.yoff
-	IF INKEY(67)=0 THEN player.ypos=player.ypos+player.yoff
+	IF INKEY(67)=0 THEN player.ypos=player.ypos-player.yoff
+	IF INKEY(69)=0 THEN player.ypos=player.ypos+player.yoff
 	IF INKEY(34)=0 THEN player.xpos=player.xpos-player.xoff
 	IF INKEY(27)=0 THEN player.xpos=player.xpos+player.xoff
 	IF player.xpos<0 THEN player.xpos=0
@@ -337,32 +338,41 @@ LABEL game.MOVEPLAYER1
 RETURN
 
 LABEL game.TICK
+	GOSUB game.DRAWCHARACTERS
+	GOSUB game.COUNTDOWN
 	CLEAR INPUT
 	GOSUB game.MOVEPLAYER1
 	GOSUB game.MOVEPLAYER2
 	GOSUB game.DRAWVALUES
-	GOSUB game.DRAWCHARACTERS
-	IF game.time=0 THEN game.on=0
+	IF game.seconds=0 THEN game.on=0
 	IF player.shots=0 THEN game.on=0
 RETURN
 
 LABEL game.EXPLOSION
+	CALL plusSetSPriteRes(7, PLUS.SPOFF)
+	CALL plusSetSPriteRes(8, PLUS.SPOFF)
+	CALL plusSetSpriteRes(9, PLUS.SPOFF)
+	CALL plusSetSpriteRes(10, PLUS.SPOFF)
+	CALL plusSetSPriteAttr(11, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
 	enemy.alive = 0
 	game.on = 0
+	FOR i=15 TO 1 STEP-1
+		SOUND 2,500,10,i,0,0,31
+	NEXT
 RETURN
 
 LABEL game.FIRELASER
+	BORDER 13
 	player.shots = player.shots - 1
 	GRAPHICS PEN 3,1: MOVE 0,36: DRAW player.xpos+6, (195-player.ypos)*2
 	MOVE 639,36: DRAW player.xpos+6, (195-player.ypos)*2
-	BORDER 0
 	i=15
 	FOR j=1 TO 31 STEP 2
 		SOUND 1,0,3,i,0,0,j: v=v-1
 	NEXT
-	FRAME
 	GRAPHICS PEN 0: MOVE 0,36: DRAW player.xpos+6, (195-player.ypos)*2
 	MOVE 639,36: DRAW player.xpos+6, (195-player.ypos)*2
+	BORDER 0
 	SELECT CASE enemy.img
 	CASE 0:
 		IF enemy.xpos-(player.xpos+6)>0 THEN RETURN
@@ -401,35 +411,25 @@ LABEL game.FIREWARP
 		CALL plusSetSpriteColors(1, palrow + i*30, 15)
 		FRAME
 	NEXT
-	EVERY 20,1 GOSUB game.SPACESHIPFLASH
 RETURN
 
 LABEL game.END
-	REMAIN(0)
-	REMAIN(1)
+	CALL plusSetSpriteRes(11, PLUS.SPOFF)
+	INK 4,6,0: GRAPHICS PEN 4,1: MOVE 90,220
 	IF enemy.alive=0 THEN
-		PRINT "PLAYER 1 WINS!!"
+		PRINT "player "+CHR$(131)+" wins!!";
 	ELSE
-		PRINT "ENEMY WINS!!"
+		IF game.menuopt=1 THEN PRINT "cpu wins!!"; ELSE PRINT "player "+CHR$(132)+" wins!!";
 	END IF
-	END
+	CALL PLAYER,MUSIC,3
+	t!=TIME+1100: WHILE TIME<t!: WEND
+	CALL NOMUSIC: game.playing=0
+	game.start = 0
 RETURN
 
 LABEL game.COUNTDOWN
-	game.time = game.time - 1
-RETURN
-
-LABEL game.SPACESHIPFLASH
-	' Change directly one sprite palette's color
-	OUT &7F00,&B8
-	IF enemy.color=0 THEN
-		enemy.color=1
-		POKE &643E,&F0
-	ELSE 
-		enemy.color=0
-		POKE &643E,&70
-	END IF
-	OUT &7F00,&A0
+	countdown = countdown + 1
+	if countdown = 80 THEN game.seconds = game.seconds - 1: countdown = 0
 RETURN
 
 LABEL color.INTROSPR
@@ -439,17 +439,6 @@ LABEL color.INTROSPR
 	ASM "db &f0,&06,&f0,&07,&f0,&08,&f0,&09,&f0,&0a,&f0,&0b,&f0,&0c"
 	ASM "db &f0,&08,&f0,&09,&f0,&0a,&f0,&0b,&f0,&0c,&f0,&0d,&f0,&0e"
 
-LABEL color.CYCLEPTR
-	ASM "db &f0,&01,&f0,&02,&f0,&03,&f0,&04,&f0,&05,&f0,&06,&f0,&07"
-	ASM "db &f0,&02,&f0,&03,&f0,&04,&f0,&05,&f0,&06,&f0,&07,&f0,&08"
-	ASM "db &f0,&03,&f0,&04,&f0,&05,&f0,&06,&f0,&07,&f0,&08,&f0,&09"
-	ASM "db &f0,&04,&f0,&05,&f0,&06,&f0,&07,&f0,&08,&f0,&09,&f0,&0a"
-	ASM "db &f0,&05,&f0,&06,&f0,&07,&f0,&08,&f0,&09,&f0,&0a,&f0,&0b"
-	ASM "db &f0,&06,&f0,&07,&f0,&08,&f0,&09,&f0,&0a,&f0,&0b,&f0,&0c"
-	ASM "db &f0,&07,&f0,&08,&f0,&09,&f0,&0a,&f0,&0b,&f0,&0c,&f0,&0d"
-	ASM "db &f0,&08,&f0,&09,&f0,&0a,&f0,&0b,&f0,&0c,&f0,&0d,&f0,&0e"
-	ASM "db &f0,&09,&f0,&0a,&f0,&0b,&f0,&0c,&f0,&0d,&f0,&0e,&f0,&0f"
-	
 LABEL color.CYCLEWARP	
 	ASM "db &dd,&0d,&bb,&0b,&99,&09,&77,&07,&55,&05,&f0,&0d,&f0,&09,&f0,&06,&0f,&0f,&0d,&0d,&0b,&0b,&70,&00,&b0,&00,&f0,&00,&f0,&00"
 	ASM "db &cc,&0c,&aa,&0a,&88,&08,&66,&06,&44,&04,&e0,&0c,&e0,&08,&e0,&05,&0e,&0e,&0c,&0c,&0a,&0a,&60,&00,&a0,&00,&e0,&00,&e0,&00"
@@ -685,41 +674,44 @@ LABEL data.SPRITE11
 	ASM "db 15,0,0,15,0,0,0,13,0,12,0,0,15,0,0,15"
 
 LABEL defineChars
-	SYMBOL 48,30,35,39,107,113,97,30,0
-	SYMBOL 49,4,4,4,12,12,12,12,0
-	SYMBOL 50,63,33,1,31,96,96,127,0
-	SYMBOL 51,127,65,1,31,3,67,127,0
-	SYMBOL 52,33,33,33,63,3,3,3,0
-	SYMBOL 53,63,32,32,63,3,3,127,0
-	SYMBOL 54,63,32,32,127,97,97,127,0
-	SYMBOL 55,127,97,2,4,8,16,32,0
-	SYMBOL 56,63,33,34,28,97,97,127,0
-	SYMBOL 57,127,65,65,127,3,3,3,0
-	SYMBOL 65,62,34,34,127,99,99,99,0
-	SYMBOL 66,124,34,34,127,97,97,127,0
-	SYMBOL 67,63,33,32,96,96,97,127,0
-	SYMBOL 68,126,33,33,99,99,99,127,0
-	SYMBOL 69,63,33,32,126,96,97,127,0
-	SYMBOL 70,63,33,32,126,96,96,96,0
-	SYMBOL 71,63,33,32,103,97,97,127,0
-	SYMBOL 72,33,33,33,127,97,97,97,0
-	SYMBOL 73,62,8,8,24,24,24,62,0
-	SYMBOL 74,62,34,2,6,102,102,126,0
-	SYMBOL 75,33,34,36,56,100,98,97,0
-	SYMBOL 76,32,32,32,96,96,97,127,0
-	SYMBOL 77,33,51,45,97,97,97,97,0
-	SYMBOL 78,33,49,41,101,99,99,99,0
-	SYMBOL 79,63,33,33,97,97,97,127,0
-	SYMBOL 80,62,33,33,127,96,96,96,0
-	SYMBOL 81,30,33,33,97,105,100,26,0
-	SYMBOL 82,62,33,33,126,100,98,97,0
-	SYMBOL 83,63,33,32,30,1,97,127,0
-	SYMBOL 84,127,73,8,24,24,24,24,0
-	SYMBOL 85,33,33,33,99,99,99,127,0
-	SYMBOL 86,33,33,33,35,50,28,24,0
-	SYMBOL 87,33,33,33,105,105,105,127,0
-	SYMBOL 88,34,34,20,8,20,99,99,0
-	SYMBOL 89,65,34,20,8,24,24,24,0
-	SYMBOL 90,126,66,4,8,48,97,127,0
+	' To save memory we redefine lower case letters because they are placed
+	' higher in the character table. For number, we use 130 = 0, 131 = 1,
+	' 132 = 2, ... 139 = 9
+	SYMBOL 130,30,35,39,107,113,97,30,0
+	SYMBOL 131,4,4,4,12,12,12,12,0
+	SYMBOL 132,63,33,1,31,96,96,127,0
+	SYMBOL 133,127,65,1,31,3,67,127,0
+	SYMBOL 134,33,33,33,63,3,3,3,0
+	SYMBOL 135,63,32,32,63,3,3,127,0
+	SYMBOL 136,63,32,32,127,97,97,127,0
+	SYMBOL 137,127,97,2,4,8,16,32,0
+	SYMBOL 138,63,33,34,28,97,97,127,0
+	SYMBOL 139,127,65,65,127,3,3,3,0
+	SYMBOL 97,62,34,34,127,99,99,99,0
+	SYMBOL 98,124,34,34,127,97,97,127,0
+	SYMBOL 99,63,33,32,96,96,97,127,0
+	SYMBOL 100,126,33,33,99,99,99,127,0
+	SYMBOL 101,63,33,32,126,96,97,127,0
+	SYMBOL 102,63,33,32,126,96,96,96,0
+	SYMBOL 103,63,33,32,103,97,97,127,0
+	SYMBOL 104,33,33,33,127,97,97,97,0
+	SYMBOL 105,62,8,8,24,24,24,62,0
+	SYMBOL 106,62,34,2,6,102,102,126,0
+	SYMBOL 107,33,34,36,56,100,98,97,0
+	SYMBOL 108,32,32,32,96,96,97,127,0
+	SYMBOL 109,33,51,45,97,97,97,97,0
+	SYMBOL 110,33,49,41,101,99,99,99,0
+	SYMBOL 111,63,33,33,97,97,97,127,0
+	SYMBOL 112,62,33,33,127,96,96,96,0
+	SYMBOL 113,30,33,33,97,105,100,26,0
+	SYMBOL 114,62,33,33,126,100,98,97,0
+	SYMBOL 115,63,33,32,30,1,97,127,0
+	SYMBOL 116,127,73,8,24,24,24,24,0
+	SYMBOL 117,33,33,33,99,99,99,127,0
+	SYMBOL 118,33,33,33,35,50,28,24,0
+	SYMBOL 119,33,33,33,105,105,105,127,0
+	SYMBOL 120,34,34,20,8,20,99,99,0
+	SYMBOL 121,65,34,20,8,24,24,24,0
+	SYMBOL 122,126,66,4,8,48,97,127,0
 RETURN
 

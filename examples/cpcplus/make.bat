@@ -27,7 +27,7 @@ IF "%1"=="clear" (
     IF EXIST "*.dsk" del "*.dsk"
     IF EXIST "*.cdt" del "*.cdt"
 ) ELSE IF "%1"=="dsk" (
-    call %COMPILE% MAIN.BAS --data=0x8000 -O3 %2 %3
+    call %COMPILE% MAIN.BAS --data=0x8000 %2 %3
     IF errorlevel 1 EXIT /b %errorlevel%
     call %DSK% MCHASE.DSK -n --put-bin MAIN.BIN --load-addr=0x0040 --start-addr=0x0040
     call %DSK% MCHASE.DSK --put-raw assets/TITLE.SCR
@@ -35,7 +35,7 @@ IF "%1"=="clear" (
     call %DSK% MCHASE.DSK --put-raw assets/INSTR.SCR
     call %DSK% MCHASE.DSK --put-bin assets/PLAYER.BIN
 ) ELSE (
-    call %COMPILE% MAIN.BAS --data=0x8000 -O3 %*
+    call %COMPILE% MAIN.BAS --data=0x8000 %*
 )
 
 @endlocal
