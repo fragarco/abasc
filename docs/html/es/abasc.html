@@ -4317,8 +4317,8 @@ color = plusEncodeColor(15, 15, 15) &#39; Blanco brillante = &amp;0FFF
 CALL plusSetPalColor(3, color)      &#39; Equivalente a INK para el ASIC
 PEN 3: PRINT &quot;HOLA MUNDO&quot;</code></pre>
 <ul>
-<li><code>SUB plusAsicPageIn()</code> /
-<code>SUB plusAsicPageOut()</code></li>
+<li><code>SUB plusAsicPageIn()</code></li>
+<li><code>SUB plusAsicPageOut()</code></li>
 </ul>
 <p>Todas las rutinas de la librería se encargan de paginar la memoria
 interna del ASIC en el rango &amp;4000–&amp;7FFF antes de realizar
@@ -4332,8 +4332,8 @@ que asumen que la memoria ya está paginada, y finalizar con
 &#39; ... acceso directo a &amp;4000–&amp;7FFF mediante POKE, PEEK o llamadas FAST ...
 CALL plusAsicPageOut()</code></pre>
 <ul>
-<li><code>SUB plusPoke(addr, value)</code> /
-<code>FUNCTION plusPeek(addr)</code></li>
+<li><code>SUB plusPoke(addr, value)</code></li>
+<li><code>FUNCTION plusPeek(addr)</code></li>
 </ul>
 <p>Las instrucciones <code>PEEK</code> y <code>POKE</code> de BASIC
 trabajan con bytes, mientras que muchos de los valores almacenados en el
@@ -4364,20 +4364,21 @@ FOR i = 0 TO 15
 NEXT</code></pre>
 <ul>
 <li><code>SUB plusSetPalColor(pindex, color)</code></li>
-</ul>
-<p>Establece una entrada de la <strong>paleta de pantalla</strong>. Los
-índices 0–15 corresponden a las tintas, mientras que el índice 16 está
-reservado para el borde.</p>
-<pre class="basic"><code>CALL plusSetPalColor(3, color)  &#39; Tinta 3
-CALL plusSetPalColor(16, color) &#39; Borde</code></pre>
-<ul>
+<li><code>SUB plusSetPalColorFast(pindex, color)</code></li>
 <li><code>SUB plusSetPalColors(istart, colorarray, colors)</code></li>
 </ul>
-<p>Permite establecer varias tintas consecutivas mediante una sola
-llamada. El primer parámetro indica la primera tinta que se va a
-establecer; el segundo es una dirección de memoria donde se encuentran
-los valores enteros que contienen el color de cada tinta; y el tercero
-indica cuántas tintas se van a modificar.</p>
+<p>Estas rutinas permites establecer los colores de la paleta de
+pantalla. <code>plusSetPalColor</code> establece una única entrada de la
+<strong>paleta de pantalla</strong>. Los índices 0–15 corresponden a las
+tintas, mientras que el índice 16 está reservado para el borde.</p>
+<pre class="basic"><code>CALL plusSetPalColor(3, color)  &#39; Tinta 3
+CALL plusSetPalColor(16, color) &#39; Borde</code></pre>
+<p>La versión <code>plusSetPalColors</code> permite establecer varias
+tintas consecutivas mediante una sola llamada. El primer parámetro
+indica la primera tinta que se va a establecer; el segundo es una
+dirección de memoria donde se encuentran los valores enteros que
+contienen el color de cada tinta; y el tercero indica cuántas tintas se
+van a modificar.</p>
 <pre class="basic"><code>CHAIN MERGE &quot;cpcplus/cpcplus.bas&quot;
 CALL plusEnableAsic(): MODE 0
 CALL plusDisableFirmwareUpdates()
@@ -4392,6 +4393,7 @@ END
 DATA &amp;00F0, &amp;04F0, &amp;08F0, &amp;0BF0</code></pre>
 <ul>
 <li><code>SUB plusSetSpriteColor(pindex, color)</code></li>
+<li><code>SUB plusSetSpriteColorFast(pindex, color)</code></li>
 <li><code>SUB plusSetSpriteColors(istart, colorarray, colors)</code></li>
 </ul>
 <p>Estas rutinas permiten establecer los colores de la <strong>paleta de
@@ -4414,6 +4416,7 @@ sprites</strong> en total. Las rutinas incluidas en la librería
 y 16.</p>
 <ul>
 <li><code>SUB plusSetSpriteData(spindex, dataaddr)</code></li>
+<li><code>SUB plusSetSpriteDataFast(spindex, dataaddr)</code></li>
 <li><code>SUB plusSetSpritesData(dataaddr, sprites)</code></li>
 </ul>
 <p>Estas rutinas permiten cargar en la memoria del ASIC los datos de un
@@ -4440,10 +4443,15 @@ LABEL data.SPRITE
   ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;</code></pre>
 <ul>
 <li><code>SUB plusSetSpriteAttr(spindex, x, y, res)</code></li>
+<li><code>SUB plusSetSpriteAttrFast(spindex, x, y, res)</code></li>
 <li><code>SUB plusSetSpritePos(spindex, x, y)</code></li>
+<li><code>SUB plusSetSpritePosFast(spindex, x, y)</code></li>
 <li><code>SUB plusSetSpritePosX(spindex, x)</code></li>
+<li><code>SUB plusSetSpritePosXFast(spindex, x)</code></li>
 <li><code>SUB plusSetSpritePosY(spindex, y)</code></li>
+<li><code>SUB plusSetSpritePosYFast(spindex, y)</code></li>
 <li><code>SUB plusSetSpriteRes(spindex, res)</code></li>
+<li><code>SUB plusSetSpriteResFast(spindex, res)</code></li>
 </ul>
 <p>Cada sprite dispone de un bloque de <strong>5 bytes</strong> que
 contiene la información necesaria para determinar dónde se dibuja y cómo

@@ -171,10 +171,10 @@ LABEL game.MENU
 		CALL plusWaitFrames(2)
 	NEXT
 	IF game.playing=0 THEN CALL PLAYER,MUSIC,1: game.playing=1
-	lapse!=TIME+50
+	t!=TIME+50
 	WHILE JOY(0)<16 AND INKEY(47)<>0
-		IF game.menuopt<3 AND TIME>lapse! AND (JOY(0)=2 OR INKEY(69)=0) THEN game.menuopt=game.menuopt+1: lapse!=TIME+50
-		IF game.menuopt>1 AND TIME>lapse! AND (JOY(0)=1 OR INKEY(67)=0) THEN game.menuopt=game.menuopt-1: lapse!=TIME+50
+		IF game.menuopt<3 AND TIME>t! AND (JOY(0)=2 OR INKEY(69)=0) THEN game.menuopt=game.menuopt+1: t!=TIME+50
+		IF game.menuopt>1 AND TIME>t! AND (JOY(0)=1 OR INKEY(67)=0) THEN game.menuopt=game.menuopt-1: t!=TIME+50
 		SELECT CASE game.menuopt
 			CASE 1: INK 3,26,0:INK 4,26:  INK 5,26:  CALL plusSetSpritePosY(6,129)
 			CASE 2: INK 3,26:  INK 4,26,0:INK 5,26:  CALL plusSetSpritePosY(6,147)
@@ -234,20 +234,22 @@ RETURN
 
 LABEL game.DRAWCHARACTERS
 	SELECT CASE enemy.img
+	CALL plusAsicPageIn()
 	CASE 0:
-		CALL plusSetSpriteRes(9, PLUS.SPOFF)
-		CALL plusSetSpriteRes(10, PLUS.SPOFF)
-		CALL plusSetSPriteAttr(8, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+		CALL plusSetSpriteResFast(9, PLUS.SPOFF)
+		CALL plusSetSpriteResFast(10, PLUS.SPOFF)
+		CALL plusSetSPriteAttrFast(8, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
 	CASE 1:
-		CALL plusSetSpriteRes(8, PLUS.SPOFF)
-		CALL plusSetSpriteRes(10, PLUS.SPOFF)
-		CALL plusSetSPriteAttr(9, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+		CALL plusSetSpriteResFast(8, PLUS.SPOFF)
+		CALL plusSetSpriteResFast(10, PLUS.SPOFF)
+		CALL plusSetSPriteAttrFast(9, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
 	CASE 2:
-		CALL plusSetSpriteRes(8, PLUS.SPOFF)
-		CALL plusSetSpriteRes(9, PLUS.SPOFF)
-		CALL plusSetSPriteAttr(10, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
+		CALL plusSetSpriteResFast(8, PLUS.SPOFF)
+		CALL plusSetSpriteResFast(9, PLUS.SPOFF)
+		CALL plusSetSPriteAttrFast(10, enemy.xpos, enemy.ypos, PLUS.SPMODE1)
 	END SELECT
-	CALL plusSetSPriteAttr(7, player.xpos, player.ypos, PLUS.SPMODE1)
+	CALL plusSetSPriteAttrFast(7, player.xpos, player.ypos, PLUS.SPMODE1)
+	CALL plusAsicPageOut()
 RETURN
 
 LABEL game.START
@@ -256,7 +258,7 @@ LABEL game.START
 	CALL plusWaitFrames(4): BORDER 13
 	CALL plusWaitFrames(4): BORDER 0
 	CALL NOMUSIC: game.playing = 0
-	FOR i=1 TO 31 STEP 2: SOUND 1,0,3,j,0,0,i: NEXT
+	FOR i=1 TO 31 STEP 2: SOUND 1,0,3,15,0,0,i: NEXT
 	RANDOMIZE TIME
 	game.seconds=60
 	game.start = 0

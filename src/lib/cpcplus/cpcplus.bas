@@ -176,6 +176,19 @@ SUB plusSetPalColor(pindex, color) ASM
 	ASM "ret"
 END SUB
 
+SUB plusSetPalColorFast(pindex, color) ASM
+	ASM "ld      hl,&6400   ; Screen Palette start address"
+	ASM "ld      a,(ix+2)   ; pen index (0-15). 16 = Border"
+	ASM "add     a          ; each position is 2 bytes"
+	ASM "ld      l,a"
+	ASM "ld      a,(ix+0)   ; color low byte"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+1)   ; color high byte"
+	ASM "ld      (hl),a"
+	ASM "ret"
+END SUB
+
 SUB plusSetPalColors(istart, colorarray, colors) ASM
 	ASM "di                 ; Let's copy more than one color"
 	ASM "ld      bc,&7FB8   ; Insert ASIC memory block"
@@ -214,6 +227,20 @@ SUB plusSetSpriteColor(pindex, color) ASM
 	ASM "ld      c,&A0      ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
+	ASM "ret"
+END SUB
+
+SUB plusSetSpriteColorFast(pindex, color) ASM
+	ASM "ld      hl,&6422   ; Sprite Palette start address"
+	ASM "ld      a,(ix+2)   ; pen index (1-15). 0 = transparent"
+	ASM "dec     a          ; index to 0-14"
+	ASM "add     a          ; each position is 2 bytes"
+	ASM "ld      l,a"
+	ASM "ld      a,(ix+0)   ; color low byte"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+1)   ; color high byte"
+	ASM "ld      (hl),a"
 	ASM "ret"
 END SUB
 
@@ -258,6 +285,21 @@ SUB plusSetSpriteData(spindex, dataaddr) ASM
 	ASM "ld      bc,&7FA0   ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
+	ASM "ret"
+END SUB
+
+SUB plusSetSpriteDataFast(spindex, dataaddr) ASM
+	ASM "ld      hl,&3F00   ; Sprites data start address is &4000 (&3F00 + &100)"
+	ASM "ld      b,(ix+2)   ; Sprite index (1-16)"
+	ASM "ld      de,&100    ; Sprite length (256 bytes)"
+	ASM "__plusspdataf_loop:"
+	ASM "add     hl,de"
+	ASM "djnz    __plusspdataf_loop"
+	ASM "ex      de,hl"
+	ASM "ld      h,(ix+1)"
+	ASM "ld      l,(ix+0)"
+	ASM "ld      bc,&100"
+	ASM "ldir"
 	ASM "ret"
 END SUB
 
@@ -310,6 +352,27 @@ SUB plusSetSpritePos(spindex, x, y) ASM
 	ASM "ret"
 END SUB
 
+SUB plusSetSpritePosFast(spindex, x, y) ASM
+	ASM "ld      hl,&5FF8   ; Sprites attributes start address is &6000"
+	ASM "ld      de,8       ; Attribute block size"
+	ASM "ld      b,(ix+4)   ; sp index (1-15)"
+	ASM "__plusspposf_loop:"
+	ASM "add     hl,de      ; sp1 = &6000, sp2 = &6008 ..."
+	ASM "djnz    __plusspposf_loop"
+	ASM "ld      a,(ix+2)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+3)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+0)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+1)"
+	ASM "ld      (hl),a"
+	ASM "ret"
+END SUB
+
 SUB plusSetSpritePosX(spindex, x) ASM
 	ASM "di                 ; X coord is two bytes"
 	ASM "ld      bc,&7FB8   ; Insert ASIC memory block"
@@ -328,6 +391,21 @@ SUB plusSetSpritePosX(spindex, x) ASM
 	ASM "ld      bc,&7FA0   ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
+	ASM "ret"
+END SUB
+
+SUB plusSetSpritePosXFast(spindex, x) ASM
+	ASM "ld      hl,&5FF8   ; Sprites attributes start address is &6000"
+	ASM "ld      de,8       ; Attribute block size"
+	ASM "ld      b,(ix+2)   ; sp index (1-15)"
+	ASM "__plusspposxf_loop:"
+	ASM "add     hl,de      ; sp1 = &6000, sp2 = &6008 ..."
+	ASM "djnz    __plusspposxf_loop"
+	ASM "ld      a,(ix+0)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+1)"
+	ASM "ld      (hl),a"
 	ASM "ret"
 END SUB
 
@@ -352,6 +430,21 @@ SUB plusSetSpritePosY(spindex, y) ASM
 	ASM "ret"
 END SUB
 
+SUB plusSetSpritePosYFast(spindex, y) ASM
+	ASM "ld      hl,&5FFA   ; Sprites Y attribute start address is &6002"
+	ASM "ld      de,8       ; Attribute block size"
+	ASM "ld      b,(ix+2)   ; sp index (1-15)"
+	ASM "__plusspposyf_loop:"
+	ASM "add     hl,de      ; sp1 = &6002, sp2 = &600A ..."
+	ASM "djnz    __plusspposyf_loop"
+	ASM "ld      a,(ix+0)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+1)"
+	ASM "ld      (hl),a"
+	ASM "ret"
+END SUB
+
 SUB plusSetSpriteRes(spindex, res) ASM
 	ASM "di                 ; Resolution is just one byte"
 	ASM "ld      bc,&7FB8   ; Insert ASIC memory block"
@@ -367,6 +460,18 @@ SUB plusSetSpriteRes(spindex, res) ASM
 	ASM "ld      bc,&7FA0   ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
+	ASM "ret"
+END SUB
+
+SUB plusSetSpriteResFast(spindex, res) ASM
+	ASM "ld      hl,&5FFC   ; Sprites resolution byte starts at &6004"
+	ASM "ld      de,8       ; Attribute block size"
+	ASM "ld      b,(ix+2)   ; sp index (1-15)"
+	ASM "__plusspresf_loop:"
+	ASM "add     hl,de      ; sp1 = &6004, sp2 = &600C ..."
+	ASM "djnz    __plusspresf_loop"
+	ASM "ld      a,(ix+0)"
+	ASM "ld      (hl),a"
 	ASM "ret"
 END SUB
 
@@ -397,6 +502,30 @@ SUB plusSetSpriteAttr(spindex, x, y, res) ASM
 	ASM "ld      bc,&7FA0   ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
+	ASM "ret"
+END SUB
+
+SUB plusSetSpriteAttrFast(spindex, x, y, res) ASM
+	ASM "ld      hl,&5FF8   ; Sprites attributes start address is &6000"
+	ASM "ld      de,8       ; Attribute block size"
+	ASM "ld      b,(ix+6)   ; sp index (1-15)"
+	ASM "__plusspattrf_loop:"
+	ASM "add     hl,de      ; sp1 = &6000, sp2 = &6008 ..."
+	ASM "djnz    __plusspattrf_loop"
+	ASM "ld      a,(ix+4)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+5)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+2)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+3)"
+	ASM "ld      (hl),a"
+	ASM "inc     hl"
+	ASM "ld      a,(ix+0)"
+	ASM "ld      (hl),a"
 	ASM "ret"
 END SUB
 

@@ -4288,8 +4288,8 @@ color = plusEncodeColor(15, 15, 15) &#39; Bright white = &amp;0FFF
 CALL plusSetPalColor(3, color)      &#39; Equivalent to INK for the ASIC
 PEN 3: PRINT &quot;HELLO WORLD&quot;</code></pre>
 <ul>
-<li><code>SUB plusAsicPageIn()</code> /
-<code>SUB plusAsicPageOut()</code></li>
+<li><code>SUB plusAsicPageIn()</code></li>
+<li><code>SUB plusAsicPageOut()</code></li>
 </ul>
 <p>All library routines take care of paging the ASIC’s internal memory
 into the &amp;4000–&amp;7FFF range before performing any operation.
@@ -4301,8 +4301,8 @@ paged in, and finish with <code>plusAsicPageOut()</code> when done.</p>
 &#39; ... direct access to &amp;4000–&amp;7FFF using POKE, PEEK or FAST calls ...
 CALL plusAsicPageOut()</code></pre>
 <ul>
-<li><code>SUB plusPoke(addr, value)</code> /
-<code>FUNCTION plusPeek(addr)</code></li>
+<li><code>SUB plusPoke(addr, value)</code></li>
+<li><code>FUNCTION plusPeek(addr)</code></li>
 </ul>
 <p>The BASIC <code>PEEK</code> and <code>POKE</code> instructions
 operate on bytes, while many of the values stored in the ASIC are 16-bit
@@ -4331,18 +4331,19 @@ FOR i = 0 TO 15
 NEXT</code></pre>
 <ul>
 <li><code>SUB plusSetPalColor(pindex, color)</code></li>
-</ul>
-<p>Sets an entry in the <strong>screen palette</strong>. Indices 0–15
-correspond to inks, while index 16 is reserved for the border.</p>
-<pre class="basic"><code>CALL plusSetPalColor(3, color)  &#39; Ink 3
-CALL plusSetPalColor(16, color) &#39; Border</code></pre>
-<ul>
+<li><code>SUB plusSetPalColorFast(pindex, color)</code></li>
 <li><code>SUB plusSetPalColors(istart, colorarray, colors)</code></li>
 </ul>
-<p>Allows several consecutive inks to be set with a single call. The
-first parameter specifies the first ink to be set; the second is a
-memory address containing the integer values representing the color for
-each ink; and the third specifies how many inks are to be modified.</p>
+<p>The single value versions set an entry in the <strong>screen
+palette</strong>. Indices 0–15 correspond to inks, while index 16 is
+reserved for the border.</p>
+<pre class="basic"><code>CALL plusSetPalColor(3, color)  &#39; Ink 3
+CALL plusSetPalColor(16, color) &#39; Border</code></pre>
+<p>The <code>plusSetPalColors</code> version allows several consecutive
+inks to be set with a single call. The first parameter specifies the
+first ink to be set; the second is a memory address containing the
+integer values representing the color for each ink; and the third
+specifies how many inks are to be modified.</p>
 <pre class="basic"><code>CHAIN MERGE &quot;cpcplus/cpcplus.bas&quot;
 CALL plusEnableAsic(): MODE 0
 CALL plusDisableFirmwareUpdates()
@@ -4356,6 +4357,7 @@ END
 DATA &amp;00F0, &amp;04F0, &amp;08F0, &amp;0BF0</code></pre>
 <ul>
 <li><code>SUB plusSetSpriteColor(pindex, color)</code></li>
+<li><code>SUB plusSetSpriteColorFast(pindex, color)</code></li>
 <li><code>SUB plusSetSpriteColors(istart, colorarray, colors)</code></li>
 </ul>
 <p>These routines allow you to set the colors of the <strong>sprite
@@ -4376,6 +4378,7 @@ total. The routines included in the <code>cpcplus.bas</code> library use
 sprite indices from 1 to 16.</p>
 <ul>
 <li><code>SUB plusSetSpriteData(spindex, dataaddr)</code></li>
+<li><code>SUB plusSetSpriteDataFast(spindex, dataaddr)</code></li>
 <li><code>SUB plusSetSpritesData(dataaddr, sprites)</code></li>
 </ul>
 <p>These routines allow the data for a sprite or a sequence of
@@ -4401,10 +4404,15 @@ LABEL data.SPRITE
     ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;</code></pre>
 <ul>
 <li><code>SUB plusSetSpriteAttr(spindex, x, y, res)</code></li>
+<li><code>SUB plusSetSpriteAttrFast(spindex, x, y, res)</code></li>
 <li><code>SUB plusSetSpritePos(spindex, x, y)</code></li>
+<li><code>SUB plusSetSpritePosFast(spindex, x, y)</code></li>
 <li><code>SUB plusSetSpritePosX(spindex, x)</code></li>
+<li><code>SUB plusSetSpritePosXFast(spindex, x)</code></li>
 <li><code>SUB plusSetSpritePosY(spindex, y)</code></li>
+<li><code>SUB plusSetSpritePosYFast(spindex, y)</code></li>
 <li><code>SUB plusSetSpriteRes(spindex, res)</code></li>
+<li><code>SUB plusSetSpriteResFast(spindex, res)</code></li>
 </ul>
 <p>Each sprite has a <strong>5-byte</strong> block containing the
 information required to determine where it is drawn and how it is

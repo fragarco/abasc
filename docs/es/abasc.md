@@ -3418,7 +3418,8 @@ CALL plusSetPalColor(3, color)      ' Equivalente a INK para el ASIC
 PEN 3: PRINT "HOLA MUNDO"
 ```
 
-* `SUB plusAsicPageIn()` / `SUB plusAsicPageOut()`
+* `SUB plusAsicPageIn()`
+* `SUB plusAsicPageOut()`
 
 Todas las rutinas de la librería se encargan de paginar la memoria interna del ASIC en el rango &4000–&7FFF antes de realizar cualquier operación.
 
@@ -3430,7 +3431,8 @@ CALL plusAsicPageIn()
 CALL plusAsicPageOut()
 ```
 
-* `SUB plusPoke(addr, value)` / `FUNCTION plusPeek(addr)`
+* `SUB plusPoke(addr, value)`
+* `FUNCTION plusPeek(addr)`
 
 Las instrucciones `PEEK` y `POKE` de BASIC trabajan con bytes, mientras que muchos de los valores almacenados en el ASIC son enteros de 16 bits. Por ello, la librería `cpcplus.bas` incorpora versiones especiales para trabajar directamente con enteros. La librería también incluye versiones `FAST`, que permiten optimizar el paginado de la memoria del ASIC cuando se realizan varias operaciones consecutivas.
 
@@ -3459,17 +3461,17 @@ NEXT
 ```
 
 * `SUB plusSetPalColor(pindex, color)`
+* `SUB plusSetPalColorFast(pindex, color)`
+* `SUB plusSetPalColors(istart, colorarray, colors)`
 
-Establece una entrada de la **paleta de pantalla**. Los índices 0–15 corresponden a las tintas, mientras que el índice 16 está reservado para el borde.
+Estas rutinas permites establecer los colores de la paleta de pantalla. `plusSetPalColor` establece una única entrada de la **paleta de pantalla**. Los índices 0–15 corresponden a las tintas, mientras que el índice 16 está reservado para el borde.
 
 ```basic
 CALL plusSetPalColor(3, color)  ' Tinta 3
 CALL plusSetPalColor(16, color) ' Borde
 ```
 
-* `SUB plusSetPalColors(istart, colorarray, colors)`
-
-Permite establecer varias tintas consecutivas mediante una sola llamada. El primer parámetro indica la primera tinta que se va a establecer; el segundo es una dirección de memoria donde se encuentran los valores enteros que contienen el color de cada tinta; y el tercero indica cuántas tintas se van a modificar.
+La versión `plusSetPalColors` permite establecer varias tintas consecutivas mediante una sola llamada. El primer parámetro indica la primera tinta que se va a establecer; el segundo es una dirección de memoria donde se encuentran los valores enteros que contienen el color de cada tinta; y el tercero indica cuántas tintas se van a modificar.
 
 ```basic
 CHAIN MERGE "cpcplus/cpcplus.bas"
@@ -3487,6 +3489,7 @@ DATA &00F0, &04F0, &08F0, &0BF0
 ```
 
 * `SUB plusSetSpriteColor(pindex, color)`
+* `SUB plusSetSpriteColorFast(pindex, color)`
 * `SUB plusSetSpriteColors(istart, colorarray, colors)`
 
 Estas rutinas permiten establecer los colores de la **paleta de sprites**, que dispone de 15 colores utilizables. El índice 0 siempre es transparente.
@@ -3505,6 +3508,7 @@ Cada sprite ocupa **256 bytes** (16×16 píxeles, un byte por píxel). Cada byte
 El ASIC del Amstrad CPC+ tiene capacidad para **16 sprites** en total. Las rutinas incluidas en la librería `cpcplus.bas` utilizan índices de sprite comprendidos entre 1 y 16.
 
 * `SUB plusSetSpriteData(spindex, dataaddr)`
+* `SUB plusSetSpriteDataFast(spindex, dataaddr)`
 * `SUB plusSetSpritesData(dataaddr, sprites)`
 
 Estas rutinas permiten cargar en la memoria del ASIC los datos de un sprite o de una secuencia de sprites consecutivos.
@@ -3533,10 +3537,15 @@ LABEL data.SPRITE
 ```
 
 * `SUB plusSetSpriteAttr(spindex, x, y, res)`
+* `SUB plusSetSpriteAttrFast(spindex, x, y, res)`
 * `SUB plusSetSpritePos(spindex, x, y)`
+* `SUB plusSetSpritePosFast(spindex, x, y)`
 * `SUB plusSetSpritePosX(spindex, x)`
+* `SUB plusSetSpritePosXFast(spindex, x)`
 * `SUB plusSetSpritePosY(spindex, y)`
+* `SUB plusSetSpritePosYFast(spindex, y)`
 * `SUB plusSetSpriteRes(spindex, res)`
+* `SUB plusSetSpriteResFast(spindex, res)`
 
 Cada sprite dispone de un bloque de **5 bytes** que contiene la información necesaria para determinar dónde se dibuja y cómo se muestra:
 
