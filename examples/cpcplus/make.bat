@@ -28,10 +28,10 @@ IF "%1"=="clear" (
     IF EXIST "*.dsk" del "*.dsk"
     IF EXIST "*.cdt" del "*.cdt"
 ) ELSE IF "%1"=="dsk" (
-    call %DSK% %TARGET%.dsk -n --put-raw assets/TITLE.SCR
-    call %DSK% %TARGET%.dsk --put-raw assets/INSTR.SCR
-    call %DSK% %TARGET%.dsk --put-raw assets/MUSIC.BIN
-    call %DSK% %TARGET%.dsk --put-raw assets/PLAYER.BIN
+    call %DSK% %TARGET%.dsk -n --put-raw assets/TITLE.SCR --flag-sys
+    call %DSK% %TARGET%.dsk --put-raw assets/INSTR.SCR    --flag-sys
+    call %DSK% %TARGET%.dsk --put-raw assets/MUSIC.BIN    --flag-sys
+    call %DSK% %TARGET%.dsk --put-raw assets/PLAYER.BIN   --flag-sys
     call %COMPILE% %SOURCE%.bas --data=%DATAADDR% %2 %3 && call %DSK% %TARGET%.dsk --put-bin %SOURCE%.bin --load-addr=0x0040 --start-addr=0x0040
 ) ELSE (
     call %COMPILE% %SOURCE%.bas --data=%DATAADDR% %*
