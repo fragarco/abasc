@@ -92,11 +92,14 @@ END SUB
 SUB plusPoke(addr, value) ASM
 	ASM "di"
 	ASM "ld      e,(ix+0)"
+	ASM "ld      d,(ix+1)"
 	ASM "ld      h,(ix+3)"
 	ASM "ld      l,(ix+2)"
 	ASM "ld      bc,&7FB8   ; Insert ASIC memory block"
 	ASM "out     (c),c      ; " 
 	ASM "ld      (hl),e"
+	ASM "inc     hl"
+	ASM "ld      (hl),d"
 	ASM "ld      c,&A0      ; Release ASIC memory block"
 	ASM "out     (c),c      ; BC = &7FA0"
 	ASM "ei"
@@ -104,10 +107,13 @@ SUB plusPoke(addr, value) ASM
 END SUB
 
 SUB plusPokeFast(addr, value) ASM
-	ASM "ld      a,(ix+0)"
+	ASM "ld      e,(ix+0)"
+	ASM "ld      d,(ix+1)"
 	ASM "ld      h,(ix+3)"
 	ASM "ld      l,(ix+2)"
-	ASM "ld      (hl),a"
+	ASM "ld      (hl),e"
+	ASM "inc     hl"
+	ASM "ld      (hl),d"
 	ASM "ret"
 END SUB
 
