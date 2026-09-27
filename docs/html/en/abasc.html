@@ -582,8 +582,18 @@ routines</a></li>
 <li><a href="#cpcrslib-constants-and-routines">CPCRSlib Constants and
 routines</a></li>
 </ul></li>
-<li><a href="#appendix-vi-installing-the-visual-code-extension">Appendix
-VI: Installing the Visual Code Extension</a>
+<li><a href="#appendix-vi-the-cpcplus-library">Appendix VI: The CPCPLUS
+Library</a>
+<ul>
+<li><a href="#constants">Constants</a></li>
+<li><a href="#color-management">Color Management</a></li>
+<li><a href="#sprite-management">Sprite Management</a></li>
+<li><a href="#auxiliary-routines">Auxiliary Routines</a></li>
+<li><a href="#quick-reference">Quick Reference</a></li>
+</ul></li>
+<li><a
+href="#appendix-vii-installing-the-visual-code-extension">Appendix VII:
+Installing the Visual Code Extension</a>
 <ul>
 <li><a href="#installation">Installation</a></li>
 </ul></li>
@@ -4081,7 +4091,477 @@ SUB         rsRRI(vmem, w, h)
 SUB         rsSetColour(npen, hwcolour)
 SUB         rsSetMode(nmode)</code></pre>
 <hr />
-<h1 id="appendix-vi-installing-the-visual-code-extension">Appendix VI:
+<h1 id="appendix-vi-the-cpcplus-library">Appendix VI: The CPCPLUS
+Library</h1>
+<p>This library, included with <code>ABASC</code>, allows BASIC programs
+to use the additional features introduced by the <strong>Amstrad
+CPC+</strong> (464+, 6128+ and GX4000) inside its <strong>ASIC</strong>
+chip. Specifically, it added support for:</p>
+<ul>
+<li><strong>16 hardware sprites of 16×16 pixels</strong>, each byte
+defines a pixel, although only 4 bits contain information (pixel =
+&amp;0T, with T=0..F).</li>
+<li><strong>A shared 15-color sprite palette</strong>, each color is 16
+bits wide, although only 12 bits contain information (4096 colors, with
+4 bits per component: &amp;0GRB).</li>
+<li><strong>An extended screen palette</strong> (17 entries: 16 inks +
+border), each color is 16 bits wide using the &amp;0GRB format.</li>
+<li><strong>Position (X, Y, 16 bits) and mode/resolution
+registers</strong> for each sprite.</li>
+</ul>
+<p>Until now, using these features required mapping the ASIC’s internal
+memory into the &amp;4000–&amp;7FFF range and accessing it to write and
+read data using <code>POKE</code> and <code>PEEK</code>. The
+<code>cpcplus.bas</code> library encapsulates all this functionality in
+constants and several routines that can be invoked using
+<code>CALL</code>.</p>
+<p>For a complete example of its use, see the project included in
+<code>examples/cpcplus</code>, a game developed by Shad0wFax and adapted
+to ABASC by Javier García.</p>
+<h2 id="constants">Constants</h2>
+<ul>
+<li><strong>Colors</strong></li>
+</ul>
+<p>The ASIC provides a palette of <strong>4096 possible colors</strong>.
+Each color is defined using 16 bits, in <strong>&amp;0GRB</strong>
+format, with 4 bits for each of the color components. The library
+provides constants representing the colors equivalent to the standard
+Amstrad CPC palette:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 8%" />
+<col style="width: 25%" />
+<col style="width: 8%" />
+<col style="width: 23%" />
+<col style="width: 8%" />
+</colgroup>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Value</th>
+<th>Constant</th>
+<th>Value</th>
+<th>Constant</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLUS.Black</code></td>
+<td><code>&amp;0000</code></td>
+<td><code>PLUS.Green</code></td>
+<td><code>&amp;0800</code></td>
+<td><code>PLUS.BrightGreen</code></td>
+<td><code>&amp;0F00</code></td>
+</tr>
+<tr>
+<td><code>PLUS.Blue</code></td>
+<td><code>&amp;0008</code></td>
+<td><code>PLUS.Cyan</code></td>
+<td><code>&amp;0808</code></td>
+<td><code>PLUS.SeaGreen</code></td>
+<td><code>&amp;0F08</code></td>
+</tr>
+<tr>
+<td><code>PLUS.BrightBlue</code></td>
+<td><code>&amp;000F</code></td>
+<td><code>PLUS.SkyBlue</code></td>
+<td><code>&amp;080F</code></td>
+<td><code>PLUS.BrightCyan</code></td>
+<td><code>&amp;0F0F</code></td>
+</tr>
+<tr>
+<td><code>PLUS.Red</code></td>
+<td><code>&amp;0080</code></td>
+<td><code>PLUS.Yellow</code></td>
+<td><code>&amp;0880</code></td>
+<td><code>PLUS.Lime</code></td>
+<td><code>&amp;0F80</code></td>
+</tr>
+<tr>
+<td><code>PLUS.Magenta</code></td>
+<td><code>&amp;0088</code></td>
+<td><code>PLUS.White</code></td>
+<td><code>&amp;0888</code></td>
+<td><code>PLUS.PastelGreen</code></td>
+<td><code>&amp;0F88</code></td>
+</tr>
+<tr>
+<td><code>PLUS.Mauve</code></td>
+<td><code>&amp;008F</code></td>
+<td><code>PLUS.PastelBlue</code></td>
+<td><code>&amp;088F</code></td>
+<td><code>PLUS.PastelCyan</code></td>
+<td><code>&amp;0F8F</code></td>
+</tr>
+<tr>
+<td><code>PLUS.BrightRed</code></td>
+<td><code>&amp;00F0</code></td>
+<td><code>PLUS.Orange</code></td>
+<td><code>&amp;08F0</code></td>
+<td><code>PLUS.BrightYellow</code></td>
+<td><code>&amp;0FF0</code></td>
+</tr>
+<tr>
+<td><code>PLUS.Purple</code></td>
+<td><code>&amp;00F8</code></td>
+<td><code>PLUS.Pink</code></td>
+<td><code>&amp;08F8</code></td>
+<td><code>PLUS.PastelYellow</code></td>
+<td><code>&amp;0FF8</code></td>
+</tr>
+<tr>
+<td><code>PLUS.BrightMagenta</code></td>
+<td><code>&amp;00FF</code></td>
+<td><code>PLUS.PastelMagenta</code></td>
+<td><code>&amp;08FF</code></td>
+<td><code>PLUS.BrightWhite</code></td>
+<td><code>&amp;0FFF</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Sprite Drawing Mode/Resolution</strong></li>
+</ul>
+<p>These constants allow you to select the resolution and scaling used
+to draw sprites:</p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th style="text-align: right;">Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLUS.SPOFF</code></td>
+<td style="text-align: right;"><code>0</code></td>
+<td>Sprite hidden</td>
+</tr>
+<tr>
+<td><code>PLUS.SPMODE2</code></td>
+<td style="text-align: right;"><code>3</code></td>
+<td>Scale equivalent to MODE 2</td>
+</tr>
+<tr>
+<td><code>PLUS.SPMODE1</code></td>
+<td style="text-align: right;"><code>9</code></td>
+<td>Scale equivalent to MODE 1</td>
+</tr>
+<tr>
+<td><code>PLUS.SPMODE0</code></td>
+<td style="text-align: right;"><code>13</code></td>
+<td>Scale equivalent to MODE 0</td>
+</tr>
+<tr>
+<td><code>PLUS.SPX2</code></td>
+<td style="text-align: right;"><code>14</code></td>
+<td>MODE 1 with double width (2×)</td>
+</tr>
+<tr>
+<td><code>PLUS.SPVS</code></td>
+<td style="text-align: right;"><code>15</code></td>
+<td>Vertically stretched</td>
+</tr>
+</tbody>
+</table>
+<h2 id="color-management">Color Management</h2>
+<ul>
+<li><code>SUB plusEnableAsic()</code></li>
+</ul>
+<p>Enables the ASIC so that it can be used. This must be the first call
+made before using any of the other library functions.</p>
+<pre class="basic"><code>CHAIN MERGE &quot;cpcplus/cpcplus.bas&quot;
+CALL plusEnableAsic()</code></pre>
+<ul>
+<li><code>SUB plusDisableFirmwareUpdates()</code></li>
+</ul>
+<p>Prevents the firmware from overwriting the screen palette set in the
+ASIC. <strong>It must be called again after every MODE</strong>, since
+MODE re-enables the firmware callback.</p>
+<pre class="basic"><code>CHAIN MERGE &quot;cpcplus/cpcplus.bas&quot;
+CALL plusEnableAsic(): MODE 0
+CALL plusDisableFirmwareUpdates()
+color = plusEncodeColor(15, 15, 15) &#39; Bright white = &amp;0FFF
+CALL plusSetPalColor(3, color)      &#39; Equivalent to INK for the ASIC
+PEN 3: PRINT &quot;HELLO WORLD&quot;</code></pre>
+<ul>
+<li><code>SUB plusAsicPageIn()</code> /
+<code>SUB plusAsicPageOut()</code></li>
+</ul>
+<p>All library routines take care of paging the ASIC’s internal memory
+into the &amp;4000–&amp;7FFF range before performing any operation.
+However, when several consecutive calls are required, it may be more
+efficient to explicitly enable the page, use the library’s
+<code>FAST</code> routines, which assume that the memory is already
+paged in, and finish with <code>plusAsicPageOut()</code> when done.</p>
+<pre class="basic"><code>CALL plusAsicPageIn()
+&#39; ... direct access to &amp;4000–&amp;7FFF using POKE, PEEK or FAST calls ...
+CALL plusAsicPageOut()</code></pre>
+<ul>
+<li><code>SUB plusPoke(addr, value)</code> /
+<code>FUNCTION plusPeek(addr)</code></li>
+</ul>
+<p>The BASIC <code>PEEK</code> and <code>POKE</code> instructions
+operate on bytes, while many of the values stored in the ASIC are 16-bit
+integers. Therefore, the <code>cpcplus.bas</code> library provides
+special versions for working directly with integers. The library also
+includes <code>FAST</code> versions, which allow ASIC memory paging to
+be optimized when performing several consecutive operations.</p>
+<pre class="basic"><code>CALL plusPoke(&amp;6400, &amp;0FFF)       &#39; First screen palette color
+CALL plusAsicPageIn()
+CALL plusPokeFast(&amp;6400, &amp;0FFF)   &#39; PEN 1
+CALL plusPokeFast(&amp;6402, &amp;0F0F)   &#39; PEN 2
+CALL plusPokeFast(&amp;6404, &amp;0F0F)   &#39; PEN 3
+CALL plusAsicPageOut()</code></pre>
+<ul>
+<li><code>FUNCTION plusEncodeColor(r, g, b)</code></li>
+</ul>
+<p>Returns an integer containing the <strong>&amp;0GRB</strong>
+representation of the specified <code>r</code>, <code>g</code> and
+<code>b</code> components, each in the range 0–15.</p>
+<pre class="basic"><code>&#39; Grayscale gradient
+PEN 3: PRINT &quot;HELLO WORLD&quot;
+FOR i = 0 TO 15
+    color = plusEncodeColor(i, i, i)
+    CALL plusSetPalColor(3, color)
+    FRAME
+NEXT</code></pre>
+<ul>
+<li><code>SUB plusSetPalColor(pindex, color)</code></li>
+</ul>
+<p>Sets an entry in the <strong>screen palette</strong>. Indices 0–15
+correspond to inks, while index 16 is reserved for the border.</p>
+<pre class="basic"><code>CALL plusSetPalColor(3, color)  &#39; Ink 3
+CALL plusSetPalColor(16, color) &#39; Border</code></pre>
+<ul>
+<li><code>SUB plusSetPalColors(istart, colorarray, colors)</code></li>
+</ul>
+<p>Allows several consecutive inks to be set with a single call. The
+first parameter specifies the first ink to be set; the second is a
+memory address containing the integer values representing the color for
+each ink; and the third specifies how many inks are to be modified.</p>
+<pre class="basic"><code>CHAIN MERGE &quot;cpcplus/cpcplus.bas&quot;
+CALL plusEnableAsic(): MODE 0
+CALL plusDisableFirmwareUpdates()
+CALL plusSetPalColors(1, @DATA, 4)
+PEN 1: PRINT &quot;H&quot;;
+PEN 2: PRINT &quot;E&quot;;
+PEN 3: PRINT &quot;L&quot;;
+PEN 4: PRINT &quot;L&quot;
+END
+
+DATA &amp;00F0, &amp;04F0, &amp;08F0, &amp;0BF0</code></pre>
+<ul>
+<li><code>SUB plusSetSpriteColor(pindex, color)</code></li>
+<li><code>SUB plusSetSpriteColors(istart, colorarray, colors)</code></li>
+</ul>
+<p>These routines allow you to set the colors of the <strong>sprite
+palette</strong>, which provides 15 usable colors. Index 0 is always
+transparent. <code>plusSetSpriteColor()</code> allows a specific color
+to be set, while <code>plusSetSpriteColors()</code> allows several
+consecutive colors to be set, in the same way as their screen palette
+counterparts.</p>
+<pre class="basic"><code>CALL plusSetSpriteColors(1, @DATA, 15)
+DATA &amp;00F0, &amp;04F0, &amp;08F0, &amp;0BF0, &amp;00F4, &amp;00F8, &amp;00FB, &amp;040F, &amp;080F, &amp;0B0F, &amp;0F04, &amp;0F08, &amp;0F0B, &amp;0444, &amp;0888</code></pre>
+<h2 id="sprite-management">Sprite Management</h2>
+<p>Each sprite occupies <strong>256 bytes</strong> (16×16 pixels, one
+byte per pixel). Each byte of a sprite contains the index of the
+corresponding ink or color in the sprite palette (0–F). A value of 0
+always indicates a transparent pixel.</p>
+<p>The Amstrad CPC+’s ASIC can handle <strong>16 sprites</strong> in
+total. The routines included in the <code>cpcplus.bas</code> library use
+sprite indices from 1 to 16.</p>
+<ul>
+<li><code>SUB plusSetSpriteData(spindex, dataaddr)</code></li>
+<li><code>SUB plusSetSpritesData(dataaddr, sprites)</code></li>
+</ul>
+<p>These routines allow the data for a sprite or a sequence of
+consecutive sprites to be loaded into the ASIC’s memory.</p>
+<pre class="basic"><code>CALL plusSetSpriteData(1, @LABEL(data.SPRITE))
+END
+LABEL data.SPRITE
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,6,0,0,0,0,6,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,6,0,0,0,0,6,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,7,11,10,10,11,7,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,1,7,9,9,9,9,7,1,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,1,2,8,10,9,9,10,8,2,1,0,0,0&quot;
+    ASM &quot;db 0,0,1,2,3,8,4,12,12,4,8,3,2,1,0,0&quot;
+    ASM &quot;db 0,2,3,4,5,7,13,15,15,13,7,5,4,3,2,0&quot;
+    ASM &quot;db 2,3,3,4,5,7,5,12,12,5,7,5,4,3,3,2&quot;
+    ASM &quot;db 3,4,5,0,0,6,0,0,0,0,6,0,0,5,4,3&quot;
+    ASM &quot;db 15,5,0,0,0,0,0,0,0,0,0,0,0,0,5,15&quot;
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;
+    ASM &quot;db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;</code></pre>
+<ul>
+<li><code>SUB plusSetSpriteAttr(spindex, x, y, res)</code></li>
+<li><code>SUB plusSetSpritePos(spindex, x, y)</code></li>
+<li><code>SUB plusSetSpritePosX(spindex, x)</code></li>
+<li><code>SUB plusSetSpritePosY(spindex, y)</code></li>
+<li><code>SUB plusSetSpriteRes(spindex, res)</code></li>
+</ul>
+<p>Each sprite has a <strong>5-byte</strong> block containing the
+information required to determine where it is drawn and how it is
+displayed:</p>
+<table>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–1</td>
+<td>X (16 bits, LSB first)</td>
+</tr>
+<tr>
+<td>2–3</td>
+<td>Y (16 bits, LSB first)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Mode / Resolution</td>
+</tr>
+</tbody>
+</table>
+<p><code>plusSetSpriteAttr()</code> allows the sprite’s position and
+resolution to be set simultaneously. The other routines allow these
+attributes to be modified independently.</p>
+<h2 id="auxiliary-routines">Auxiliary Routines</h2>
+<ul>
+<li><code>SUB plusWaitFrames(frames)</code></li>
+</ul>
+<p>Waits for the specified number of vertical retraces, repeatedly
+calling <code>MC_WAIT_FLYBACK</code>. It is useful, for example, for
+controlling palette animations such as fades.</p>
+<pre class="basic"><code>CALL plusWaitFrames(5)</code></pre>
+<h2 id="quick-reference">Quick Reference</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 19%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr>
+<th>Routine</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plusEnableAsic</code></td>
+<td>—</td>
+<td>Unlocks the ASIC.</td>
+</tr>
+<tr>
+<td><code>plusDisableFirmwareUpdates</code></td>
+<td>—</td>
+<td>Prevents the firmware from overwriting the palette. A call to
+<code>MODE</code> reverses this.</td>
+</tr>
+<tr>
+<td><code>plusAsicPageIn</code> / <code>plusAsicPageOut</code></td>
+<td>—</td>
+<td>Maps / unmaps the ASIC memory page at &amp;4000–&amp;7FFF.</td>
+</tr>
+<tr>
+<td><code>plusPoke</code></td>
+<td><code>addr, value</code></td>
+<td>Writes 2 bytes to the ASIC, performing paging.</td>
+</tr>
+<tr>
+<td><code>plusPokeFast</code></td>
+<td><code>addr, value</code></td>
+<td>Writes 2 bytes to the ASIC with the page already mapped.</td>
+</tr>
+<tr>
+<td><code>plusPeek</code></td>
+<td><code>addr</code> → word</td>
+<td>Reads 2 bytes from the ASIC, performing paging.</td>
+</tr>
+<tr>
+<td><code>plusPeekFast</code></td>
+<td><code>addr</code> → word</td>
+<td>Reads 2 bytes from the ASIC with the page already mapped.</td>
+</tr>
+<tr>
+<td><code>plusEncodeColor</code></td>
+<td><code>r, g, b</code> → color</td>
+<td>Returns an &amp;0GRB color from its R, G and B components.</td>
+</tr>
+<tr>
+<td><code>plusSetPalColor</code></td>
+<td><code>pindex (0–16), color</code></td>
+<td>Sets the color of a screen palette entry (16 = border).</td>
+</tr>
+<tr>
+<td><code>plusSetPalColors</code></td>
+<td><code>istart, colorarray, colors</code></td>
+<td>Sets a consecutive block of colors in the screen palette.</td>
+</tr>
+<tr>
+<td><code>plusSetSpriteColor</code></td>
+<td><code>pindex (1–15), color</code></td>
+<td>Sets a sprite palette entry (0 is always transparent).</td>
+</tr>
+<tr>
+<td><code>plusSetSpriteColors</code></td>
+<td><code>istart, colorarray, colors</code></td>
+<td>Sets a consecutive block of colors in the sprite palette.</td>
+</tr>
+<tr>
+<td><code>plusSetSpriteData</code></td>
+<td><code>spindex, dataaddr</code></td>
+<td>Loads 256 bytes (16×16) containing the sprite data.</td>
+</tr>
+<tr>
+<td><code>plusSetSpritesData</code></td>
+<td><code>dataaddr, sprites</code></td>
+<td>Loads several consecutive sprites into memory.</td>
+</tr>
+<tr>
+<td><code>plusSetSpritePos</code></td>
+<td><code>spindex, x, y</code></td>
+<td>Sets the sprite’s X and Y position.</td>
+</tr>
+<tr>
+<td><code>plusSetSpritePosX</code></td>
+<td><code>spindex, x</code></td>
+<td>Sets only the X position.</td>
+</tr>
+<tr>
+<td><code>plusSetSpritePosY</code></td>
+<td><code>spindex, y</code></td>
+<td>Sets only the Y position.</td>
+</tr>
+<tr>
+<td><code>plusSetSpriteRes</code></td>
+<td><code>spindex, res</code></td>
+<td>Sets the sprite mode / resolution.</td>
+</tr>
+<tr>
+<td><code>plusSetSpriteAttr</code></td>
+<td><code>spindex, x, y, res</code></td>
+<td>Sets the sprite’s position and resolution.</td>
+</tr>
+<tr>
+<td><code>plusWaitFrames</code></td>
+<td><code>frames</code></td>
+<td>Waits for N VSYNCs.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="appendix-vii-installing-the-visual-code-extension">Appendix VII:
 Installing the Visual Code Extension</h1>
 <p><code>ABASC</code> includes a separate extension for Visual Code:
 <code>abascbasic-1.0.0.vsix</code>. The extension allows Visual Code
@@ -4099,7 +4579,7 @@ version 2 and version 2 plus.</p>
 <ul>
 <li>Version 1.3.0
 <ul>
-<li>New cpcplus.bas library with support for CPC+ ASIC features</li>
+<li>New CPCPLUS library with support for CPC+ ASIC features</li>
 <li>The new command DEF ATTRIBUTE() allows to set compilation attributes
 from code.</li>
 <li>Fixed a problem when optimizing OUT and INP code</li>
