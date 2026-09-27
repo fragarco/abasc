@@ -233,8 +233,8 @@ LABEL game.DRAWVALUES
 RETURN
 
 LABEL game.DRAWCHARACTERS
-	SELECT CASE enemy.img
 	CALL plusAsicPageIn()
+	SELECT CASE enemy.img
 	CASE 0:
 		CALL plusSetSpriteResFast(9, PLUS.SPOFF)
 		CALL plusSetSpriteResFast(10, PLUS.SPOFF)
@@ -416,7 +416,13 @@ LABEL game.FIREWARP
 RETURN
 
 LABEL game.END
-	CALL plusSetSpriteRes(11, PLUS.SPOFF)
+	CALL plusAsicPageIn()
+	CALL plusSetSPriteResFast(7, PLUS.SPOFF)
+	CALL plusSetSPriteResFast(8, PLUS.SPOFF)
+	CALL plusSetSpriteResFast(9, PLUS.SPOFF)
+	CALL plusSetSpriteResFast(10, PLUS.SPOFF)
+	CALL plusSetSpriteResFast(11, PLUS.SPOFF)
+	CALL plusAsicPageOut()
 	INK 4,6,0: GRAPHICS PEN 4,1: MOVE 90,220
 	IF enemy.alive=0 THEN
 		PRINT "player "+CHR$(131)+" wins!!";
