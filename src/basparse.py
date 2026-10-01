@@ -393,6 +393,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="CLEAR")
 
+    @astnode
     def _parse_CLEAR_INPUT(self) -> AST.Command:
         """ <CLEAR_INPUT> ::= CLEAR INPUT"""
         # BASIC 1.1
@@ -757,6 +758,7 @@ class LocBasParser:
         self._advance()
         return AST.Command(name="DEG")
 
+    @astnode
     def _parse_DELETE(self) -> AST.Command:
         """ <DELETE> ::= DELETE <int_range> """
         self._advance()
@@ -935,6 +937,7 @@ class LocBasParser:
         self._advance()
         return AST.Function(name="EOF", etype=AST.ExpType.Integer)    
 
+    @astnode
     def _parse_ERASE(self) -> AST.Command:
         """ <ERASE> ::= ERASE IDENT[,IDENT]* """
         self._advance()
@@ -969,6 +972,7 @@ class LocBasParser:
         self._advance()
         return AST.Function(name="ERR", etype=AST.ExpType.Integer)
 
+    @astnode
     def _parse_ERROR(self) -> AST.Command:
         """ <ERROR> ::= ERROR <int_expression> """
         # Sets the values for ERR and ERL
