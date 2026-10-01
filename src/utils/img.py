@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.5'
+__version__='1.4.6'
 
 import sys
 import os
@@ -218,10 +218,13 @@ class ImgConverter:
         pixelxbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
         totalbytes = int((self.imgh * self.imgw) / pixelxbyte)
         imgdata = bytearray([0x00 for i in range(0, totalbytes)])
-        for i in range(0, len(self.img)):
+        # the total number of pixels to convert must be even.
+        pixels = len(self.img)
+        if pixels % 2 == 1: pixels = pixels - 1
+        for i in range(0, pixels):
             # Let's go orginal image pixel by pixel
             # and calculate in imgbyte which CPC image byte to set
-            imgbyte = int(i / pixelxbyte)
+            imgbyte = i // pixelxbyte
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
                 imgdata[imgbyte] = imgdata[imgbyte] | (self.img[i] << pos)
@@ -510,8 +513,8 @@ def run_read_inputimg(srcfile:str, format: str, mode: str) -> RGBImage:
             requiredw = 160 if mode == 0 else 320 if mode == 1 else 640
             if imgfile.width != requiredw or imgfile.height != 200:
                 print(f"[img] resizing image to {requiredw}x200")
-                img: RGBImage = imgfile.resize((requiredw, 200))
-        return img.convert('RGB')
+                imgfile.resize((requiredw, 200))
+        return imgfile.convert('RGB')
     except Exception as e:
         print("[img] error trying to read the input image", srcfile)
         print(str(e))
@@ -527,6 +530,8 @@ def run_convert(args: argparse.Namespace) -> None:
     images: list[str] = []
     for inputimg in args.inimg: 
         images = images + glob.glob(inputimg)
+    if len(images) == 0:
+        raise ConversionError("no input images were found")
     for inimg in images:
         inputimg = run_read_inputimg(inimg, args.format, args.mode)
         converter = ImgConverter()
