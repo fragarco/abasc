@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.5'
+__version__='1.4.6'
 
 import sys
 import os
@@ -957,7 +957,7 @@ def store_bit_type(p: int, opargs: str, offset: int) -> int:
     check_args(opargs,2)
     arg1,arg2 = opargs.split(',',1)
     allowundef = 1 if p == 1 else 0
-    b = g_context.parse_expression(arg1, allowundef)
+    b = g_context.parse_expression(arg1, allowundef=allowundef)
     if b is None:
         b = 0  # lets wait until the second pass for missing symbols
     if b > 7 or b < 0:
@@ -1151,9 +1151,11 @@ def op_LET(p: int, opargs: str) -> int:
         abort("LET directive uses the format SYMBOL=VALUE")
     sym, sval = args
     allowundef = 1 if p == 1 else 0
-    nval = g_context.parse_expression(sval, allowundef)
-    if nval is not None:
-        g_context.set_symbol(sym, nval, is_let=True, type='let')
+    nval = g_context.parse_expression(sval, allowundef=allowundef)
+    # Maybe the expression is using some variables not defined yet so let's
+    # define the real value in the second pass
+    if nval is None: nval = -1
+    g_context.set_symbol(sym, nval, is_let=True, type='let')
     return 0
 
 def op_READ(p: int, opargs: str) -> int:
@@ -1629,8 +1631,7 @@ def op_IN(p: int, opargs: str) -> int:
         elif r == REG_A:
             match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
             if match == None:
-                abort("no expression in " + args[1])
-
+                abort("wrong expression in " + args[1])
             n = cast(int, g_context.parse_expression(match.group(1))) # type: ignore [union-attr]
             g_context.store(p, [0xdb, n])
         else:
@@ -1646,6 +1647,8 @@ def op_OUT(p: int, opargs: str) -> int:
             g_context.store(p, [0xed, 0x41 + 8 * r])
         elif r == REG_A:
             match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
+            if match == None:
+                abort("wrong expression in " + args[0])
             n = cast(int, g_context.parse_expression(match.group(1)))  # type: ignore [union-attr]
             g_context.store(p, [0xd3, n])
         else:
@@ -1799,8 +1802,9 @@ def op_LD(p,opargs):
 def op_IF(p: int, opargs: str) -> int:
     check_args(opargs, 1)
     # WinAPE supports = as equal sym in IF directive while we need ==
-    if '=' in opargs and '==' not in opargs and '!=' not in opargs:
-        opargs = opargs.replace('=','==')
+    if '=' in opargs:
+        if '==' not in opargs and '!=' not in opargs and '>=' not in opargs and '<=' not in opargs:
+            opargs = opargs.replace('=','==')
     g_context.ifstack.append((g_context.currentfile, g_context.ifstate))
     if g_context.ifstate < IFSTATE_DISCARD:
         # No undefined symbols are allowed in IF expressions or we may
