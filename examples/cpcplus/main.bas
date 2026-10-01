@@ -102,7 +102,7 @@ LABEL game.INTRO
 	fadestep = 0  ' 10 steps: 0..9
 	palrow = @LABEL(color.INTROSPR)
 	LABEL loop
-		IF JOY(0)>15 OR INKEY(47)=0 THEN GOTO endloop
+		IF JOY(0)>15 OR JOY(1)>15 OR INKEY(47)=0 THEN GOTO endloop
 		CALL plusSetSpriteColors(1, palrow, 7)
 		color = plusEncodeColor(fadestep, fadestep, fadestep)
 		CALL plusSetPalColor(16, color)
@@ -172,7 +172,7 @@ LABEL game.MENU
 	NEXT
 	IF game.playing=0 THEN CALL PLAYER,MUSIC,1: game.playing=1
 	t!=TIME+50
-	WHILE JOY(0)<16 AND INKEY(47)<>0
+	WHILE JOY(0)<16 AND JOY(1)<16 AND INKEY(47)<>0
 		IF game.menuopt<3 AND TIME>t! AND (JOY(0)=2 OR INKEY(69)=0) THEN game.menuopt=game.menuopt+1: t!=TIME+50
 		IF game.menuopt>1 AND TIME>t! AND (JOY(0)=1 OR INKEY(67)=0) THEN game.menuopt=game.menuopt-1: t!=TIME+50
 		SELECT CASE game.menuopt
@@ -325,15 +325,16 @@ LABEL game.MOVEPLAYER2
 RETURN
 
 LABEL game.MOVEPLAYER1
-	IF INKEY(67)=0 THEN player.ypos=player.ypos-player.yoff
-	IF INKEY(69)=0 THEN player.ypos=player.ypos+player.yoff
-	IF INKEY(34)=0 THEN player.xpos=player.xpos-player.xoff
-	IF INKEY(27)=0 THEN player.xpos=player.xpos+player.xoff
+	i = JOY(1)
+	IF INKEY(67)=0 OR (i AND 1) THEN player.ypos=player.ypos-player.yoff
+	IF INKEY(69)=0 OR (i AND 2) THEN player.ypos=player.ypos+player.yoff
+	IF INKEY(34)=0 OR (i AND 4) THEN player.xpos=player.xpos-player.xoff
+	IF INKEY(27)=0 OR (i AND 8) THEN player.xpos=player.xpos+player.xoff
 	IF player.xpos<0 THEN player.xpos=0
 	IF player.ypos<0 THEN player.ypos=0
 	IF player.xpos>624 THEN player.xpos=624
 	IF player.ypos>175 THEN player.ypos=175
-	IF INKEY(47)=0 THEN
+	IF INKEY(47)=0 OR i>15 THEN
 		GOSUB game.FIRELASER
 		IF player.shots = 0 AND enemy.alive THEN game.on = 0
 	END IF
