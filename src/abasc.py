@@ -37,7 +37,7 @@ from basopt import BasOptimizer
 import json
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__= "1.3.0"
+__version__= "1.4.0"
 
 
 @dataclass
@@ -146,7 +146,17 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: A
     emitter.cfgset_tmpstrsz(opts.strsz)
     emitter.cfgset_compactcode(opts.optlevel == 3)
     return emitter.emit_program()
-    
+
+def get_defautllib_path() -> str:
+    """Path to the ABASC folder (could be the PY script or the executable)"""
+    # This is the directory for our script
+    libpath = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):
+        # We are running the exectuable file so let's get where the executable
+        # is because the __file__ path is where the system uncompresses the binary
+        libpath = os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.join(libpath, "lib")
+
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
     asmfile: str = str(pathlib.Path(outfile).with_suffix('.asm'))
     with open(asmfile, "w", encoding="utf-8") as fd:
@@ -155,9 +165,9 @@ def assemble(infile: str, outfile: str, asmcode: str) -> None:
     # we add the src/lib directory and also
     # the path to the BAS source file because the output ASM
     # file may be placed in a different directory.
-    basepath = os.path.dirname(os.path.abspath(__file__))
+    deflib = get_defautllib_path()
     libpaths = [
-        os.path.join(basepath, "lib"),
+        deflib,
         os.path.join(os.path.dirname(infile))
     ]
     ABASM.assemble(asmfile, outfile, libpaths=libpaths)
