@@ -7,11 +7,25 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python ../../../../src/abasc.py"
-DSK="python  ../../../../src/utils/dsk.py"
-CDT="python  ../../../../src/utils/cdt.py"
-IMG="python  ../../../../src/utils/img.py"
-ASM="python  ../../../../src/utils/abasm.py"
+
+ABASC_HOME="../../../.."
+
+# If the "bin" folder exists, all tools are taken from there;
+# otherwise they fall back to the Python scripts from "src".
+
+if [ -d "$ABASC_HOME/bin" ]; then
+    BASC="$ABASC_HOME/bin/abasc"
+    DSK="$ABASC_HOME/bin/dsk"
+    CDT="$ABASC_HOME/bin/cdt"
+    IMG="$ABASC_HOME/bin/img"
+    ASM="$ABASC_HOME/bin/abasm"
+else
+    BASC="python $ABASC_HOME/src/abasc.py"
+    DSK="python $ABASC_HOME/src/utils/dsk.py"
+    CDT="python $ABASC_HOME/src/utils/cdt.py"
+    IMG="python $ABASC_HOME/src/utils/img.py"
+    ASM="python $ABASC_HOME/src/utils/abasm.py"
+fi
 
 SOURCE=main
 TARGET=runner

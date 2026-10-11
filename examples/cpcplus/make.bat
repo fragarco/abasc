@@ -8,11 +8,20 @@ REM * USAGE: make [clear][dsk]
 
 @setlocal
 
+set ABASC_HOME=%~dp0\..\..
+
+if exist "%ABASC_HOME%\bin" goto :abasc_tools_bin
+    set BASC=python "%ABASC_HOME%\src\abasc.py"
+    set DSK=python  "%ABASC_HOME%\src\utils\dsk.py"
+    goto :abasc_tools_end
+:abasc_tools_bin
+    set BASC="%ABASC_HOME%\bin\abasc.exe"
+    set DSK="%ABASC_HOME%\bin\dsk.exe"
+:abasc_tools_end
+
 set SOURCE=main
 set TARGET=mchase
-
-set COMPILE=python3 ../../src/abasc.py
-set DSK=python3 ../../src/utils/dsk.py
+set COMPILE=%BASC%
 set DATAADDR=0x8000
 
 IF "%1"=="clear" (

@@ -7,11 +7,23 @@
 # USAGE: ./make.sh [clear | dsk]
 #
 
+ABASC_HOME="../.."
+
+# If the "bin" folder exists, all tools are taken from there;
+# otherwise they fall back to the Python scripts from "src".
+
+if [ -d "$ABASC_HOME/bin" ]; then
+    BASC="$ABASC_HOME/bin/abasc"
+    DSK="$ABASC_HOME/bin/dsk"
+else
+    BASC="python3 $ABASC_HOME/src/abasc.py"
+    DSK="python3 $ABASC_HOME/src/utils/dsk.py"
+fi
+
 SOURCE=main
 TARGET=mchase
 
-COMPILE="python3 ../../src/abasc.py"
-DSK="python3 ../../src/utils/dsk.py"
+COMPILE="$BASC"
 DATAADDR=0x8000
 
 if [ "$1" = "clear" ]; then

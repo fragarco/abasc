@@ -8,12 +8,19 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python "..\..\..\..\src\abasc.py"
-set DSK=python "..\..\..\..\src\utils\dsk.py"
+set ABASC_HOME=%~dp0\..\..\..\..
+
+if exist "%ABASC_HOME%\bin" goto :abasc_tools_bin
+    set BASC=python "%ABASC_HOME%\src\abasc.py"
+    set DSK=python "%ABASC_HOME%\src\utils\dsk.py"
+    goto :abasc_tools_end
+:abasc_tools_bin
+    set BASC="%ABASC_HOME%\bin\abasc.exe"
+    set DSK="%ABASC_HOME%\bin\dsk.exe"
+:abasc_tools_end
 
 set SOURCE=main
 set TARGET=dbuffer
-
 set LOADADDR=0x0040
 
 REM * In this example we move DATA section from 0x4000 to 0x8000 because the 0x4000

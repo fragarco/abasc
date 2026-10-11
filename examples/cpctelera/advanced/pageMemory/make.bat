@@ -8,12 +8,19 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python "..\..\..\..\src\abasc.py"
-set DSK=python "..\..\..\..\src\utils\dsk.py"
+set ABASC_HOME=%~dp0\..\..\..\..
+
+if exist "%ABASC_HOME%\bin" goto :abasc_tools_bin
+    set BASC=python "%ABASC_HOME%\src\abasc.py"
+    set DSK=python "%ABASC_HOME%\src\utils\dsk.py"
+    goto :abasc_tools_end
+:abasc_tools_bin
+    set BASC="%ABASC_HOME%\bin\abasc.exe"
+    set DSK="%ABASC_HOME%\bin\dsk.exe"
+:abasc_tools_end
 
 set SOURCE=main
 set TARGET=pagemem
-
 set LOADADDR=0x0040
 
 set RUNBAS=%BASC% %SOURCE%.bas --data=0x8000

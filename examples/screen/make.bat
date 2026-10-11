@@ -8,15 +8,26 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python "..\..\src\abasc.py"
-set DSK=python  "..\..\src\utils\dsk.py"
-set CDT=python  "..\..\src\utils\cdt.py"
-set IMG=python  "..\..\src\utils\img.py"
-set ASM=python  "..\..\src\utils\abasm.py"
+
+set ABASC_HOME=%~dp0\..\..
+
+if exist "%ABASC_HOME%\bin" goto :abasc_tools_bin
+    set BASC=python "%ABASC_HOME%\src\abasc.py"
+    set DSK=python "%ABASC_HOME%\src\utils\dsk.py"
+    set CDT=python "%ABASC_HOME%\src\utils\cdt.py"
+    set IMG=python "%ABASC_HOME%\src\utils\img.py"
+    set ASM=python "%ABASC_HOME%\src\utils\abasm.py"
+    goto :abasc_tools_end
+:abasc_tools_bin
+    set BASC="%ABASC_HOME%\bin\abasc.exe"
+    set DSK="%ABASC_HOME%\bin\dsk.exe"
+    set CDT="%ABASC_HOME%\bin\cdt.exe"
+    set IMG="%ABASC_HOME%\bin\img.exe"
+    set ASM="%ABASC_HOME%\bin\abasm.exe"
+:abasc_tools_end
 
 set SOURCE=main
 set TARGET=retropoli
-
 set LOADADDR=0x0040
 
 set RUNBAS=%BASC% %SOURCE%.bas
