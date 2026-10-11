@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 #
 # This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
@@ -8,7 +8,7 @@
 #
 
 
-ABASC_HOME="../.."
+ABASC_HOME=$(dirname "$0")"/../.."
 
 # If the "bin" folder exists, all tools are taken from there;
 # otherwise they fall back to the Python scripts from "src".
