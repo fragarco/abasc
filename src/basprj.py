@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__= "1.3.0"
+__version__= "1.4.0"
 
 import argparse
 import os
@@ -28,9 +28,8 @@ import platform
 import stat
 import re
 import sys
-from typing import List
 
-WINDOWS_TEMPLATE: str = r"""@echo off
+WINDOWS_TEMPLATE: str = r"""@ECHO OFF
 
 REM *
 REM * This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
@@ -40,20 +39,30 @@ REM * USAGE: make [clear | dsk]
 
 @setlocal
 
-set BASC=python "{BASC}"
-set DSK=python "{DSK}"
-set CDT=python "{CDT}"
-set IMG=python "{IMG}"
-set ASM=python "{ASM}"
+set ABASC_HOME={HOME}
 
-set SOURCE=main
-set TARGET={TARGET}
+IF EXIST "%ABASC_HOME%\bin" GOTO :abasc_tools_bin
+    SET BASC=python "%ABASC_HOME%\src\abasc.py"
+    SET DSK=python "%ABASC_HOME%\src\utils\dsk.py"
+    SET CDT=python "%ABASC_HOME%\src\utils\cdt.py"
+    SET IMG=python "%ABASC_HOME%\src\utils\img.py"
+    SET ASM=python "%ABASC_HOME%\src\utils\abasm.py"
+GOTO :abasc_tools_end
+:abasc_tools_bin
+    SET BASC="%ABASC_HOME%\bin\abasc.exe"
+    SET DSK="%ABASC_HOME%\bin\dsk.exe"
+    SET CDT="%ABASC_HOME%\bin\cdt.exe"
+    SET IMG="%ABASC_HOME%\bin\img.exe"
+    SET ASM="%ABASC_HOME%\bin\abasm.exe"
+:abasc_tools_end
 
-set LOADADDR=0x0040
+SET SOURCE=main
+SET TARGET={TARGET}
+SET LOADADDR=0x0040
 
-set RUNBAS=%BASC% %SOURCE%.bas
-set RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
-set RUNCDT=%CDT% %TARGET%.cdt -n --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR% --name %TARGET%
+SET RUNBAS=%BASC% %SOURCE%.bas
+SET RUNDSK=%DSK% %TARGET%.dsk --new --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR%
+SET RUNCDT=%CDT% %TARGET%.cdt -n --put-bin %SOURCE%.bin --load-addr %LOADADDR% --start-addr %LOADADDR% --name %TARGET%
 
 IF "%1"=="clear" (
     IF EXIST "%SOURCE%.bpp" del "%SOURCE%.bpp"
@@ -68,18 +77,18 @@ IF "%1"=="clear" (
     IF EXIST "%TARGET%.dsk" del "%TARGET%.dsk"
     IF EXIST "%TARGET%.cdt" del "%TARGET%.cdt"
 ) ELSE IF "%1"=="dsk" (
-    call %RUNBAS% %2 %3 && call %RUNDSK%
+    CALL %RUNBAS% %2 %3 && CALL %RUNDSK%
 ) ELSE IF "%1"=="cdt" (
-    call %RUNBAS% %2 %3 && call %RUNCDT% 
+    CALL %RUNBAS% %2 %3 && CALL %RUNCDT% 
 ) ELSE (
-    call %RUNBAS% %*
+    CALL %RUNBAS% %*
 )
 
 @endlocal
-@echo on
+@ECHO ON
 """
 
-UNIX_TEMPLATE: str = r"""#!/bin/sh
+UNIX_TEMPLATE: str = r"""#!/usr/bin/env bash
 
 #
 # This file is just an example of how ABASC and DSK/CDT utilities can be called to compile programs
@@ -88,15 +97,24 @@ UNIX_TEMPLATE: str = r"""#!/bin/sh
 # USAGE: ./make.sh [clear | dsk]
 #
 
-BASC="python {BASC}"
-DSK="python {DSK}"
-CDT="python {CDT}"
-IMG="python {IMG}"
-ASM="python {ASM}"
+ABASC_HOME="{HOME}"
+
+if [ -d "$ABASC_HOME/bin" ]; then
+    BASC="$ABASC_HOME/bin/abasc"
+    DSK="$ABASC_HOME/bin/dsk"
+    CDT="$ABASC_HOME/bin/cdt"
+    IMG="$ABASC_HOME/bin/img"
+    ASM="$ABASC_HOME/bin/abasm"
+else
+    BASC="python $ABASC_HOME/src/abasc.py"
+    DSK="python $ABASC_HOME/src/utils/dsk.py"
+    CDT="python $ABASC_HOME/src/utils/cdt.py"
+    IMG="python $ABASC_HOME/src/utils/img.py"
+    ASM="python $ABASC_HOME/src/utils/abasm.py"
+fi
 
 SOURCE=main
 TARGET={TARGET}
-
 LOADADDR=0x0040
 
 RUNBAS="$BASC $SOURCE.bas"
@@ -132,60 +150,46 @@ LABEL mainloop
     GOTO mainloop
 """
 
-def script_tools_paths() -> List[str]:
+def abasc_home_dir() -> str:
+    """Path to the ABASC root folder (the parent of 'src' and 'bin')."""
+    # This is the directory for our script
     script_dir: str = os.path.dirname(os.path.abspath(__file__))
-    return [
-        os.path.join(script_dir, "abasc.py"),
-        os.path.join(script_dir, "utils", "dsk.py"),
-        os.path.join(script_dir, "utils", "cdt.py"),
-        os.path.join(script_dir, "utils", "img.py"),
-        os.path.join(script_dir, "utils", "abasm.py"),
-    ]
+    if getattr(sys, 'frozen', False):
+        # We are running the exectuable file so let's get where the executable
+        # is because the initial path is where the system uncompresses the binary
+        script_dir = os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.normpath(os.path.join(script_dir, os.pardir))
 
 def target_name_from_dir(path: str) -> str:
     return os.path.basename(os.path.normpath(path))
 
-def update_project_win(content: str, paths: List[str]) -> str:
+def update_project_win(content: str, home: str) -> str:
     """
-    We have to use lamda functions to avoid the problem with Windows paths and re.sub calls
-    raising errors like 're.error: bad escape'
+    We have to use lambda functions to avoid the problem with Windows paths and re.sub
+    calls raising errors like 're.error: bad escape'.
+    Only the ABASC_HOME line is rewritten, so everything else in the make file
+    (extra tools, customizations, ...) is preserved.
     """
-    expressions = [
-        (r'^set BASC=.*$', 'set BASC=python '),
-        (r'^set DSK=.*$',  'set DSK=python '),
-        (r'^set CDT=.*$',  'set CDT=python '),
-        (r'^set IMG=.*$',  'set IMG=python '),
-        (r'^set ASM=.*$',  'set ASM=python ')
-    ]
-    for i,exp in enumerate(expressions):
-        content = re.sub(
-            exp[0],
-            lambda _: exp[1] + f'"{paths[i]}"',
-            content,
-            flags=re.MULTILINE,
-        )
-    return content
+    return re.sub(
+        r'^set ABASC_HOME=.*$',
+        lambda _: f'set ABASC_HOME={home}',
+        content,
+        flags=re.MULTILINE,
+    )
 
-def update_project_unix(content: str, paths: List[str]) -> str:
+def update_project_unix(content: str, home: str) -> str:
     """ 
     Linux shouldn't have the same problem than Windows with bars in the path, but
     lets use the lambda workaround just in case.
+    Only the ABASC_HOME line is rewritten, so everything else in the make file
+    (extra tools, customizations, ...) is preserved.
     """
-    expressions = [
-        (r'^BASC=.*$', 'BASC="python '),
-        (r'^DSK=.*$',  'DSK="python '),
-        (r'^CDT=.*$',  'CDT="python '),
-        (r'^IMG=.*$',  'IMG="python '),
-        (r'^ASM=.*$',  'ASM="python ')
-    ]
-    for i,exp in enumerate(expressions):
-        content = re.sub(
-            exp[0],
-            lambda _: exp[1] + f'{paths[i]}"',
-            content,
-            flags=re.MULTILINE,
-        )
-    return content
+    return re.sub(
+        r'^ABASC_HOME=.*$',
+        lambda _: f'ABASC_HOME="{home}"',
+        content,
+        flags=re.MULTILINE,
+    )
 
 def update_project(target_dir: str, is_windows: bool) -> None:
     make_name: str = "make.bat" if is_windows else "make.sh"
@@ -195,40 +199,36 @@ def update_project(target_dir: str, is_windows: bool) -> None:
         print(f"{make_name} was not found in {target_dir}", file=sys.stderr)
         sys.exit(1)
 
-    paths = script_tools_paths()
+    home = abasc_home_dir()
 
     with open(make_path, "r", encoding="utf-8") as f:
         content: str = f.read()
     if is_windows:
-        content = update_project_win(content, paths)
+        content = update_project_win(content, home)
     else:
-        content = update_project_unix(content, paths)
+        content = update_project_unix(content, home)
+    if home not in content:
+        print(f"No ABASC_HOME line found in {make_path}", file=sys.stderr)
+        print("The file is not a basprj generated make file. Regenerate it with -n", file=sys.stderr)
+        sys.exit(1)
     with open(make_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
     print(f"{make_name} was sucessfully updated")
 
 def create_project(target_dir: str, is_windows: bool) -> None:
     target_name: str = target_name_from_dir(target_dir)
-    paths = script_tools_paths()
+    home = abasc_home_dir()
 
     if is_windows:
         make_name: str = "make.bat"
         make_content: str = WINDOWS_TEMPLATE.format(
-            BASC=paths[0],
-            DSK=paths[1],
-            CDT=paths[2],
-            IMG=paths[3],
-            ASM=paths[4],
+            HOME=home,
             TARGET=target_name,
         )
     else:
         make_name = "make.sh"
         make_content = UNIX_TEMPLATE.format(
-            BASC=paths[0],
-            DSK=paths[1],
-            CDT=paths[2],
-            IMG=paths[3],
-            ASM=paths[4],
+            HOME=home,
             TARGET=target_name,
         )
         
