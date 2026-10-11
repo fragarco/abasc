@@ -105,6 +105,16 @@ def readsourcefile(source: str) -> str:
     with open(source, "r", encoding="utf-8") as fd:
         return fd.read()
 
+def get_defautllib_path() -> str:
+    """Path to the ABASC folder (could be the PY script or the executable)"""
+    # This is the directory for our script
+    libpath = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):
+        # We are running the exectuable file so let's get where the executable
+        # is because the __file__ path is where the system uncompresses the binary
+        libpath = os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.join(libpath, "lib")
+
 def preprocess(infile: str, content: str, verbose: bool) -> tuple[list[CodeLine], str]:
     pp = LocBasPreprocessor()
     codelines, code = pp.preprocess(infile, content, 10)
@@ -146,16 +156,6 @@ def emit(codelines: list[CodeLine], ast:AST.Program, symtable: SymTable, opts: A
     emitter.cfgset_tmpstrsz(opts.strsz)
     emitter.cfgset_compactcode(opts.optlevel == 3)
     return emitter.emit_program()
-
-def get_defautllib_path() -> str:
-    """Path to the ABASC folder (could be the PY script or the executable)"""
-    # This is the directory for our script
-    libpath = os.path.dirname(os.path.abspath(__file__))
-    if getattr(sys, 'frozen', False):
-        # We are running the exectuable file so let's get where the executable
-        # is because the __file__ path is where the system uncompresses the binary
-        libpath = os.path.dirname(os.path.abspath(sys.executable))
-    return os.path.join(libpath, "lib")
 
 def assemble(infile: str, outfile: str, asmcode: str) -> None:
     asmfile: str = str(pathlib.Path(outfile).with_suffix('.asm'))

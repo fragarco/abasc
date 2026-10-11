@@ -40,6 +40,16 @@ class LocBasPreprocessor:
             line = line
         )
 
+    def get_defautllib_path(self) -> str:
+        """Path to the ABASC folder (could be the PY script or the executable)"""
+        # This is the directory for our script
+        libpath = os.path.dirname(os.path.abspath(__file__))
+        if getattr(sys, 'frozen', False):
+            # We are running the exectuable file so let's get where the executable
+            # is because the __file__ path is where the system uncompresses the binary
+            libpath = os.path.dirname(os.path.abspath(sys.executable))
+        return os.path.join(libpath, "lib")
+
     def _insert_file(self, basedir, line: int, code: str, lines: list[CodeLine]) -> list[CodeLine]:
         parser = LocBasLexer(code)
         tokens = list(parser.tokens())
@@ -57,8 +67,7 @@ class LocBasPreprocessor:
                 if not os.path.exists(infile):
                     # may be a library
                     infile = os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "lib",
+                        self.get_defautllib_path(),
                         tokens[i+1].value # type: ignore [arg-type]
                     )
                 try:
