@@ -1,7 +1,7 @@
 IMG: MANUAL DEL USUARIO
 =======================
 
-# Descripción
+## Descripción
 
 `img.py` es una herramienta escrita en Python 3 que convierte imágenes de formatos habituales como **PNG** o **JPEG** a formatos utilizables en proyectos de programación para el **Amstrad CPC**. Los formatos de salida incluyen:
 
@@ -23,15 +23,27 @@ En todos los casos, si no se proporciona un fichero con una descripción de la p
 - **Modo 1**: 320x200 píxeles, 4 colores
 - **Modo 2**: 640x200 píxeles, 2 colores
 
-# Instalación
+## Instalación
 
-Para usar esta herramienta, debes tener **Python 3.x** instalado en tu sistema. Además, `img.py` utiliza la librería de imágenes **Pillow**, la librería estándar de procesamiento de imágenes de Python, que se puede instalar fácilmente usando el gestor de paquetes `pip` con el siguiente comando:
+Si no se está usando la versión ya compilada de la herramienta. Para usar `img.py` debes tener **Python 3.x** instalado en tu sistema. Además, `img.py` utiliza la librería de imágenes **Pillow**, la librería estándar de procesamiento de imágenes de Python, que se puede instalar fácilmente usando el gestor de paquetes `pip` con el siguiente comando:
 
 ```bash
 pip3 install pillow
 ```
 
-# Uso básico
+## Construir los ejecutables
+
+ABASM y sus herramientas asociadas están pensadas para utilizarse junto con el intérprete de Python, ya que así su ejecución es más rápida. No obstante, también se distribuyen ejecutables de ABASM y de sus herramientas para los principales sistemas operativos. Además, es posible generar los ejecutables por cuenta propia. Para ello, primero hay que instalar el paquete PyInstaller de Python mediante el siguiente comando:
+
+```bash
+pip install pyinstaller
+```
+
+A continuación, basta con acceder al directorio `src/build` y ejecutar `build.bat` en Windows o `build.sh` en macOS o Linux. Los binarios resultantes se guardarán en la carpeta `bin`, al lado de la carpeta `src`.
+
+## Uso básico
+
+Todos los ejemplos de uso asumen que se está usando `img.py` junto al intérprete de Python. Si se está utilizando el ejecutable, basta con obviar la llamada a `python` o `python3` y remplazar `python img.py` por la llamada directa al ejecutable.
 
 La herramienta se ejecuta desde la línea de comandos, tomando como entrada un archivo de imagen (PNG, JPEG, etc.) y convirtiéndolo al formato especificado.
 
@@ -89,7 +101,7 @@ python3 img.py portada.png --format scn
 
 Este comando convierte `portada.png` en un archivo SCN (`portada.scn`) para usar como pantalla de carga. La imagen se escalará a una resolución de 160x200 (modo gráfico 0) con un máximo de 16 colores.
 
-# Paletas
+## Paletas
 
 Si no se utiliza el parámetro `--palette`, `IMG` calcula una paleta de colores según el modo gráfico deseado y los colores de la imagen de entrada con mayor representación. Sin embargo, es muy habitual trabajar con una única paleta compartida por varias imágenes, sobre todo al convertir sprites. `IMG` genera siempre un fichero adicional con información variada en cada conversión con la extensión `.info`. De dicho fichero se pueden extraer los valores de la paleta utilizada en la conversión o crear nuestro propio fichero desde cero.
 
@@ -122,7 +134,7 @@ Y utilizarlo para convertir una imagen como sigue:
 python3 img.py imagen.png --format scn --palette paleta.pal
 ```
 
-# Licencia
+## Licencia
 
 `img.py` es software libre; puedes redistribuirlo y/o modificarlo bajo los términos de la **GNU General Public License v3**, publicada por la **Free Software Foundation**.
 

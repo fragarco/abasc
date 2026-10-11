@@ -5,6 +5,7 @@ ABASM: MANUAL DEL USUARIO
 
 - [Introducción](#introducción)
   - [¿Por qué otro ensamblador para Amstrad?](#por-qué-otro-ensamblador-para-amstrad)
+- [Construir los ejecutables](#construir-los-ejecutables)
 - [Cómo se usa](#cómo-se-usa)
   - [Opciones disponibles](#opciones-disponibles)
   - [Ejemplos de uso](#ejemplos-de-uso)
@@ -61,15 +62,31 @@ En cualquier caso, si lo que buscas es eficiencia en vez de portabilidad y facil
 * [ASZ80](https://shop-pdp.net/ashtml/)
 * [Rasm](https://github.com/EdouardBERGE/rasm)
 
+# Construir los ejecutables
+
+ABASM y sus herramientas asociadas están pensadas para utilizarse junto con el intérprete de Python, ya que así su ejecución es más rápida. No obstante, también se distribuyen ejecutables de ABASM y de sus herramientas para los principales sistemas operativos. Además, es posible generar los ejecutables por cuenta propia. Para ello, primero hay que instalar el paquete PyInstaller de Python mediante el siguiente comando:
+
+```bash
+pip install pyinstaller
+```
+
+A continuación, basta con acceder al directorio `src/build` y ejecutar `build.bat` en Windows o `build.sh` en macOS o Linux. Los binarios resultantes se guardarán en la carpeta `bin`, al lado de la carpeta `src`.
+
 # Cómo se usa
 
-Para ensamblar un archivo fuente de código en ensamblador (por ejemplo, `program.asm`), basta con ejecutar el siguiente comando:
+Para ensamblar un archivo fuente de código en ensamblador (por ejemplo, `program.asm`), basta con ejecutar el siguiente comando si se usan directamente los scripts de Python:
 
 ```
-python3 ABASM.py <program.asm> [opciones]
+python3 abasm.py program.asm [opciones]
 ```
 
 Este comando ensamblará el archivo `program.asm` y generará un fichero binario con el mismo nombre, `program.bin`.
+
+Si se está ejecutando el binario ejecutable, el comando será:
+
+```
+abasm program.asm [opciones]
+```
 
 ## Opciones disponibles
 
@@ -1274,6 +1291,10 @@ FD AE hh    	XOR   (IY+d)    5 Realiza una OR exclusiva entre el valor en (IY+d)
 
 # Historial de cambios
 
+- Versión 1.5.0
+  * Nuevo sistema opcional para generar ejecutables.
+  * Otras pequeñas mejoras y arreglos.
+  
 - Versión 1.4.5
   * Arreglada la exportación de ficheros de más de 16K con la herramienta DSK
   * La herramienta DSK muestra ahora el espacio consumido/libre al usar la opción --cat

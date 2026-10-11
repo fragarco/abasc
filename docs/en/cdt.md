@@ -1,7 +1,7 @@
 CDT: USER MANUAL
 ================
 
-# Description
+## Description
 `cdt.py` is a simple Python 3.X-based tool for creating and managing CDT files used in simulators and tape emulators for Amstrad CPC computers. It can perform various operations to work with these files, with its main focus on aiding in packaging programs developed on modern computers.
 
 Additional information about the CDT format can be found at the following link:
@@ -12,7 +12,19 @@ For further understanding of how information was stored on actual tapes, refer t
 
 This tool does not overwrite existing files with the same name within the CDT file; all operations add files. Therefore, you can combine the `--new` option with insertion operations, allowing you to generate the same CDT file every time the command is executed.
 
-# Basic Usage
+## Building the Executables
+
+ABASM and all its related tools are designed to be used alongside the Python interpreter, as this allows them to run faster. However, prebuilt executables are also distributed for the main operating systems since release 1.5.0. In addition, it is possible to build the executables yourself. To do so, you first need to install the PyInstaller Python package using the following command:
+
+```bash
+pip install pyinstaller
+```
+
+Next, navigate to the `src/build` directory and run `build.bat` on Windows or `build.sh` on macOS or Linux. The resulting binaries will be saved in the `bin` directory, sibling to the `src` directory.
+
+## Basic usage
+
+All the examples assume that you will be using `cdt.py` directly from Python. If you are using the executable, just drop the use of `python` or `python3` and just remplace `python cdt.py` by the direct call to the binary.
 
 > python3 cdt.py <cdtfile> [options]
 
@@ -54,3 +66,9 @@ Create a new CDT file and add a binary file which should be loaded at address 0x
 ```
 python3 cdt.py tape.cdt --new --put-bin program.bin --map-file program.map --load-addr 0x4000 --start-addr MAIN --name "MYPROGRAM"
 ```
+
+## License
+
+`cdt.py` is free software; you can redistribute it and/or modify it under the terms of the **GNU General Public License v3**, as published by the **Free Software Foundation**.
+
+`cdt.py` is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**. See the **GNU General Public License** for more details.

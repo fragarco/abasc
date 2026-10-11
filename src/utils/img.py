@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.6'
+__version__='1.5.0'
 
 import sys
 import os
@@ -479,7 +479,7 @@ class ImgConverter:
         print("[img] generating SCN file...")
         requiredw = 160 if self.mode == 0 else 320 if self.mode == 1 else 640
         if self.imgw != requiredw or self.imgh != 200:
-            raise ConversionError("input image must be %dx200 for mode %d" % (requiredw, self.mode))
+            raise ConversionError("input image must be %dx200 for mode %d but is %dx%d" % (requiredw, self.mode, self.imgw, self.imgh))
         
         data: bytearray = self._encode_img()
         interlaced = bytearray()
@@ -500,7 +500,7 @@ class ImgConverter:
             interlaced.extend(padding)
         self.write_bin(target, '.scn', interlaced)
 
-def run_read_inputimg(srcfile:str, format: str, mode: str) -> RGBImage:
+def run_read_inputimg(srcfile:str, format: str, mode: int) -> RGBImage:
     """
     We load the image. If the target format is SCN we check
     the resolution and resize the image if needed. Finally,
@@ -513,7 +513,7 @@ def run_read_inputimg(srcfile:str, format: str, mode: str) -> RGBImage:
             requiredw = 160 if mode == 0 else 320 if mode == 1 else 640
             if imgfile.width != requiredw or imgfile.height != 200:
                 print(f"[img] resizing image to {requiredw}x200")
-                imgfile.resize((requiredw, 200))
+                imgfile = imgfile.resize((requiredw, 200))
         return imgfile.convert('RGB')
     except Exception as e:
         print("[img] error trying to read the input image", srcfile)

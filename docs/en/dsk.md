@@ -1,7 +1,7 @@
 DSK: USER MANUAL
 ================
 
-# Description
+## Description
 
 `dsk.py` is a simple Python 3.X-based tool for creating and managing DSK files, as used in simulators and disk drive emulators for Amstrad CPC computers. It can perform various operations to work with these files, with its main focus on aiding to package programs developed on modern computers.
 
@@ -18,7 +18,19 @@ For more information on the format, refer to the following pages:
 
 This tool does not overwrite existing files with the same name inside the DSK; all operations add files. Therefore, you can combine the --new option with insertion operations, allowing you to generate the same DSK file every time the command is executed.
 
-# Basic Usage
+## Building the Executables
+
+ABASM and all its related tools are designed to be used alongside the Python interpreter, as this allows them to run faster. However, prebuilt executables are also distributed for the main operating systems since release 1.5.0. In addition, it is possible to build the executables yourself. To do so, you first need to install the PyInstaller Python package using the following command:
+
+```bash
+pip install pyinstaller
+```
+
+Next, navigate to the `src/build` directory and run `build.bat` on Windows or `build.sh` on macOS or Linux. The resulting binaries will be saved in the `bin` directory, sibling to the `src` directory.
+
+## Basic usage
+
+All the examples assume that you will be using `dsk.py` directly from Python. If you are using the executable, just drop the use of `python` or `python3` and just remplace `python dsk.py` by the direct call to the binary.
 
 > python3 dsk.py <dskfile> [options]
 
@@ -66,3 +78,9 @@ Add a binary file to the DSK file which should be loaded at address 0x4000. It i
 ```
 python3 dsk.py --new file.dsk --put-bin program.bin --map-file program.map --load-addr 0x4000 --start-addr MAIN
 ```
+
+## License
+
+`dsk.py` is free software; you can redistribute it and/or modify it under the terms of the **GNU General Public License v3**, as published by the **Free Software Foundation**.
+
+`dsk.py` is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**. See the **GNU General Public License** for more details.

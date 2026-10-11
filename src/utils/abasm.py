@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.4.6'
+__version__='1.5.0'
 
 import sys
 import os
@@ -308,7 +308,7 @@ class AsmContext:
                                 errormsg = f"unexpected register {testsymbol}"
                             elif allowundef != 0:
                                 # Allow undefined symbols if undefsym=1
-                                return -1
+                                return None
                             abort(errormsg)
 
                     elif testsymbol[0] == '0' and len(testsymbol) > 2 and testsymbol[1] == 'b':
@@ -1047,7 +1047,7 @@ def op_PRINT(p: int, opargs: str) -> int:
             text.append(expr.strip().rstrip()[1:-1])
         else:
             a = g_context.parse_expression(expr, allowundef=1)
-            if a != None:
+            if a is not None:
                 text.append(str(a))
             else:
                 text.append("?")
@@ -1982,12 +1982,21 @@ def process_args() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
+def get_defautllib_path() -> str:
+    """Path to the ABASM folder (could be the PY script or the executable)"""
+    # This is the directory for our script
+    libpath = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):
+        # We are running the exectuable file so let's get where the executable
+        # is because the __file__ path is where the system uncompresses the binary
+        libpath = os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.join(libpath, "lib")
+
 def main() -> None:
     global g_context
     args = process_args()
     g_context.verbose = args.verbose
-    libpath = os.path.dirname(os.path.abspath(__file__))
-    libpath = os.path.join(libpath, "lib")
+    libpath = get_defautllib_path()
     assemble(args.inputfile, args.output, args.define, args.start, args.tolerance, libpaths=[libpath])
     if args.sfile:
         dump_assembledcode()

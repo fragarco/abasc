@@ -252,6 +252,8 @@
 <li><a href="#por-qué-otro-ensamblador-para-amstrad">¿Por qué otro
 ensamblador para Amstrad?</a></li>
 </ul></li>
+<li><a href="#construir-los-ejecutables">Construir los
+ejecutables</a></li>
 <li><a href="#cómo-se-usa">Cómo se usa</a>
 <ul>
 <li><a href="#opciones-disponibles">Opciones disponibles</a></li>
@@ -338,14 +340,31 @@ otros ensambladores:</p>
 <li><a href="https://shop-pdp.net/ashtml/">ASZ80</a></li>
 <li><a href="https://github.com/EdouardBERGE/rasm">Rasm</a></li>
 </ul>
+<h1 id="construir-los-ejecutables">Construir los ejecutables</h1>
+<p>ABASM y sus herramientas asociadas están pensadas para utilizarse
+junto con el intérprete de Python, ya que así su ejecución es más
+rápida. No obstante, también se distribuyen ejecutables de ABASM y de
+sus herramientas para los principales sistemas operativos. Además, es
+posible generar los ejecutables por cuenta propia. Para ello, primero
+hay que instalar el paquete PyInstaller de Python mediante el siguiente
+comando:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyinstaller</span></code></pre></div>
+<p>A continuación, basta con acceder al directorio
+<code>src/build</code> y ejecutar <code>build.bat</code> en Windows o
+<code>build.sh</code> en macOS o Linux. Los binarios resultantes se
+guardarán en la carpeta <code>bin</code>, al lado de la carpeta
+<code>src</code>.</p>
 <h1 id="cómo-se-usa">Cómo se usa</h1>
 <p>Para ensamblar un archivo fuente de código en ensamblador (por
 ejemplo, <code>program.asm</code>), basta con ejecutar el siguiente
-comando:</p>
-<pre><code>python3 ABASM.py &lt;program.asm&gt; [opciones]</code></pre>
+comando si se usan directamente los scripts de Python:</p>
+<pre><code>python3 abasm.py program.asm [opciones]</code></pre>
 <p>Este comando ensamblará el archivo <code>program.asm</code> y
 generará un fichero binario con el mismo nombre,
 <code>program.bin</code>.</p>
+<p>Si se está ejecutando el binario ejecutable, el comando será:</p>
+<pre><code>abasm program.asm [opciones]</code></pre>
 <h2 id="opciones-disponibles">Opciones disponibles</h2>
 <ul>
 <li><code>-d</code> o <code>--define</code>: Permite definir pares
@@ -395,9 +414,9 @@ continuación, solo será necesaria una llamada adicional a las
 herramientas <code>DSK</code> o <code>CDT</code> para empaquetar el
 resultado y poder utilizarlo en emuladores o en hardware real (por
 ejemplo, mediante dispositivos como Gotek, M4 o DDI-Revival).</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasm.py main.asm</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x4000 <span class="at">--load-addr</span><span class="op">=</span>0x4000</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasm.py main.asm</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x4000 <span class="at">--load-addr</span><span class="op">=</span>0x4000</span></code></pre></div>
 <p>Además, es posible generar rápidamente la estructura básica de un
 proyecto utilizando la herramienta <code>ASMPRJ</code>. Esta utilidad
 crea automáticamente un script de construcción con todo lo necesario
@@ -406,8 +425,8 @@ para comenzar a trabajar: en Windows se generará un fichero
 fichero <code>make.sh</code>. Asimismo, se incluirá un archivo
 <code>main.asm</code> con código de ejemplo listo para ser ensamblado y
 probado.</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> asmprj.py <span class="at">-n</span> myproject</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> asmprj.py <span class="at">-n</span> myproject</span></code></pre></div>
 <p>Para conocer todas las opciones disponibles, se recomienda consultar
 la documentación específica de <code>ASMPRJ</code>.</p>
 <h1 id="productos-del-ensamblado">Productos del ensamblado</h1>
@@ -1751,6 +1770,11 @@ aquí: <a href="https://www.cpcwiki.eu/imgs/f/f6/S968se02.pdf">ROMs. RAM
 and Restart Instructions.</a></p>
 <h1 id="historial-de-cambios">Historial de cambios</h1>
 <ul>
+<li>Versión 1.5.0
+<ul>
+<li>Nuevo sistema opcional para generar ejecutables.</li>
+<li>Otras pequeñas mejoras y arreglos.</li>
+</ul></li>
 <li>Versión 1.4.5
 <ul>
 <li>Arreglada la exportación de ficheros de más de 16K con la

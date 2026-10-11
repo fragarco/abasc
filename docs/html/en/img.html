@@ -244,7 +244,7 @@
 <h1 class="title">IMG</h1>
 </header>
 <h1 id="img-user-manual">IMG: USER MANUAL</h1>
-<h1 id="description">Description</h1>
+<h2 id="description">Description</h2>
 <p><code>img.py</code> is a tool written in Python 3 that converts
 images in common formats such as <strong>PNG</strong> or
 <strong>JPEG</strong> into formats usable in programming projects for
@@ -275,20 +275,37 @@ nearest colors available in the Amstrad CPC palette.</p>
 <li><strong>Mode 1</strong>: 320x200 pixels, 4 colors</li>
 <li><strong>Mode 2</strong>: 640x200 pixels, 2 colors</li>
 </ul>
-<h1 id="installation">Installation</h1>
-<p>To use this tool, you need to have <strong>Python 3.x</strong>
-installed on your system. Additionally, <code>img.py</code> uses the
-<strong>Pillow</strong> image library (Python’s standard image
-processing library), which can be easily installed using
-<code>pip</code>, the Python package manager, with the following
-command:</p>
+<h2 id="installation">Installation</h2>
+<p>If you are not using the binary exectuable file, to use this tool you
+need to have <strong>Python 3.x</strong> installed on your system.
+Additionally, <code>img.py</code> uses the <strong>Pillow</strong> image
+library (Python’s standard image processing library), which can be
+easily installed using <code>pip</code>, the Python package manager,
+with the following command:</p>
 <div class="sourceCode" id="cb1"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip3</span> install pillow</span></code></pre></div>
-<h1 id="basic-usage">Basic Usage</h1>
+<h2 id="building-the-executables">Building the Executables</h2>
+<p>ABASM and all its related tools are designed to be used alongside the
+Python interpreter, as this allows them to run faster. However, prebuilt
+executables are also distributed for the main operating systems since
+release 1.5.0. In addition, it is possible to build the executables
+yourself. To do so, you first need to install the PyInstaller Python
+package using the following command:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyinstaller</span></code></pre></div>
+<p>Next, navigate to the <code>src/build</code> directory and run
+<code>build.bat</code> on Windows or <code>build.sh</code> on macOS or
+Linux. The resulting binaries will be saved in the <code>bin</code>
+directory, sibling to the <code>src</code> directory.</p>
+<h2 id="basic-usage">Basic usage</h2>
+<p>All the examples assume that you will be using <code>img.py</code>
+directly from Python. If you are using the executable, just drop the use
+of <code>python</code> or <code>python3</code> and just remplace
+<code>python img.py</code> by the direct call to the binary.</p>
 <p>The tool runs from the command line, taking an image file (PNG, JPEG,
 etc.) as input and converting it to the specified format.</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py <span class="op">&lt;</span>inimg<span class="op">&gt;</span> [--name NAME] [--format FORMAT] [--mode MODE] [--palette FILE]</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py <span class="op">&lt;</span>inimg<span class="op">&gt;</span> [--name NAME] [--format FORMAT] [--mode MODE] [--palette FILE]</span></code></pre></div>
 <h2 id="available-options">Available Options</h2>
 <ul>
 <li><strong><code>&lt;inimg&gt;</code></strong>: (Required) The input
@@ -326,8 +343,8 @@ be processed and converted.</p>
 <li><strong>Convert a PNG image to a binary file without AMSDOS header
 (default format):</strong></li>
 </ol>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png</span></code></pre></div>
 <p>This command converts <code>imagen.png</code> into a binary file
 (<code>imagen.bin</code>) without AMSDOS header, using graphic mode 0
 with 16 colors.</p>
@@ -335,8 +352,8 @@ with 16 colors.</p>
 <li><strong>Convert a JPEG image to assembly compatible with
 WinAPE/MAXAM:</strong></li>
 </ol>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.jpg <span class="at">--format</span> asm <span class="at">--mode</span> 1</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.jpg <span class="at">--format</span> asm <span class="at">--mode</span> 1</span></code></pre></div>
 <p>This command converts <code>imagen.jpg</code> into an assembly file
 (<code>imagen.asm</code>) ready for use in graphic mode 1 of the Amstrad
 CPC.</p>
@@ -344,8 +361,8 @@ CPC.</p>
 <li><strong>Convert a PNG image to a C source file for
 SDCC:</strong></li>
 </ol>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> c <span class="at">--name</span> mi_sprite</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> c <span class="at">--name</span> mi_sprite</span></code></pre></div>
 <p>This command converts <code>imagen.png</code> into C source files
 (<code>mi_sprite.h</code> and <code>mi_sprite.c</code>) that can be used
 with the SDCC compiler. The name <code>mi_sprite</code> will be used for
@@ -354,13 +371,13 @@ the variables in the generated code.</p>
 <li><strong>Convert an image to an SCN file for loading
 screens:</strong></li>
 </ol>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py portada.png <span class="at">--format</span> scn</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py portada.png <span class="at">--format</span> scn</span></code></pre></div>
 <p>This command converts <code>portada.png</code> into an SCN file
 (<code>portada.scn</code>) for use as a loading screen. The image will
 be scaled to a resolution of 160x200 (graphic mode 0) with a maximum of
 16 colors.</p>
-<h1 id="palettes">Palettes</h1>
+<h2 id="palettes">Palettes</h2>
 <p>If the <code>--palette</code> parameter is not used, <code>IMG</code>
 computes a color palette based on the desired graphics mode and the most
 representative colors of the input image. However, it is very common to
@@ -371,27 +388,27 @@ with various information for each conversion, using the
 used in the conversion can be extracted, or we can create our own
 palette file from scratch.</p>
 <p>The contents of a palette specification file must be as follows:</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span> <span class="kw">or</span> <span class="st">&#39;FW&#39;</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [<span class="bu">list</span> of hardware <span class="kw">or</span> firmware values depending on the specified <span class="bu">type</span>]</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>For example, we can create a file called <code>paleta.pal</code> with
-the following contents:</p>
 <div class="sourceCode" id="cb8"><pre
 class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span>,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x0B</span>, <span class="bn">0x00</span>, <span class="bn">0x14</span>, <span class="bn">0x1F</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x07</span>, <span class="bn">0x19</span>, <span class="bn">0x06</span>, <span class="bn">0x15</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x12</span>, <span class="bn">0x0C</span>, <span class="bn">0x1C</span>, <span class="bn">0x04</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x16</span>, <span class="bn">0x1E</span>, <span class="bn">0x1A</span>, <span class="bn">0x18</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>And use it to convert an image as follows:</p>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span> <span class="kw">or</span> <span class="st">&#39;FW&#39;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [<span class="bu">list</span> of hardware <span class="kw">or</span> firmware values depending on the specified <span class="bu">type</span>]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>For example, we can create a file called <code>paleta.pal</code> with
+the following contents:</p>
 <div class="sourceCode" id="cb9"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> scn <span class="at">--palette</span> paleta.pal</span></code></pre></div>
-<h1 id="license">License</h1>
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;type&#39;</span>: <span class="st">&#39;HW&#39;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;pal&#39;</span>: [</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x0B</span>, <span class="bn">0x00</span>, <span class="bn">0x14</span>, <span class="bn">0x1F</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x07</span>, <span class="bn">0x19</span>, <span class="bn">0x06</span>, <span class="bn">0x15</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x12</span>, <span class="bn">0x0C</span>, <span class="bn">0x1C</span>, <span class="bn">0x04</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x16</span>, <span class="bn">0x1E</span>, <span class="bn">0x1A</span>, <span class="bn">0x18</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>And use it to convert an image as follows:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> img.py imagen.png <span class="at">--format</span> scn <span class="at">--palette</span> paleta.pal</span></code></pre></div>
+<h2 id="license">License</h2>
 <p><code>img.py</code> is free software; you can redistribute it and/or
 modify it under the terms of the <strong>GNU General Public License
 v3</strong>, as published by the <strong>Free Software
