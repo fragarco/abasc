@@ -3623,6 +3623,10 @@ CALL plusWaitFrames(5)
 
 # Historial de cambios
 
+- Versión 1.5.0
+  - Nuevo sistema opcional para generar ejecutables.
+  - Otras pequeñas mejoras y arreglos.
+  
 - Versión 1.3.0
   - Nueva librería CPCPLUS con soporte para las funciones del ASIC incluido en la gama CPC+
   - Nuevo comando para establecer attributos de la compilación: DEF ATTRIBUTE()

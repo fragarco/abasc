@@ -3666,6 +3666,10 @@ CALL plusWaitFrames(5)
 
 # Changelog
 
+- Version 1.4.0
+  - New optional build system to generate exectuables.
+  - Some other minor fixes and improvements.
+  
 - Version 1.3.0
   - New CPCPLUS library with support for CPC+ ASIC features
   - The new command DEF ATTRIBUTE() allows to set compilation attributes from code.
