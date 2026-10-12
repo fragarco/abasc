@@ -271,6 +271,8 @@ href="#example-2-syntax-using-several-basic-2-enhancements">Example 2
 (syntax using several BASIC 2 enhancements)</a></li>
 </ul></li>
 <li><a href="#additional-tools">Additional Tools</a></li>
+<li><a href="#building-the-executables">Building the
+Executables</a></li>
 <li><a href="#using-the-compiler">Using the Compiler</a>
 <ul>
 <li><a href="#options">Options</a></li>
@@ -735,7 +737,24 @@ href="dsk.html">manual</a></li>
 useful for distributing binaries and other accompanying files. <a
 href="cdt.html">manual</a></li>
 </ul>
+<h1 id="building-the-executables">Building the Executables</h1>
+<p>ABASC and all its related tools are designed to be used alongside the
+Python interpreter, as this allows them to run faster. However, prebuilt
+executables are also distributed for the main operating systems since
+release 1.5.0. In addition, it is possible to build the executables
+yourself. To do so, you first need to install the PyInstaller Python
+package using the following command:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyinstaller</span></code></pre></div>
+<p>Next, navigate to the <code>src/build</code> directory and run
+<code>build.bat</code> on Windows or <code>build.sh</code> on macOS or
+Linux. The resulting binaries will be saved in the <code>bin</code>
+directory, sibling to the <code>src</code> directory.</p>
 <h1 id="using-the-compiler">Using the Compiler</h1>
+<p>All the examples assume that you will be using <code>abasc.py</code>
+directly from Python. If you are using the executable, just drop the use
+of <code>python</code> or <code>python3</code> and just remplace
+<code>python abasc.py</code> by the direct call to the binary.</p>
 <pre><code>python abasc.py [options] file.bas [-o output]</code></pre>
 <h3 id="options">Options</h3>
 <ul>
@@ -766,9 +785,9 @@ subsequent call to the <code>DSK</code> or <code>CDT</code> tools is
 then enough to package the result for use in emulators or on real
 hardware (for example, via devices such as Gotek, M4, or
 DDI-Revival).</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasc.py main.bas</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x0040 <span class="at">--load-addr</span><span class="op">=</span>0x0040</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasc.py main.bas</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x0040 <span class="at">--load-addr</span><span class="op">=</span>0x0040</span></code></pre></div>
 <p>However, it is also possible to quickly generate a basic project
 structure using the <code>BASPRJ</code> tool. This utility automatically
 creates a build script with everything needed to get started: on
@@ -776,8 +795,8 @@ Windows, a <code>make.bat</code> file is generated, while on Linux and
 macOS a <code>make.sh</code> file is created. In addition, a
 <code>main.bas</code> file containing ready-to-use example code is
 included.</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> basprj.py <span class="at">-n</span> myproject</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> basprj.py <span class="at">-n</span> myproject</span></code></pre></div>
 <p>For more detailed information, please refer to the specific
 <code>BASPRJ</code> documentation.</p>
 <hr />
@@ -3314,13 +3333,13 @@ commands from the directory containing <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Type checking:</strong></li>
 </ul>
-<div class="sourceCode" id="cb132"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb133"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Unit testing:</strong></li>
 </ul>
-<div class="sourceCode" id="cb133"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb134"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finally, the <code>examples</code> directory contains several sample
 programs that can be compiled and also used for testing and
 experimenting with the compiler.</p>

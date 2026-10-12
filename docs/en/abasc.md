@@ -17,6 +17,7 @@
     - [Example 1 (syntax compatible with BASIC 1.0 and 1.1)](#example-1-syntax-compatible-with-basic-10-and-11)
     - [Example 2 (syntax using several BASIC 2 enhancements)](#example-2-syntax-using-several-basic-2-enhancements)
 - [Additional Tools](#additional-tools)
+- [Building the Executables](#building-the-executables)
 - [Using the Compiler](#using-the-compiler)
     - [Options](#options)
   - [Creating a Project Using BASPRJ](#creating-a-project-using-basprj)
@@ -349,7 +350,19 @@ In addition to the compiler, the development package includes several extra tool
 - `dsk.py` — Creates `.DSK` disk images, allowing you to distribute compiled binaries and additional files. [manual](dsk.html)
 - `cdt.py` — Creates `.CDT` tape images, also useful for distributing binaries and other accompanying files. [manual](cdt.html)
 
+# Building the Executables
+
+ABASC and all its related tools are designed to be used alongside the Python interpreter, as this allows them to run faster. However, prebuilt executables are also distributed for the main operating systems since release 1.5.0. In addition, it is possible to build the executables yourself. To do so, you first need to install the PyInstaller Python package using the following command:
+
+```bash
+pip install pyinstaller
+```
+
+Next, navigate to the `src/build` directory and run `build.bat` on Windows or `build.sh` on macOS or Linux. The resulting binaries will be saved in the `bin` directory, sibling to the `src` directory.
+
 # Using the Compiler
+
+All the examples assume that you will be using `abasc.py` directly from Python. If you are using the executable, just drop the use of `python` or `python3` and just remplace `python abasc.py` by the direct call to the binary.
 
 ```
 python abasc.py [options] file.bas [-o output]

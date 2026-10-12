@@ -275,6 +275,8 @@ href="#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2">Ejemplo
 </ul></li>
 <li><a href="#herramientas-adicionales">Herramientas
 adicionales</a></li>
+<li><a href="#construir-los-ejecutables">Construir los
+ejecutables</a></li>
 <li><a href="#uso-del-compilador">Uso del compilador</a>
 <ul>
 <li><a href="#opciones">Opciones</a></li>
@@ -745,8 +747,29 @@ href="cdt.html">manual</a></li>
 comenzar a trabajar. <a href="basprj.html">manual</a></li>
 </ul>
 <hr />
+<h1 id="construir-los-ejecutables">Construir los ejecutables</h1>
+<p>ABASC y sus herramientas asociadas están pensadas para utilizarse
+junto con el intérprete de Python, ya que así su ejecución es más
+rápida. No obstante, también se distribuyen ejecutables de ABASC y de
+sus herramientas para los principales sistemas operativos. Además, es
+posible generar los ejecutables por cuenta propia. Para ello, primero
+hay que instalar el paquete PyInstaller de Python mediante el siguiente
+comando:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyinstaller</span></code></pre></div>
+<p>A continuación, basta con acceder al directorio
+<code>src/build</code> y ejecutar <code>build.bat</code> en Windows o
+<code>build.sh</code> en macOS o Linux. Los binarios resultantes se
+guardarán en la carpeta <code>bin</code>, al lado de la carpeta
+<code>src</code>.</p>
 <h1 id="uso-del-compilador">Uso del compilador</h1>
-<pre><code>python abasc.py [opciones] archivo.bas [-o archivo]</code></pre>
+<p>Todos los ejemplos de uso asumen que se está usando
+<code>abasc.py</code> junto al intérprete de Python. Si se está
+utilizando el ejecutable, basta con obviar la llamada a
+<code>python</code> o <code>python3</code> y remplazar
+<code>python abasc.py</code> por la llamada directa al ejecutable.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> abasc.py <span class="pp">[</span><span class="ss">opciones</span><span class="pp">]</span> archivo.bas [-o archivo]</span></code></pre></div>
 <h3 id="opciones">Opciones</h3>
 <ul>
 <li><code>--version</code> — muestra la versión del compilador.</li>
@@ -781,9 +804,9 @@ llamada adicional a las herramientas <code>DSK</code> o <code>CDT</code>
 para empaquetar el resultado y poder utilizarlo en emuladores o en
 hardware real (por ejemplo, mediante dispositivos como Gotek, M4 o
 DDI-Revival).</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasc.py main.bas</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x4000 <span class="at">--load-addr</span><span class="op">=</span>0x0170</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> abasc.py main.bas</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dsk.py <span class="at">-n</span> main.dsk <span class="at">--put-bin</span> main.bin <span class="at">--start-addr</span><span class="op">=</span>0x4000 <span class="at">--load-addr</span><span class="op">=</span>0x0170</span></code></pre></div>
 <p>sin embargo, también es posible generar rápidamente la estructura
 básica de un proyecto utilizando la herramienta <code>BASPRJ</code>.
 Esta utilidad crea automáticamente un script de construcción con todo lo
@@ -792,8 +815,8 @@ necesario para comenzar a trabajar: en Windows se generará un fichero
 fichero <code>make.sh</code>. Asimismo, se incluirá un archivo
 <code>main.bas</code> con código de ejemplo listo para ser compilado y
 probado.</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> basprj.py <span class="at">-n</span> myproject</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> basprj.py <span class="at">-n</span> myproject</span></code></pre></div>
 <p>Para conocer todas las opciones disponibles, se recomienda consultar
 la documentación específica de <code>BASPRJ</code>.</p>
 <hr />
@@ -3337,13 +3360,13 @@ donde se encuentra <code>abasc.py</code>:</p>
 <ul>
 <li><strong>Comprobación de tipos:</strong></li>
 </ul>
-<div class="sourceCode" id="cb131"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
+<div class="sourceCode" id="cb132"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mypy</span> . <span class="at">--explicit-package-bases</span></span></code></pre></div>
 <ul>
 <li><strong>Pruebas unitarias:</strong></li>
 </ul>
-<div class="sourceCode" id="cb132"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
+<div class="sourceCode" id="cb133"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest <span class="at">-b</span></span></code></pre></div>
 <p>Finalmente, el directorio <code>examples</code> incluye varios
 programas de ejemplo que pueden compilarse y servir también para
 realizar pruebas y experimentos con el compilador.</p>

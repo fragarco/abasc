@@ -74,6 +74,8 @@ Next, navigate to the `src/build` directory and run `build.bat` on Windows or `b
 
 # Basic Usage
 
+All the examples assume that you will be using `abasm.py` directly from Python. If you are using the executable, just drop the use of `python` or `python3` and just remplace `python abasm.py` by the direct call to the binary.
+
 To assemble a source file written in assembly language (e.g., `program.asm`), simply run the following command if you are using the Python interpreter:
 
 ```

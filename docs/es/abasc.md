@@ -17,6 +17,7 @@
     - [Ejemplo 1 (sintaxis compatible con BASIC 1.0 y 1.1)](#ejemplo-1-sintaxis-compatible-con-basic-10-y-11)
     - [Ejemplo 2 (sintaxis incluyendo varias de las mejoras de BASIC 2)](#ejemplo-2-sintaxis-incluyendo-varias-de-las-mejoras-de-basic-2)
 - [Herramientas adicionales](#herramientas-adicionales)
+- [Construir los ejecutables](#construir-los-ejecutables)
 - [Uso del compilador](#uso-del-compilador)
     - [Opciones](#opciones)
   - [Creación de un proyecto usando BASPRJ](#creación-de-un-proyecto-usando-basprj)
@@ -352,9 +353,23 @@ Además del compilador, el paquete de desarrollo incluye algunas herramientas ad
 
 ---
 
+# Construir los ejecutables
+
+ABASC y sus herramientas asociadas están pensadas para utilizarse junto con el intérprete de Python, ya que así su ejecución es más rápida. No obstante, también se distribuyen ejecutables de ABASC y de sus herramientas para los principales sistemas operativos. Además, es posible generar los ejecutables por cuenta propia. Para ello, primero hay que instalar el paquete PyInstaller de Python mediante el siguiente comando:
+
+```bash
+pip install pyinstaller
+```
+
+A continuación, basta con acceder al directorio `src/build` y ejecutar `build.bat` en Windows o `build.sh` en macOS o Linux. Los binarios resultantes se guardarán en la carpeta `bin`, al lado de la carpeta `src`.
+
 # Uso del compilador
 
-    python abasc.py [opciones] archivo.bas [-o archivo]
+Todos los ejemplos de uso asumen que se está usando `abasc.py` junto al intérprete de Python. Si se está utilizando el ejecutable, basta con obviar la llamada a `python` o `python3` y remplazar `python abasc.py` por la llamada directa al ejecutable.
+
+```bash
+python abasc.py [opciones] archivo.bas [-o archivo]
+```
 
 ### Opciones
 

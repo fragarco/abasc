@@ -74,6 +74,8 @@ A continuación, basta con acceder al directorio `src/build` y ejecutar `build.b
 
 # Cómo se usa
 
+Todos los ejemplos de uso asumen que se está usando `abasm.py` junto al intérprete de Python. Si se está utilizando el ejecutable, basta con obviar la llamada a `python` o `python3` y remplazar `python abasm.py` por la llamada directa al ejecutable.
+
 Para ensamblar un archivo fuente de código en ensamblador (por ejemplo, `program.asm`), basta con ejecutar el siguiente comando si se usan directamente los scripts de Python:
 
 ```

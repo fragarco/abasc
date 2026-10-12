@@ -7,7 +7,19 @@ BASPRJ: MANUAL DEL USUARIO
 
 ---
 
+## Construir los ejecutables
+
+ABASC y sus herramientas asociadas están pensadas para utilizarse junto con el intérprete de Python, ya que así su ejecución es más rápida. No obstante, también se distribuyen ejecutables de ABASC y de sus herramientas para los principales sistemas operativos. Además, es posible generar los ejecutables por cuenta propia. Para ello, primero hay que instalar el paquete PyInstaller de Python mediante el siguiente comando:
+
+```bash
+pip install pyinstaller
+```
+
+A continuación, basta con acceder al directorio `src/build` y ejecutar `build.bat` en Windows o `build.sh` en macOS o Linux. Los binarios resultantes se guardarán en la carpeta `bin`, al lado de la carpeta `src`.
+
 ## Uso básico
+
+Todos los ejemplos de uso asumen que se está usando `basprj.py` junto al intérprete de Python. Si se está utilizando el ejecutable, basta con obviar la llamada a `python` o `python3` y remplazar `python basmprj.py` por la llamada directa al ejecutable.
 
 Creación de un nuevo proyecto:
 
@@ -97,3 +109,9 @@ python3 basprj.py --update .
 
 - La herramienta no sobrescribe `main.bas` si ya existe.
 - El modo `--update` solo modifica las variables necesarias, preservando el resto del contenido del fichero *make*.
+
+## License
+
+`basprj.py` is free software; you can redistribute it and/or modify it under the terms of the **GNU General Public License v3**, as published by the **Free Software Foundation**.
+
+`basprj.py` is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**. See the **GNU General Public License** for more details.
