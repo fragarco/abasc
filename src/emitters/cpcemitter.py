@@ -207,10 +207,6 @@ class CPCEmitter:
         for l in self.requiredlabels:
             entry = self.symtable.find(ident = l[0], stype = SymType.Label, context="")
             if entry is None:
-                # label defined using LABEL command
-                datalabel = f"_data_{l[0]}_label"
-                entry = self.symtable.find(ident = datalabel, stype = SymType.Label, context="")
-            if entry is None:
                 self._raise_error(5, l[1], "the target label/line doesn't contain a DATA statement")
 
     def _emit_pushcontext(self) -> None:
@@ -3225,7 +3221,7 @@ class CPCEmitter:
             if isinstance(label, AST.Integer) or isinstance(label, AST.Label):
                 sym = self.symtable.find(str(label.value), SymType.Label, "")
                 if sym is not None:
-                    targetlabel = f"_data_{str(label.value)}_label"
+                    targetlabel = f"_data_{str(label.value).replace('.','_')}_label"
                     self._emit_code(f"ld      hl,{targetlabel}")
                     self.requiredlabels.append((targetlabel, node))
                 else:

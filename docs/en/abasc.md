@@ -3666,6 +3666,10 @@ CALL plusWaitFrames(5)
 
 # Changelog
 
+- Version 1.4.1
+  - Fix in RESTORE/DATA used labels to support the symbol '.'
+  - Some other minor fixes and improvements.
+  
 - Version 1.4.0
   - New optional build system to generate exectuables.
   - Some other minor fixes and improvements.

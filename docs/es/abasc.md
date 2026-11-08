@@ -3623,7 +3623,11 @@ CALL plusWaitFrames(5)
 
 # Historial de cambios
 
-- Versión 1.5.0
+- Versión 1.4.1
+  - Arreglo para usar el '.' como parte de las estiquetas usadas con RESTORE/DATA y LABEL.
+  - Otras pequeñas mejoras y arreglos.
+  
+- Versión 1.4.0
   - Nuevo sistema opcional para generar ejecutables.
   - Otras pequeñas mejoras y arreglos.
   

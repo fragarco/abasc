@@ -577,7 +577,7 @@ class Data(Statement):
         super().__init__(etype=ExpType.Void, id="Data")
         self.args = args
         self.linelabel = f"_data_{linelabel}_label"
-        self.userlabel = "" if userlabel == "" else f"_data_{userlabel}_label"
+        self.userlabel = "" if userlabel == "" else f"_data_{userlabel.replace('.','_')}_label"
 
     def to_json(self) -> dict:
         d = super().to_json()
