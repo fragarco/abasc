@@ -3625,6 +3625,7 @@ CALL plusWaitFrames(5)
 
 - Versión 1.4.1
   - Arreglo para usar el '.' como parte de las estiquetas usadas con RESTORE/DATA y LABEL.
+  - IMG.py puede generar ahora proyectos para Tixel.
   - Otras pequeñas mejoras y arreglos.
   
 - Versión 1.4.0

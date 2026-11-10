@@ -3668,6 +3668,7 @@ CALL plusWaitFrames(5)
 
 - Version 1.4.1
   - Fix in RESTORE/DATA used labels to support the symbol '.'
+  - IMG.py can generate Tixel projects.
   - Some other minor fixes and improvements.
   
 - Version 1.4.0

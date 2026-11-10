@@ -18,6 +18,10 @@ Modo 0, 160x200, colors (4 bits x pixel: bit 0 bit 2 bit 1 bit 3)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1
 
+Besides the CPC formats, it can also output 'tixel' projects: a JSON file
+with the sprite and its palette ready to be opened and edited with the
+Tixel sprite editor (images must be 48x48 or smaller for this format).
+
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation in its version 3.
@@ -34,12 +38,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.5.0'
+__version__='1.5.1'
 
 import sys
 import os
 import argparse
 import glob
+import json
+import ast
 from PIL import Image
 from typing import Any
 
@@ -153,6 +159,11 @@ CPC_RGB_COLORS: list[RGBColor] = [
 # CODE
 #
 
+# Tixel sprite editor limits
+TIXEL_MAX_SIZE = 48
+
+VALID_MODES = (0, 1, 2)
+
 class ConversionError(Exception):
     message: str
 
@@ -170,15 +181,19 @@ class ImgConverter:
     imgw: int
     imgh: int
     
-    def __init__(self, mode:int =0, palette: list[int] = [0x14 for i in range(0,16)]) -> None:
+    def __init__(self, mode: int = 0, palette: list[int] | None = None) -> None:
+        if mode not in VALID_MODES:
+            raise ConversionError("unknown graphic mode %s, supported modes are: 0, 1 and 2" % mode)
         self.mode = mode
-        self.palette = palette
+        self.palette = [] if palette is None else list(palette)
         self.img = bytearray()
         self.imgw = 0
         self.imgh = 0
         self._check_palette(mode)
-        
+
     def _colors_per_mode(self, mode: int) -> int:
+        if mode not in VALID_MODES:
+            raise ConversionError("unknown graphic mode %s, supported modes are: 0, 1 and 2" % mode)
         if mode == 0: return 16
         return 4 if mode == 1 else 2
 
@@ -188,8 +203,8 @@ class ImgConverter:
         if colors < len(self.palette):
             raise ConversionError("palette has too many entries, max %d vs %d entries"%(colors, len(self.palette)))
         for color in self.palette:
-            if color not in CPC_HW_COLORS:
-                raise ConversionError("palette includes an unknown hardware color value: %s"%(hex(color)))
+            if not isinstance(color, int) or color not in CPC_HW_COLORS:
+                raise ConversionError("palette includes an unknown hardware color value: %s" % (color,))
 
     def _palette2colors(self) -> list[RGBColor]:
         colors: list[RGBColor] = []
@@ -253,15 +268,21 @@ class ImgConverter:
         try:
             with open(palfile, "r") as fd:
                 content: str = fd.read()
-                palinfo = eval(content)
+                palinfo = ast.literal_eval(content)
+                if not isinstance(palinfo, dict):
+                    raise ConversionError("palette file content must be a dict")
                 if 'type' not in palinfo:
                     raise ConversionError("'type' field is missing in palette file content")
                 if 'pal' not in palinfo:
                     raise ConversionError("'pal' field is missing in palette file content")
+                if not isinstance(palinfo['pal'], list):
+                    raise ConversionError("'pal' field must be a list of colors")
                 if palinfo['type'] == 'HW':
                     palette = palinfo['pal']
                 else:
                     palette = list(map(lambda item: CPC_FW_COLORS[item][0], palinfo['pal']))   
+        except ConversionError:
+            raise
         except Exception as e:
             raise ConversionError(f"couldn't process {palfile} file. " + str(e))
         return palette
@@ -352,7 +373,7 @@ class ImgConverter:
                     "{ 'type': 'FW', 'pal': [%s]}\n" % ', '.join('%d' % x for x in fwcols)
                 ])
         except IOError as e:
-            raise ConversionError("%s.inf couldn't be create due to %s" % (target + ext, str(e)))
+            raise ConversionError("%s.info couldn't be create due to %s" % (target + ext, str(e)))
 
     def write_bin(self, target: str, ext: str ='.bin', cpcimg = None) -> None:
         print("[img] generating BIN file...")
@@ -500,6 +521,39 @@ class ImgConverter:
             interlaced.extend(padding)
         self.write_bin(target, '.scn', interlaced)
 
+    def write_tixel(self, target: str) -> None:
+        """
+        Generates a Tixel project file (.tixel, JSON) that can be opened and
+        edited with the Tixel sprite editor. The sprite stores palette indexes
+        (not colors) so it can be re-palettised inside the editor.
+        """
+        print("[img] generating Tixel project file...")
+        if len(self.img) == 0:
+            raise ConversionError("no image was converted yet, call build_cpcimg first")
+        if self.imgw > TIXEL_MAX_SIZE or self.imgh > TIXEL_MAX_SIZE:
+            raise ConversionError("tixel projects are limited to %dx%d pixels, use another format for this image" %
+                                  (TIXEL_MAX_SIZE, TIXEL_MAX_SIZE))
+        rows: list[list[int]] = [list(self.img[y * self.imgw:(y + 1) * self.imgw])
+                                 for y in range(self.imgh)]
+        project = {
+            "width": self.imgw,
+            "height": self.imgh,
+            "video_mode": self.mode,
+            "palette": [CPC_HW_COLORS[hw] for hw in self.palette],
+            "sprites": [{
+                "width": self.imgw,
+                "height": self.imgh,
+                "pixels": rows,
+            }],
+            "name": os.path.basename(target),
+        }
+        try:
+            with open(target + '.tixel', 'w', encoding='utf-8') as fd:
+                json.dump(project, fd, indent=2)
+        except IOError as e:
+            raise ConversionError("%s couldn't be create due to %s" % (target + '.tixel', str(e)))
+        self.write_info(target, '.tixel')
+
 def run_read_inputimg(srcfile:str, format: str, mode: int) -> RGBImage:
     """
     We load the image. If the target format is SCN we check
@@ -513,7 +567,7 @@ def run_read_inputimg(srcfile:str, format: str, mode: int) -> RGBImage:
             requiredw = 160 if mode == 0 else 320 if mode == 1 else 640
             if imgfile.width != requiredw or imgfile.height != 200:
                 print(f"[img] resizing image to {requiredw}x200")
-                imgfile = imgfile.resize((requiredw, 200))
+                return imgfile.resize((requiredw, 200)).convert('RGB')
         return imgfile.convert('RGB')
     except Exception as e:
         print("[img] error trying to read the input image", srcfile)
@@ -547,8 +601,10 @@ def run_convert(args: argparse.Namespace) -> None:
             converter.write_bas(target)
         elif args.format == 'scn':
             converter.write_scn(target)
+        elif args.format == 'tixel':
+            converter.write_tixel(target)
         else:
-            raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas.")
+            raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas, scn and tixel.")
 
 def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -561,12 +617,13 @@ def process_args() -> argparse.Namespace:
             'bas': BASIC source file using DATA. Ready for ABASC compiler.
             'asm': Maxam/WinApe assembly compatible file.
             'scn': interlaced image following the Amstrad video memory scheme.
+            'tixel': JSON project file for the Tixel sprite editor (max 48x48).
         """
     )
     parser.add_argument('inimg', nargs='*', help='Input image file.')
     parser.add_argument('--name', type=str, default='', help='Name that has to be used to reference the image. If is not specified the input file name will be used.')
-    parser.add_argument('--format', type=str, default='bin', help='Format to be used for the output file: bin, c, bas, asm or scn (bin by default).')
-    parser.add_argument('--mode', type=int, default=0, help='Graphic mode: 0, 1 or 2 (0 by default).')
+    parser.add_argument('--format', type=str, default='bin', choices=['bin', 'c', 'bas', 'asm', 'scn', 'tixel'], help='Format to be used for the output file: bin, c, bas, asm, scn or tixel (bin by default).')
+    parser.add_argument('--mode', type=int, default=0, choices=[0, 1, 2], help='Graphic mode: 0, 1 or 2 (0 by default).')
     parser.add_argument('--palette', type=str, default='', help='indicates a file with a palette description to be used in the conversion.')
     parser.add_argument('-v', '--version', action='version', version=f' IMG Tool Version {__version__}', help = "Shows program's version and exits.")
     args = parser.parse_args()
