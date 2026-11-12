@@ -22,14 +22,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from __future__ import annotations
 
 __author__='Javier "Dwayne Hicks" Garcia'
-__version__='1.5.0'
+__version__='1.5.1'
 
 import sys
 import os
 import re
+import ast
+import operator
 import argparse
 import inspect
-from typing import Any, TextIO, cast
+from typing import Any, Callable, TextIO, cast
 
 #
 # CONSTANTS
@@ -227,22 +229,6 @@ class AsmContext:
                 return filename
         return os.path.join(os.path.dirname(self.currentfile), fname)
 
-    def parse_logic_expr(self, expr: str) -> bool:
-        """
-        Resolves an expression that can be reduced to 0 = FALSE or !0 = TRUE.
-        """
-        values = re.findall(r'\w+', expr)
-        for i in range(0, len(values)):
-            values[i] = cast(int, g_context.parse_expression(values[i]))
-        logic = re.findall(r'[<|>|=|<=|>=|!=|==]', expr)
-        if len(logic) and logic[0] == '=': logic[0] = "=="
-
-        if len(values) == 1: return values[0]
-        if len(values) != 2:
-            abort("evaluating logical expression " + expr)
-        operation = "%d %s %d" % (values[0], logic[0], values[1])
-        return bool(eval(operation))
-       
     def parse_expression(self, arg: str, signed: int=0, byte: int=0, word: int=0, allowundef: int=0) -> int|None:
         """
         Resolves a numeric expression that can be reduced to an integer value.
@@ -334,9 +320,9 @@ class AsmContext:
                 argcopy += c
 
         try:
-            narg = int(eval(argcopy))
+            narg = safe_evaluate(argcopy)
         except Exception:
-            abort("syntax error in expression")
+            abort("syntax error in expression " + argcopy)
 
         if not signed:
             if byte:
@@ -745,6 +731,97 @@ def abort(message: str, tolerancelevel: int=0, errortype: str = "Syntax Error") 
         sys.exit(1)
     else:
         raise RuntimeError(f"{line1} {line2}")
+
+
+# Safe evaluation of numeric expressions, allowed operations 
+_EXPRESSION_BINOPS: dict[type, Callable[[Any, Any], Any]] = {
+    ast.Add:      operator.add,
+    ast.Sub:      operator.sub,
+    ast.Mult:     operator.mul,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod:      operator.mod,
+    ast.BitAnd:   operator.and_,
+    ast.BitOr:    operator.or_,
+    ast.BitXor:   operator.xor,
+    ast.LShift:   operator.lshift,
+    ast.RShift:   operator.rshift,
+}
+
+_EXPRESSION_CMPOPS: dict[type, Callable[[Any, Any], bool]] = {
+    ast.Eq:    operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Lt:    operator.lt,
+    ast.LtE:   operator.le,
+    ast.Gt:    operator.gt,
+    ast.GtE:   operator.ge,
+}
+
+_EXPRESSION_UNARYOPS: dict[type, Callable[[Any], Any]] = {
+    ast.USub:   operator.neg,
+    ast.UAdd:   operator.pos,
+    ast.Invert: operator.invert,
+}
+
+def _evaluate_expression_node(node: ast.AST) -> int|bool:
+    """
+    Recursively evaluates an expression AST node, only accepting the small set
+    of operations that assembly expressions are allowed to use. Any other node
+    raises ValueError.
+    """
+    if isinstance(node, ast.Expression):
+        return _evaluate_expression_node(node.body)
+    if isinstance(node, ast.Constant):
+        # Only integers and booleans are allowed.
+        # Floats, strings and any other literal kind are rejected.
+        if isinstance(node.value, bool) or isinstance(node.value, int):
+            return node.value
+        raise ValueError("only integer literals are allowed in expressions")
+    if isinstance(node, ast.UnaryOp):
+        unary = _EXPRESSION_UNARYOPS.get(type(node.op))
+        if unary is None:
+            raise ValueError("unsupported unary operator in expression")
+        return unary(_evaluate_expression_node(node.operand))
+    if isinstance(node, ast.BinOp):
+        binary = _EXPRESSION_BINOPS.get(type(node.op))
+        if binary is None:
+            raise ValueError("unsupported operator in expression")
+        return binary(_evaluate_expression_node(node.left),
+                      _evaluate_expression_node(node.right))
+    if isinstance(node, ast.Compare):
+        # Python comparison chaining (1 < 2 < 3) is supported
+        left = _evaluate_expression_node(node.left)
+        for op_node, right_node in zip(node.ops, node.comparators):
+            compare = _EXPRESSION_CMPOPS.get(type(op_node))
+            if compare is None:
+                raise ValueError("unsupported comparison in expression")
+            right = _evaluate_expression_node(right_node)
+            if not compare(left, right):
+                return False
+            left = right
+        return True
+    if isinstance(node, ast.BoolOp):
+        # 'and'/'or' keep the Python semantics they had under plain eval()
+        values = [_evaluate_expression_node(v) for v in node.values]
+        if isinstance(node.op, ast.And):
+            for value in values:
+                if not value:
+                    return value
+            return values[-1] if values else True
+        for value in values:
+            if value:
+                return value
+        return values[-1] if values else False
+    raise ValueError(f"'{type(node).__name__}' is not allowed in expressions")
+
+def safe_evaluate(expr: str) -> int:
+    """
+    Safely evaluates an already resolved numeric expression, reducing it to
+    an integer value. Raises ValueError (or SyntaxError from the parser) for
+    any content that is not a plain integer arithmetic/logic expression.
+    """
+    tree = ast.parse(expr.strip(), mode='eval')
+    return int(_evaluate_expression_node(tree))
+
 
 ###########################################################################
 # Refactored common code shared by several opcode implementations
